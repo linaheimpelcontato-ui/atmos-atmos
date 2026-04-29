@@ -1,0 +1,1 @@
+ALTER TABLE public.proposals ADD COLUMN atmos_service jsonb DEFAULT '{"price_per_person_day": 0, "description": "", "internal_costs": []}'::jsonb;

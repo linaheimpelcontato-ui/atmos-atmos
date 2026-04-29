@@ -1,0 +1,1 @@
+ALTER TABLE public.prospects ADD COLUMN document TEXT, ADD COLUMN document_type TEXT;

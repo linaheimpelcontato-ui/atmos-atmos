@@ -1,0 +1,1 @@
+ALTER TABLE public.proposal_day_items ADD COLUMN quantity integer NOT NULL DEFAULT 1;

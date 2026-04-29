@@ -1,0 +1,1 @@
+ALTER TABLE public.proposals ADD COLUMN contract_url text DEFAULT NULL;

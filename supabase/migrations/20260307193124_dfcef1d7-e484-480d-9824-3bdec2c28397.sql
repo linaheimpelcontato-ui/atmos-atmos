@@ -1,0 +1,1 @@
+ALTER TABLE public.guides ADD COLUMN vehicle_seats integer NOT NULL DEFAULT 5;

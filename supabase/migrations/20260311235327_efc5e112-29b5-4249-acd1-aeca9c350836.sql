@@ -1,0 +1,1 @@
+ALTER TABLE public.proposal_feedback ADD COLUMN IF NOT EXISTS is_resolved boolean NOT NULL DEFAULT false;

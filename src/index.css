@@ -1,0 +1,156 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@font-face {
+  font-family: 'DeFonteReduced';
+  src: url('/fonts/DeFonteReduced.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ATMOS Design System — Official Palette
+   #744404 (deep amber)   | #8d7b63 (warm taupe)
+   #1f2c17 (forest green) | #2e2019 (dark chocolate)
+   #556952 (sage green)   | #e4dbcc (light sand)
+   #540202 (burgundy)     | #fff (white)
+*/
+
+@layer base {
+  :root {
+    --background: 38 28% 96%;
+    --foreground: 20 30% 14%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 20 30% 14%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 30% 14%;
+
+    --primary: 97 31% 13%;
+    --primary-foreground: 38 33% 90%;
+
+    --secondary: 38 33% 85%;
+    --secondary-foreground: 20 30% 14%;
+
+    --muted: 38 18% 91%;
+    --muted-foreground: 34 18% 40%;
+
+    --accent: 34 93% 24%;
+    --accent-foreground: 38 30% 95%;
+
+    --nav: 38 30% 93%;
+    --nav-foreground: 20 30% 14%;
+
+    --footer: 20 30% 14%;
+    --footer-foreground: 38 30% 95%;
+
+    --border-accent: 0 95% 17%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 38 18% 82%;
+    --input: 38 18% 82%;
+    --ring: 97 31% 13%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 38 25% 95%;
+    --sidebar-foreground: 20 25% 20%;
+    --sidebar-primary: 97 31% 13%;
+    --sidebar-primary-foreground: 38 33% 90%;
+    --sidebar-accent: 38 25% 88%;
+    --sidebar-accent-foreground: 20 30% 14%;
+    --sidebar-border: 38 15% 82%;
+    --sidebar-ring: 97 31% 20%;
+  }
+
+  .dark {
+    --background: 20 25% 7%;
+    --foreground: 38 25% 90%;
+
+    --card: 20 22% 10%;
+    --card-foreground: 38 25% 90%;
+
+    --popover: 20 22% 10%;
+    --popover-foreground: 38 25% 90%;
+
+    --primary: 112 12% 37%;
+    --primary-foreground: 38 30% 95%;
+
+    --secondary: 20 18% 16%;
+    --secondary-foreground: 38 25% 88%;
+
+    --muted: 20 14% 16%;
+    --muted-foreground: 34 15% 55%;
+
+    --accent: 34 80% 32%;
+    --accent-foreground: 38 30% 95%;
+
+    --nav: 20 22% 12%;
+    --nav-foreground: 38 25% 90%;
+
+    --footer: 20 30% 8%;
+    --footer-foreground: 38 25% 90%;
+
+    --border-accent: 0 70% 25%;
+
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 20 14% 18%;
+    --input: 20 14% 18%;
+    --ring: 112 12% 37%;
+
+    --sidebar-background: 20 22% 9%;
+    --sidebar-foreground: 38 20% 88%;
+    --sidebar-primary: 112 12% 37%;
+    --sidebar-primary-foreground: 38 30% 95%;
+    --sidebar-accent: 20 14% 14%;
+    --sidebar-accent-foreground: 38 20% 88%;
+    --sidebar-border: 20 14% 16%;
+    --sidebar-ring: 112 12% 37%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+}
+
+/* Always-visible scrollbar for proposal itinerary */
+.proposal-itinerary-scroll [data-radix-scroll-area-scrollbar] {
+  width: 10px !important;
+  padding: 1px !important;
+  background: hsl(var(--secondary) / 0.9);
+  border-radius: 9999px;
+}
+
+.proposal-itinerary-scroll [data-radix-scroll-area-thumb] {
+  background: hsl(var(--muted-foreground) / 0.4) !important;
+  border-radius: 9999px;
+  min-height: 48px;
+}
+
+.proposal-itinerary-scroll [data-radix-scroll-area-corner] {
+  background: transparent;
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}

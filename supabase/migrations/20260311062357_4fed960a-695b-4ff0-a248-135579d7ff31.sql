@@ -1,0 +1,1 @@
+ALTER TABLE public.calendar_events ADD COLUMN seller_id uuid REFERENCES public.sellers(id) ON DELETE SET NULL;

@@ -1,0 +1,1 @@
+ALTER TABLE public.proposal_day_items DROP CONSTRAINT IF EXISTS proposal_day_items_catalog_item_id_fkey;

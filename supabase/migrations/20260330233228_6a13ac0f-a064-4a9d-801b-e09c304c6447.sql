@@ -1,0 +1,1 @@
+ALTER TABLE public.proposal_accommodations ADD COLUMN payment_type text NOT NULL DEFAULT 'hospedagem';

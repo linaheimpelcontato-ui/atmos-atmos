@@ -1,0 +1,1 @@
+ALTER TABLE public.prospects ADD COLUMN birth_date date;

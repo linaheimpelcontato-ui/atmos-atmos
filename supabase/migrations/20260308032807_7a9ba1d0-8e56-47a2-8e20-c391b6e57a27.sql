@@ -1,0 +1,1 @@
+ALTER TABLE public.proposals ADD COLUMN guide_id uuid REFERENCES public.guides(id) ON DELETE SET NULL;

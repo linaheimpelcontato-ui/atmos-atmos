@@ -1,0 +1,1 @@
+ALTER TABLE proposal_day_items ADD COLUMN vehicle_type text DEFAULT 'carroTurista';
