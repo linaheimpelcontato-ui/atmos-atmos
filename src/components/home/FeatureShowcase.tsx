@@ -57,42 +57,42 @@ const CURATION_CATEGORIES = [
     id: 'cachoeiras',
     label: 'CACHOEIRAS',
     items: [
-      { t: 'Dragão', d: 'Cachoeira', img: storageUrl('cachoeiras/dragao-1.jpg') },
-      { t: 'Macacão', d: 'Cachoeira', img: storageUrl('cachoeiras/macacao-1.jpg') },
-      { t: 'Canjica e Aguas Lindas', d: 'Cachoeira', img: storageUrl('cachoeiras/canjica-aguas-lindas-1.jpg') },
-      { t: 'Prata', d: 'Cachoeira', img: storageUrl('cachoeiras/prata-1.jpg') },
-      { t: 'Cânions São Felix', d: 'Cachoeira', img: storageUrl('cachoeiras/canions-sao-felix-1.jpg') },
-      { t: 'Bocaina do Farias', d: 'Cachoeira', img: storageUrl('cachoeiras/bocaina-farias-1.jpg') },
-      { t: 'Macaquinhos', d: 'Cachoeira', img: storageUrl('cachoeiras/macaquinhos-1.jpg') },
-      { t: 'Curriola (Guardião)', d: 'Cachoeira', img: storageUrl('cachoeiras/curriola-guardiao-1.jpg') }
+      { t: 'Dragão', d: 'Cachoeira', img: storageUrl('cachoeiras/Dragão/Dragão-1.jpg') },
+      { t: 'Macacão', d: 'Cachoeira', img: storageUrl('cachoeiras/Macacão/Macacão-1.jpg') },
+      { t: 'Canjica e Águas Lindas', d: 'Cachoeira', img: storageUrl('cachoeiras/Canjica e Águas lindas/Canjica e Águas lindas-1.jpg') },
+      { t: 'Prata', d: 'Cachoeira', img: storageUrl('cachoeiras/Prata/Prata-1.jpg') },
+      { t: 'Cânions São Félix', d: 'Cachoeira', img: storageUrl('cachoeiras/Cânion da São Félix/Cânion da São Félix-1.jpg') },
+      { t: 'Bocaina do Farias', d: 'Cachoeira', img: storageUrl('cachoeiras/Bocaina do Farias/Bocaina do Farias-1.jpg') },
+      { t: 'Macaquinhos', d: 'Cachoeira', img: storageUrl('cachoeiras/Macaquinhos/Macaquinhos-1.jpg') },
+      { t: 'Curriola (Guardião)', d: 'Cachoeira', img: storageUrl('cachoeiras/Guardião - Curriola/Guardião - Curriola-1.jpg') }
     ]
   },
   {
     id: 'hospedagens',
     label: 'HOSPEDAGENS',
     items: [
-      { t: 'Amana', d: 'Hospedagem', img: storageUrl('hospedagens/amana-hotel-1.jpg') },
-      { t: 'Vila Baru', d: 'Hospedagem', img: storageUrl('hospedagens/vila-baru-1.jpg') },
-      { t: 'Vila Abaton', d: 'Hospedagem', img: storageUrl('hospedagens/vila-abaton-1.jpg') },
-      { t: 'Villa Eya', d: 'Hospedagem', img: storageUrl('hospedagens/villa-eya-1.jpg') },
-      { t: 'Casa Poema', d: 'Hospedagem', img: storageUrl('hospedagens/casa-poema-1.jpg') },
-      { t: 'Bagua Bangalos', d: 'Hospedagem', img: storageUrl('hospedagens/bagua-bangalos-1.jpg') },
-      { t: 'Vila Toa', d: 'Hospedagem', img: storageUrl('hospedagens/vila-toa-1.jpg') },
-      { t: 'Terra Gaia', d: 'Hospedagem', img: storageUrl('hospedagens/terra-gaia-1.jpg') }
+      { t: 'Amana', d: 'Hospedagem', img: storageUrl('hospedagens/Amana Hotel/Amana Hotel-1.jpg') },
+      { t: 'Vila Baru', d: 'Hospedagem', img: storageUrl('hospedagens/Vila Baru/Vila Baru-1.jpg') },
+      { t: 'Vila Abaton', d: 'Hospedagem', img: storageUrl('hospedagens/Vila Abaton/Vila Abaton-1.jpg') },
+      { t: 'Villa Eya', d: 'Hospedagem', img: storageUrl('hospedagens/Villa Eya/Villa Eya-1.jpg') },
+      { t: 'Casa Poema', d: 'Hospedagem', img: storageUrl('hospedagens/Casa Poema/Casa Poema-1.jpg') },
+      { t: 'Bagua Bangalos', d: 'Hospedagem', img: storageUrl('hospedagens/Bagua Bangalos/Bagua Bangalos-1.jpg') },
+      { t: 'Vila Toa', d: 'Hospedagem', img: storageUrl('hospedagens/Vila Toa/Vila Toa-1.jpg') },
+      { t: 'Terra Gaia', d: 'Hospedagem', img: storageUrl('hospedagens/Terra Gaia/Terra Gaia-1.jpg') }
     ]
   },
   {
     id: 'experiencias',
     label: 'EXPERIÊNCIAS',
     items: [
-      { t: 'Noturna Imersiva', d: 'Experiência', img: storageUrl('experiencias/noturna-1.jpg') },
-      { t: 'Voo de Balão', d: 'Experiência', img: storageUrl('experiencias/balao-1.jpg') },
-      { t: 'Passeio a Cavalo', d: 'Experiência', img: storageUrl('experiencias/cavalo-1.jpg') },
-      { t: 'Canionismo', d: 'Experiência', img: storageUrl('experiencias/canionismo-1.jpg') },
-      { t: 'Rapel', d: 'Experiência', img: storageUrl('experiencias/rapel-1.jpg') },
-      { t: 'Rafting', d: 'Experiência', img: storageUrl('experiencias/rafting-1.jpg') },
-      { t: 'Astro Turismo', d: 'Experiência', img: storageUrl('experiencias/astro-1.jpg') },
-      { t: 'Yoga e Meditação', d: 'Experiência', img: storageUrl('experiencias/yoga-1.jpg') }
+      { t: 'Noturna Imersiva', d: 'Experiência', img: storageUrl('experiencias/Experiencia Noturna Imersiva/Experiencia Noturna Imersiva-1.jpg') },
+      { t: 'Voo de Balão', d: 'Experiência', img: storageUrl('experiencias/Voo de Balao/Voo de Balao-1.jpg') },
+      { t: 'Passeio a Cavalo', d: 'Experiência', img: storageUrl('experiencias/Passeio a Cavalo/Passeio a Cavalo-1.jpg') },
+      { t: 'Canionismo', d: 'Experiência', img: storageUrl('experiencias/Canionismo/Canionismo-1.jpg') },
+      { t: 'Rapel', d: 'Experiência', img: storageUrl('experiencias/Rapel/Rapel-1.jpg') },
+      { t: 'Rafting', d: 'Experiência', img: storageUrl('experiencias/Rafting/Rafting-1.jpg') },
+      { t: 'Astro Turismo', d: 'Experiência', img: storageUrl('experiencias/Astro Turismo/Astro Turismo-1.jpg') },
+      { t: 'Yoga e Meditação', d: 'Experiência', img: storageUrl('experiencias/Yoga e Meditacao/Yoga e Meditacao-1.jpg') }
     ]
   },
   {

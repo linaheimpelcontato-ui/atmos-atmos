@@ -9,7 +9,7 @@ const CATEGORY_MAPPINGS: Record<string, string> = {
   'experiencias/': 'produtos/EXPERIENCIAS/',
   'hospedagens/': 'produtos/HOSPEDAGENS/',
   'servicos/': 'produtos/SERVIÇOS/',
-  'cachoeiras/': 'produtos/CACHOEIRAS/',
+  'cachoeiras/': 'produtos/cachoeiras/',
   'roteiros/': 'produtos/ROTEIROS/',
   'lideranca/': 'home/lideranca/',
   'home/': 'home/',
