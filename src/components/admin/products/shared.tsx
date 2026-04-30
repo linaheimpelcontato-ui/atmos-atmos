@@ -212,22 +212,22 @@ export function getStorageInfo(product: Partial<Product> & { name: string; type:
   let categoryFolder = "";
   switch (product.type) {
     case "waterfall":
-      categoryFolder = "CACHOEIRAS";
+      categoryFolder = "cachoeiras";
       break;
     case "experience":
-      categoryFolder = "EXPERIENCIAS";
+      categoryFolder = "experiencias";
       break;
     case "accommodation":
-      categoryFolder = "HOSPEDAGENS";
+      categoryFolder = "hospedagens";
       break;
     case "service":
-      categoryFolder = "SERVICOS";
+      categoryFolder = "servicos";
       break;
     case "itinerary":
-      categoryFolder = "ROTEIROS";
+      categoryFolder = "roteiros";
       break;
     default:
-      categoryFolder = "OUTROS";
+      categoryFolder = "outros";
   }
 
   // Final folder path: produtos/CATEGORY

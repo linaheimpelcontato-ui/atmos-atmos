@@ -167,7 +167,9 @@ export function ProductMediaTab({
     if (!info) return;
     setLoading(true);
     try {
+      console.log("Listing folder:", info.folder);
       const data = await r2.list(info.folder);
+      console.log("R2 Data found:", data?.length || 0, "objects");
       
       const normalize = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
       const normalizedPrefix = normalize(info.prefix);
