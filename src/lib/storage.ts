@@ -25,30 +25,7 @@ export const MAP_R2_PATH = (path: string): string => {
   for (const [oldPrefix, newPrefix] of Object.entries(CATEGORY_MAPPINGS)) {
     if (path.startsWith(oldPrefix)) {
       const rest = path.slice(oldPrefix.length);
-      
-      // If it's a product category, handle the subfolder structure
-      if (['produtos/EXPERIENCIAS/', 'produtos/HOSPEDAGENS/', 'produtos/SERVIÇOS/', 'produtos/cachoeiras/'].includes(newPrefix)) {
-        // Try to infer subfolder from filename (e.g., "vila-toa-1.jpg" -> "Vila Toa")
-        // This handles filenames that start with the product name
-        const filename = rest.split('/').pop() || "";
-        const parts = filename.split('-');
-        
-        // Remove numeric suffix if exists (e.g., "-1.jpg")
-        if (parts.length > 1) {
-          const lastPart = parts[parts.length - 1];
-          if (/^\d+\.(jpg|jpeg|png|webp)$/i.test(lastPart)) {
-            parts.pop();
-          }
-        }
-        
-        // Capitalize words to match folder names (e.g., "vila toa")
-        const subfolder = parts.map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-        
-        // Return the 3-level path
-        return `${newPrefix}${subfolder}/${rest}`;
-      }
-      
-      return `${newPrefix}${rest}`;
+      return newPrefix + rest;
     }
   }
   return path;
