@@ -97,6 +97,33 @@ function SearchableCatalogCombobox({ value, onSelect, options, placeholder, clas
   );
 }
 
+function VariationSelect({ productId, value, onSelect, catalogItems, className }: {
+  productId: string;
+  value: string | null;
+  onSelect: (vId: string) => void;
+  catalogItems: any[];
+  className?: string;
+}) {
+  const product = catalogItems.find(c => c.id === productId);
+  const variations = (product?.variables?.variations || []) as any[];
+  if (variations.length === 0) return null;
+
+  return (
+    <Select value={value || ""} onValueChange={onSelect}>
+      <SelectTrigger className={cn("h-8 text-[10px] uppercase font-bold", className)}>
+        <SelectValue placeholder="Escolher opção..." />
+      </SelectTrigger>
+      <SelectContent>
+        {variations.map(v => (
+          <SelectItem key={v.id} value={v.id} className="text-xs">
+            {v.name} — R$ {Number(v.unit_price).toFixed(0)}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 function TextCell({ value, onCommit, className, ...props }: {
   value: string;
   onCommit: (v: string) => void;
@@ -128,9 +155,11 @@ type DayItem = {
   value_text: string;
   description: string;
   catalog_item_id: string | null;
+  variation_id: string | null;
   item_index: number;
   vehicle_type?: string;
   qty: number;
+  supplier_id?: string | null;
 };
 
 type CostItem = {
@@ -235,7 +264,7 @@ const getGuideSalePrice = (product: any, vehicleType: string, qty: number): numb
 const newDayItem = (dayNum: number, cat: string, itemIdx: number, numPeople: number): DayItem => ({
   day_number: dayNum, day_label: `Dia ${dayNum}`, category: cat,
   item_name: "", value: 0, cost: 0, comissao: 0, value_text: "", description: "",
-  catalog_item_id: null, item_index: itemIdx, qty: numPeople,
+  catalog_item_id: null, variation_id: null, item_index: itemIdx, qty: numPeople,
 });
 
 export default function ProposalFormDialog({
@@ -421,7 +450,7 @@ export default function ProposalFormDialog({
     return m;
   }, [guideWaterfallPrices]);
 
-  const getEffectiveCost = useCallback((cell: { day_number: number; item_index: number; cost: number; catalog_item_id?: string | null; category?: string; qty?: number }) => {
+  const getEffectiveCost = useCallback((cell: { day_number: number; item_index: number; cost: number; catalog_item_id?: string | null; variation_id?: string | null; category?: string; qty?: number }) => {
     // 1. Checklist verified → definitive source of truth
     const check = costChecks.find(c => c.day_number === cell.day_number && c.item_index === cell.item_index && c.is_verified);
     if (check) {
@@ -464,6 +493,11 @@ export default function ProposalFormDialog({
       } else {
         const product = catalogItems.find((c: any) => c.id === cell.catalog_item_id);
         if (product) {
+          if (cell.variation_id) {
+            const vars = (product.variables || {}) as Record<string, any>;
+            const variation = (vars.variations || []).find((v: any) => v.id === cell.variation_id);
+            if (variation && Number(variation.cost_price) > 0) return Number(variation.cost_price);
+          }
           const vars = (product.variables || {}) as Record<string, unknown>;
           const isTransferOrDrone = product.category === "transfer" || product.category === "drone";
           const pricingType = (vars.pricingType as string) || (isTransferOrDrone ? "total" : "");
@@ -593,9 +627,11 @@ export default function ProposalFormDialog({
           value_text: d.value_text || "",
           description: d.description || "",
           catalog_item_id: d.catalog_item_id,
+          variation_id: d.variation_id || null,
           item_index: d.item_index || 0,
           vehicle_type: d.vehicle_type || undefined,
           qty: d.quantity || 1,
+          supplier_id: d.supplier_id || null,
         }));
         // Re-index items to be globally sequential per day
         const byDay = new Map<number, typeof loaded>();
@@ -871,14 +907,30 @@ export default function ProposalFormDialog({
         if (!cell.catalog_item_id) return cell;
         const prod = catalogItems.find((c: any) => c.id === cell.catalog_item_id);
         if (!prod) return cell;
-        const vars = (prod.variables || {}) as Record<string, unknown>;
+        const vars = (prod.variables || {}) as Record<string, any>;
         const isTransferOrDrone = (prod.category === "transfer" || prod.category === "drone");
         const pricingType = (vars.pricingType as string) || (isTransferOrDrone ? "total" : "");
         if (pricingType !== "total" || numPeople <= 0) return cell;
+
+        let basePrice = Number(prod.unit_price);
+        let baseCost = Number(prod.cost_price) || basePrice;
+
+        if (cell.variation_id) {
+          const v = (vars.variations || []).find((vx: any) => vx.id === cell.variation_id);
+          if (v) {
+            basePrice = Number(v.unit_price);
+            baseCost = Number(v.cost_price);
+          }
+        }
+
         const limite = Number(vars.limitePessoas) || Number(vars.maxPessoas) || 0;
         if (limite > 0 && numPeople > limite) limitWarning = true;
-        const costBase = Number(prod.cost_price) || Number(prod.unit_price);
-        return { ...cell, value: Math.round((Number(prod.unit_price) / numPeople) * 100) / 100, cost: Math.round((costBase / numPeople) * 100) / 100 };
+        
+        return { 
+          ...cell, 
+          value: Math.round((basePrice / numPeople) * 100) / 100, 
+          cost: Math.round((baseCost / numPeople) * 100) / 100 
+        };
       })
     );
     if (limitWarning) {
@@ -901,17 +953,29 @@ export default function ProposalFormDialog({
         if (isUserEdit && 'qty' in patch && cell.catalog_item_id) {
           const prod = catalogItems.find((c: any) => c.id === cell.catalog_item_id);
           if (prod) {
-            const vars = (prod.variables || {}) as Record<string, unknown>;
-            const isTransferOrDrone = (prod.category === "transfer" || prod.category === "drone");
-            const pricingType = (vars.pricingType as string) || (isTransferOrDrone ? "total" : "");
-            if (pricingType === "total" && updated.qty > 0) {
-              const cellKey = `${dayNum}_${itemIdx}`;
-              const isManual = manualValueKeysRef.current.has(cellKey);
-              if (!isManual) {
-                updated.value = Math.round((Number(prod.unit_price) / updated.qty) * 100) / 100;
-              }
-              const currentCostTotal = (cell.cost || 0) * (cell.qty || 1);
-              updated.cost = currentCostTotal > 0 ? Math.round((currentCostTotal / updated.qty) * 100) / 100 : Math.round(((Number(prod.cost_price) || Number(prod.unit_price)) / updated.qty) * 100) / 100;
+              const vars = (prod.variables || {}) as Record<string, any>;
+              const isTransferOrDrone = (prod.category === "transfer" || prod.category === "drone");
+              const pricingType = (vars.pricingType as string) || (isTransferOrDrone ? "total" : "");
+              if (pricingType === "total" && updated.qty > 0) {
+                const cellKey = `${dayNum}_${itemIdx}`;
+                const isManual = manualValueKeysRef.current.has(cellKey);
+                
+                let basePrice = Number(prod.unit_price);
+                let baseCost = Number(prod.cost_price) || basePrice;
+
+                if (cell.variation_id) {
+                  const v = (vars.variations || []).find((vx: any) => vx.id === cell.variation_id);
+                  if (v) {
+                    basePrice = Number(v.unit_price);
+                    baseCost = Number(v.cost_price);
+                  }
+                }
+
+                if (!isManual) {
+                  updated.value = Math.round((basePrice / updated.qty) * 100) / 100;
+                }
+                const currentCostTotal = (cell.cost || 0) * (cell.qty || 1);
+                updated.cost = currentCostTotal > 0 ? Math.round((currentCostTotal / updated.qty) * 100) / 100 : Math.round((baseCost / updated.qty) * 100) / 100;
             }
           }
         }
@@ -975,6 +1039,24 @@ export default function ProposalFormDialog({
     });
   };
 
+  const selectVariation = (dayNum: number, cat: string, itemIdx: number, vId: string) => {
+    const current = grid.find(c => c.day_number === dayNum && c.category === cat && c.item_index === itemIdx);
+    if (!current?.catalog_item_id) return;
+    const product = catalogItems.find(c => c.id === current.catalog_item_id);
+    if (!product) return;
+    const variations = (product.variables?.variations || []) as any[];
+    const v = variations.find(x => x.id === vId);
+    if (!v) return;
+
+    updateCell(dayNum, cat, itemIdx, {
+      variation_id: vId,
+      item_name: v.name,
+      value: Number(v.unit_price),
+      cost: Number(v.cost_price),
+      supplier_id: v.supplier_id || product.supplier_id
+    });
+  };
+
   const selectCatalogItem = (dayNum: number, cat: string, itemIdx: number, catalogId: string) => {
     const vt = dayVehicleType[dayNum] || "carroTurista";
     const currentItem = grid.find((c) => c.day_number === dayNum && c.category === cat && c.item_index === itemIdx);
@@ -1019,6 +1101,22 @@ export default function ProposalFormDialog({
 
     const item = catalogItems.find((c: any) => c.id === catalogId);
     if (item) {
+      // Handle variations if present
+      const variations = (item.variables?.variations || []) as any[];
+      if (variations.length > 0) {
+        const v = variations[0];
+        updateCell(dayNum, cat, itemIdx, {
+          catalog_item_id: catalogId,
+          variation_id: v.id,
+          item_name: v.name,
+          value: Number(v.unit_price),
+          cost: Number(v.cost_price),
+          comissao: Number(item.variables?.comissao) || 0,
+          supplier_id: v.supplier_id || item.supplier_id
+        });
+        return;
+      }
+
       const vars = (item.variables || {}) as Record<string, unknown>;
       const limite = Number(vars.limitePessoas) || Number(vars.maxPessoas) || 0;
       if (limite > 0 && numPeople > limite) {
@@ -1286,11 +1384,13 @@ export default function ProposalFormDialog({
             value_text: c.value_text || null,
             description: c.description || null,
             catalog_item_id: c.catalog_item_id || null,
+            variation_id: c.variation_id || null,
             item_index: c.item_index,
             vehicle_type: dayVehicleType[c.day_number] || "carroTurista",
             quantity: c.qty,
             cost_price: c.cost,
             commission_percent: c.comissao,
+            supplier_id: c.supplier_id || null,
           }));
         if (itemsPayload.length > 0) {
           const { error } = await db.from("proposal_day_items").insert(itemsPayload);
@@ -1818,12 +1918,21 @@ export default function ProposalFormDialog({
                                   />
                                 )}
 
-                                <TextCell
-                                  className="h-8 text-xs"
-                                  placeholder={catCatalog.length > 0 || isGuia ? "Nome / detalhe" : "Detalhe"}
-                                  value={cell.item_name}
-                                  onCommit={(v) => updateCell(dayNum, cat, cell.item_index, { item_name: v })}
-                                />
+                                {cell.catalog_item_id && (catalogItems.find(c => c.id === cell.catalog_item_id)?.variables?.variations || []).length > 0 ? (
+                                  <VariationSelect
+                                    productId={cell.catalog_item_id}
+                                    value={cell.variation_id}
+                                    onSelect={(vId) => selectVariation(dayNum, cat, cell.item_index, vId)}
+                                    catalogItems={catalogItems}
+                                  />
+                                ) : (
+                                  <TextCell
+                                    className="h-8 text-xs"
+                                    placeholder={catCatalog.length > 0 || isGuia ? "Nome / detalhe" : "Detalhe"}
+                                    value={cell.item_name}
+                                    onCommit={(v) => updateCell(dayNum, cat, cell.item_index, { item_name: v })}
+                                  />
+                                )}
 
                                 <NumericCell
                                   className="h-8 text-xs tabular-nums text-center"

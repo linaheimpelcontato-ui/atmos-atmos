@@ -203,24 +203,43 @@ export const typeFields: Record<string, FieldDef[]> = {
 };
 
 export function getStorageInfo(product: Partial<Product> & { name: string; type: string; tempId?: string }): { folder: string; prefix: string } | null {
+  const nameSlug = slugify(product.name);
   const vars = (product.variables || {}) as Record<string, unknown>;
   const prefix = (vars.storage_id as string) || product.id || product.tempId;
-  if (!prefix) return null;
+  
+  if (!prefix || !product.name) return null;
 
+  let categoryFolder = "";
   switch (product.type) {
     case "waterfall":
-      return { folder: "cachoeiras", prefix: product.source_id || prefix };
+      categoryFolder = "CACHOEIRAS";
+      break;
     case "experience":
-      return { folder: "experiencias", prefix: (vars.imageKey as string) || product.source_id || prefix };
+      categoryFolder = "EXPERIENCIAS";
+      break;
     case "accommodation":
-      return { folder: "hospedagens", prefix: product.source_id || prefix };
+      categoryFolder = "HOSPEDAGENS";
+      break;
     case "service":
-      return { folder: "servicos", prefix: product.source_id || prefix || (product as any).category };
+      categoryFolder = "SERVICOS";
+      break;
     case "itinerary":
-      return { folder: "roteiros", prefix: product.source_id || prefix };
+      categoryFolder = "ROTEIROS";
+      break;
     default:
-      return null;
+      categoryFolder = "OUTROS";
   }
+
+  // Final folder path: produtos/CATEGORY/product-name
+  const folderPath = `produtos/${categoryFolder}/${nameSlug}`;
+  
+  // Prefix for the files themselves (slugified product name)
+  const filePrefix = nameSlug;
+
+  return { 
+    folder: folderPath, 
+    prefix: filePrefix 
+  };
 }
 
 const CUSTOM_FIELDS_KEY = "atmos-custom-type-fields";
