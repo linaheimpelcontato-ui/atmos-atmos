@@ -2,7 +2,7 @@ import React, { useRef } from "react";
 import { motion, useScroll, useTransform, animate, motionValue, useInView } from "framer-motion";
 import { storageUrl } from "@/lib/storage";
 const logoAtmos = storageUrl("home/logo-atmos.png");
-const flowerSymbol = storageUrl("home/flower-symbol.png");
+const flowerSymbol = storageUrl("home/simboloatmos.png");
 
 export default function AboutAtmosSection() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -132,26 +132,26 @@ export default function AboutAtmosSection() {
                     Criamos atmosferas exclusivas que conectam pessoas a experiências memoráveis
                   </span>
                   {/* Dynamic Flower Divider (Mask Technique) */}
-                  <div className="mx-8 md:mx-16 flex-shrink-0">
-                    <motion.div
-                      style={{
-                        maskImage: `url(${flowerSymbol})`,
-                        WebkitMaskImage: `url(${flowerSymbol})`,
-                        maskSize: 'contain',
-                        WebkitMaskSize: 'contain',
-                        maskRepeat: 'no-repeat',
-                        WebkitMaskRepeat: 'no-repeat',
-                        maskPosition: 'center',
-                        WebkitMaskPosition: 'center',
-                        backgroundColor: '#FAF9F6',
-                        width: 'clamp(40px, 4vw, 64px)',
-                        height: 'clamp(40px, 4vw, 64px)'
-                      }}
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-                      className="opacity-90"
-                    />
-                  </div>
+                <div className="mx-8 md:mx-16 flex-shrink-0">
+                  <motion.div
+                    style={{
+                      maskImage: `url(${flowerSymbol})`,
+                      WebkitMaskImage: `url(${flowerSymbol})`,
+                      maskSize: 'contain',
+                      WebkitMaskSize: 'contain',
+                      maskRepeat: 'no-repeat',
+                      WebkitMaskRepeat: 'no-repeat',
+                      maskPosition: 'center',
+                      WebkitMaskPosition: 'center',
+                      backgroundColor: '#FAF9F6',
+                      width: 'clamp(40px, 4vw, 64px)',
+                      height: 'clamp(40px, 4vw, 64px)'
+                    }}
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                    className="opacity-90"
+                  />
+                </div>
                 </div>
               ))}
             </div>
@@ -163,26 +163,26 @@ export default function AboutAtmosSection() {
                   <span className="text-[#FAF9F6] font-display italic text-4xl md:text-6xl lg:text-7xl opacity-95 tracking-tight whitespace-nowrap px-8">
                     Criamos atmosferas exclusivas que conectam pessoas a experiências memoráveis
                   </span>
-                  <div className="mx-8 md:mx-16 flex-shrink-0">
-                    <motion.div
-                      style={{
-                        maskImage: `url(${flowerSymbol})`,
-                        WebkitMaskImage: `url(${flowerSymbol})`,
-                        maskSize: 'contain',
-                        WebkitMaskSize: 'contain',
-                        maskRepeat: 'no-repeat',
-                        WebkitMaskRepeat: 'no-repeat',
-                        maskPosition: 'center',
-                        WebkitMaskPosition: 'center',
-                        backgroundColor: '#FAF9F6',
-                        width: 'clamp(40px, 4vw, 64px)',
-                        height: 'clamp(40px, 4vw, 64px)'
-                      }}
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-                      className="opacity-90"
-                    />
-                  </div>
+                <div className="mx-8 md:mx-16 flex-shrink-0">
+                  <motion.div
+                    style={{
+                      maskImage: `url(${flowerSymbol})`,
+                      WebkitMaskImage: `url(${flowerSymbol})`,
+                      maskSize: 'contain',
+                      WebkitMaskSize: 'contain',
+                      maskRepeat: 'no-repeat',
+                      WebkitMaskRepeat: 'no-repeat',
+                      maskPosition: 'center',
+                      WebkitMaskPosition: 'center',
+                      backgroundColor: '#FAF9F6',
+                      width: 'clamp(40px, 4vw, 64px)',
+                      height: 'clamp(40px, 4vw, 64px)'
+                    }}
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                    className="opacity-90"
+                  />
+                </div>
                 </div>
               ))}
             </div>

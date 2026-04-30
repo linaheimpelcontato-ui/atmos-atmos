@@ -90,7 +90,7 @@ export default function VideoFeature() {
 
               <div className="relative">
                 <motion.img
-                  src={storageUrl("home/flower-symbol.png")}
+                  src={storageUrl("home/simboloatmos.png")}
                   alt="ATMOS"
                   className="w-16 h-16 md:w-24 md:h-24"
                   style={{ filter: "brightness(0) invert(1)" }}

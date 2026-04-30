@@ -183,7 +183,7 @@ export default function ExperienceEcosystem() {
                 className="w-[200px] h-[200px] border border-white/30 border-dashed rounded-full flex items-center justify-center bg-white/[0.02] backdrop-blur-3xl absolute"
               >
                 <img
-                  src={storageUrl("home/flower-symbol.png")}
+                  src={storageUrl("home/simboloatmos.png")}
                   alt="ATMOS Symbol"
                   className="w-24 h-24 opacity-60 brightness-0 invert"
                 />
@@ -327,8 +327,8 @@ export default function ExperienceEcosystem() {
                   <div
                     className="w-12 h-12 bg-[#141C15] opacity-80 mx-8"
                     style={{
-                      maskImage: `url(${storageUrl("home/flower-symbol.png")})`,
-                      WebkitMaskImage: `url(${storageUrl("home/flower-symbol.png")})`,
+                      maskImage: `url(${storageUrl("home/simboloatmos.png")})`,
+                      WebkitMaskImage: `url(${storageUrl("home/simboloatmos.png")})`,
                       maskSize: 'contain',
                       WebkitMaskSize: 'contain',
                       maskRepeat: 'no-repeat',
