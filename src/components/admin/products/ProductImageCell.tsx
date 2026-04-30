@@ -4,30 +4,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { storageUrl } from "@/lib/storage";
+import { storageUrl, optimizedUrl, IMAGE_PRESETS } from "@/lib/storage";
 import { toast } from "sonner";
 import { r2 } from "@/lib/r2";
-import type { Product } from "./shared";
+import { type Product, getStorageInfo } from "./shared";
 
-/* ─── Storage path mapping ─────────────────────────────────────────── */
-
-function getStorageInfo(product: Product): { folder: string; prefix: string } | null {
-  const vars = (product.variables || {}) as Record<string, unknown>;
-  switch (product.type) {
-    case "waterfall":
-      return { folder: "cachoeiras", prefix: product.source_id || product.name };
-    case "experience":
-      return { folder: "experiencias", prefix: (vars.imageKey as string) || product.source_id || product.name };
-    case "accommodation":
-      return { folder: "hospedagens", prefix: product.source_id || product.name };
-    case "service":
-      return { folder: "servicos", prefix: product.source_id || product.category || product.name };
-    case "itinerary":
-      return { folder: "roteiros", prefix: product.source_id || product.name };
-    default:
-      return null;
-  }
-}
 
 /* ─── Component ────────────────────────────────────────────────────── */
 
@@ -46,10 +27,30 @@ export function ProductImageCell({ product }: { product: Product }) {
     setLoading(true);
     try {
       const data = await r2.list(info.folder);
+      
+      const normalize = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+      const normalizedPrefix = normalize(info.prefix);
+      const normalizedRawName = info.rawName ? normalize(info.rawName) : normalizedPrefix;
+
       const matching = (data || [])
-        .map((f: any) => f.Key.split('/').pop())
-        .filter((name: string) => new RegExp(`^${info.prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:-.*)?\\.(jpg|jpeg|png|webp|heic|mov|mp4|webm|avi|mkv)$`, 'i').test(name))
-        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+        .filter((f: any) => {
+          const key = f.Key.toLowerCase();
+          const fileName = key.split('/').pop() || "";
+          const normalizedFileName = normalize(fileName);
+          
+          return normalizedFileName.startsWith(normalizedPrefix) || 
+                 normalizedFileName.startsWith(normalizedRawName) ||
+                 key.includes(`/${normalizedPrefix}/`) ||
+                 key.includes(`/${normalizedRawName}/`);
+        })
+        .map((f: any) => f.Key) // Store full Key
+        .sort((a, b) => {
+          const nameA = a.split('/').pop() || "";
+          const nameB = b.split('/').pop() || "";
+          const numA = parseInt(nameA.match(/-(\d+)\./)?.[1] || "0");
+          const numB = parseInt(nameB.match(/-(\d+)\./)?.[1] || "0");
+          return numA - numB;
+        });
       setImages(matching);
     } catch (err) {
       console.error(err);
@@ -57,19 +58,20 @@ export function ProductImageCell({ product }: { product: Product }) {
     } finally {
       setLoading(false);
     }
-  }, [info?.folder, info?.prefix]);
+  }, [info?.folder, info?.prefix, info?.rawName]);
 
   const handleOpen = () => {
     setOpen(true);
     loadImages();
   };
 
-  const handleDelete = async (fileName: string) => {
+  const handleDelete = async (fullKey: string) => {
     if (!info) return;
     try {
-      await r2.delete(info.folder, fileName);
+      const relativePath = fullKey.replace(`${info.folder}/`, "");
+      await r2.delete(info.folder, relativePath);
       toast.success("Imagem removida do Cloudflare");
-      setImages((prev) => prev.filter((f) => f !== fileName));
+      setImages((prev) => prev.filter((f) => f !== fullKey));
     } catch (err) {
       console.error(err);
       toast.error("Erro ao deletar imagem");
@@ -80,10 +82,10 @@ export function ProductImageCell({ product }: { product: Product }) {
     if (!info) return;
     let fileName = targetName;
     if (!fileName) {
-      // find next number
       const nums = images
         .map((f) => {
-          const match = f.match(new RegExp(`^${info.prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}-(\\d+)\\.`));
+          const baseName = f.split('/').pop() || "";
+          const match = baseName.match(new RegExp(`^${info.prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}-(\\d+)\\.`));
           return match ? parseInt(match[1]) : 0;
         })
         .filter((n) => n > 0);
@@ -93,7 +95,14 @@ export function ProductImageCell({ product }: { product: Product }) {
     }
 
     try {
-      await r2.upload(info.folder, fileName, file);
+      const firstWithSubfolder = images.find(m => m.includes(`${info.folder}/`) && m.split('/').length > (info.folder.split('/').length + 1));
+      const uploadFolder = firstWithSubfolder 
+        ? firstWithSubfolder.substring(0, firstWithSubfolder.lastIndexOf('/'))
+        : info.folder;
+
+      const finalRelativeName = uploadFolder === info.folder ? fileName : `${uploadFolder.replace(`${info.folder}/`, "")}/${fileName}`;
+
+      await r2.upload(info.folder, finalRelativeName, file);
       toast.success(targetName ? "Imagem substituída" : "Imagem adicionada ao Cloudflare");
       await loadImages();
     } catch (err) {
@@ -121,11 +130,9 @@ export function ProductImageCell({ product }: { product: Product }) {
   };
 
   // Thumbnail: show first image
-  const thumbUrl = info && images.length > 0
-    ? storageUrl(`${info.folder}/${images[0]}`)
-    : info
-      ? storageUrl(`${info.folder}/${info.prefix}-1.jpg`)
-      : null;
+  const thumbUrl = images.length > 0
+    ? optimizedUrl(images[0], IMAGE_PRESETS.thumbnail)
+    : null;
 
   return (
     <>
@@ -168,38 +175,41 @@ export function ProductImageCell({ product }: { product: Product }) {
               )}
 
               <div className="grid grid-cols-3 gap-3 max-h-[50vh] overflow-auto">
-                {images.map((fileName) => (
-                  <div key={fileName} className="relative group rounded-lg overflow-hidden border border-border">
-                    <img
-                      src={storageUrl(`${info!.folder}/${fileName}`)}
-                      alt={fileName}
-                      className="w-full aspect-[4/3] object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                      <Button
-                        variant="secondary"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => startReplace(fileName)}
-                        title="Substituir"
-                      >
-                        <Replace className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => handleDelete(fileName)}
-                        title="Deletar"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                {images.map((fullKey) => {
+                  const fileName = fullKey.split('/').pop() || "";
+                  return (
+                    <div key={fullKey} className="relative group rounded-lg overflow-hidden border border-border">
+                      <img
+                        src={optimizedUrl(fullKey, IMAGE_PRESETS.thumbnail)}
+                        alt={fileName}
+                        className="w-full aspect-[4/3] object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        <Button
+                          variant="secondary"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => startReplace(fileName)}
+                          title="Substituir"
+                        >
+                          <Replace className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleDelete(fullKey)}
+                          title="Deletar"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <span className="absolute bottom-1 left-1 text-[10px] bg-black/60 text-white px-1.5 py-0.5 rounded">
+                        {fileName}
+                      </span>
                     </div>
-                    <span className="absolute bottom-1 left-1 text-[10px] bg-black/60 text-white px-1.5 py-0.5 rounded">
-                      {fileName}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               <div className="flex justify-end pt-2">

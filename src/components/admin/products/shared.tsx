@@ -230,15 +230,14 @@ export function getStorageInfo(product: Partial<Product> & { name: string; type:
       categoryFolder = "OUTROS";
   }
 
-  // Final folder path: produtos/CATEGORY/product-name
-  const folderPath = `produtos/${categoryFolder}/${nameSlug}`;
+  // Final folder path: produtos/CATEGORY
+  const folderPath = `produtos/${categoryFolder}`;
   
-  // Prefix for the files themselves (slugified product name)
-  const filePrefix = nameSlug;
-
+  // Return parent folder and raw name for better image matching
   return { 
     folder: folderPath, 
-    prefix: filePrefix 
+    prefix: nameSlug,
+    rawName: product.name
   };
 }
 

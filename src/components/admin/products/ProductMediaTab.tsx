@@ -61,7 +61,7 @@ function Lightbox({
     <div className="fixed inset-0 z-[9999] bg-black/95 flex flex-col items-center justify-center">
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-6 py-4 bg-gradient-to-b from-black/60 to-transparent">
-        <span className="text-white/60 text-xs font-mono truncate max-w-[60%]">{fileName}</span>
+        <span className="text-white/60 text-xs font-mono truncate max-w-[60%]">{fileName.split('/').pop()}</span>
         <div className="flex items-center gap-3">
           <span className="text-white/40 text-xs">{current + 1} / {urls.length}</span>
           <button
@@ -130,7 +130,7 @@ function Lightbox({
                   <Film className="h-3 w-3 text-white/50" />
                 </div>
               ) : (
-                <img src={u} alt={fileNames[i]} className="w-full h-full object-cover" />
+                <img src={u} alt={fileNames[i].split('/').pop()} className="w-full h-full object-cover" />
               )}
             </button>
           ))}
@@ -169,13 +169,27 @@ export function ProductMediaTab({
     try {
       const data = await r2.list(info.folder);
       
-      const prefixRegex = new RegExp(`^${info.prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:-.*)?\\.(jpg|jpeg|png|webp|heic|mov|mp4|webm|avi|mkv)$`, 'i');
+      const normalize = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+      const normalizedPrefix = normalize(info.prefix);
+      const normalizedRawName = info.rawName ? normalize(info.rawName) : normalizedPrefix;
+
       const matching = (data || [])
-        .filter((f: any) => prefixRegex.test(f.Key.split('/').pop()))
-        .map((f: any) => f.Key.split('/').pop())
+        .filter((f: any) => {
+          const key = f.Key.toLowerCase();
+          const fileName = key.split('/').pop() || "";
+          const normalizedFileName = normalize(fileName);
+          
+          return normalizedFileName.startsWith(normalizedPrefix) || 
+                 normalizedFileName.startsWith(normalizedRawName) ||
+                 key.includes(`/${normalizedPrefix}/`) ||
+                 key.includes(`/${normalizedRawName}/`);
+        })
+        .map((f: any) => f.Key) // Store full Key
         .sort((a, b) => {
-          const numA = parseInt(a.match(/-(\d+)\./)?.[1] || "0");
-          const numB = parseInt(b.match(/-(\d+)\./)?.[1] || "0");
+          const nameA = a.split('/').pop() || "";
+          const nameB = b.split('/').pop() || "";
+          const numA = parseInt(nameA.match(/-(\d+)\./)?.[1] || "0");
+          const numB = parseInt(nameB.match(/-(\d+)\./)?.[1] || "0");
           return numA - numB;
         });
       setMedia(matching);
@@ -191,13 +205,18 @@ export function ProductMediaTab({
     loadMedia();
   }, [loadMedia]);
 
-  const handleDelete = async (fileName: string) => {
+  const handleDelete = async (fullKey: string) => {
     if (!info) return;
     try {
-      await r2.delete(info.folder, fileName);
+      // The r2.delete expects folder and fileName. 
+      // If fullKey is 'produtos/CACHOEIRAS/Almecegas/Almecegas-1.jpg' 
+      // and info.folder is 'produtos/CACHOEIRAS'
+      // we need to pass the relative part.
+      const relativePath = fullKey.replace(`${info.folder}/`, "");
+      await r2.delete(info.folder, relativePath);
       toast.success("Arquivo removido do Cloudflare");
-      setMedia((prev) => prev.filter((f) => f !== fileName));
-      onDelete?.(fileName);
+      setMedia((prev) => prev.filter((f) => f !== fullKey));
+      onDelete?.(fullKey.split('/').pop() || "");
     } catch (err) {
       console.error(err);
       toast.error("Erro ao deletar arquivo");
@@ -210,11 +229,11 @@ export function ProductMediaTab({
     try {
       const fileArray = Array.from(files);
       for (const file of fileArray) {
-        let fileName = targetName;
         if (!fileName) {
           const nums = media
             .map((f) => {
-              const match = f.match(new RegExp(`^${info.prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}-(\\d+)\\.`));
+              const baseName = f.split('/').pop() || "";
+              const match = baseName.match(new RegExp(`^${info.prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}-(\\d+)\\.`));
               return match ? parseInt(match[1]) : 0;
             })
             .filter((n) => n > 0);
@@ -222,8 +241,18 @@ export function ProductMediaTab({
           const ext = file.name.split(".").pop() || "jpg";
           fileName = `${info.prefix}-${next}.${ext}`;
         }
+        
+        // If we found subfolders in existing media, let's keep them if it's a replacement or specific case
+        // But for new uploads, we'll use the info.folder root to keep it simple unless we want to maintain the nesting.
+        // Given the user's preference for nesting, let's try to put it in the same subfolder if it exists.
+        const firstWithSubfolder = media.find(m => m.includes(`${info.folder}/`) && m.split('/').length > (info.folder.split('/').length + 1));
+        const uploadFolder = firstWithSubfolder 
+          ? firstWithSubfolder.substring(0, firstWithSubfolder.lastIndexOf('/'))
+          : info.folder;
 
-        await r2.upload(info.folder, fileName, file);
+        const finalRelativeName = uploadFolder === info.folder ? fileName : `${uploadFolder.replace(`${info.folder}/`, "")}/${fileName}`;
+
+        await r2.upload(info.folder, finalRelativeName, file);
       }
       toast.success(targetName ? "Arquivo substituído" : `${fileArray.length} arquivo(s) enviado(s) para Cloudflare`);
       await loadMedia();
@@ -254,7 +283,7 @@ export function ProductMediaTab({
 
   if (!info) return <div className="p-8 text-center text-muted-foreground">Tipo de produto não suportado para mídia.</div>;
 
-  const mediaUrls = media.map((f) => storageUrl(`${info.folder}/${f}`));
+  const mediaUrls = media.map((f) => storageUrl(f));
 
   return (
     <div className="space-y-6">
@@ -277,11 +306,12 @@ export function ProductMediaTab({
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {media.map((fileName, idx) => {
+          {media.map((fullKey, idx) => {
+            const fileName = fullKey.split('/').pop() || "";
             const isVid = isVideo(fileName);
             
             return (
-              <div key={fileName} className="relative group rounded-xl overflow-hidden border border-border/50 bg-muted/5 aspect-[4/3] shadow-sm cursor-pointer">
+              <div key={fullKey} className="relative group rounded-xl overflow-hidden border border-border/50 bg-muted/5 aspect-[4/3] shadow-sm cursor-pointer">
                 {/* Clickable area — opens lightbox */}
                 <button
                   type="button"
@@ -297,8 +327,8 @@ export function ProductMediaTab({
                   </div>
                 ) : (
                   <OptimizedImage
-                    src={optimizedUrl(`${info.folder}/${fileName}`, IMAGE_PRESETS.thumbnail)}
-                    alt={fileName}
+                    src={optimizedUrl(fullKey, IMAGE_PRESETS.thumbnail)}
+                    alt={fullKey}
                     className="w-full h-full object-cover"
                     containerClassName="w-full h-full"
                   />
@@ -349,7 +379,7 @@ export function ProductMediaTab({
                     variant="destructive"
                     size="icon"
                     className="h-8 w-8 rounded-full"
-                    onClick={(e) => { e.stopPropagation(); handleDelete(fileName); }}
+                    onClick={(e) => { e.stopPropagation(); handleDelete(fullKey); }}
                     title="Deletar"
                   >
                     <Trash2 className="h-4 w-4" />

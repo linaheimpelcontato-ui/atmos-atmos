@@ -594,12 +594,21 @@ export default function ProposalPublic() {
           if (product.type === "waterfall") {
             const imgs = await fetchStorageImages("cachoeiras", product.source_id);
             if (imgs.length > 0) urls.push(...imgs);
-            else for (let n = 1; n <= 3; n++) urls.push(storageUrl(`cachoeiras/${product.source_id}-${n}.jpg`));
+            else {
+              // Try falling back to product name folder
+              const folderName = product.name;
+              for (let n = 1; n <= 3; n++) {
+                urls.push(storageUrl(`cachoeiras/${folderName}/${folderName}-${n}.jpg`));
+              }
+            }
           } else if (product.type === "experience") {
             const key = EXP_STORAGE_KEY[product.source_id] || product.source_id;
             const imgs = await fetchStorageImages("experiencias", key);
             if (imgs.length > 0) urls.push(...imgs);
-            else urls.push(storageUrl(`experiencias/${key}-1.jpg`));
+            else {
+              const folderName = product.name;
+              urls.push(storageUrl(`experiencias/${folderName}/${folderName}-1.jpg`));
+            }
           }
         }
         dayGalleries[dayNum] = urls;
@@ -617,7 +626,10 @@ export default function ProposalPublic() {
         const imgs = await fetchStorageImages("hospedagens", sourceId);
         accImgs[sourceId] = imgs.length > 0
           ? imgs
-          : Array.from({ length: 6 }, (_, i) => storageUrl(`hospedagens/${sourceId}-${i + 1}.jpg`));
+          : Array.from({ length: 6 }, (_, i) => {
+              const folderName = product?.name || sourceId;
+              return storageUrl(`hospedagens/${folderName}/${folderName}-${i + 1}.jpg`);
+            });
       }
       setDynamicAccImages(accImgs);
     })();

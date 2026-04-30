@@ -26,13 +26,18 @@ export async function fetchStorageImages(folder: string, prefix: string): Promis
       const files = await r2.list(f);
       if (!files || files.length === 0) continue;
 
-      const prefixRegex = new RegExp(`^${prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:-.*)?\\.(jpg|jpeg|png|webp|heic|mov|mp4|webm|avi|mkv)$`, 'i');
+      const normalize = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+      const normalizedPrefix = normalize(prefix);
       
       const matching = files
-        .filter((file: any) => prefixRegex.test(file.Key.split('/').pop()))
+        .filter((file: any) => {
+          const fileName = file.Key.split('/').pop() || "";
+          const normalizedFileName = normalize(fileName);
+          return normalizedFileName.startsWith(normalizedPrefix);
+        })
         .sort((a: any, b: any) => {
-          const nameA = a.Key.split('/').pop();
-          const nameB = b.Key.split('/').pop();
+          const nameA = a.Key.split('/').pop() || "";
+          const nameB = b.Key.split('/').pop() || "";
           const numA = parseInt(nameA.match(/-(\d+)\./)?.[1] || "0");
           const numB = parseInt(nameB.match(/-(\d+)\./)?.[1] || "0");
           return numA - numB;
