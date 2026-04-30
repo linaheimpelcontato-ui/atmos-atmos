@@ -10,6 +10,8 @@ const CATEGORY_MAPPINGS: Record<string, string> = {
   'hospedagens/': 'produtos/HOSPEDAGENS/',
   'servicos/': 'produtos/SERVIÇOS/',
   'cachoeiras/': 'produtos/cachoeiras/',
+  'roteiros/': 'produtos/ROTEIROS/',
+  'lideranca/': 'home/lideranca/',
   'home/': 'home/',
   'duvidas/': 'duvidas/',
   'preferencias/': 'preferencias/',
