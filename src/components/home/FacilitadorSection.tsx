@@ -143,9 +143,8 @@ export default function FacilitadorSection() {
           </div>
         </div>
 
-        {/* Impact Visual: Large Background Symbol */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] opacity-[0.05] pointer-events-none">
-          <img src={storageUrl("home/simboloatmos.png")} alt="" className="w-full h-full grayscale invert" />
+          <img src={storageUrl("home/flower-symbol.png")} alt="" className="w-full h-full grayscale invert" />
         </div>
 
       </div>

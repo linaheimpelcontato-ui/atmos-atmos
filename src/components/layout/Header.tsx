@@ -93,7 +93,7 @@ export default function Header() {
         {/* Center: Atmos Logo */}
         <div className="w-1/3 flex justify-center items-center">
           <Link to="/" className="flex items-center transition-opacity hover:opacity-80">
-            <img src={logoAtmos} alt="ATMOS" className="h-14 sm:h-16" />
+            <img src={storageUrl("home/logo-atmos.png")} alt="ATMOS" className="h-14 sm:h-16" />
           </Link>
         </div>
 

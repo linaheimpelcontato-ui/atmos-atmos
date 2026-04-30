@@ -166,8 +166,8 @@ export default function AboutAtmosSection() {
                   <div className="mx-8 md:mx-16 flex-shrink-0">
                     <motion.div
                       style={{
-                        maskImage: `url(${storageUrl("home/simboloatmos.png")})`,
-                        WebkitMaskImage: `url(${storageUrl("home/simboloatmos.png")})`,
+                        maskImage: `url(${flowerSymbol})`,
+                        WebkitMaskImage: `url(${flowerSymbol})`,
                         maskSize: 'contain',
                         WebkitMaskSize: 'contain',
                         maskRepeat: 'no-repeat',

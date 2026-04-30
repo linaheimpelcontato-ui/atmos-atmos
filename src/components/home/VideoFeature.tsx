@@ -88,10 +88,9 @@ export default function VideoFeature() {
                 <span className="text-xl md:text-2xl font-light tracking-wide">ASSISTA</span>
               </div>
 
-              {/* Center: Atmos Flower Symbol */}
               <div className="relative">
                 <motion.img
-                  src={storageUrl("home/simboloatmos.png")}
+                  src={storageUrl("home/flower-symbol.png")}
                   alt="ATMOS"
                   className="w-16 h-16 md:w-24 md:h-24"
                   style={{ filter: "brightness(0) invert(1)" }}

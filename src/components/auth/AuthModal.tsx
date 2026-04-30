@@ -470,7 +470,7 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
               </div>
             </div>
 
-            <div className="p-12 pl-24 flex justify-start"><img src={storageUrl("home/simboloatmos.png")} className="h-10 opacity-10" alt="ATMOS" /></div>
+            <div className="p-12 pl-24 flex justify-start"><img src={storageUrl("home/flower-symbol.png")} className="h-10 opacity-10" alt="ATMOS" /></div>
           </div>
 
           <div className="hidden lg:block lg:flex-1 h-full relative">

@@ -177,14 +177,13 @@ export default function ExperienceEcosystem() {
                 className="w-[300px] h-[300px] border border-white/20 border-dashed rounded-full flex items-center justify-center relative"
               />
 
-              {/* Inner rotating ring with backdrop */}
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
                 className="w-[200px] h-[200px] border border-white/30 border-dashed rounded-full flex items-center justify-center bg-white/[0.02] backdrop-blur-3xl absolute"
               >
                 <img
-                  src={storageUrl("home/simboloatmos.png")}
+                  src={storageUrl("home/flower-symbol.png")}
                   alt="ATMOS Symbol"
                   className="w-24 h-24 opacity-60 brightness-0 invert"
                 />
@@ -328,8 +327,8 @@ export default function ExperienceEcosystem() {
                   <div
                     className="w-12 h-12 bg-[#141C15] opacity-80 mx-8"
                     style={{
-                      maskImage: `url(${storageUrl("home/simboloatmos.png")})`,
-                      WebkitMaskImage: `url(${storageUrl("home/simboloatmos.png")})`,
+                      maskImage: `url(${storageUrl("home/flower-symbol.png")})`,
+                      WebkitMaskImage: `url(${storageUrl("home/flower-symbol.png")})`,
                       maskSize: 'contain',
                       WebkitMaskSize: 'contain',
                       maskRepeat: 'no-repeat',

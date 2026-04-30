@@ -309,7 +309,7 @@ export default function FeatureShowcase() {
               {/* Atmos Logo (instead of search bar) */}
               <div className="absolute left-1/2 -translate-x-1/2 flex items-center h-full">
                 <img
-                  src={storageUrl("home/flower-symbol.png")}
+                  src={logoAtmos}
                   alt="ATMOS"
                   className={`h-10 transition-all duration-1000 ${currentStep.id === 'analise' ? 'grayscale invert opacity-50 shadow-none' : 'opacity-100'
                     }`}
