@@ -160,6 +160,8 @@ export function ProductMediaTab({
   const replaceRef = useRef<HTMLInputElement>(null);
   const [replaceTarget, setReplaceTarget] = useState<string | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
+  const [isMoving, setIsMoving] = useState(false);
 
   const info = getStorageInfo(product);
 
@@ -283,117 +285,297 @@ export function ProductMediaTab({
     setTimeout(() => replaceRef.current?.click(), 50);
   };
 
+  const downloadFile = async (url: string, fileName: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = fileName.split('/').pop() || "download";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao baixar arquivo");
+    }
+  };
+
+  const bulkDownload = async () => {
+    toast.info("Iniciando downloads...");
+    for (const key of selectedKeys) {
+      const url = storageUrl(key);
+      await downloadFile(url, key);
+      // Small delay to prevent browser blocking
+      await new Promise(r => setTimeout(r, 300));
+    }
+  };
+
+  const toggleFavorite = async (fullKey: string) => {
+    if (!info) return;
+    setIsMoving(true);
+    try {
+      const isFav = fullKey.includes('_capa');
+      const newKey = isFav 
+        ? fullKey.replace('_capa', '') 
+        : fullKey.replace(/(\.[^.]+)$/, '_capa$1');
+      
+      await r2.copy(fullKey, newKey);
+      await r2.delete(info.folder, fullKey.replace(`${info.folder}/`, ""));
+      
+      toast.success(isFav ? "Removido dos destaques" : "Definido como imagem de capa");
+      await loadMedia();
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao favoritar imagem");
+    } finally {
+      setIsMoving(false);
+    }
+  };
+
+  const moveMedia = async (idx: number, direction: 'left' | 'right') => {
+    if (!info || isMoving) return;
+    const targetIdx = direction === 'left' ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= media.length) return;
+
+    setIsMoving(true);
+    try {
+      const keyA = media[idx];
+      const keyB = media[targetIdx];
+      
+      // Temporary name to avoid collision during swap
+      const tempKey = `${keyA}_temp`;
+      
+      await r2.copy(keyA, tempKey);
+      await r2.copy(keyB, keyA);
+      await r2.copy(tempKey, keyB);
+      
+      await r2.delete(info.folder, tempKey.replace(`${info.folder}/`, ""));
+      
+      toast.success("Ordem atualizada");
+      await loadMedia();
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao reordenar");
+    } finally {
+      setIsMoving(false);
+    }
+  };
+
+  const toggleSelect = (key: string) => {
+    setSelectedKeys(prev => 
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+    );
+  };
+
+  const bulkDelete = async () => {
+    if (!info || selectedKeys.length === 0) return;
+    if (!confirm(`Deseja deletar ${selectedKeys.length} arquivos?`)) return;
+
+    setLoading(true);
+    try {
+      for (const key of selectedKeys) {
+        await r2.delete(info.folder, key.replace(`${info.folder}/`, ""));
+      }
+      toast.success(`${selectedKeys.length} arquivos removidos`);
+      setSelectedKeys([]);
+      await loadMedia();
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao deletar arquivos");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!info) return <div className="p-8 text-center text-muted-foreground">Tipo de produto não suportado para mídia.</div>;
 
   const mediaUrls = media.map((f) => storageUrl(f));
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold">Galeria de Fotos & Vídeos</h3>
-          <p className="text-sm text-muted-foreground">Imagens que serão exibidas na página pública do produto.</p>
+      <div className="flex items-center justify-between bg-white/40 backdrop-blur-md p-4 rounded-2xl border border-white/20 sticky top-0 z-30 shadow-sm">
+        <div className="flex flex-col">
+          <h3 className="text-sm font-bold text-[#2D241E]">
+            {selectedKeys.length > 0 ? `${selectedKeys.length} selecionados` : "Galeria de Fotos & Vídeos"}
+          </h3>
+          <p className="text-[10px] text-[#8d7b63] uppercase tracking-wider font-medium">
+            {selectedKeys.length > 0 ? "Escolha uma ação para os itens" : "Gerencie a ordem e destaque do site"}
+          </p>
         </div>
+        
         <div className="flex gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
-            {uploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
-            Upload em Massa
-          </Button>
+          {selectedKeys.length > 0 ? (
+            <>
+              <Button type="button" variant="outline" size="sm" onClick={bulkDownload} className="h-9 rounded-xl text-xs border-[#8d7b63]/20 hover:bg-[#8d7b63]/5">
+                Exportar {selectedKeys.length}
+              </Button>
+              <Button type="button" variant="destructive" size="sm" onClick={bulkDelete} className="h-9 rounded-xl text-xs bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/20">
+                <Trash2 className="h-3.5 w-3.5 mr-2" />
+                Remover {selectedKeys.length}
+              </Button>
+            </>
+          ) : (
+            <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading || isMoving} className="h-9 rounded-xl text-xs bg-[#2D241E] text-white border-none hover:bg-[#3D342E] shadow-lg shadow-black/10 transition-all active:scale-95">
+              {uploading ? <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" /> : <Upload className="h-3.5 w-3.5 mr-2" />}
+              Upload em Massa
+            </Button>
+          )}
         </div>
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-primary/40" />
+      {loading || isMoving ? (
+        <div className="flex flex-col items-center justify-center py-24 gap-4">
+          <div className="relative">
+            <Loader2 className="h-10 w-10 animate-spin text-[#8d7b63]" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="h-2 w-2 bg-[#8d7b63] rounded-full animate-ping" />
+            </div>
+          </div>
+          <p className="text-xs font-medium text-[#8d7b63] animate-pulse">
+            {isMoving ? "Sincronizando ordem..." : "Carregando galeria..."}
+          </p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 pt-2">
           {media.map((fullKey, idx) => {
             const fileName = fullKey.split('/').pop() || "";
             const isVid = isVideo(fileName);
+            const isSelected = selectedKeys.includes(fullKey);
+            const isFav = fileName.includes('_capa');
             
             return (
-              <div key={fullKey} className="relative group rounded-xl overflow-hidden border border-border/50 bg-muted/5 aspect-[4/3] shadow-sm cursor-pointer">
-                {/* Clickable area — opens lightbox */}
+              <div 
+                key={fullKey} 
+                className={cn(
+                  "relative group rounded-2xl overflow-hidden border transition-all duration-300 aspect-[4/3] shadow-sm",
+                  isSelected ? "ring-2 ring-[#2D241E] border-transparent scale-[0.98]" : "border-black/5 hover:border-black/10 hover:shadow-xl hover:-translate-y-1"
+                )}
+              >
+                {/* Checkbox selector */}
                 <button
                   type="button"
-                  className="absolute inset-0 w-full h-full z-10"
-                  onClick={(e) => { e.stopPropagation(); setLightboxIndex(idx); }}
-                  title="Visualizar"
-                />
+                  onClick={(e) => { e.stopPropagation(); toggleSelect(fullKey); }}
+                  className={cn(
+                    "absolute top-3 left-3 z-30 w-5 h-5 rounded-full border-2 transition-all flex items-center justify-center backdrop-blur-md",
+                    isSelected ? "bg-[#2D241E] border-[#2D241E]" : "bg-black/10 border-white/60 opacity-0 group-hover:opacity-100"
+                  )}
+                >
+                  {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                </button>
 
-                {isVid ? (
-                  <div className="w-full h-full flex items-center justify-center bg-slate-900">
-                    <Film className="h-8 w-8 text-white/20" />
-                    <Play className="h-6 w-6 text-white absolute" />
-                  </div>
-                ) : (
-                  <OptimizedImage
-                    src={optimizedUrl(fullKey, IMAGE_PRESETS.thumbnail)}
-                    alt={fullKey}
-                    className="w-full h-full object-cover"
-                    containerClassName="w-full h-full"
-                  />
-                )}
-
-                {favorites.includes(fileName) && (
-                  <div className="absolute top-2 right-2 z-10 pointer-events-none">
-                    <div className="bg-yellow-500 rounded-full p-1 shadow-lg ring-2 ring-white/50">
-                      <Star className="h-2.5 w-2.5 text-white fill-current" />
+                {/* Media Content */}
+                <div 
+                  className="w-full h-full cursor-pointer"
+                  onClick={() => selectedKeys.length > 0 ? toggleSelect(fullKey) : setLightboxIndex(idx)}
+                >
+                  {isVid ? (
+                    <div className="w-full h-full flex items-center justify-center bg-[#2D241E]">
+                      <Film className="h-8 w-8 text-white/20" />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                        <Play className="h-8 w-8 text-white fill-white/20" />
+                      </div>
                     </div>
+                  ) : (
+                    <OptimizedImage
+                      src={optimizedUrl(fullKey, IMAGE_PRESETS.thumbnail)}
+                      alt={fullKey}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      containerClassName="w-full h-full"
+                    />
+                  )}
+                </div>
+
+                {/* Cover Badge */}
+                {isFav && (
+                  <div className="absolute top-3 right-3 z-20">
+                    <Badge className="bg-yellow-400 text-[#2D241E] border-none text-[8px] font-black uppercase px-2 h-5 shadow-lg shadow-yellow-400/20 backdrop-blur-md">
+                      Destaque
+                    </Badge>
                   </div>
                 )}
                 
-                {/* Hover overlay — pointer-events-none when invisible so clicks reach z-10 button */}
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 z-20 pointer-events-none group-hover:pointer-events-auto">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="icon"
-                    className="h-8 w-8 rounded-full"
-                    onClick={(e) => { e.stopPropagation(); setLightboxIndex(idx); }}
-                    title="Visualizar"
-                  >
-                    <Expand className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={favorites.includes(fileName) ? "default" : "secondary"}
-                    size="icon"
-                    className="h-8 w-8 rounded-full"
-                    onClick={(e) => { e.stopPropagation(); onToggleFavorite?.(fileName); }}
-                    title={favorites.includes(fileName) ? "Remover dos favoritos" : "Favoritar (máx 5)"}
-                  >
-                    <Star className={cn("h-4 w-4 text-yellow-500", favorites.includes(fileName) && "fill-current")} />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="icon"
-                    className="h-8 w-8 rounded-full"
-                    onClick={(e) => { e.stopPropagation(); startReplace(fileName); }}
-                    title="Substituir"
-                  >
-                    <Replace className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon"
-                    className="h-8 w-8 rounded-full"
-                    onClick={(e) => { e.stopPropagation(); handleDelete(fullKey); }}
-                    title="Deletar"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                {/* Actions Overlay */}
+                <div className={cn(
+                  "absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-300 flex flex-col justify-end p-3 gap-3 z-20 pointer-events-none",
+                  selectedKeys.length > 0 ? "opacity-0" : "opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto"
+                )}>
+                  {/* Reordering Row */}
+                  <div className="flex items-center justify-center gap-1.5 translate-y-4 group-hover:translate-y-0 transition-transform duration-300 delay-75">
+                    <button
+                      type="button"
+                      disabled={idx === 0}
+                      onClick={(e) => { e.stopPropagation(); moveMedia(idx, 'left'); }}
+                      className="h-8 w-8 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white hover:bg-white/40 disabled:opacity-20 transition-all"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    
+                    <div className="h-8 px-3 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-[10px] font-bold text-white uppercase tracking-widest">
+                      Pos {idx + 1}
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={idx === media.length - 1}
+                      onClick={(e) => { e.stopPropagation(); moveMedia(idx, 'right'); }}
+                      className="h-8 w-8 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white hover:bg-white/40 disabled:opacity-20 transition-all"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  {/* Utility Row */}
+                  <div className="flex items-center justify-between translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                    <div className="flex gap-1.5">
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); toggleFavorite(fullKey); }}
+                        className={cn(
+                          "h-8 w-8 rounded-xl flex items-center justify-center transition-all",
+                          isFav ? "bg-yellow-400 text-black shadow-lg shadow-yellow-400/30" : "bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/30"
+                        )}
+                        title="Imagem de Capa"
+                      >
+                        <Star className={cn("h-4 w-4", isFav && "fill-current")} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); downloadFile(storageUrl(fullKey), fileName); }}
+                        className="h-8 w-8 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/30 flex items-center justify-center transition-all"
+                        title="Baixar"
+                      >
+                        <ImageIcon className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); startReplace(fileName); }}
+                        className="h-8 w-8 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/30 flex items-center justify-center transition-all"
+                        title="Substituir"
+                      >
+                        <Replace className="h-4 w-4" />
+                      </button>
+                    </div>
+                    
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); handleDelete(fullKey); }}
+                      className="h-8 w-8 rounded-xl bg-red-500/80 backdrop-blur-md text-white hover:bg-red-600 shadow-lg shadow-red-500/20 flex items-center justify-center transition-all"
+                      title="Deletar"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
                 
-                <div className="absolute bottom-2 left-2 flex gap-1 z-20">
-                  <Badge className="bg-black/40 backdrop-blur-md border-none text-[9px] px-1.5 h-4">
-                    {idx + 1}
-                  </Badge>
-                  {isVid && <Badge className="bg-blue-500/80 backdrop-blur-md border-none text-[9px] px-1.5 h-4">Vídeo</Badge>}
-                </div>
+                {/* Video Indicator */}
+                {!isFav && isVid && (
+                  <div className="absolute bottom-3 left-3 z-10 pointer-events-none">
+                    <Badge className="bg-blue-500/80 backdrop-blur-md border-none text-[8px] font-black uppercase px-2 h-5 shadow-lg shadow-blue-500/20">
+                      Vídeo
+                    </Badge>
+                  </div>
+                )}
               </div>
             );
           })}
@@ -401,12 +583,18 @@ export function ProductMediaTab({
           <button 
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="border-2 border-dashed border-border/60 rounded-xl flex flex-col items-center justify-center gap-2 hover:border-primary/40 hover:bg-primary/5 transition-all aspect-[4/3] group"
+            className="border-2 border-dashed border-[#8d7b63]/20 rounded-2xl flex flex-col items-center justify-center gap-3 hover:border-[#2D241E]/40 hover:bg-[#2D241E]/5 transition-all aspect-[4/3] group relative overflow-hidden"
           >
-            <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-              <Upload className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+            <div className="h-12 w-12 rounded-2xl bg-[#8d7b63]/10 flex items-center justify-center group-hover:bg-[#2D241E]/10 group-hover:scale-110 transition-all duration-300">
+              <Upload className="h-6 w-6 text-[#8d7b63] group-hover:text-[#2D241E] transition-colors" />
             </div>
-            <span className="text-xs font-medium text-muted-foreground group-hover:text-primary">Adicionar</span>
+            <div className="flex flex-col items-center">
+              <span className="text-[10px] font-bold text-[#8d7b63] group-hover:text-[#2D241E] uppercase tracking-widest">Adicionar</span>
+              <span className="text-[8px] text-[#8d7b63]/60 group-hover:text-[#2D241E]/60 uppercase tracking-tighter mt-1">Fotos ou Vídeos</span>
+            </div>
+            
+            {/* Animated bg elements */}
+            <div className="absolute -bottom-4 -right-4 w-12 h-12 bg-[#8d7b63]/5 rounded-full blur-2xl group-hover:bg-[#2D241E]/10 transition-colors" />
           </button>
         </div>
       )}

@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { S3Client, PutObjectCommand, ListObjectsV2Command, DeleteObjectCommand } from "npm:@aws-sdk/client-s3"
+import { S3Client, PutObjectCommand, ListObjectsV2Command, DeleteObjectCommand, CopyObjectCommand } from "npm:@aws-sdk/client-s3"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -66,6 +66,19 @@ serve(async (req) => {
       })
       const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 })
       return new Response(JSON.stringify({ url }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    if (action === 'copy') {
+      const { sourceKey, destinationKey } = await req.json()
+      const command = new CopyObjectCommand({
+        Bucket: BUCKET_NAME,
+        CopySource: `${BUCKET_NAME}/${sourceKey}`,
+        Key: destinationKey,
+      })
+      await s3Client.send(command)
+      return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }

@@ -39,8 +39,16 @@ export async function fetchStorageImages(folder: string, prefix: string): Promis
                  key.includes(`/${normalizedPrefix}/`);
         })
         .sort((a: any, b: any) => {
-          const nameA = a.Key.split('/').pop() || "";
-          const nameB = b.Key.split('/').pop() || "";
+          const nameA = a.Key.toLowerCase();
+          const nameB = b.Key.toLowerCase();
+          
+          // Priority 1: _capa files always first
+          const isFavA = nameA.includes('_capa');
+          const isFavB = nameB.includes('_capa');
+          if (isFavA && !isFavB) return -1;
+          if (!isFavA && isFavB) return 1;
+
+          // Priority 2: Numerical order
           const numA = parseInt(nameA.match(/-(\d+)\./)?.[1] || "0");
           const numB = parseInt(nameB.match(/-(\d+)\./)?.[1] || "0");
           return numA - numB;

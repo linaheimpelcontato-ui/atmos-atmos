@@ -593,22 +593,11 @@ export default function ProposalPublic() {
           if (!product?.source_id) continue;
           if (product.type === "waterfall") {
             const imgs = await fetchStorageImages("cachoeiras", product.source_id);
-            if (imgs.length > 0) urls.push(...imgs);
-            else {
-              // Try falling back to product name folder
-              const folderName = product.name;
-              for (let n = 1; n <= 3; n++) {
-                urls.push(storageUrl(`cachoeiras/${folderName}/${folderName}-${n}.jpg`));
-              }
-            }
+            urls.push(...imgs);
           } else if (product.type === "experience") {
             const key = EXP_STORAGE_KEY[product.source_id] || product.source_id;
             const imgs = await fetchStorageImages("experiencias", key);
-            if (imgs.length > 0) urls.push(...imgs);
-            else {
-              const folderName = product.name;
-              urls.push(storageUrl(`experiencias/${folderName}/${folderName}-1.jpg`));
-            }
+            urls.push(...imgs);
           }
         }
         dayGalleries[dayNum] = urls;

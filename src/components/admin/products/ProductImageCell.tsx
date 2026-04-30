@@ -45,8 +45,16 @@ export function ProductImageCell({ product }: { product: Product }) {
         })
         .map((f: any) => f.Key) // Store full Key
         .sort((a, b) => {
-          const nameA = a.split('/').pop() || "";
-          const nameB = b.split('/').pop() || "";
+          const nameA = a.toLowerCase();
+          const nameB = b.toLowerCase();
+          
+          // Priority 1: _capa files always first
+          const isFavA = nameA.includes('_capa');
+          const isFavB = nameB.includes('_capa');
+          if (isFavA && !isFavB) return -1;
+          if (!isFavA && isFavB) return 1;
+
+          // Priority 2: Numerical order
           const numA = parseInt(nameA.match(/-(\d+)\./)?.[1] || "0");
           const numB = parseInt(nameB.match(/-(\d+)\./)?.[1] || "0");
           return numA - numB;

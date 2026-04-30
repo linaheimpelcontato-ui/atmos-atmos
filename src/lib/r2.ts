@@ -64,5 +64,16 @@ export const r2 = {
     });
 
     if (error) throw error;
+  },
+
+  /**
+   * Copies a file in R2 (useful for renaming)
+   */
+  async copy(sourceKey: string, destinationKey: string): Promise<void> {
+    const { error } = await supabase.functions.invoke('r2-storage', {
+      body: { action: 'copy', sourceKey, destinationKey }
+    });
+
+    if (error) throw error;
   }
 };
