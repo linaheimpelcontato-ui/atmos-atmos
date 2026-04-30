@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { Search, Heart, User, CheckCircle2, ClipboardList, Map, Calendar, ArrowRight, Users } from 'lucide-react';
 import { storageUrl } from '@/lib/storage';
-import logoAtmos from '@/assets/logo-atmos.png';
+const logoAtmos = storageUrl("home/logo-atmos.png");
 
 const JOURNEY_STEPS = [
   {
@@ -370,7 +370,8 @@ export default function FeatureShowcase() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="absolute inset-0 flex items-center justify-center px-8 bg-[url('https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&q=80')] bg-cover bg-center"
+                    className="absolute inset-0 flex items-center justify-center px-8 bg-cover bg-center"
+                    style={{ backgroundImage: `url(${storageUrl("home/about-bg.jpg")})` }}
                   >
                     <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
                     <motion.div
@@ -547,7 +548,7 @@ export default function FeatureShowcase() {
                       className="absolute inset-0 z-0"
                     >
                       <img
-                        src="/assets/home/curadoria-bg.jpg"
+                        src={storageUrl("home/curadoria-bg.jpg")}
                         className="w-full h-full object-cover"
                         alt="Curadoria Atmos Background"
                       />
@@ -614,7 +615,10 @@ export default function FeatureShowcase() {
                     <div className="w-[30%] h-full border-r border-[#2C3E2D]/10 flex flex-col p-8 bg-white/50 backdrop-blur-md">
                       <div className="w-full aspect-[4/5] bg-[#1B291C] rounded-[2rem] flex flex-col items-center justify-center relative overflow-hidden shadow-2xl group">
                         {/* Elegant Leaf Texture Background (User Provided) */}
-                        <div className="absolute inset-0 opacity-80 bg-[url('/assets/home/leaf-texture.jpg')] bg-cover grayscale contrast-125 brightness-50" />
+                        <div 
+                          className="absolute inset-0 opacity-80 bg-cover grayscale contrast-125 brightness-50" 
+                          style={{ backgroundImage: `url(${storageUrl("home/leaf-texture.jpg")})` }}
+                        />
 
                         {/* Atmos Symbol Centered */}
                         <motion.div
@@ -671,7 +675,7 @@ export default function FeatureShowcase() {
                         {/* Hero Header Wrapper - Consistent Brand Background */}
                         <div className="h-64 relative overflow-hidden">
                           <img
-                            src="/assets/home/about-bg.jpg"
+                            src={storageUrl("home/about-bg.jpg")}
                             className="w-full h-full object-cover"
                             alt="Chapada Header"
                           />

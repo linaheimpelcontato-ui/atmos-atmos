@@ -3,6 +3,7 @@ import { useState } from "react";
 import AuthModal from "@/components/auth/AuthModal";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { storageUrl } from "@/lib/storage";
 
 export default function HeroMain({ 
   tagline = "O seu espaço para explorar a", 
@@ -28,11 +29,11 @@ export default function HeroMain({
           className="w-full h-full object-cover object-bottom opacity-80"
         >
           <source
-            src="/assets/home/hero-bg.mp4"
+            src={storageUrl("home/hero-bg.mp4")}
             type="video/mp4"
           />
           <source
-            src="/assets/home/hero-bg.MOV"
+            src={storageUrl("home/hero-bg.MOV")}
             type="video/quicktime"
           />
         </video>

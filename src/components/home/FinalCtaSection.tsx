@@ -4,29 +4,52 @@ import AuthModal from "@/components/auth/AuthModal";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 
-// Re-using the same high-end assets from the Hero
-import expMassagem from "@/assets/exp-massagem.jpg";
-import expYoga from "@/assets/exp-yoga.jpg";
-import expBalao from "@/assets/exp-balao.jpg";
-import expRapel from "@/assets/exp-rapel.jpg";
-import expAstro from "@/assets/exp-astro.jpg";
-import expCavalos from "@/assets/exp-cavalo.jpg";
-import wat1 from "@/assets/waterfall-placeholder-1.jpg";
-import wat2 from "@/assets/waterfall-placeholder-2.jpg";
-import wat3 from "@/assets/waterfall-placeholder-3.jpg";
-import wat4 from "@/assets/waterfall-placeholder-4.jpg";
-import daySantaBarbara from "@/assets/day-santa-barbara.jpg";
-import dayCouros from "@/assets/day-cataratas-couros.jpg";
-import heroChapada from "@/assets/hero-chapada.jpg";
-import heroCachoeiras from "@/assets/hero-cachoeiras.jpg";
-import heroHome from "@/assets/hero-home.jpg";
-import heroHospedagens from "@/assets/hero-hospedagens.jpg";
-import heroRoteiros from "@/assets/hero-roteiros.jpg";
-import imersoesHero from "@/assets/imersoes-hero.jpg";
+import { storageUrl } from "@/lib/storage";
 
-const innerImages = [expMassagem, expYoga, expBalao, expRapel, expAstro, expCavalos, expMassagem, expYoga, expBalao, expRapel, expAstro, expCavalos];
-const middleImages = [wat1, wat2, wat3, wat4, daySantaBarbara, dayCouros, wat1, wat2, wat3, wat4, daySantaBarbara, dayCouros];
-const outerImages = [heroChapada, heroCachoeiras, heroHome, heroHospedagens, heroRoteiros, imersoesHero, heroChapada, heroCachoeiras, heroHome, heroHospedagens, heroRoteiros, imersoesHero];
+const innerImages = [
+  storageUrl("experiencias/massagem-1.jpg"),
+  storageUrl("experiencias/yoga-1.jpg"),
+  storageUrl("experiencias/balao-1.jpg"),
+  storageUrl("experiencias/rapel-1.jpg"),
+  storageUrl("experiencias/astro-1.jpg"),
+  storageUrl("experiencias/cavalo-1.jpg"),
+  storageUrl("experiencias/massagem-1.jpg"),
+  storageUrl("experiencias/yoga-1.jpg"),
+  storageUrl("experiencias/balao-1.jpg"),
+  storageUrl("experiencias/rapel-1.jpg"),
+  storageUrl("experiencias/astro-1.jpg"),
+  storageUrl("experiencias/cavalo-1.jpg")
+];
+
+const middleImages = [
+  storageUrl("cachoeiras/segredo-1.jpg"),
+  storageUrl("cachoeiras/vale-da-lua-1.jpg"),
+  storageUrl("cachoeiras/macacao-1.jpg"),
+  storageUrl("cachoeiras/dragao-1.jpg"),
+  storageUrl("cachoeiras/santa-barbara-1.jpg"),
+  storageUrl("cachoeiras/couros-1.jpg"),
+  storageUrl("cachoeiras/segredo-1.jpg"),
+  storageUrl("cachoeiras/vale-da-lua-1.jpg"),
+  storageUrl("cachoeiras/macacao-1.jpg"),
+  storageUrl("cachoeiras/dragao-1.jpg"),
+  storageUrl("cachoeiras/santa-barbara-1.jpg"),
+  storageUrl("cachoeiras/couros-1.jpg")
+];
+
+const outerImages = [
+  storageUrl("home/hero-chapada.jpg"),
+  storageUrl("home/hero-cachoeiras.jpg"),
+  storageUrl("home/hero-home.jpg"),
+  storageUrl("home/hero-hospedagens.jpg"),
+  storageUrl("home/hero-roteiros.jpg"),
+  storageUrl("home/imersoes-hero.jpg"),
+  storageUrl("home/hero-chapada.jpg"),
+  storageUrl("home/hero-cachoeiras.jpg"),
+  storageUrl("home/hero-home.jpg"),
+  storageUrl("home/hero-hospedagens.jpg"),
+  storageUrl("home/hero-roteiros.jpg"),
+  storageUrl("home/imersoes-hero.jpg")
+];
 
 const GalleryRing = ({ radius, count, speed, imgSize, opacity = 1, images }: { radius: number, count: number, speed: number, imgSize: number, opacity?: number, images: string[] }) => {
   return (

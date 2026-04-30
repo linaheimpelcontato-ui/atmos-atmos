@@ -2,40 +2,42 @@ import { motion, AnimatePresence, useInView } from "framer-motion";
 import { useEffect, useState, useRef } from "react";
 import { Car, Languages, Heart, Camera, Shield, Search, Leaf, Mountain, Users, Award } from "lucide-react";
 
+import { storageUrl } from "@/lib/storage";
+
 // Supabase Storage Public URLs for Joao's photos
 const JOAO_IMAGES = [
-  "https://zjavxhmxrbpidvssrbca.supabase.co/storage/v1/object/public/assets/home/joao/joao-1.jpg",
-  "https://zjavxhmxrbpidvssrbca.supabase.co/storage/v1/object/public/assets/home/joao/joao-2.jpg",
-  "https://zjavxhmxrbpidvssrbca.supabase.co/storage/v1/object/public/assets/home/joao/joao-3.jpg",
-  "https://zjavxhmxrbpidvssrbca.supabase.co/storage/v1/object/public/assets/home/joao/joao-4.jpg",
-  "https://zjavxhmxrbpidvssrbca.supabase.co/storage/v1/object/public/assets/home/joao/joao-5.jpg",
-  "https://zjavxhmxrbpidvssrbca.supabase.co/storage/v1/object/public/assets/home/joao/joao-6.jpg",
+  storageUrl("home/joao/joao-1.jpg"),
+  storageUrl("home/joao/joao-2.jpg"),
+  storageUrl("home/joao/joao-3.jpg"),
+  storageUrl("home/joao/joao-4.jpg"),
+  storageUrl("home/joao/joao-5.jpg"),
+  storageUrl("home/joao/joao-6.jpg"),
 ];
 
 // Real Guide Images from public folder
 const GUIDE_IMAGES = [
-  "/assets/home/guides/guia-aline.jpg",
-  "/assets/home/guides/guia-anacarolina.jpg",
-  "/assets/home/guides/guia-aurora.jpg",
-  "/assets/home/guides/guia-big.jpg",
-  "/assets/home/guides/guia-camilla.jpg",
-  "/assets/home/guides/guia-chico.jpg",
-  "/assets/home/guides/guia-gudu.jpg",
-  "/assets/home/guides/guia-henrique.jpg",
-  "/assets/home/guides/guia-jessica.jpg",
-  "/assets/home/guides/guia-joao.jpg",
-  "/assets/home/guides/guia-leocanastra.jpg",
-  "/assets/home/guides/guia-magela.jpg",
-  "/assets/home/guides/guia-naia.jpg",
-  "/assets/home/guides/guia-nissen.jpg",
-  "/assets/home/guides/guia-pedropilla.jpg",
-  "/assets/home/guides/guia-raphaelmaia.jpg",
-  "/assets/home/guides/guia-thiagoalmanamala.jpg",
-  "/assets/home/guides/guia-thiagoqueiroz.jpg",
-  "/assets/home/guides/guia-tony.jpg",
-  "/assets/home/guides/guia-victoria.jpg",
-  "/assets/home/guides/guia-vini.jpg",
-  "/assets/home/guides/guia-yago.jpg"
+  storageUrl("home/guides/guia-aline.jpg"),
+  storageUrl("home/guides/guia-anacarolina.jpg"),
+  storageUrl("home/guides/guia-aurora.jpg"),
+  storageUrl("home/guides/guia-big.jpg"),
+  storageUrl("home/guides/guia-camilla.jpg"),
+  storageUrl("home/guides/guia-chico.jpg"),
+  storageUrl("home/guides/guia-gudu.jpg"),
+  storageUrl("home/guides/guia-henrique.jpg"),
+  storageUrl("home/guides/guia-jessica.jpg"),
+  storageUrl("home/guides/guia-joao.jpg"),
+  storageUrl("home/guides/guia-leocanastra.jpg"),
+  storageUrl("home/guides/guia-magela.jpg"),
+  storageUrl("home/guides/guia-naia.jpg"),
+  storageUrl("home/guides/guia-nissen.jpg"),
+  storageUrl("home/guides/guia-pedropilla.jpg"),
+  storageUrl("home/guides/guia-raphaelmaia.jpg"),
+  storageUrl("home/guides/guia-thiagoalmanamala.jpg"),
+  storageUrl("home/guides/guia-thiagoqueiroz.jpg"),
+  storageUrl("home/guides/guia-tony.jpg"),
+  storageUrl("home/guides/guia-victoria.jpg"),
+  storageUrl("home/guides/guia-vini.jpg"),
+  storageUrl("home/guides/guia-yago.jpg")
 ];
 
 const StatItem = ({ number, label, suffix = "" }: { number: number, label: string, suffix?: string }) => {

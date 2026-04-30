@@ -18,9 +18,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import ProposalFeedbackDialog from "@/components/proposal/ProposalFeedbackDialog";
 /* dnd-kit reordering */
 const logoAtmos = storageUrl("home/logo-atmos.png");
-const heroImage = "/assets/proposta-visual-cliente/propostavisualbg.jpg";
+const heroImage = storageUrl("roteiros/hero-roteiros.jpg");
 const dividerImage = storageUrl("roteiros/hero-roteiros.jpg");
-const db = supabase as any;
+const leafTexture = storageUrl("home/leaf-texture - horizontal.jpg");
 
 
 /* ───── types ───── */
@@ -156,10 +156,9 @@ const DIFFICULTY_CONFIG: Record<string, { pt: string; en: string; es: string; co
 function DayBanner({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative w-full px-6 md:px-12 py-16 md:py-20 overflow-hidden bg-[#1a1411]">
-      {/* Background Texture - Sharp and prominent */}
       <div 
-        className="absolute inset-0 bg-cover bg-center contrast-[1.2] brightness-[0.5] opacity-80"
-        style={{ backgroundImage: "url('/assets/home/leaf-texture - horizontal.jpg')" }}
+        className="absolute inset-0 z-0 opacity-10"
+        style={{ backgroundImage: `url(${leafTexture})` }}
       />
       
       <div className="relative z-10">
@@ -270,7 +269,7 @@ export default function ProposalPublic() {
   useEffect(() => {
     if (!user) { setIsAdmin(false); return; }
     (async () => {
-      const { data: roleOk } = await db.rpc("has_role", { _user_id: user.id, _role: "admin" });
+      const { data: roleOk } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
       if (roleOk) {
         setIsAdmin(true);
         if (searchParams.get("edit") === "1") setEditMode(true);
@@ -285,7 +284,7 @@ export default function ProposalPublic() {
       let err: any = null;
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(token);
       if (!isUUID) {
-        const res = await db
+        const res = await supabase
           .from("proposals")
           .select("*, prospects(name, email), sellers(name, phone)")
           .eq("slug", token).single();
@@ -293,7 +292,7 @@ export default function ProposalPublic() {
         err = res.error;
       }
       if (!prop) {
-        const res = await db
+        const res = await supabase
           .from("proposals")
           .select("*, prospects(name, email), sellers(name, phone)")
           .eq("share_token", token).single();
@@ -303,12 +302,12 @@ export default function ProposalPublic() {
       if (err || !prop) { setError(true); setLoading(false); return; }
       setProposal(prop);
       proposalIdRef.current = prop.id;
-      const { data: dayItems } = await db
+      const { data: dayItems } = await supabase
         .from("proposal_day_items").select("*")
         .eq("proposal_id", prop.id).order("day_number, item_index");
       setItems(dayItems || []);
 
-      const { data: dayDescs } = await db
+      const { data: dayDescs } = await supabase
         .from("proposal_days").select("day_number, description, observation")
         .eq("proposal_id", prop.id);
       if (dayDescs) {
@@ -317,7 +316,7 @@ export default function ProposalPublic() {
         setDayObservations(obsMap);
       }
 
-      const { data: prods } = await db
+      const { data: prods } = await supabase
         .from("products")
         .select("id, source_id, type, name, variables")
         .in("type", ["waterfall", "experience", "accommodation"]);
@@ -388,7 +387,7 @@ export default function ProposalPublic() {
     setSaving(true);
     try {
       // Save observations
-      await db.from("proposal_days").delete().eq("proposal_id", propId);
+      await supabase.from("proposal_days").delete().eq("proposal_id", propId);
       const allDayNums = [...new Set(Object.keys(editObservations).map(Number))];
       const obsPayload = allDayNums
         .filter(d => editObservations[d] && editObservations[d].trim())
@@ -399,14 +398,14 @@ export default function ProposalPublic() {
           observation: editObservations[d] || "",
         }));
       if (obsPayload.length > 0) {
-        await db.from("proposal_days").insert(obsPayload);
+        await supabase.from("proposal_days").insert(obsPayload);
       }
       setDayObservations({ ...editObservations });
 
       // Save day labels
       for (const [dayNumStr, label] of Object.entries(editLabels)) {
         const dayNum = parseInt(dayNumStr);
-        await db.from("proposal_day_items")
+        await supabase.from("proposal_day_items")
           .update({ day_label: label })
           .eq("proposal_id", propId)
           .eq("day_number", dayNum);
@@ -422,7 +421,7 @@ export default function ProposalPublic() {
         const desc = editDescriptions[descKey] ?? editDescriptions[altDescKey] ?? item.description;
         
         if (item.id) {
-          await db.from("proposal_day_items")
+          await supabase.from("proposal_day_items")
             .update({ description: desc || null, item_index: item.item_index })
             .eq("id", item.id);
         }
@@ -448,7 +447,7 @@ export default function ProposalPublic() {
     setPublishing(true);
     try {
       const newVal = proposal?.published_at ? null : new Date().toISOString();
-      await db.from("proposals").update({ published_at: newVal }).eq("id", propId);
+      await supabase.from("proposals").update({ published_at: newVal }).eq("id", propId);
       setProposal((prev: Proposal | null) => prev ? { ...prev, published_at: newVal, status: newVal ? 'sent' : prev.status } : prev);
     } catch (e) {
       console.error("Error toggling publish:", e);
@@ -463,7 +462,7 @@ export default function ProposalPublic() {
     setSavingContract(true);
     try {
       const url = contractUrlInput.trim() || null;
-      await db.from("proposals").update({ contract_url: url }).eq("id", propId);
+      await supabase.from("proposals").update({ contract_url: url }).eq("id", propId);
       setProposal((prev: Proposal | null) => prev ? { ...prev, contract_url: url } : prev);
       setContractDialogOpen(false);
     } catch (e) {

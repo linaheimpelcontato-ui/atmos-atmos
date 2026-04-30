@@ -1,5 +1,6 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef, useState } from "react";
+import { storageUrl } from "@/lib/storage";
 
 export default function VideoFeature() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -67,7 +68,7 @@ export default function VideoFeature() {
           onEnded={() => setIsPlaying(false)}
         >
           <source
-            src="/assets/home/video-destaque.mp4"
+            src={storageUrl("home/video-destaque.mp4")}
             type="video/mp4"
           />
           Your browser does not support the video tag.
@@ -90,7 +91,7 @@ export default function VideoFeature() {
               {/* Center: Atmos Flower Symbol */}
               <div className="relative">
                 <motion.img
-                  src="https://zjavxhmxrbpidvssrbca.supabase.co/storage/v1/object/public/assets/home/simboloatmos.png"
+                  src={storageUrl("home/simboloatmos.png")}
                   alt="ATMOS"
                   className="w-16 h-16 md:w-24 md:h-24"
                   style={{ filter: "brightness(0) invert(1)" }}

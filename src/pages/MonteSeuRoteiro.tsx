@@ -342,7 +342,7 @@ export default function MonteSeuRoteiro() {
           playsInline
           className="absolute inset-0 w-full h-full object-cover"
         >
-          <source src="/assets/monte-seu-roteiro/monte-seu-roteiro-bg.mp4" type="video/mp4" />
+          <source src={storageUrl("monte-seu-roteiro/monte-seu-roteiro-bg.mp4")} type="video/mp4" />
         </video>
         
         {/* Clean Dark Overlay only */}

@@ -4,6 +4,8 @@ import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
+import { storageUrl } from "@/lib/storage";
+
 interface HeroVideoProps {
   tagline?: string;
   title?: string;
@@ -26,7 +28,7 @@ export default function HeroVideo({ tagline, title }: HeroVideoProps) {
           style={{ filter: "brightness(0.9) contrast(1.1)" }}
         >
           <source
-            src="https://zjavxhmxrbpidvssrbca.supabase.co/storage/v1/object/public/assets/home/hero-video.mp4"
+            src={storageUrl("home/hero-video.mp4")}
             type="video/mp4"
           />
           {/* Fallback to original mixkit if Supabase fails or as backup */}

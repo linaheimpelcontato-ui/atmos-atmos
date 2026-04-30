@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, Globe, Heart, LogIn, LogOut, UserCircle, Shield, MapPin } from "lucide-react";
-import logoAtmos from "@/assets/logo-atmos.png";
 import { useLanguage, type Language } from "@/contexts/LanguageContext";
 import { useWishlist } from "@/contexts/WishlistContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,6 +9,10 @@ import { useIsGuide } from "@/hooks/useGuideGuard";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import AuthModal from "@/components/auth/AuthModal";
+import { storageUrl } from "@/lib/storage";
+
+const logoAtmos = storageUrl("home/logo-atmos.png");
+
 
 import {
   DropdownMenu,
@@ -79,7 +82,7 @@ export default function Header() {
           <Link to="/" className="flex items-center gap-2 group">
             <div className="h-10 w-10 flex items-center justify-center transition-transform group-hover:scale-110">
               <img
-                src="https://zjavxhmxrbpidvssrbca.supabase.co/storage/v1/object/public/assets/home/simboloatmos.png"
+                src={storageUrl("home/simboloatmos.png")}
                 alt="ATMOS Symbol"
                 className="h-8 w-8 object-contain"
               />

@@ -1,5 +1,6 @@
 import React, { useRef } from "react";
 import { motion, useInView } from "framer-motion";
+import { storageUrl } from "@/lib/storage";
 import {
   Heart,
   Eye,
@@ -18,37 +19,37 @@ const differentials = [
   {
     title: "Curadoria 360º",
     description: "Do planejamento à vivência, a ATMOS cuida de cada detalhe da jornada.",
-    image: "/assets/home/Curadoria360.png",
+    image: storageUrl("home/Curadoria360.png"),
     color: "bg-[#744404]/10 text-[#744404]"
   },
   {
     title: "Rede de Parceiros",
     description: "Parceiros locais escolhidos a dedo: hospedagens, restaurantes e experiências.",
-    image: "/assets/home/RedeParceiros.png",
+    image: storageUrl("home/RedeParceiros.png"),
     color: "bg-[#566952]/10 text-[#566952]"
   },
   {
     title: "Conteúdo e Estética",
     description: "Uma marca que traduz o Cerrado com olhar cinematográfico e autêntico.",
-    image: "/assets/home/ConteudoEstetica.png",
+    image: storageUrl("home/ConteudoEstetica.png"),
     color: "bg-[#2C3E2D]/10 text-[#2C3E2D]"
   },
   {
     title: "Atendimento",
     description: "Atendimento bilíngue com suporte real e presente do início ao fim da viagem.",
-    image: "/assets/home/Atendimentoatmos.png",
+    image: storageUrl("home/Atendimentoatmos.png"),
     color: "bg-[#8d7b63]/10 text-[#8d7b63]"
   },
   {
     title: "Sustentabilidade Local",
     description: "Valorizamos a economy da Chapada e os produtores regionais.",
-    image: "/assets/home/SustentabilidadeLocal.png",
+    image: storageUrl("home/SustentabilidadeLocal.png"),
     color: "bg-[#1f2c17]/10 text-[#1f2c17]"
   },
   {
     title: "Experiências com Propósito",
     description: "Mais do que passeios, vivências transformadoras que te conectam com o território.",
-    image: "/assets/home/ExperienciasComProposito.png",
+    image: storageUrl("home/ExperienciasComProposito.png"),
     color: "bg-[#2e2019]/10 text-[#2e2019]"
   }
 ];
@@ -58,7 +59,7 @@ const pillars = [
     id: "acao",
     title: "AÇÃO",
     description: "Vivências participativas que convidam o turista a agir, interagir e se integrar à cultura e à comunidade.",
-    image: "/assets/home/Açao.png",
+    image: storageUrl("home/Açao.png"),
     bg: "bg-[#744404]",
     textColor: "text-white"
   },
@@ -66,7 +67,7 @@ const pillars = [
     id: "pensamento",
     title: "PENSAMENTO",
     description: "Propostas que estimulam a criatividade, o aprendizado e novas formas de olhar o mundo.",
-    image: "/assets/home/Pensamento.png",
+    image: storageUrl("home/Pensamento.png"),
     bg: "bg-[#8d7b63]",
     textColor: "text-white"
   },
@@ -74,7 +75,7 @@ const pillars = [
     id: "identificacao",
     title: "IDENTIFICAÇÃO",
     description: "Experiências pessoais e autênticas, nas quais o viajante se reconhece no território e em suas histórias.",
-    image: "/assets/home/Identificacao.png",
+    image: storageUrl("home/Identificacao.png"),
     bg: "bg-[#566952]",
     textColor: "text-white"
   },
@@ -82,7 +83,7 @@ const pillars = [
     id: "atendimento",
     title: "ATENDIMENTO",
     description: "Atividades que despertam afeto e empatia, criando laços entre o visitante, o destino e as pessoas locais.",
-    image: "/assets/home/Atendimento.png",
+    image: storageUrl("home/Atendimento.png"),
     bg: "bg-[#1f2c17]",
     textColor: "text-white"
   },
@@ -90,7 +91,7 @@ const pillars = [
     id: "sentido",
     title: "SENTIDO",
     description: "Experiências que envolvem os cinco sentidos (visão, audição, tato, paladar, olfato) gerando encantamento e presença.",
-    image: "/assets/home/Sentidos.png",
+    image: storageUrl("home/Sentidos.png"),
     bg: "bg-[#2e2019]",
     textColor: "text-white"
   }
@@ -107,7 +108,7 @@ export default function ExperienceEcosystem() {
         {/* Background Image specifically for this section */}
         <div className="absolute inset-0 z-0">
           <img
-            src="/assets/home/exclusividade-rocks.jpg"
+            src={storageUrl("home/exclusividade-rocks.jpg")}
             alt="Exclusividade Atmos Background"
             className="w-full h-full object-cover opacity-50 brightness-[0.35] contrast-[1.1]"
           />
@@ -183,7 +184,7 @@ export default function ExperienceEcosystem() {
                 className="w-[200px] h-[200px] border border-white/30 border-dashed rounded-full flex items-center justify-center bg-white/[0.02] backdrop-blur-3xl absolute"
               >
                 <img
-                  src="https://zjavxhmxrbpidvssrbca.supabase.co/storage/v1/object/public/assets/home/simboloatmos.png"
+                  src={storageUrl("home/simboloatmos.png")}
                   alt="ATMOS Symbol"
                   className="w-24 h-24 opacity-60 brightness-0 invert"
                 />
@@ -304,8 +305,8 @@ export default function ExperienceEcosystem() {
                   <div
                     className="w-12 h-12 bg-[#141C15] opacity-80 mx-8"
                     style={{
-                      maskImage: 'url(https://zjavxhmxrbpidvssrbca.supabase.co/storage/v1/object/public/assets/home/simboloatmos.png)',
-                      WebkitMaskImage: 'url(https://zjavxhmxrbpidvssrbca.supabase.co/storage/v1/object/public/assets/home/simboloatmos.png)',
+                      maskImage: `url(${storageUrl("home/simboloatmos.png")})`,
+                      WebkitMaskImage: `url(${storageUrl("home/simboloatmos.png")})`,
                       maskSize: 'contain',
                       WebkitMaskSize: 'contain',
                       maskRepeat: 'no-repeat',
@@ -327,8 +328,8 @@ export default function ExperienceEcosystem() {
                   <div
                     className="w-12 h-12 bg-[#141C15] opacity-80 mx-8"
                     style={{
-                      maskImage: 'url(https://zjavxhmxrbpidvssrbca.supabase.co/storage/v1/object/public/assets/home/simboloatmos.png)',
-                      WebkitMaskImage: 'url(https://zjavxhmxrbpidvssrbca.supabase.co/storage/v1/object/public/assets/home/simboloatmos.png)',
+                      maskImage: `url(${storageUrl("home/simboloatmos.png")})`,
+                      WebkitMaskImage: `url(${storageUrl("home/simboloatmos.png")})`,
                       maskSize: 'contain',
                       WebkitMaskSize: 'contain',
                       maskRepeat: 'no-repeat',

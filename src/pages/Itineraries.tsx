@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import PageSEO from "@/components/seo/PageSEO";
 import Layout from "@/components/layout/Layout";
+import { storageUrl } from "@/lib/storage";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useProducts } from "@/hooks/useProducts";
 import { getDurations, getItinerariesByDuration, type DurationDays, type Itinerary, itineraries as staticItineraries } from "@/data/itineraries";
@@ -216,36 +217,36 @@ const Itineraries = () => {
   const navigate = useNavigate();
   const [selectedDuration, setSelectedDuration] = useState<DurationDays>(3);
   
-  const { data: dbProducts = [] } = useProducts("itinerary");
+  const { data: supabaseProducts = [] } = useProducts("itinerary");
 
   const mergedItineraries = useMemo(() => {
     const merged = [...staticItineraries];
     
-    dbProducts.forEach(dbProduct => {
-      const staticIdx = merged.findIndex(i => i.id === dbProduct.source_id);
-      const dbVars = (dbProduct.variables || {}) as any;
+    supabaseProducts.forEach(supabaseProduct => {
+      const staticIdx = merged.findIndex(i => i.id === supabaseProduct.source_id);
+      const supabaseVars = (supabaseProduct.variables || {}) as any;
       
       const mapped: Itinerary = {
-        id: dbProduct.source_id || dbProduct.id,
-        duration: (dbVars.duration || (staticIdx > -1 ? merged[staticIdx].duration : 3)) as any,
-        category: (dbProduct.segment || (staticIdx > -1 ? merged[staticIdx].category : "classico")) as any,
+        id: supabaseProduct.source_id || supabaseProduct.id,
+        duration: (supabaseVars.duration || (staticIdx > -1 ? merged[staticIdx].duration : 3)) as any,
+        category: (supabaseProduct.segment || (staticIdx > -1 ? merged[staticIdx].category : "classico")) as any,
         name: {
-          pt: dbProduct.name,
-          en: (staticIdx > -1 ? merged[staticIdx].name.en : dbProduct.name),
-          es: (staticIdx > -1 ? merged[staticIdx].name.es : dbProduct.name),
+          pt: supabaseProduct.name,
+          en: (staticIdx > -1 ? merged[staticIdx].name.en : supabaseProduct.name),
+          es: (staticIdx > -1 ? merged[staticIdx].name.es : supabaseProduct.name),
         },
         description: {
-          pt: dbProduct.description || "",
-          en: (staticIdx > -1 ? merged[staticIdx].description.en : dbProduct.description || ""),
-          es: (staticIdx > -1 ? merged[staticIdx].description.es : dbProduct.description || ""),
+          pt: supabaseProduct.description || "",
+          en: (staticIdx > -1 ? merged[staticIdx].description.en : supabaseProduct.description || ""),
+          es: (staticIdx > -1 ? merged[staticIdx].description.es : supabaseProduct.description || ""),
         },
-        days: dbVars.days || (staticIdx > -1 ? merged[staticIdx].days : []),
-        pricing: dbVars.pricing || (staticIdx > -1 ? merged[staticIdx].pricing : { 
+        days: supabaseVars.days || (staticIdx > -1 ? merged[staticIdx].days : []),
+        pricing: supabaseVars.pricing || (staticIdx > -1 ? merged[staticIdx].pricing : { 
           atmos4x4: { individual: 0, dupla: 0, trio: 0 }, 
           carroProprio: { individual: 0, dupla: 0, trio: 0 } 
         }),
-        extraCosts: dbVars.extraCosts || (staticIdx > -1 ? merged[staticIdx].extraCosts : { entranceFees: 0 }),
-        inclusions: dbVars.inclusions || (staticIdx > -1 ? merged[staticIdx].inclusions : { pt: [], en: [], es: [] }),
+        extraCosts: supabaseVars.extraCosts || (staticIdx > -1 ? merged[staticIdx].extraCosts : { entranceFees: 0 }),
+        inclusions: supabaseVars.inclusions || (staticIdx > -1 ? merged[staticIdx].inclusions : { pt: [], en: [], es: [] }),
       };
 
       if (staticIdx > -1) {
@@ -256,7 +257,7 @@ const Itineraries = () => {
     });
     
     return merged;
-  }, [dbProducts]);
+  }, [supabaseProducts]);
 
   const durations = getDurations();
   const currentItineraries = getItinerariesByDuration(selectedDuration, mergedItineraries)
@@ -282,7 +283,7 @@ const Itineraries = () => {
             className="absolute inset-0"
           >
             <img
-              src="/assets/duvidas/duvidas-bg.jpg"
+              src={storageUrl("duvidas/duvidas-bg.jpg")}
               alt="Atmos Expeditions"
               className="w-full h-full object-cover opacity-60"
             />
@@ -359,7 +360,7 @@ const Itineraries = () => {
           {/* Background Image with Blur (No Grayscale) */}
           <div className="absolute inset-0 z-0">
             <img 
-              src="/assets/duvidas/duvidas-bg.jpg" 
+              src={storageUrl("duvidas/duvidas-bg.jpg")} 
               alt="" 
               className="w-full h-full object-cover opacity-60 blur-sm scale-110" 
             />

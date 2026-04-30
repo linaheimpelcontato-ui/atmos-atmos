@@ -231,7 +231,7 @@ const Wishlist = () => {
         {/* Background Image - User provided */}
         <div className="absolute inset-0 z-0">
           <img 
-            src="/assets/preferencias/preferencias-bg.jpeg" 
+            src={storageUrl("preferencias/preferencias-bg.jpeg")} 
             className="w-full h-full object-cover"
             alt="Preferências Background"
           />

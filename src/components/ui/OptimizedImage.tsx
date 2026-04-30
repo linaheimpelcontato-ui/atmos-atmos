@@ -46,30 +46,11 @@ export function OptimizedImage({
       return;
     }
 
-    // Stage 3: Global Folder Fallback
-    // If we've tried original and bare in the current folder and it still fails, 
-    // try other common folders for the same filename
-    const folders = ['experiencias', 'cachoeiras', 'hospedagens', 'roteiros', 'servicos'];
-    const currentPath = currentSrc.split('/public/assets/')[1]?.split('?')[0];
-    if (currentPath) {
-      const currentFolder = currentPath.split('/')[0];
-      const fileName = currentPath.split('/').pop();
-      const nextFolderIdx = folders.indexOf(currentFolder) + 1;
-      
-      if (nextFolderIdx < folders.length) {
-        const nextFolder = folders[nextFolderIdx];
-        const nextSrc = currentSrc.replace(`/assets/${currentFolder}/`, `/assets/${nextFolder}/`);
-        setLoaded(false); // Reset to re-trigger onLoad
-        setCurrentSrc(nextSrc);
-        return;
-      }
-    }
-
-    // Stage 4: Final fallback to placeholder
+    // Stage 3: Placeholder Fallback
     if (!error) {
       console.warn(`[Atmos] Image load failed: ${src}. Falling back to placeholder.`);
       setError(true);
-      setLoaded(true); // Remove blur for the final fallback
+      setLoaded(true);
       setCurrentSrc(fallbackSrc);
     }
     if (onError) onError(e);

@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { MAP_R2_PATH } from "./storage";
 
 /**
  * Utility for Cloudflare R2 operations via the r2-storage Edge Function.
@@ -9,11 +10,12 @@ export const r2 = {
    * Uploads a file to R2 using a presigned URL
    */
   async upload(folder: string, fileName: string, file: File): Promise<void> {
+    const mappedFolder = MAP_R2_PATH(folder.endsWith('/') ? folder : `${folder}/`).replace(/\/$/, "");
     // 1. Get presigned URL from Edge Function
     const { data, error: functionError } = await supabase.functions.invoke('r2-storage', {
       body: { 
         action: 'get-upload-url', 
-        folder, 
+        folder: mappedFolder, 
         fileName 
       },
       headers: {
@@ -43,8 +45,9 @@ export const r2 = {
    * Lists files in an R2 folder
    */
   async list(folder: string): Promise<any[]> {
+    const mappedFolder = MAP_R2_PATH(folder.endsWith('/') ? folder : `${folder}/`).replace(/\/$/, "");
     const { data, error } = await supabase.functions.invoke('r2-storage', {
-      body: { action: 'list', folder }
+      body: { action: 'list', folder: mappedFolder }
     });
 
     if (error) throw error;
@@ -55,8 +58,9 @@ export const r2 = {
    * Deletes a file from R2
    */
   async delete(folder: string, fileName: string): Promise<void> {
+    const mappedFolder = MAP_R2_PATH(folder.endsWith('/') ? folder : `${folder}/`).replace(/\/$/, "");
     const { error } = await supabase.functions.invoke('r2-storage', {
-      body: { action: 'delete', folder, fileName }
+      body: { action: 'delete', folder: mappedFolder, fileName }
     });
 
     if (error) throw error;

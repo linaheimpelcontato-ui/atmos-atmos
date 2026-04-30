@@ -8,6 +8,7 @@ import { PhoneInput } from "@/components/ui/phone-input";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { trackSignup, trackLogin } from "@/lib/analytics";
+import { storageUrl } from "@/lib/storage";
 
 import {
   Select,
@@ -94,7 +95,7 @@ const countries = [
   { code: "IL", name: "Israel" }, { code: "AE", name: "Emirados Árabes" }, { code: "ZA", name: "África do Sul" },
 ];
 
-const loginImage = "/assets/home/foto-login.jpg";
+const loginImage = storageUrl("home/foto-login.jpg");
 
 export default function AuthModal({ open, onClose, onSuccess, defaultMode = "signup" }: AuthModalProps) {
   const { signIn, signUp, signInWithGoogle, updateProfile, profile, user, session } = useAuth();
@@ -469,7 +470,7 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
               </div>
             </div>
 
-            <div className="p-12 pl-24 flex justify-start"><img src="https://zjavxhmxrbpidvssrbca.supabase.co/storage/v1/object/public/assets/home/simboloatmos.png" className="h-10 opacity-10" alt="ATMOS" /></div>
+            <div className="p-12 pl-24 flex justify-start"><img src={storageUrl("home/simboloatmos.png")} className="h-10 opacity-10" alt="ATMOS" /></div>
           </div>
 
           <div className="hidden lg:block lg:flex-1 h-full relative">

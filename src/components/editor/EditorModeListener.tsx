@@ -8,6 +8,8 @@ import TextEditPanel from "./TextEditPanel";
 import BackgroundEditPanel from "./BackgroundEditPanel";
 import GridOverlay from "./GridOverlay";
 
+const R2_DOMAIN = import.meta.env.VITE_R2_DOMAIN || "";
+
 export default function EditorModeListener() {
   const [enabled, setEnabled] = useState(false);
   const [showGrid, setShowGrid] = useState(false);
@@ -67,15 +69,25 @@ export default function EditorModeListener() {
   }, [qc]);
 
   const extractPath = useCallback((src: string): string => {
-    const match = src.match(/\/storage\/v1\/(?:object|render\/image)\/public\/assets\/(.+?)(?:\?|$)/);
-    return match ? match[1] : src;
+    // Legacy Supabase
+    const sbMatch = src.match(/\/storage\/v1\/(?:object|render\/image)\/public\/assets\/(.+?)(?:\?|$)/);
+    if (sbMatch) return sbMatch[1];
+    
+    // Cloudflare R2
+    if (R2_DOMAIN) {
+      const domain = R2_DOMAIN.replace(/^https?:\/\//, '').replace(/\/$/, '');
+      const r2Match = src.match(new RegExp(`https?://${domain}/(.+?)(?:\\?|$)`));
+      if (r2Match) return r2Match[1];
+    }
+    
+    return src;
   }, []);
 
   const classifyElement = useCallback((el: HTMLElement): "image" | "text" | "background" | null => {
     const tag = el.tagName.toLowerCase();
     if (tag === "img") {
       const style = window.getComputedStyle(el);
-      if (style.objectFit === "cover" || el.hasAttribute("data-editable-image") || (el as HTMLImageElement).src.includes("/storage/")) return "image";
+      if (style.objectFit === "cover" || el.hasAttribute("data-editable-image") || (el as HTMLImageElement).src.includes("/storage/") || (R2_DOMAIN && (el as HTMLImageElement).src.includes(R2_DOMAIN))) return "image";
     }
     // Before checking text/bg, look for a nearby cover image (handles overlays)
     if (["div", "section", "span", "p", "h1", "h2", "h3", "h4", "a"].includes(tag)) {

@@ -24,8 +24,6 @@ import {
   ArrowRight,
 } from "lucide-react";
 
-const heroFaq = "/assets/duvidas/duvidas-bg.jpg";
-
 interface FAQItem {
   icon: React.ElementType;
   question: string;
@@ -266,7 +264,7 @@ export default function FAQ() {
           className="absolute inset-0"
         >
           <img
-            src={heroFaq}
+            src={storageUrl("duvidas/duvidas-bg.jpg")}
             alt="ATMOS FAQ"
             className="w-full h-full object-cover opacity-60 scale-105"
           />
