@@ -6,11 +6,11 @@ const RENDER_BASE = `${BASE_URL}/storage/v1/render/image/public/assets`;
 const R2_DOMAIN = import.meta.env.VITE_R2_DOMAIN || "";
 
 const CATEGORY_MAPPINGS: Record<string, string> = {
-  'experiencias/': 'produtos/experiencias/',
-  'hospedagens/': 'produtos/hospedagens/',
-  'servicos/': 'produtos/servicos/',
+  'experiencias/': 'produtos/EXPERIENCIAS/',
+  'hospedagens/': 'produtos/HOSPEDAGENS/',
+  'servicos/': 'produtos/SERVIÇOS/',
   'cachoeiras/': 'produtos/cachoeiras/',
-  'roteiros/': 'produtos/roteiros/',
+  'roteiros/': 'produtos/ROTEIROS/',
   'lideranca/': 'home/lideranca/',
   'home/': 'home/',
   'duvidas/': 'duvidas/',

@@ -230,8 +230,8 @@ export function getStorageInfo(product: Partial<Product> & { name: string; type:
       categoryFolder = "outros";
   }
 
-  // Final folder path: produtos/CATEGORY
-  const folderPath = `produtos/${categoryFolder}`;
+  // Return folder as the key that MAP_R2_PATH understands (e.g., 'experiencias', 'cachoeiras')
+  const folderPath = categoryFolder;
   
   // Return parent folder and raw name for better image matching
   return { 
