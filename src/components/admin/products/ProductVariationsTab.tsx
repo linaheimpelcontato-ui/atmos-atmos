@@ -11,6 +11,7 @@ import { optimizedUrl, IMAGE_PRESETS, storageUrl } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useRef } from "react";
+import { r2 } from "@/lib/r2";
 
 interface ProductVariationsTabProps {
   product: Partial<Product> & { id?: string; name: string; type: string; unit_price?: number; cost_price?: number; variables?: any; tempId?: string };
@@ -36,17 +37,16 @@ export function ProductVariationsTab({
     queryFn: async () => {
       if (!(product.id || product.tempId) || !info) return [];
       
-      const { data, error } = await supabase.storage
-        .from("assets")
-        .list(info.folder);
-        
-      if (error) throw error;
-
+      const data = await r2.list(info.folder);
+      
       // Filter by prefix (same logic as ProductMediaTab)
-      const prefixRegex = new RegExp(`^${info.prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:-.*)?\\.(jpg|jpeg|png|webp|mov|mp4)$`, 'i');
+      const prefixRegex = new RegExp(`^${info.prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:-.*)?\\.(jpg|jpeg|png|webp|heic|mov|mp4|webm|avi|mkv)$`, 'i');
       return data
-        .filter(f => !f.name.startsWith(".") && prefixRegex.test(f.name))
-        .map(f => f.name)
+        .filter((f: any) => {
+          const name = f.Key.split('/').pop();
+          return !name.startsWith(".") && prefixRegex.test(name);
+        })
+        .map((f: any) => f.Key.split('/').pop())
         .sort((a, b) => {
           // Priority 1: Favorites
           const isAFav = favorites.includes(a);
@@ -122,9 +122,7 @@ export function ProductVariationsTab({
         const ext = file.name.split(".").pop() || "jpg";
         const fileName = `${info.prefix}-${next}.${ext}`;
 
-        const path = `${info.folder}/${fileName}`;
-        const { error } = await supabase.storage.from("assets").upload(path, file, { upsert: true });
-        if (error) throw error;
+        await r2.upload(info.folder, fileName, file);
         uploadedNames.push(fileName);
       }
 

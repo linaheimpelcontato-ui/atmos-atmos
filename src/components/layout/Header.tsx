@@ -243,7 +243,7 @@ export default function Header() {
         onClose={() => setAuthModalOpen(false)}
         onSuccess={() => {
           setAuthModalOpen(false);
-          navigate("/roteiros");
+          navigate("/monte-seu-roteiro");
         }}
       />
     </header>

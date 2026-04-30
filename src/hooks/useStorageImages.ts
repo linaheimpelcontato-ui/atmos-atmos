@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { storageUrl } from "@/lib/storage";
+import { r2 } from "@/lib/r2";
 
 /**
  * Lists real files from the assets bucket for a given folder+prefix,
@@ -21,21 +22,28 @@ export async function fetchStorageImages(folder: string, prefix: string): Promis
   const uniqueFolders = Array.from(new Set(folders));
   
   for (const f of uniqueFolders) {
-    const { data: files, error } = await supabase.storage.from("assets").list(f);
-    if (error || !files || files.length === 0) continue;
+    try {
+      const files = await r2.list(f);
+      if (!files || files.length === 0) continue;
 
-    const prefixRegex = new RegExp(`^${prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:-.*)?\\.(jpg|jpeg|png|webp|mov|mp4)$`, 'i');
-    
-    const matching = files
-      .filter((file) => prefixRegex.test(file.name))
-      .sort((a, b) => {
-        const numA = parseInt(a.name.match(/-(\d+)\./)?.[1] || "0");
-        const numB = parseInt(b.name.match(/-(\d+)\./)?.[1] || "0");
-        return numA - numB;
-      })
-      .map((file) => storageUrl(`${f}/${file.name}`));
+      const prefixRegex = new RegExp(`^${prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:-.*)?\\.(jpg|jpeg|png|webp|heic|mov|mp4|webm|avi|mkv)$`, 'i');
+      
+      const matching = files
+        .filter((file: any) => prefixRegex.test(file.Key.split('/').pop()))
+        .sort((a: any, b: any) => {
+          const nameA = a.Key.split('/').pop();
+          const nameB = b.Key.split('/').pop();
+          const numA = parseInt(nameA.match(/-(\d+)\./)?.[1] || "0");
+          const numB = parseInt(nameB.match(/-(\d+)\./)?.[1] || "0");
+          return numA - numB;
+        })
+        .map((file: any) => storageUrl(file.Key));
 
-    if (matching.length > 0) return matching;
+      if (matching.length > 0) return matching;
+    } catch (err) {
+      console.error(`Error listing R2 for folder ${f}:`, err);
+      continue;
+    }
   }
 
   return [];

@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Upload, Trash2, FileText, Download, Loader2 } from "lucide-react";
+import { r2 } from "@/lib/r2";
+import { storageUrl } from "@/lib/storage";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,15 +24,18 @@ export default function ProspectTabDocuments({ prospectId }: { prospectId: strin
   const basePath = `prospect-docs/${prospectId}`;
 
   const fetchFiles = useCallback(async () => {
-    const { data, error } = await supabase.storage.from("assets").list(basePath);
-    if (error) return;
-    const mapped = (data ?? [])
-      .filter(f => f.name !== ".emptyFolderPlaceholder")
-      .map(f => ({
-        name: f.name,
-        url: supabase.storage.from("assets").getPublicUrl(`${basePath}/${f.name}`).data.publicUrl,
-      }));
-    setFiles(mapped);
+    try {
+      const data = await r2.list(basePath);
+      const mapped = (data ?? [])
+        .map((f: any) => ({
+          name: f.Key.split('/').pop(),
+          url: storageUrl(f.Key),
+        }))
+        .filter(f => f.name !== ".emptyFolderPlaceholder");
+      setFiles(mapped);
+    } catch (err) {
+      console.error(err);
+    }
   }, [basePath]);
 
   useEffect(() => {
@@ -41,23 +46,25 @@ export default function ProspectTabDocuments({ prospectId }: { prospectId: strin
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    const filePath = `${basePath}/${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage.from("assets").upload(filePath, file);
-    if (error) {
-      toast({ title: "Erro ao fazer upload", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Arquivo enviado!" });
+    const fileName = `${Date.now()}-${file.name}`;
+    try {
+      await r2.upload(basePath, fileName, file);
+      toast({ title: "Arquivo enviado para Cloudflare!" });
       fetchFiles();
+    } catch (err: any) {
+      toast({ title: "Erro ao fazer upload", description: err.message, variant: "destructive" });
     }
     setUploading(false);
     e.target.value = "";
   };
 
   const handleDelete = async (name: string) => {
-    const { error } = await supabase.storage.from("assets").remove([`${basePath}/${name}`]);
-    if (!error) {
-      toast({ title: "Arquivo removido" });
+    try {
+      await r2.delete(basePath, name);
+      toast({ title: "Arquivo removido do Cloudflare" });
       fetchFiles();
+    } catch (err) {
+      console.error(err);
     }
   };
 

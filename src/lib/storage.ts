@@ -2,8 +2,16 @@ const BASE_URL = "https://zjavxhmxrbpidvssrbca.supabase.co";
 const STORAGE_BASE = `${BASE_URL}/storage/v1/object/public/assets`;
 const RENDER_BASE = `${BASE_URL}/storage/v1/render/image/public/assets`;
 
-/** Returns the public URL for a storage asset (original quality) */
-export function storageUrl(path: string): string {
+// Cloudflare R2 Public Domain (to be configured in Vercel/Supabase Env)
+const R2_DOMAIN = import.meta.env.VITE_R2_DOMAIN || "";
+
+/** Returns the public URL for a storage asset */
+export function storageUrl(path: string, provider: 'supabase' | 'r2' = 'r2'): string {
+  if (provider === 'r2' && R2_DOMAIN) {
+    const cleanDomain = R2_DOMAIN.replace(/\/$/, ""); // Remove trailing slash
+    const domainWithProtocol = cleanDomain.startsWith("http") ? cleanDomain : `https://${cleanDomain}`;
+    return `${domainWithProtocol}/${path}`;
+  }
   return `${STORAGE_BASE}/${path}`;
 }
 

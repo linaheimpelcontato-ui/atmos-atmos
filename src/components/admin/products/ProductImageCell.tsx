@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { storageUrl } from "@/lib/storage";
 import { toast } from "sonner";
+import { r2 } from "@/lib/r2";
 import type { Product } from "./shared";
 
 /* ─── Storage path mapping ─────────────────────────────────────────── */
@@ -44,15 +45,14 @@ export function ProductImageCell({ product }: { product: Product }) {
     if (!info) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase.storage.from("assets").list(info.folder, {
-        search: info.prefix,
-      });
-      if (error) throw error;
+      const data = await r2.list(info.folder);
       const matching = (data || [])
-        .filter((f) => f.name.startsWith(info.prefix + "-") || f.name === info.prefix + ".jpg")
-        .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
-      setImages(matching.map((f) => f.name));
-    } catch {
+        .map((f: any) => f.Key.split('/').pop())
+        .filter((name: string) => new RegExp(`^${info.prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:-.*)?\\.(jpg|jpeg|png|webp|heic|mov|mp4|webm|avi|mkv)$`, 'i').test(name))
+        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+      setImages(matching);
+    } catch (err) {
+      console.error(err);
       setImages([]);
     } finally {
       setLoading(false);
@@ -66,12 +66,13 @@ export function ProductImageCell({ product }: { product: Product }) {
 
   const handleDelete = async (fileName: string) => {
     if (!info) return;
-    const { error } = await supabase.storage.from("assets").remove([`${info.folder}/${fileName}`]);
-    if (error) {
-      toast.error("Erro ao deletar imagem");
-    } else {
-      toast.success("Imagem removida");
+    try {
+      await r2.delete(info.folder, fileName);
+      toast.success("Imagem removida do Cloudflare");
       setImages((prev) => prev.filter((f) => f !== fileName));
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao deletar imagem");
     }
   };
 
@@ -91,13 +92,13 @@ export function ProductImageCell({ product }: { product: Product }) {
       fileName = `${info.prefix}-${next}.${ext}`;
     }
 
-    const path = `${info.folder}/${fileName}`;
-    const { error } = await supabase.storage.from("assets").upload(path, file, { upsert: true });
-    if (error) {
-      toast.error("Erro ao enviar imagem");
-    } else {
-      toast.success(targetName ? "Imagem substituída" : "Imagem adicionada");
+    try {
+      await r2.upload(info.folder, fileName, file);
+      toast.success(targetName ? "Imagem substituída" : "Imagem adicionada ao Cloudflare");
       await loadImages();
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao enviar imagem");
     }
   };
 

@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { optimizedUrl, storageUrl, IMAGE_PRESETS } from "@/lib/storage";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { toast } from "sonner";
+import { r2 } from "@/lib/r2";
 import type { Product } from "./shared";
 import { getStorageInfo } from "./shared";
 import { cn } from "@/lib/utils";
@@ -15,7 +16,7 @@ import { cn } from "@/lib/utils";
 
 /* ─── Helpers ──────────────────────────────────────────────────────── */
 
-const isVideo = (fileName: string) => /\.(mp4|mov|webm)$/i.test(fileName);
+const isVideo = (fileName: string) => /\.(mp4|mov|webm|avi|mkv)$/i.test(fileName);
 
 /* ─── Lightbox ─────────────────────────────────────────────────────── */
 
@@ -166,24 +167,25 @@ export function ProductMediaTab({
     if (!info) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase.storage.from("assets").list(info.folder);
-      if (error) throw error;
+      const data = await r2.list(info.folder);
       
-      const prefixRegex = new RegExp(`^${info.prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:-.*)?\\.(jpg|jpeg|png|webp|mov|mp4)$`, 'i');
+      const prefixRegex = new RegExp(`^${info.prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:-.*)?\\.(jpg|jpeg|png|webp|heic|mov|mp4|webm|avi|mkv)$`, 'i');
       const matching = (data || [])
-        .filter((f) => prefixRegex.test(f.name))
+        .filter((f: any) => prefixRegex.test(f.Key.split('/').pop()))
+        .map((f: any) => f.Key.split('/').pop())
         .sort((a, b) => {
-          const numA = parseInt(a.name.match(/-(\d+)\./)?.[1] || "0");
-          const numB = parseInt(b.name.match(/-(\d+)\./)?.[1] || "0");
+          const numA = parseInt(a.match(/-(\d+)\./)?.[1] || "0");
+          const numB = parseInt(b.match(/-(\d+)\./)?.[1] || "0");
           return numA - numB;
         });
-      setMedia(matching.map((f) => f.name));
-    } catch {
+      setMedia(matching);
+    } catch (err) {
+      console.error("Error loading R2 media:", err);
       setMedia([]);
     } finally {
       setLoading(false);
     }
-  }, [info?.folder, info?.prefix, supabase.storage]);
+  }, [info?.folder, info?.prefix]);
 
   useEffect(() => {
     loadMedia();
@@ -191,13 +193,14 @@ export function ProductMediaTab({
 
   const handleDelete = async (fileName: string) => {
     if (!info) return;
-    const { error } = await supabase.storage.from("assets").remove([`${info.folder}/${fileName}`]);
-    if (error) {
-      toast.error("Erro ao deletar arquivo");
-    } else {
-      toast.success("Arquivo removido");
+    try {
+      await r2.delete(info.folder, fileName);
+      toast.success("Arquivo removido do Cloudflare");
       setMedia((prev) => prev.filter((f) => f !== fileName));
       onDelete?.(fileName);
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao deletar arquivo");
     }
   };
 
@@ -220,11 +223,9 @@ export function ProductMediaTab({
           fileName = `${info.prefix}-${next}.${ext}`;
         }
 
-        const path = `${info.folder}/${fileName}`;
-        const { error } = await supabase.storage.from("assets").upload(path, file, { upsert: true });
-        if (error) throw error;
+        await r2.upload(info.folder, fileName, file);
       }
-      toast.success(targetName ? "Arquivo substituído" : `${fileArray.length} arquivo(s) enviado(s)`);
+      toast.success(targetName ? "Arquivo substituído" : `${fileArray.length} arquivo(s) enviado(s) para Cloudflare`);
       await loadMedia();
     } catch (err) {
       console.error(err);

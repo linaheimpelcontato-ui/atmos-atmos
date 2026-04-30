@@ -21,7 +21,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
-import { dayImages, getDayImage } from "@/components/itineraries/dayImages";
+import { getDayImage } from "@/components/itineraries/dayImages";
 
 const pageLabels = {
   pt: {

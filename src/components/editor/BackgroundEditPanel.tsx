@@ -2,6 +2,8 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { X, Upload, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { storageUrl } from "@/lib/storage";
+import { r2 } from "@/lib/r2";
 import EditorColorPicker from "./EditorColorPicker";
 
 interface Props {
@@ -170,9 +172,8 @@ export default function BackgroundEditPanel({ element, onOverride, onClose, curr
     setUploading(true);
     try {
       const path = `backgrounds/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
-      const { error } = await supabase.storage.from("assets").upload(path, file, { upsert: true });
-      if (error) throw error;
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/assets/${path}`;
+      await r2.upload("backgrounds", path.split('/').pop()!, file);
+      const url = storageUrl(path);
       setBgImage(url);
     } catch (err) {
       console.error("Upload failed:", err);
