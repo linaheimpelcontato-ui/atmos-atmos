@@ -31,9 +31,12 @@ export async function fetchStorageImages(folder: string, prefix: string): Promis
       
       const matching = files
         .filter((file: any) => {
-          const fileName = file.Key.split('/').pop() || "";
+          const key = file.Key.toLowerCase();
+          const fileName = key.split('/').pop() || "";
           const normalizedFileName = normalize(fileName);
-          return normalizedFileName.startsWith(normalizedPrefix);
+          
+          return normalizedFileName.startsWith(normalizedPrefix) || 
+                 key.includes(`/${normalizedPrefix}/`);
         })
         .sort((a: any, b: any) => {
           const nameA = a.Key.split('/').pop() || "";
