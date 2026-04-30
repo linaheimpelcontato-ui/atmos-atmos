@@ -5,30 +5,47 @@ const RENDER_BASE = `${BASE_URL}/storage/v1/render/image/public/assets`;
 // Cloudflare R2 Public Domain (configured in .env)
 const R2_DOMAIN = import.meta.env.VITE_R2_DOMAIN || "";
 
+const CATEGORY_MAPPINGS: Record<string, string> = {
+  'experiencias/': 'produtos/EXPERIENCIAS/',
+  'hospedagens/': 'produtos/HOSPEDAGENS/',
+  'servicos/': 'produtos/SERVIÇOS/',
+  'cachoeiras/': 'produtos/cachoeiras/',
+  'home/': 'home/',
+  'duvidas/': 'duvidas/',
+  'preferencias/': 'preferencias/',
+  'monte-seu-roteiro/': 'monte-seu-roteiro/',
+  'proposta-visual-cliente/': 'proposta-visual-cliente/'
+};
+
 /**
  * Maps legacy folder names to the new R2 structure.
  * Helps transition without changing every call in the codebase.
  */
 export const MAP_R2_PATH = (path: string): string => {
-  const mapping: Record<string, string> = {
-    'cachoeiras/': 'produtos/CACHOEIRAS/',
-    'experiencias/': 'produtos/EXPERIENCIAS/',
-    'hospedagens/': 'produtos/HOSPEDAGENS/',
-    'servicos/': 'produtos/SERVICOS/',
-    'roteiros/': 'produtos/ROTEIROS/',
-  };
-
-  for (const [oldPrefix, newPrefix] of Object.entries(mapping)) {
+  for (const [oldPrefix, newPrefix] of Object.entries(CATEGORY_MAPPINGS)) {
     if (path.startsWith(oldPrefix)) {
       const rest = path.slice(oldPrefix.length);
       
-      // If it matches "slug-1.jpg" or "slug.jpg" etc, insert the slug folder
-      // This handles calls like storageUrl('cachoeiras/dragao-1.jpg')
-      const productFileMatch = rest.match(/^([a-z0-9-]+)(?:-\d+)?\.(jpg|jpeg|png|webp|heic|mov|mp4|webm)$/i);
-      
-      if (productFileMatch && !rest.includes('/')) {
-        const slug = productFileMatch[1];
-        return `${newPrefix}${slug}/${rest}`;
+      // If it's a product category, handle the subfolder structure
+      if (['produtos/EXPERIENCIAS/', 'produtos/HOSPEDAGENS/', 'produtos/SERVIÇOS/', 'produtos/cachoeiras/'].includes(newPrefix)) {
+        // Try to infer subfolder from filename (e.g., "vila-toa-1.jpg" -> "Vila Toa")
+        // This handles filenames that start with the product name
+        const filename = rest.split('/').pop() || "";
+        const parts = filename.split('-');
+        
+        // Remove numeric suffix if exists (e.g., "-1.jpg")
+        if (parts.length > 1) {
+          const lastPart = parts[parts.length - 1];
+          if (/^\d+\.(jpg|jpeg|png|webp)$/i.test(lastPart)) {
+            parts.pop();
+          }
+        }
+        
+        // Capitalize words to match folder names (e.g., "vila toa")
+        const subfolder = parts.map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        
+        // Return the 3-level path
+        return `${newPrefix}${subfolder}/${rest}`;
       }
       
       return `${newPrefix}${rest}`;
