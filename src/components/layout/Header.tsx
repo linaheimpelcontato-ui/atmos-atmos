@@ -82,7 +82,7 @@ export default function Header() {
           <Link to="/" className="flex items-center gap-2 group">
             <div className="h-10 w-10 flex items-center justify-center transition-transform group-hover:scale-110">
               <img
-                src={storageUrl("home/simboloatmos.png")}
+                src={storageUrl("home/flower-symbol.png")}
                 alt="ATMOS Symbol"
                 className="h-8 w-8 object-contain"
               />

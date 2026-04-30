@@ -309,7 +309,7 @@ export default function FeatureShowcase() {
               {/* Atmos Logo (instead of search bar) */}
               <div className="absolute left-1/2 -translate-x-1/2 flex items-center h-full">
                 <img
-                  src={logoAtmos}
+                  src={storageUrl("home/flower-symbol.png")}
                   alt="ATMOS"
                   className={`h-10 transition-all duration-1000 ${currentStep.id === 'analise' ? 'grayscale invert opacity-50 shadow-none' : 'opacity-100'
                     }`}
@@ -617,7 +617,7 @@ export default function FeatureShowcase() {
                         {/* Elegant Leaf Texture Background (User Provided) */}
                         <div 
                           className="absolute inset-0 opacity-80 bg-cover grayscale contrast-125 brightness-50" 
-                          style={{ backgroundImage: `url(${storageUrl("home/leaf-texture.jpg")})` }}
+                          style={{ backgroundImage: `url(${storageUrl("home/texture-leaf.jpg")})` }}
                         />
 
                         {/* Atmos Symbol Centered */}
@@ -628,7 +628,7 @@ export default function FeatureShowcase() {
                           className="relative z-10 flex flex-col items-center"
                         >
                           <img
-                            src={storageUrl("home/simboloatmos.png")}
+                            src={storageUrl("home/flower-symbol.png")}
                             alt="Atmos Symbol"
                             className="w-20 h-20 object-contain invert opacity-90 shadow-2xl"
                           />
@@ -747,7 +747,7 @@ export default function FeatureShowcase() {
             transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
           >
             <img
-              src={storageUrl("home/simboloatmos.png")}
+              src={storageUrl("home/flower-symbol.png")}
               alt="Atmos Symbol"
               className="w-16 h-16 object-contain"
               style={{ filter: "invert(41%) sepia(20%) saturate(464%) hue-rotate(58deg) brightness(95%) contrast(84%)" }}

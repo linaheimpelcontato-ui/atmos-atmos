@@ -2,6 +2,7 @@ import React, { useRef } from "react";
 import { motion, useScroll, useTransform, animate, motionValue, useInView } from "framer-motion";
 import { storageUrl } from "@/lib/storage";
 const logoAtmos = storageUrl("home/logo-atmos.png");
+const flowerSymbol = storageUrl("home/flower-symbol.png");
 
 export default function AboutAtmosSection() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -100,7 +101,7 @@ export default function AboutAtmosSection() {
           {/* Background Watermark (Static/Rotating behind the text) */}
           <div className="absolute inset-0 flex items-center justify-center opacity-[0.05] pointer-events-none z-0">
             <motion.img
-              src={storageUrl("home/simboloatmos.png")}
+              src={flowerSymbol}
               alt="ATMOS Symbol"
               className="w-[220px] md:w-[320px] h-auto aspect-square object-contain invert"
               animate={{ rotate: 360 }}
@@ -134,8 +135,8 @@ export default function AboutAtmosSection() {
                   <div className="mx-8 md:mx-16 flex-shrink-0">
                     <motion.div
                       style={{
-                        maskImage: `url(${storageUrl("home/simboloatmos.png")})`,
-                        WebkitMaskImage: `url(${storageUrl("home/simboloatmos.png")})`,
+                        maskImage: `url(${flowerSymbol})`,
+                        WebkitMaskImage: `url(${flowerSymbol})`,
                         maskSize: 'contain',
                         WebkitMaskSize: 'contain',
                         maskRepeat: 'no-repeat',
@@ -234,8 +235,8 @@ export default function AboutAtmosSection() {
                         <div className="w-5 h-5 opacity-40">
                           <motion.div
                             style={{
-                              maskImage: `url(${storageUrl("home/simboloatmos.png")})`,
-                              WebkitMaskImage: `url(${storageUrl("home/simboloatmos.png")})`,
+                              maskImage: `url(${flowerSymbol})`,
+                              WebkitMaskImage: `url(${flowerSymbol})`,
                               maskSize: 'contain',
                               WebkitMaskSize: 'contain',
                               maskRepeat: 'no-repeat',
