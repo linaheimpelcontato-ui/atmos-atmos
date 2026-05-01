@@ -120,9 +120,9 @@ function NavLinks({ location, allowedModules, onNavigate }: { location: ReturnTy
                     key={link.path}
                     to={link.path}
                     onClick={onNavigate}
-                    className={`flex items-center gap-3.5 px-4 py-3 rounded-2xl text-[13.5px] font-bold transition-all duration-300 group ${
+                    className={`flex items-center gap-3.5 px-4 py-3 rounded-[1.25rem] text-[13.5px] font-bold transition-all duration-300 group ${
                       isActive
-                        ? "bg-admin-primary text-white shadow-xl shadow-admin-primary/20 scale-[1.02]"
+                        ? "bg-admin-primary text-white shadow-xl shadow-admin-primary/25 scale-[1.02]"
                         : "text-admin-primary/60 hover:bg-admin-muted hover:text-admin-primary hover:translate-x-1"
                     }`}
                   >
@@ -139,7 +139,7 @@ function NavLinks({ location, allowedModules, onNavigate }: { location: ReturnTy
         <Link
           to="/"
           onClick={onNavigate}
-          className="flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-admin-primary hover:bg-white transition-all duration-300 group"
+          className="flex items-center gap-3 px-4 py-3 rounded-[1.25rem] text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-admin-primary hover:bg-white transition-all duration-300 group"
         >
           <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
           Voltar ao site
@@ -208,7 +208,7 @@ export default function AdminLayout() {
           </button>
           <img src={logoAtmos} alt="ATMOS" className="h-6" />
         </div>
-        <div className="h-10 w-10 rounded-2xl bg-admin-primary flex items-center justify-center text-white shadow-lg shadow-admin-primary/20">
+        <div className="h-10 w-10 rounded-2xl bg-admin-primary flex items-center justify-center text-white shadow-lg shadow-admin-primary/30">
           <Shield className="h-5 w-5" />
         </div>
       </div>
@@ -232,25 +232,25 @@ export default function AdminLayout() {
       {/* Main content */}
       <main ref={mainRef} className="flex-1 flex flex-col overflow-hidden md:pt-0 pt-16 min-w-0 bg-admin-bg relative">
         {/* Glassmorphism Header */}
-        <header className="hidden md:flex sticky top-0 z-20 h-20 px-8 items-center justify-between bg-white/40 backdrop-blur-md border-b border-admin-border/40">
+        <header className="hidden md:flex sticky top-0 z-20 h-24 px-8 items-center justify-between bg-white/40 backdrop-blur-md border-b border-admin-border/40">
           <div className="flex items-center gap-4 flex-1">
             <div className="relative group max-w-md w-full">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-admin-primary" />
               <input 
                 type="text" 
                 placeholder="Buscar em todo o sistema..." 
-                className="w-full h-11 pl-11 pr-4 bg-admin-muted/50 border-none rounded-xl text-sm focus:ring-2 focus:ring-admin-primary/10 transition-all placeholder:text-muted-foreground/50"
+                className="w-full h-12 pl-11 pr-4 bg-admin-muted/50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-admin-primary/10 transition-all placeholder:text-muted-foreground/50 font-medium"
               />
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <button className="h-11 w-11 rounded-xl bg-white border border-admin-border/60 flex items-center justify-center text-muted-foreground hover:text-admin-primary transition-all relative">
+          <div className="flex items-center gap-4">
+            <button className="h-12 w-12 rounded-2xl bg-white border border-admin-border/60 flex items-center justify-center text-muted-foreground hover:text-admin-primary transition-all relative shadow-sm hover:shadow-md">
               <Bell className="h-5 w-5" />
-              <span className="absolute top-3 right-3 h-2 w-2 rounded-full bg-admin-primary border-2 border-white" />
+              <span className="absolute top-3.5 right-3.5 h-2 w-2 rounded-full bg-admin-primary border-2 border-white" />
             </button>
-            <div className="h-11 px-4 rounded-xl bg-white border border-admin-border/60 flex items-center gap-3 text-sm font-bold text-admin-primary">
-              <div className="h-7 w-7 rounded-lg bg-admin-muted flex items-center justify-center text-[10px] font-black">AD</div>
-              Administrador
+            <div className="h-12 px-4 rounded-2xl bg-white border border-admin-border/60 flex items-center gap-3 text-sm font-bold text-admin-primary shadow-sm">
+              <div className="h-8 w-8 rounded-xl bg-admin-muted flex items-center justify-center text-[10px] font-black">AD</div>
+              <span className="tracking-tight">Administrador</span>
             </div>
           </div>
         </header>

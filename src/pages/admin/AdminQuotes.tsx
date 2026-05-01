@@ -574,15 +574,15 @@ export default function AdminQuotes({ segment }: { segment: "b2c" | "b2b" }) {
 
 
       {/* Status filter pills */}
-      <div className="flex gap-2 mb-4 flex-wrap">
+      <div className="flex gap-2.5 mb-6 flex-wrap">
         {statusFilterButtons.map((btn) => (
           <button
             key={btn.value}
             onClick={() => setStatusFilter(btn.value)}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+            className={`px-6 py-2 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] border transition-all duration-300 ${
               statusFilter === btn.value
-                ? "bg-secondary text-secondary-foreground border-secondary"
-                : "bg-card text-foreground border-border hover:bg-muted"
+                ? "bg-admin-primary text-white border-admin-primary shadow-lg shadow-admin-primary/20 scale-105"
+                : "bg-white/50 backdrop-blur-sm text-admin-primary/60 border-admin-border/40 hover:bg-white hover:text-admin-primary hover:border-admin-primary/40"
             }`}
           >
             {btn.label}
@@ -591,13 +591,13 @@ export default function AdminQuotes({ segment }: { segment: "b2c" | "b2b" }) {
       </div>
 
       {/* Quick search */}
-      <div className="relative mb-4 max-w-sm">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <div className="relative mb-6 max-w-sm group">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60 group-focus-within:text-admin-primary transition-colors" />
         <Input
           placeholder="Buscar por nome, e-mail, telefone..."
           value={quickSearch}
           onChange={(e) => setQuickSearch(e.target.value)}
-          className="pl-9 h-9"
+          className="pl-11 h-12 bg-white/50 backdrop-blur-sm border-admin-border/40 rounded-2xl text-base font-semibold placeholder:text-muted-foreground/30 focus-visible:ring-admin-primary/10"
         />
       </div>
 
@@ -605,18 +605,18 @@ export default function AdminQuotes({ segment }: { segment: "b2c" | "b2b" }) {
       <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen} className="mb-6">
         <div className="flex items-center gap-3">
           <CollapsibleTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2">
-              <SlidersHorizontal className="h-4 w-4" />
+            <Button variant="outline" size="sm" className="h-10 px-5 rounded-xl border-admin-border/60 font-black text-[10px] uppercase tracking-widest gap-2 hover:bg-admin-muted transition-all">
+              <SlidersHorizontal className="h-3.5 w-3.5" />
               Filtros avançados
               {filtersOpen ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
             </Button>
           </CollapsibleTrigger>
           {activeFilterCount > 0 && (
             <>
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary text-primary-foreground">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-admin-primary text-white shadow-lg shadow-admin-primary/20 animate-in zoom-in-95 duration-300">
                 {activeFilterCount} {activeFilterCount === 1 ? "filtro ativo" : "filtros ativos"}
               </span>
-              <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1.5 text-muted-foreground h-8 px-2">
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1.5 text-muted-foreground/60 hover:text-red-500 hover:bg-red-50 font-black text-[10px] uppercase tracking-widest h-10 px-4 rounded-xl transition-all">
                 <X className="h-3.5 w-3.5" />
                 Limpar
               </Button>
@@ -747,37 +747,39 @@ export default function AdminQuotes({ segment }: { segment: "b2c" | "b2b" }) {
       </Collapsible>
 
       {/* Table */}
-      <div className="bg-card rounded-xl border border-border shadow-sm overflow-auto overscroll-x-contain max-h-[calc(100vh-340px)]">
+      <div className="bg-white/50 backdrop-blur-md rounded-[2rem] border border-admin-border/40 shadow-sm overflow-hidden relative">
+        <div className="overflow-auto overscroll-x-contain max-h-[calc(100vh-340px)]">
         <Table>
-          <TableHeader>
-            <TableRow>
-              <th className="p-3 w-10">
+          <TableHeader className="sticky top-0 z-20 bg-admin-muted/80 backdrop-blur-md border-b border-admin-border/40">
+            <TableRow className="hover:bg-transparent border-none">
+              <th className="p-6 w-12 text-center">
                 <Checkbox
                   checked={sortedLeads.length > 0 && sortedLeads.every(l => selection.isSelected(l.id))}
                   onCheckedChange={() => selection.toggleAll(sortedLeads.map(l => l.id))}
+                  className="rounded-md border-admin-border/60 data-[state=checked]:bg-admin-primary data-[state=checked]:border-admin-primary"
                 />
               </th>
-              <TableHead>Origem</TableHead>
-              <SmartTableHead label="Nome" sortKey="name" filterState={filterState} data={filteredLeads} />
-              <SmartTableHead label="E-mail" sortKey="email" filterState={filterState} data={filteredLeads} className="hidden md:table-cell" />
-              <TableHead className="hidden sm:table-cell">Telefone</TableHead>
-              <SmartTableHead label="Data" sortKey="created_at" filterState={filterState} data={filteredLeads} className="hidden md:table-cell" />
+              <SmartTableHead label="Origem" sortKey="origin" filterState={filterState} data={filteredLeads} className="text-admin-primary/40 font-black uppercase tracking-widest text-[10px] p-6" />
+              <SmartTableHead label="Nome" sortKey="name" filterState={filterState} data={filteredLeads} className="text-admin-primary/40 font-black uppercase tracking-widest text-[10px] p-6" />
+              <SmartTableHead label="E-mail" sortKey="email" filterState={filterState} data={filteredLeads} className="hidden md:table-cell text-admin-primary/40 font-black uppercase tracking-widest text-[10px] p-6" />
+              <TableHead className="hidden sm:table-cell text-admin-primary/40 font-black uppercase tracking-widest text-[10px] p-6">Telefone</TableHead>
+              <SmartTableHead label="Data" sortKey="created_at" filterState={filterState} data={filteredLeads} className="hidden md:table-cell text-admin-primary/40 font-black uppercase tracking-widest text-[10px] p-6" />
               {segment === "b2c" && (
                 <>
-                  <SmartTableHead label="Situação" sortKey="ans_status" filterState={filterState} data={filteredLeads} valueExtractor={(row: unknown) => { const a = getAnswers(row as UnifiedLead); return a.status || ""; }} className="hidden lg:table-cell" />
-                  <SmartTableHead label="Crianças" sortKey="ans_children" filterState={filterState} data={filteredLeads} valueExtractor={(row: unknown) => { const a = getAnswers(row as UnifiedLead); return a.children || ""; }} className="hidden lg:table-cell" />
-                  <SmartTableHead label="Mobilidade" sortKey="ans_mobility" filterState={filterState} data={filteredLeads} valueExtractor={(row: unknown) => { const a = getAnswers(row as UnifiedLead); return a.mobility || ""; }} className="hidden lg:table-cell" />
-                  <SmartTableHead label="Grupo" sortKey="ans_groupSize" filterState={filterState} data={filteredLeads} valueExtractor={(row: unknown) => { const a = getAnswers(row as UnifiedLead); return a.groupSize || ""; }} className="hidden lg:table-cell" />
-                  <SmartTableHead label="Período" sortKey="ans_startDate" filterState={filterState} data={filteredLeads} valueExtractor={(row: unknown) => { const a = getAnswers(row as UnifiedLead); return a.startDate || ""; }} className="hidden lg:table-cell" />
-                  <SmartTableHead label="Nº Diárias" sortKey="ans_numDays" filterState={filterState} data={filteredLeads} valueExtractor={(row: unknown) => { const a = getAnswers(row as UnifiedLead); return a.numDays || ""; }} className="hidden lg:table-cell" />
-                  <SmartTableHead label="Transporte" sortKey="ans_transport" filterState={filterState} data={filteredLeads} valueExtractor={(row: unknown) => { const a = getAnswers(row as UnifiedLead); return a.transport || ""; }} className="hidden lg:table-cell" />
-                  <SmartTableHead label="Hospedagem" sortKey="ans_hasAccommodation" filterState={filterState} data={filteredLeads} valueExtractor={(row: unknown) => { const a = getAnswers(row as UnifiedLead); return a.hasAccommodation || ""; }} className="hidden lg:table-cell" />
+                  <SmartTableHead label="Situação" sortKey="ans_status" filterState={filterState} data={filteredLeads} valueExtractor={(row: unknown) => { const a = getAnswers(row as UnifiedLead); return a.status || ""; }} className="hidden lg:table-cell text-admin-primary/40 font-black uppercase tracking-widest text-[10px] p-6" />
+                  <SmartTableHead label="Crianças" sortKey="ans_children" filterState={filterState} data={filteredLeads} valueExtractor={(row: unknown) => { const a = getAnswers(row as UnifiedLead); return a.children || ""; }} className="hidden lg:table-cell text-admin-primary/40 font-black uppercase tracking-widest text-[10px] p-6" />
+                  <SmartTableHead label="Mobilidade" sortKey="ans_mobility" filterState={filterState} data={filteredLeads} valueExtractor={(row: unknown) => { const a = getAnswers(row as UnifiedLead); return a.mobility || ""; }} className="hidden lg:table-cell text-admin-primary/40 font-black uppercase tracking-widest text-[10px] p-6" />
+                  <SmartTableHead label="Grupo" sortKey="ans_groupSize" filterState={filterState} data={filteredLeads} valueExtractor={(row: unknown) => { const a = getAnswers(row as UnifiedLead); return a.groupSize || ""; }} className="hidden lg:table-cell text-admin-primary/40 font-black uppercase tracking-widest text-[10px] p-6" />
+                  <SmartTableHead label="Período" sortKey="ans_startDate" filterState={filterState} data={filteredLeads} valueExtractor={(row: unknown) => { const a = getAnswers(row as UnifiedLead); return a.startDate || ""; }} className="hidden lg:table-cell text-admin-primary/40 font-black uppercase tracking-widest text-[10px] p-6" />
+                  <SmartTableHead label="Nº Diárias" sortKey="ans_numDays" filterState={filterState} data={filteredLeads} valueExtractor={(row: unknown) => { const a = getAnswers(row as UnifiedLead); return a.numDays || ""; }} className="hidden lg:table-cell text-admin-primary/40 font-black uppercase tracking-widest text-[10px] p-6" />
+                  <SmartTableHead label="Transporte" sortKey="ans_transport" filterState={filterState} data={filteredLeads} valueExtractor={(row: unknown) => { const a = getAnswers(row as UnifiedLead); return a.transport || ""; }} className="hidden lg:table-cell text-admin-primary/40 font-black uppercase tracking-widest text-[10px] p-6" />
+                  <SmartTableHead label="Hospedagem" sortKey="ans_hasAccommodation" filterState={filterState} data={filteredLeads} valueExtractor={(row: unknown) => { const a = getAnswers(row as UnifiedLead); return a.hasAccommodation || ""; }} className="hidden lg:table-cell text-admin-primary/40 font-black uppercase tracking-widest text-[10px] p-6" />
                 </>
               )}
               {segment === "b2b" && (
-                <TableHead className="hidden sm:table-cell">Info</TableHead>
+                <TableHead className="hidden sm:table-cell text-admin-primary/40 font-black uppercase tracking-widest text-[10px] p-6">Info</TableHead>
               )}
-              <SmartTableHead label="Status" sortKey="status" filterState={filterState} data={leads} labelMap={Object.fromEntries(Object.entries(statusConfig).map(([k, v]) => [k, v.label]))} />
+              <SmartTableHead label="Status" sortKey="status" filterState={filterState} data={leads} labelMap={Object.fromEntries(Object.entries(statusConfig).map(([k, v]) => [k, v.label]))} className="text-admin-primary/40 font-black uppercase tracking-widest text-[10px] p-6" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -867,6 +869,7 @@ export default function AdminQuotes({ segment }: { segment: "b2c" | "b2b" }) {
           </TableBody>
         </Table>
       </div>
+    </div>
 
       <BulkActionBar
         count={selection.count}

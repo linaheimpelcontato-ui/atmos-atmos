@@ -422,374 +422,471 @@ export default function AdminProposals({ segment }: { segment: "b2c" | "b2b" }) 
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-2">
-          <FileText className="h-5 w-5 text-primary" />
-          <h1 className="text-xl font-bold">Propostas {segment.toUpperCase()}</h1>
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="p-4 md:p-8 space-y-8 min-w-0"
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+        <div className="space-y-1">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-admin-primary/10">
+              <FileText className="h-6 w-6 text-admin-primary" />
+            </div>
+            <h1 className="text-3xl font-black tracking-tight text-admin-primary">Propostas {segment.toUpperCase()}</h1>
+          </div>
+          <p className="text-muted-foreground text-sm font-medium ml-14">Gestão de orçamentos e propostas comerciais</p>
         </div>
-        <div className="flex items-center gap-2">
+
+        <div className="flex items-center gap-3 ml-14 sm:ml-0">
           {totalPillCount > 0 && (
             <Popover>
               <PopoverTrigger asChild>
-                <Button size="sm" variant="destructive" className="uppercase font-bold tracking-wide text-xs gap-0 px-0 overflow-hidden">
-                  <span className="px-3">Alertas</span>
-                  <span className="border-l border-white/40 px-2.5 self-stretch flex items-center">{totalPillCount}</span>
+                <Button size="sm" variant="destructive" className="h-10 rounded-xl uppercase font-black tracking-widest text-[10px] gap-0 px-0 overflow-hidden shadow-lg shadow-destructive/20 transition-all hover:scale-105 active:scale-95">
+                  <span className="px-4">Alertas</span>
+                  <span className="bg-white/20 px-3 self-stretch flex items-center border-l border-white/20">{totalPillCount}</span>
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-72 p-0" align="end">
-                <ScrollArea className="max-h-80">
-                  {awaitingProspects.length > 0 && (
-                    <div className="p-2">
-                      <p className="text-xs font-semibold text-muted-foreground px-2 pb-1 flex items-center gap-1.5">
-                        <Plus className="h-3 w-3" /> Aguardando Orçamento
-                        <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold px-1">{awaitingProspects.length}</span>
-                      </p>
-                      {awaitingProspects.map((p) => (
-                        <button
-                          key={p.id}
-                          className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md hover:bg-muted text-sm transition-colors text-left"
-                          onClick={() => {
-                            setEditingId(null);
-                            setInitialProspectId(p.id);
-                            setDialogOpen(true);
-                          }}
-                        >
-                          <Plus className="h-3.5 w-3.5 text-primary shrink-0" />
-                          <span className="truncate">{p.name}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {feedbackGroups.changes.length > 0 && (
-                    <div className="p-2 border-t border-border">
-                      <p className="text-xs font-semibold text-muted-foreground px-2 pb-1 flex items-center gap-1.5">
-                        <PenLine className="h-3 w-3" /> Solicitações de Ajustes
-                      </p>
-                      {feedbackGroups.changes.map((f) => {
-                        const isExpanded = expandedFeedback === `change-${f.proposal_id}`;
-                        return (
-                          <div key={f.proposal_id}>
+              <PopoverContent className="w-80 p-0 rounded-[2rem] border-admin-border/60 shadow-2xl overflow-hidden" align="end">
+                <div className="bg-admin-primary/5 p-6 border-b border-admin-border/40">
+                  <p className="text-[10px] font-black uppercase tracking-[0.25em] text-admin-primary">Central de Atenção</p>
+                </div>
+                <ScrollArea className="max-h-[400px]">
+                  <div className="p-2 space-y-1">
+                    {awaitingProspects.length > 0 && (
+                      <div className="p-2">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 px-2 py-2 flex items-center gap-2">
+                          <Plus className="h-3 w-3" /> Aguardando Orçamento
+                        </p>
+                        {awaitingProspects.map((p) => (
+                          <button
+                            key={p.id}
+                            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-2xl hover:bg-admin-primary/5 text-sm transition-all text-left group"
+                            onClick={() => {
+                              setEditingId(null);
+                              setInitialProspectId(p.id);
+                              setDialogOpen(true);
+                            }}
+                          >
+                            <div className="h-8 w-8 rounded-xl bg-admin-primary/10 flex items-center justify-center group-hover:bg-admin-primary group-hover:text-white transition-colors">
+                              <Plus className="h-4 w-4" />
+                            </div>
+                            <span className="font-bold text-admin-primary truncate">{p.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {(feedbackGroups.changes.length > 0 || feedbackGroups.questions.length > 0) && (
+                      <div className="p-2 border-t border-admin-border/40">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 px-2 py-2 flex items-center gap-2">
+                          <MessageCircle className="h-3 w-3" /> Feedback do Cliente
+                        </p>
+                        
+                        {feedbackGroups.changes.map((f) => (
+                          <div key={f.proposal_id} className="mb-1">
                             <button
-                              className="flex items-center justify-between w-full px-2 py-1.5 rounded-md hover:bg-muted text-sm transition-colors text-left"
-                              onClick={() => setExpandedFeedback(isExpanded ? null : `change-${f.proposal_id}`)}
+                              className="flex items-center justify-between w-full px-3 py-2.5 rounded-2xl hover:bg-orange-500/5 text-sm transition-all text-left group"
+                              onClick={() => setExpandedFeedback(expandedFeedback === `change-${f.proposal_id}` ? null : `change-${f.proposal_id}`)}
                             >
-                              <span className="flex items-center gap-1.5 truncate">
-                                {isExpanded ? <ChevronUp className="h-3 w-3 shrink-0" /> : <ChevronDown className="h-3 w-3 shrink-0" />}
-                                <span className="truncate">{f.proposal_title}</span>
+                              <span className="font-bold text-orange-600 truncate flex items-center gap-2">
+                                <PenLine className="h-3.5 w-3.5" />
+                                {f.proposal_title}
                               </span>
-                              <span className="shrink-0 ml-2 inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-orange-500 text-white text-[10px] font-bold px-1">
-                                {f.count}
-                              </span>
+                              <Badge className="bg-orange-500 text-white border-none text-[10px] h-5 min-w-[20px] rounded-full">{f.count}</Badge>
                             </button>
-                            {isExpanded && (
-                              <div className="ml-6 mr-2 mb-2 space-y-1.5">
+                            {expandedFeedback === `change-${f.proposal_id}` && (
+                              <div className="mx-2 mb-2 p-3 space-y-2 bg-orange-500/[0.03] border border-orange-500/10 rounded-2xl">
                                 {f.messages.map((m) => (
-                                  <div key={m.id} className="rounded-md bg-muted/60 px-3 py-2 text-xs text-foreground">
-                                    <p>{m.content}</p>
-                                    <p className="text-[10px] text-muted-foreground mt-1">{new Date(m.created_at).toLocaleString("pt-BR")}</p>
+                                  <div key={m.id} className="text-[11px] leading-relaxed text-orange-900/80">
+                                    <p className="font-medium italic">"{m.content}"</p>
+                                    <p className="text-[9px] opacity-50 mt-1">{new Date(m.created_at).toLocaleString("pt-BR")}</p>
                                   </div>
                                 ))}
-                                <Button size="sm" variant="outline" className="w-full text-xs mt-1" onClick={() => { setEditingId(f.proposal_id); setInitialProspectId(null); setDialogOpen(true); }}>
-                                  <Pencil className="h-3 w-3 mr-1" /> Abrir Proposta
+                                <Button size="sm" variant="ghost" className="w-full text-[10px] font-black uppercase tracking-widest h-8 rounded-xl bg-orange-500/10 text-orange-600 hover:bg-orange-500 hover:text-white transition-all" onClick={() => { setEditingId(f.proposal_id); setInitialProspectId(null); setDialogOpen(true); }}>
+                                  Resolver Ajustes
                                 </Button>
                               </div>
                             )}
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                  {feedbackGroups.questions.length > 0 && (
-                    <div className="p-2 border-t border-border">
-                      <p className="text-xs font-semibold text-muted-foreground px-2 pb-1 flex items-center gap-1.5">
-                        <HelpCircle className="h-3 w-3" /> Dúvidas
-                      </p>
-                      {feedbackGroups.questions.map((f) => {
-                        const isExpanded = expandedFeedback === `question-${f.proposal_id}`;
-                        return (
-                          <div key={f.proposal_id}>
+                        ))}
+
+                        {feedbackGroups.questions.map((f) => (
+                          <div key={f.proposal_id} className="mb-1">
                             <button
-                              className="flex items-center justify-between w-full px-2 py-1.5 rounded-md hover:bg-muted text-sm transition-colors text-left"
-                              onClick={() => setExpandedFeedback(isExpanded ? null : `question-${f.proposal_id}`)}
+                              className="flex items-center justify-between w-full px-3 py-2.5 rounded-2xl hover:bg-blue-500/5 text-sm transition-all text-left group"
+                              onClick={() => setExpandedFeedback(expandedFeedback === `question-${f.proposal_id}` ? null : `question-${f.proposal_id}`)}
                             >
-                              <span className="flex items-center gap-1.5 truncate">
-                                {isExpanded ? <ChevronUp className="h-3 w-3 shrink-0" /> : <ChevronDown className="h-3 w-3 shrink-0" />}
-                                <span className="truncate">{f.proposal_title}</span>
+                              <span className="font-bold text-blue-600 truncate flex items-center gap-2">
+                                <HelpCircle className="h-3.5 w-3.5" />
+                                {f.proposal_title}
                               </span>
-                              <span className="shrink-0 ml-2 inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-blue-500 text-white text-[10px] font-bold px-1">
-                                {f.count}
-                              </span>
+                              <Badge className="bg-blue-500 text-white border-none text-[10px] h-5 min-w-[20px] rounded-full">{f.count}</Badge>
                             </button>
-                            {isExpanded && (
-                              <div className="ml-6 mr-2 mb-2 space-y-1.5">
+                            {expandedFeedback === `question-${f.proposal_id}` && (
+                              <div className="mx-2 mb-2 p-3 space-y-2 bg-blue-500/[0.03] border border-blue-500/10 rounded-2xl">
                                 {f.messages.map((m) => (
-                                  <div key={m.id} className="rounded-md bg-muted/60 px-3 py-2 text-xs text-foreground">
-                                    <p>{m.content}</p>
-                                    <p className="text-[10px] text-muted-foreground mt-1">{new Date(m.created_at).toLocaleString("pt-BR")}</p>
+                                  <div key={m.id} className="text-[11px] leading-relaxed text-blue-900/80">
+                                    <p className="font-medium italic">"{m.content}"</p>
+                                    <p className="text-[9px] opacity-50 mt-1">{new Date(m.created_at).toLocaleString("pt-BR")}</p>
                                   </div>
                                 ))}
-                                <Button size="sm" variant="outline" className="w-full text-xs mt-1" onClick={() => { setEditingId(f.proposal_id); setInitialProspectId(null); setDialogOpen(true); }}>
-                                  <Pencil className="h-3 w-3 mr-1" /> Abrir Proposta
+                                <Button size="sm" variant="ghost" className="w-full text-[10px] font-black uppercase tracking-widest h-8 rounded-xl bg-blue-500/10 text-blue-600 hover:bg-blue-500 hover:text-white transition-all" onClick={() => { setEditingId(f.proposal_id); setInitialProspectId(null); setDialogOpen(true); }}>
+                                  Responder Dúvida
                                 </Button>
                               </div>
                             )}
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                  {/* ── Status Alerts ── */}
-                  {totalAlertCount > 0 && (
-                    <div className="p-2 border-t border-border">
-                      <p className="text-xs font-semibold text-muted-foreground px-2 pb-1">Alertas de Status</p>
-                      {alertCounts.approvedNoDate > 0 && (
-                        <div className="flex items-center justify-between px-2 py-1.5 text-sm text-muted-foreground">
-                          <span>Aprovadas sem data</span>
-                          <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-amber-500 text-white text-[10px] font-bold px-1">{alertCounts.approvedNoDate}</span>
+                        ))}
+                      </div>
+                    )}
+
+                    {totalAlertCount > 0 && (
+                      <div className="p-2 border-t border-admin-border/40">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 px-2 py-2">Alertas Operacionais</p>
+                        <div className="space-y-1">
+                          {alertCounts.approvedNoDate > 0 && (
+                            <div className="flex items-center justify-between px-3 py-2 text-xs font-bold text-amber-600 bg-amber-500/5 rounded-xl">
+                              <span>Aprovadas sem data</span>
+                              <Badge className="bg-amber-500 border-none h-5 min-w-[20px] rounded-full">{alertCounts.approvedNoDate}</Badge>
+                            </div>
+                          )}
+                          {alertCounts.expired > 0 && (
+                            <div className="flex items-center justify-between px-3 py-2 text-xs font-bold text-red-600 bg-red-500/5 rounded-xl">
+                              <span>Propostas expiradas</span>
+                              <Badge className="bg-red-500 border-none h-5 min-w-[20px] rounded-full">{alertCounts.expired}</Badge>
+                            </div>
+                          )}
+                          {alertCounts.signedNoPayment > 0 && (
+                            <div className="flex items-center justify-between px-3 py-2 text-xs font-bold text-destructive bg-destructive/5 rounded-xl">
+                              <span>Assinadas sem pagamento</span>
+                              <Badge className="bg-destructive border-none h-5 min-w-[20px] rounded-full">{alertCounts.signedNoPayment}</Badge>
+                            </div>
+                          )}
                         </div>
-                      )}
-                      {alertCounts.approvedNoContract > 0 && (
-                        <div className="flex items-center justify-between px-2 py-1.5 text-sm text-muted-foreground">
-                          <span>Aprovadas sem contrato</span>
-                          <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-amber-500 text-white text-[10px] font-bold px-1">{alertCounts.approvedNoContract}</span>
-                        </div>
-                      )}
-                      {alertCounts.signedNoPayment > 0 && (
-                        <div className="flex items-center justify-between px-2 py-1.5 text-sm text-muted-foreground">
-                          <span>Contrato assinado s/ pgto</span>
-                          <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-bold px-1">{alertCounts.signedNoPayment}</span>
-                        </div>
-                      )}
-                      {alertCounts.sentNoReturn > 0 && (
-                        <div className="flex items-center justify-between px-2 py-1.5 text-sm text-muted-foreground">
-                          <span>Enviadas s/ retorno 7+ dias</span>
-                          <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-orange-500 text-white text-[10px] font-bold px-1">{alertCounts.sentNoReturn}</span>
-                        </div>
-                      )}
-                      {alertCounts.contractSentNotSigned > 0 && (
-                        <div className="flex items-center justify-between px-2 py-1.5 text-sm text-muted-foreground">
-                          <span>Contrato enviado s/ assinatura</span>
-                          <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-blue-500 text-white text-[10px] font-bold px-1">{alertCounts.contractSentNotSigned}</span>
-                        </div>
-                      )}
-                      {alertCounts.partialPayment > 0 && (
-                        <div className="flex items-center justify-between px-2 py-1.5 text-sm text-muted-foreground">
-                          <span>Pagamento parcial em aberto</span>
-                          <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-amber-500 text-white text-[10px] font-bold px-1">{alertCounts.partialPayment}</span>
-                        </div>
-                      )}
-                      {alertCounts.expired > 0 && (
-                        <div className="flex items-center justify-between px-2 py-1.5 text-sm text-muted-foreground">
-                          <span>Expiradas</span>
-                          <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-gray-500 text-white text-[10px] font-bold px-1">{alertCounts.expired}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                      </div>
+                    )}
+                  </div>
                 </ScrollArea>
               </PopoverContent>
             </Popover>
           )}
-          <Button size="sm" onClick={() => { setEditingId(null); setInitialProspectId(null); setDialogOpen(true); }}>
-            <Plus className="h-4 w-4 mr-1" /> Nova Proposta
+          
+          <Button 
+            onClick={() => { setEditingId(null); setInitialProspectId(null); setDialogOpen(true); }}
+            className="h-12 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] px-8 shadow-xl shadow-admin-primary/20 transition-all hover:scale-105 active:scale-95 bg-admin-primary hover:bg-admin-primary/90"
+          >
+            <Plus className="h-4 w-4 mr-2" /> Nova Proposta
           </Button>
         </div>
       </div>
 
-      <div className="flex gap-2 flex-wrap items-center">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar proposta, código ou prospect..." className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
+      {/* Filters Bar */}
+      <div className="flex flex-col sm:flex-row gap-4 items-center bg-white/60 backdrop-blur-md p-3 rounded-[2rem] border border-admin-border/40 shadow-sm">
+        <div className="relative flex-1 w-full">
+          <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
+          <Input 
+            placeholder="Buscar por código, título ou prospect..." 
+            className="pl-12 h-12 bg-transparent border-none focus-visible:ring-0 text-base font-semibold placeholder:text-muted-foreground/40" 
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos status</SelectItem>
-            {Object.entries(statusMap).map(([k, v]) => (
-              <SelectItem key={k} value={k}>{v.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <HiddenColumnsButton
-          columns={[
-            { key: "code", label: "Código" },
-            { key: "title", label: "Título" },
-            { key: "prospect_name", label: "Prospect" },
-            { key: "guide_name", label: "Guia" },
-            { key: "status", label: "Status" },
-            { key: "seller_name", label: "Vendedor" },
-            { key: "total", label: "Total (R$)" },
-            { key: "valid_until", label: "Validade" },
-          ]}
-          hiddenColumns={hiddenColumns}
-          showColumn={showColumn}
-          showAll={showAll}
-        />
+        
+        <div className="flex items-center gap-2 pr-2">
+          <div className="flex items-center bg-admin-muted/40 rounded-[1.25rem] p-1.5 gap-1.5">
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="h-10 border-none bg-transparent hover:bg-white/50 rounded-xl transition-colors min-w-[160px] font-black text-[10px] uppercase tracking-widest">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent className="rounded-2xl border-none shadow-2xl">
+                <SelectItem value="all" className="text-[10px] font-black uppercase tracking-widest">Todos Status</SelectItem>
+                {Object.entries(statusMap).map(([k, v]) => (
+                  <SelectItem key={k} value={k} className="text-[10px] font-black uppercase tracking-widest">{v.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <div className="w-px h-5 bg-admin-border/40 mx-1" />
+
+            <HiddenColumnsButton
+              columns={[
+                { key: "code", label: "Código" },
+                { key: "title", label: "Título" },
+                { key: "prospect_name", label: "Prospect" },
+                { key: "guide_name", label: "Guia" },
+                { key: "status", label: "Status" },
+                { key: "seller_name", label: "Vendedor" },
+                { key: "total", label: "Total (R$)" },
+                { key: "valid_until", label: "Validade" },
+              ]}
+              hiddenColumns={hiddenColumns}
+              showColumn={showColumn}
+              showAll={showAll}
+            />
+          </div>
+        </div>
       </div>
 
       {isLoading ? (
-        <p className="text-muted-foreground text-sm">Carregando...</p>
+        <div className="flex items-center justify-center h-64">
+          <p className="text-muted-foreground font-medium animate-pulse">Carregando propostas...</p>
+        </div>
       ) : (
         <TooltipProvider delayDuration={200}>
-        <div className="border border-border rounded-lg overflow-auto overscroll-x-contain max-h-[calc(100vh-280px)]">
-          <table className="w-full text-sm">
-            <thead className="bg-card sticky top-0 z-10">
-              <tr>
-                <th className="p-3 w-10">
-                  <Checkbox checked={allIds.length > 0 && allIds.every(id => selection.isSelected(id))} onCheckedChange={() => selection.toggleAll(allIds)} />
-                </th>
-                {!isHidden("code") && <SmartTh label="Código" sortKey="code" filterState={filterState} data={filtered} className="hidden md:table-cell" onHide={() => hideColumn("code")} />}
-                {!isHidden("title") && <SmartTh label="Título" sortKey="title" filterState={filterState} data={filtered} onHide={() => hideColumn("title")} />}
-                {!isHidden("prospect_name") && <SmartTh label="Prospect" sortKey="prospect_name" filterState={filterState} data={filtered} className="hidden sm:table-cell" onHide={() => hideColumn("prospect_name")} />}
-                {!isHidden("status") && <SmartTh label="Status" sortKey="status" filterState={filterState} data={proposals} labelMap={Object.fromEntries(Object.entries(statusMap).map(([k, v]) => [k, v.label]))} onHide={() => hideColumn("status")} />}
-                {!isHidden("guide_name") && <SmartTh label="Guia" sortKey="guide_name" filterState={filterState} data={filtered} className="hidden lg:table-cell" onHide={() => hideColumn("guide_name")} />}
-                {!isHidden("seller_name") && <SmartTh label="Vendedor" sortKey="seller_name" filterState={filterState} data={filtered} className="hidden lg:table-cell" onHide={() => hideColumn("seller_name")} />}
-                {!isHidden("total") && <SmartTh label="Total (R$)" sortKey="total" filterState={filterState} data={filtered} className="text-right" onHide={() => hideColumn("total")} />}
-                {!isHidden("valid_until") && <SmartTh label="Validade" sortKey="valid_until" filterState={filterState} data={filtered} className="hidden md:table-cell" onHide={() => hideColumn("valid_until")} />}
-                <th className="p-3 w-20 md:w-32" />
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((p) => {
-                const st = statusMap[p.status] || statusMap.draft;
-                const proposalLink = getProposalLink(p);
-                return (
-                  <tr
-                    key={p.id}
-                    className={`border-t border-border hover:bg-muted/30 cursor-pointer ${selection.isSelected(p.id) ? "bg-primary/5" : ""}`}
-                    onClick={() => { setEditingId(p.id); setInitialProspectId(null); setDialogOpen(true); }}
-                  >
-                    <td className="p-3" onClick={(e) => e.stopPropagation()}>
-                      <Checkbox checked={selection.isSelected(p.id)} onCheckedChange={() => selection.toggle(p.id)} />
-                    </td>
-                    {!isHidden("code") && <td className="p-3 font-mono text-xs text-muted-foreground hidden md:table-cell">{p.code || "—"}</td>}
-                    {!isHidden("title") && <td className="p-3 font-medium max-w-[160px] truncate">{p.title}</td>}
-                    {!isHidden("prospect_name") && <td className="p-3 text-muted-foreground hidden sm:table-cell">{p.prospect_name || "—"}</td>}
-                    {!isHidden("status") && <td className="p-3">
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-1.5">
-                          <Badge className={st.color}>{st.label}</Badge>
-                          {feedbackCounts[p.id] && feedbackCounts[p.id] > 0 && (
-                            <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-bold px-1">
-                              {feedbackCounts[p.id]}
-                            </span>
-                          )}
-                        </div>
-                        {p.contract_status && (() => {
-                          const cs = contractStatusMap[p.contract_status];
-                          return cs ? <Badge className={`${cs.color} text-[10px] px-1.5 py-0`}>{cs.label}</Badge> : null;
-                        })()}
-                        {p.payment_status && (() => {
-                          const ps = paymentStatusMap[p.payment_status];
-                          return ps ? <Badge className={`${ps.color} text-[10px] px-1.5 py-0`}>{ps.label}</Badge> : null;
-                        })()}
-                      </div>
-                    </td>}
-                    {!isHidden("guide_name") && <td className="p-3 text-muted-foreground hidden lg:table-cell">{(p as any).guide_name || "—"}</td>}
-                    {!isHidden("seller_name") && <td className="p-3 text-muted-foreground hidden lg:table-cell">{p.seller_name || "—"}</td>}
-                    {!isHidden("total") && <td className="p-3 text-right font-medium">{Number(p.total).toFixed(2)}</td>}
-                    {!isHidden("valid_until") && <td className="p-3 text-muted-foreground hidden md:table-cell">
-                      {p.valid_until ? new Date(p.valid_until).toLocaleDateString("pt-BR") : "—"}
-                    </td>}
-                    <td className="p-3" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex gap-1 justify-end flex-wrap">
-                        {proposalLink && (
-                          <>
+          <div className="bg-white/50 backdrop-blur-sm rounded-[2rem] border border-admin-border/60 shadow-sm overflow-hidden transition-all duration-500">
+            <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-320px)] scrollbar-thin scrollbar-thumb-admin-border/40">
+              <table className="w-full text-sm border-collapse">
+                <thead className="sticky top-0 z-20">
+                  <tr className="bg-admin-muted/80 backdrop-blur-md border-b border-admin-border/40">
+                    <th className="p-6 w-12 text-center">
+                      <Checkbox 
+                        checked={allIds.length > 0 && allIds.every(id => selection.isSelected(id))} 
+                        onCheckedChange={() => selection.toggleAll(allIds)} 
+                        className="rounded-md border-admin-border/60 data-[state=checked]:bg-admin-primary data-[state=checked]:border-admin-primary"
+                      />
+                    </th>
+                    {!isHidden("code") && (
+                      <SmartTh 
+                        label="Cód" 
+                        sortKey="code" 
+                        filterState={filterState} 
+                        data={filtered} 
+                        className="p-4 font-black text-[10px] uppercase tracking-widest text-admin-primary/60 hidden md:table-cell" 
+                        onHide={() => hideColumn("code")} 
+                      />
+                    )}
+                    {!isHidden("title") && (
+                      <SmartTh 
+                        label="Título" 
+                        sortKey="title" 
+                        filterState={filterState} 
+                        data={filtered} 
+                        className="p-4 font-black text-[10px] uppercase tracking-widest text-admin-primary/60" 
+                        onHide={() => hideColumn("title")} 
+                      />
+                    )}
+                    {!isHidden("prospect_name") && (
+                      <SmartTh 
+                        label="Prospect" 
+                        sortKey="prospect_name" 
+                        filterState={filterState} 
+                        data={filtered} 
+                        className="p-4 font-black text-[10px] uppercase tracking-widest text-admin-primary/60 hidden sm:table-cell" 
+                        onHide={() => hideColumn("prospect_name")} 
+                      />
+                    )}
+                    {!isHidden("status") && (
+                      <SmartTh 
+                        label="Status" 
+                        sortKey="status" 
+                        filterState={filterState} 
+                        data={proposals} 
+                        labelMap={Object.fromEntries(Object.entries(statusMap).map(([k, v]) => [k, v.label]))} 
+                        className="p-4 font-black text-[10px] uppercase tracking-widest text-admin-primary/60" 
+                        onHide={() => hideColumn("status")} 
+                      />
+                    )}
+                    {!isHidden("total") && (
+                      <SmartTh 
+                        label="Total" 
+                        sortKey="total" 
+                        filterState={filterState} 
+                        data={filtered} 
+                        className="p-4 font-black text-[10px] uppercase tracking-widest text-admin-primary/60 text-right" 
+                        onHide={() => hideColumn("total")} 
+                      />
+                    )}
+                    {!isHidden("valid_until") && (
+                      <SmartTh 
+                        label="Validade" 
+                        sortKey="valid_until" 
+                        filterState={filterState} 
+                        data={filtered} 
+                        className="p-4 font-black text-[10px] uppercase tracking-widest text-admin-primary/60 hidden md:table-cell" 
+                        onHide={() => hideColumn("valid_until")} 
+                      />
+                    )}
+                        <th className="p-6 w-20 md:w-32" />
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-admin-border/20">
+                  {filtered.map((p) => {
+                    const st = statusMap[p.status] || statusMap.draft;
+                    const proposalLink = getProposalLink(p);
+                    const isSelected = selection.isSelected(p.id);
+
+                    return (
+                      <tr
+                        key={p.id}
+                        className={`group transition-all duration-200 cursor-pointer ${isSelected ? "bg-admin-primary/[0.04]" : "hover:bg-admin-muted/30"}`}
+                        onClick={() => { setEditingId(p.id); setInitialProspectId(null); setDialogOpen(true); }}
+                      >
+                        <td className="p-6 text-center" onClick={(e) => e.stopPropagation()}>
+                          <Checkbox 
+                            checked={isSelected} 
+                            onCheckedChange={() => selection.toggle(p.id)} 
+                            className="rounded-md border-admin-border/60 data-[state=checked]:bg-admin-primary data-[state=checked]:border-admin-primary"
+                          />
+                        </td>
+                        {!isHidden("code") && (
+                          <td className="p-6 font-mono text-[10px] font-black tracking-widest text-admin-primary/30 hidden md:table-cell">
+                            {p.code || "—"}
+                          </td>
+                        )}
+                        {!isHidden("title") && (
+                          <td className="p-6">
+                            <p className="font-black text-admin-primary text-sm leading-tight group-hover:translate-x-1 transition-transform tracking-tight">{p.title}</p>
+                            {p.seller_name && <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted-foreground/40 mt-1">Resp: {p.seller_name}</p>}
+                          </td>
+                        )}
+                        {!isHidden("prospect_name") && (
+                          <td className="p-6 hidden sm:table-cell">
+                            <p className="text-xs font-black text-admin-primary/80 uppercase tracking-wide">{p.prospect_name || "—"}</p>
+                            {p.prospect_phone && <p className="text-[10px] font-medium text-muted-foreground/40 mt-0.5 tracking-tight">{p.prospect_phone}</p>}
+                          </td>
+                        )}
+                        {!isHidden("status") && (
+                          <td className="p-6">
+                            <div className="flex flex-col gap-2">
+                              <div className="flex items-center gap-2">
+                                <Badge className={`text-[9px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-lg border-none shadow-sm ${st.color}`}>
+                                  {st.label}
+                                </Badge>
+                                {feedbackCounts[p.id] && feedbackCounts[p.id] > 0 && (
+                                  <Badge className="bg-red-500 text-white border-none text-[9px] font-black h-5 min-w-[20px] px-1 rounded-full animate-pulse shadow-lg shadow-red-500/20">
+                                    {feedbackCounts[p.id]}
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="flex flex-wrap gap-1">
+                                {p.contract_status && contractStatusMap[p.contract_status] && (
+                                  <Badge className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md border-none opacity-80 ${contractStatusMap[p.contract_status].color}`}>
+                                    {contractStatusMap[p.contract_status].label}
+                                  </Badge>
+                                )}
+                                {p.payment_status && paymentStatusMap[p.payment_status] && (
+                                  <Badge className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md border-none opacity-80 ${paymentStatusMap[p.payment_status].color}`}>
+                                    {paymentStatusMap[p.payment_status].label}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                        )}
+                        {!isHidden("total") && (
+                          <td className="p-6 text-right">
+                            <p className="font-black text-admin-primary text-sm tracking-tight">
+                              {Number(p.total).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                            </p>
+                          </td>
+                        )}
+                        {!isHidden("valid_until") && (
+                          <td className="p-6 text-muted-foreground/60 text-xs hidden md:table-cell font-black uppercase tracking-widest">
+                            {p.valid_until ? new Date(p.valid_until).toLocaleDateString("pt-BR") : "—"}
+                          </td>
+                        )}
+                        <td className="p-6" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                            {proposalLink && (
+                              <>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg hover:bg-admin-primary/10" asChild>
+                                      <a href={getProposalPath(p)} target="_blank" rel="noopener noreferrer">
+                                        <ExternalLink className="h-3.5 w-3.5 text-admin-primary" />
+                                      </a>
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Ver proposta</TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg hover:bg-admin-primary/10" onClick={() => {
+                                      navigator.clipboard.writeText(proposalLink);
+                                      setCopiedId(p.id);
+                                      setTimeout(() => setCopiedId(null), 2000);
+                                    }}>
+                                      {copiedId === p.id ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5 text-admin-primary" />}
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>{copiedId === p.id ? "Copiado!" : "Copiar link"}</TooltipContent>
+                                </Tooltip>
+                                <WhatsAppButton proposal={p} prospectPhone={p.prospect_phone || null} prospectId={p.prospect_id} />
+                              </>
+                            )}
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <Button size="icon" variant="ghost" className="hidden sm:inline-flex" asChild>
-                                  <a href={getProposalPath(p)} target="_blank" rel="noopener noreferrer">
-                                    <ExternalLink className="h-3.5 w-3.5" />
-                                  </a>
+                                <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg hover:bg-admin-primary/10" onClick={() => { setEditingId(p.id); setInitialProspectId(null); setDialogOpen(true); }}>
+                                  <Pencil className="h-3.5 w-3.5 text-admin-primary" />
                                 </Button>
                               </TooltipTrigger>
-                              <TooltipContent>Ver proposta do cliente</TooltipContent>
+                              <TooltipContent>Editar orçamento</TooltipContent>
                             </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button size="icon" variant="ghost" className="hidden sm:inline-flex" onClick={() => {
-                                  navigator.clipboard.writeText(proposalLink);
-                                  setCopiedId(p.id);
-                                  setTimeout(() => setCopiedId(null), 2000);
-                                }}>
-                                  {copiedId === p.id ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>{copiedId === p.id ? "Copiado!" : "Copiar link"}</TooltipContent>
-                            </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span><WhatsAppButton proposal={p} prospectPhone={p.prospect_phone || null} prospectId={p.prospect_id} /></span>
-                              </TooltipTrigger>
-                              <TooltipContent>Enviar via WhatsApp</TooltipContent>
-                            </Tooltip>
-                          </>
-                        )}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button size="icon" variant="ghost" onClick={() => { setEditingId(p.id); setInitialProspectId(null); setDialogOpen(true); }}>
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Editar orçamento</TooltipContent>
-                        </Tooltip>
-                        {(p.slug || p.share_token) && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button size="icon" variant="ghost" className="hidden md:inline-flex" onClick={() => navigate(`${getProposalPath(p)}?edit=1`)}>
-                                <Eye className="h-3.5 w-3.5" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Editar proposta visual</TooltipContent>
-                          </Tooltip>
-                        )}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
+                            
                             <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button size="icon" variant="ghost" className="text-destructive">
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <AlertDialogTrigger asChild>
+                                    <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg hover:bg-destructive/10 text-destructive">
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                </TooltipTrigger>
+                                <TooltipContent>Excluir proposta</TooltipContent>
+                              </Tooltip>
+                              <AlertDialogContent className="rounded-[2rem] border-admin-border/60">
                                 <AlertDialogHeader>
-                                  <AlertDialogTitle>Remover Proposta?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Esta ação não pode ser desfeita. Isso excluirá permanentemente a proposta <strong>{p.title}</strong> e todos os itens relacionados.
+                                  <AlertDialogTitle className="text-xl font-black text-admin-primary">Confirmar Exclusão?</AlertDialogTitle>
+                                  <AlertDialogDescription className="text-sm font-medium">
+                                    Esta ação é permanente e removerá a proposta <span className="font-bold text-admin-primary">{p.title}</span> do sistema.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogCancel className="rounded-xl border-admin-border/60 font-bold">Cancelar</AlertDialogCancel>
                                   <AlertDialogAction 
                                     onClick={() => deleteMutation.mutate(p.id)}
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    className="bg-destructive text-white hover:bg-destructive/90 rounded-xl font-bold"
                                   >
-                                    {deleteMutation.isPending ? "Removendo..." : "Excluir"}
+                                    Excluir Definitivamente
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
                               </AlertDialogContent>
                             </AlertDialog>
-                          </TooltipTrigger>
-                          <TooltipContent>Remover proposta</TooltipContent>
-                        </Tooltip>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={8} className="p-6 text-center text-muted-foreground">Nenhuma proposta encontrada</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {filtered.length === 0 && (
+                    <tr>
+                      <td colSpan={10} className="p-20 text-center">
+                        <div className="flex flex-col items-center gap-3">
+                          <div className="p-4 rounded-full bg-admin-muted/40">
+                            <Search className="h-8 w-8 text-admin-primary/20" />
+                          </div>
+                          <p className="text-muted-foreground font-bold tracking-tight">Nenhuma proposta encontrada com os filtros atuais.</p>
+                          <Button variant="ghost" className="text-xs font-black uppercase tracking-widest text-admin-primary" onClick={() => { setSearch(""); setFilterStatus("all"); filterState.clearFilters(); }}>Limpar Filtros</Button>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </TooltipProvider>
       )}
 
-      <BulkActionBar count={selection.count} onClear={selection.clear} onDelete={handleBulkDelete} onExport={handleBulkExport} onDuplicate={handleBulkDuplicate} bulkFields={BULK_FIELDS} onBulkUpdate={handleBulkUpdate} />
+      <BulkActionBar 
+        count={selection.count} 
+        onClear={selection.clear} 
+        onDelete={handleBulkDelete} 
+        onExport={handleBulkExport} 
+        onDuplicate={handleBulkDuplicate} 
+        bulkFields={BULK_FIELDS} 
+        onBulkUpdate={handleBulkUpdate} 
+      />
 
       <ProposalFormDialog
         open={dialogOpen}
@@ -798,6 +895,6 @@ export default function AdminProposals({ segment }: { segment: "b2c" | "b2b" }) 
         segment={segment}
         initialProspectId={initialProspectId}
       />
-    </div>
+    </motion.div>
   );
 }

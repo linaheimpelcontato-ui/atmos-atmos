@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -607,93 +608,126 @@ export default function AdminProspects({ segment }: AdminProspectsProps) {
   // ─── Render ───────────────────────────────────────────────────────
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <h1 className="text-xl font-bold">Clientes {segment === "b2c" ? "B2C" : "B2B"}</h1>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={resetColumns}>
-            <RotateCcw className="h-4 w-4 mr-1" /> Resetar colunas
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="p-4 md:p-8 space-y-8 min-w-0"
+    >
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-black tracking-tight text-admin-primary">
+            Clientes {segment === "b2c" ? "B2C" : "B2B"}
+          </h1>
+          <p className="text-muted-foreground text-sm font-medium">Gestão estratégica de base de leads e clientes</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" onClick={resetColumns} className="rounded-xl font-bold text-xs border-admin-border/60 hover:bg-admin-muted">
+            <RotateCcw className="h-3.5 w-3.5 mr-2 opacity-60" /> Resetar
           </Button>
-          <Button variant="outline" size="sm" onClick={exportCSV}>
-            <Download className="h-4 w-4 mr-1" /> CSV
+          <Button variant="outline" size="sm" onClick={exportCSV} className="rounded-xl font-bold text-xs border-admin-border/60 hover:bg-admin-muted">
+            <Download className="h-3.5 w-3.5 mr-2 opacity-60" /> Exportar
           </Button>
-          <Button onClick={handleCreateAndOpen} size="sm">
-            <Plus className="h-4 w-4 mr-1" /> Novo Cliente
+          <Button onClick={handleCreateAndOpen} size="sm" className="h-10 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] px-6 shadow-xl shadow-admin-primary/20 bg-admin-primary hover:bg-admin-primary/90">
+            <Plus className="h-3.5 w-3.5 mr-2" /> Novo Cliente
           </Button>
         </div>
       </div>
 
-      {/* Search */}
-      <div className="flex flex-wrap gap-2 items-center">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar nome, email, telefone, tags..." className="pl-8 h-9" />
+      {/* Search & Filters Bar */}
+      <div className="flex flex-col sm:flex-row gap-4 items-center bg-white/50 backdrop-blur-sm p-2 rounded-[2rem] border border-admin-border/40 shadow-sm">
+        <div className="relative flex-1 w-full">
+          <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
+          <Input 
+            value={search} 
+            onChange={e => setSearch(e.target.value)} 
+            placeholder="Buscar nome, email, telefone, tags..." 
+            className="pl-12 h-12 bg-transparent border-none focus-visible:ring-0 text-base font-semibold placeholder:text-muted-foreground/30" 
+          />
         </div>
-        <HiddenColumnsButton
-          columns={availableColumns.map(c => ({ key: c.key, label: c.label }))}
-          hiddenColumns={hiddenColumns}
-          showColumn={showColumn}
-          showAll={showAllColumns}
-        />
-        {Object.keys(filterState.filters).length > 0 && (
-          <Button variant="ghost" size="sm" className="h-9 text-xs text-muted-foreground" onClick={filterState.clearAll}>
-            <X className="h-3.5 w-3.5 mr-1" /> Limpar todos filtros
-          </Button>
+        <div className="flex items-center gap-2 pr-2">
+          <HiddenColumnsButton
+            columns={availableColumns.map(c => ({ key: c.key, label: c.label }))}
+            hiddenColumns={hiddenColumns}
+            showColumn={showColumn}
+            showAll={showAllColumns}
+          />
+          {Object.keys(filterState.filters).length > 0 && (
+            <Button variant="ghost" size="sm" className="h-10 rounded-xl text-xs font-bold text-destructive hover:bg-destructive/5" onClick={filterState.clearAll}>
+              <X className="h-3.5 w-3.5 mr-2" /> Limpar Filtros
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Table Container */}
+      <div className="bg-white/50 backdrop-blur-sm rounded-[2rem] border border-admin-border/60 shadow-sm overflow-hidden relative">
+        {loading ? (
+          <div className="py-24 text-center">
+            <RotateCcw className="h-8 w-8 text-admin-primary/20 animate-spin mx-auto mb-4" />
+            <p className="text-sm font-bold text-muted-foreground/60 uppercase tracking-widest">Carregando base de clientes...</p>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="py-24 text-center">
+            <Search className="h-8 w-8 text-admin-primary/20 mx-auto mb-4" />
+            <p className="text-sm font-bold text-muted-foreground/60 uppercase tracking-widest">Nenhum cliente encontrado</p>
+          </div>
+        ) : (
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <div className="overflow-x-auto overflow-y-auto max-h-[70vh] overscroll-x-contain scrollbar-thin scrollbar-thumb-admin-border/40 scrollbar-track-transparent">
+              <Table>
+                <TableHeader className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-admin-border/40">
+                  <SortableContext items={orderedColumns.map(c => c.key)} strategy={horizontalListSortingStrategy}>
+                    <TableRow className="hover:bg-transparent border-none">
+                      <th className="p-6 w-12 text-center bg-transparent">
+                        <Checkbox
+                          checked={allIds.length > 0 && allIds.every(id => selection.isSelected(id))}
+                          onCheckedChange={() => selection.toggleAll(allIds)}
+                          className="rounded-md border-admin-border/60 data-[state=checked]:bg-admin-primary data-[state=checked]:border-admin-primary"
+                        />
+                      </th>
+                      {orderedColumns.map(col => (
+                        <SortableSmartTableHead
+                          key={col.key}
+                          id={col.key}
+                          label={col.label}
+                          sortKey={col.key}
+                          filterState={filterState}
+                          data={filtered}
+                          valueExtractor={col.valueExtractor as any}
+                          labelMap={col.labelMap}
+                          onHide={() => hideColumn(col.key)}
+                        />
+                      ))}
+                    </TableRow>
+                  </SortableContext>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((p: Record<string, unknown>) => (
+                    <TableRow 
+                      key={p.id as string} 
+                      className={`group cursor-pointer transition-colors duration-200 border-b border-admin-border/20 ${selection.isSelected(p.id as string) ? "bg-admin-primary/[0.03]" : "hover:bg-admin-muted/40"}`}
+                    >
+                      <TableCell className="w-12 text-center p-6" onClick={e => e.stopPropagation()}>
+                        <Checkbox 
+                          checked={selection.isSelected(p.id as string)} 
+                          onCheckedChange={() => selection.toggle(p.id as string)} 
+                          className="rounded-md border-admin-border/60 data-[state=checked]:bg-admin-primary data-[state=checked]:border-admin-primary"
+                        />
+                      </TableCell>
+                      {orderedColumns.map(col => (
+                        <TableCell key={col.key} className="text-nowrap p-6" onClick={() => setSelectedProspectId(p.id as string)}>
+                          {col.render(p, stages)}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </DndContext>
         )}
       </div>
-
-      {/* Table */}
-      {loading ? (
-        <p className="text-sm text-muted-foreground py-8 text-center">Carregando...</p>
-      ) : filtered.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-8 text-center">Nenhum cliente encontrado.</p>
-      ) : (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <div className="rounded-lg border border-border overflow-x-auto overscroll-x-contain">
-          <Table>
-            <TableHeader>
-                <SortableContext items={orderedColumns.map(c => c.key)} strategy={horizontalListSortingStrategy}>
-                  <TableRow>
-                    <th className="p-3 w-10">
-                      <Checkbox
-                        checked={allIds.length > 0 && allIds.every(id => selection.isSelected(id))}
-                        onCheckedChange={() => selection.toggleAll(allIds)}
-                      />
-                    </th>
-                    {orderedColumns.map(col => (
-                      <SortableSmartTableHead
-                        key={col.key}
-                        id={col.key}
-                        label={col.label}
-                        sortKey={col.key}
-                        filterState={filterState}
-                        data={filtered}
-                        valueExtractor={col.valueExtractor as any}
-                        labelMap={col.labelMap}
-                        onHide={() => hideColumn(col.key)}
-                      />
-                    ))}
-                  </TableRow>
-                </SortableContext>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((p: Record<string, unknown>) => (
-                <TableRow key={p.id as string} className={`cursor-pointer hover:bg-muted/60 ${selection.isSelected(p.id as string) ? "bg-primary/5" : ""}`}>
-                  <TableCell className="w-10" onClick={e => e.stopPropagation()}>
-                    <Checkbox checked={selection.isSelected(p.id as string)} onCheckedChange={() => selection.toggle(p.id as string)} />
-                  </TableCell>
-                  {orderedColumns.map(col => (
-                    <TableCell key={col.key} className="text-nowrap" onClick={() => setSelectedProspectId(p.id as string)}>
-                      {col.render(p, stages)}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-        </DndContext>
-      )}
 
       <BulkActionBar
         count={selection.count}
@@ -712,6 +746,6 @@ export default function AdminProspects({ segment }: AdminProspectsProps) {
         segment={segment}
         onUpdated={fetchProspects}
       />
-    </div>
+    </motion.div>
   );
 }

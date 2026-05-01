@@ -35,6 +35,11 @@ export const MAP_R2_PATH = (path: string): string => {
 
 /** Returns the public URL for a storage asset */
 export function storageUrl(path: string, provider: 'supabase' | 'r2' = 'r2'): string {
+  // Priority 1: Local assets for core branding (reliable and instant)
+  if (path.startsWith("home/")) {
+    return `/assets/${path}`;
+  }
+
   // Respect user request: 100% Cloudflare R2
   if (R2_DOMAIN) {
     const cleanDomain = R2_DOMAIN.replace(/\/$/, ""); 

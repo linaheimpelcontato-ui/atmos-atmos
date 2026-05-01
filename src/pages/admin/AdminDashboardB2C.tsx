@@ -1,25 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
-import { Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import {
-  Users, TrendingUp, Clock, DollarSign, Target, ArrowRight,
-  AlertCircle, BarChart3, Filter, Instagram, Globe, MessageCircle,
-  UserPlus, Award, MapPin, Calendar as CalIcon
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend, LineChart, Line, AreaChart, Area
-} from "recharts";
-import { format, subDays, subMonths, startOfMonth, endOfMonth, isBefore, isAfter, addDays, differenceInDays, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow
-} from "@/components/ui/table";
+import { motion, AnimatePresence } from "framer-motion";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any;
@@ -316,146 +295,166 @@ export default function AdminDashboardB2C() {
     return Array.from(set).sort();
   }, [prospects]);
 
-  const CHART_COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", "#6366F1"];
-
   if (loading) {
     return (
       <div className="p-4 md:p-8 flex items-center justify-center min-h-[60vh]">
-        <div className="text-muted-foreground animate-pulse">Carregando dashboard...</div>
+        <RotateCcw className="h-8 w-8 text-admin-primary/20 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="p-4 md:p-8 space-y-6">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="p-4 md:p-8 space-y-8"
+    >
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Dashboard B2C</h1>
-          <p className="text-muted-foreground mt-1">Análise completa do pipeline de turistas</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+        <div className="space-y-1">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-admin-primary/10">
+              <BarChart3 className="h-6 w-6 text-admin-primary" />
+            </div>
+            <h1 className="text-3xl font-black tracking-tight text-admin-primary">Dashboard B2C</h1>
+          </div>
+          <p className="text-muted-foreground text-sm font-medium ml-14">Análise completa do pipeline de turistas e performance comercial</p>
         </div>
       </div>
 
-      {/* Filters */}
-      <Card className="shadow-sm">
-        <CardContent className="pt-6">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <Filter className="h-4 w-4" /> Filtros:
-            </div>
-            <Select value={period} onValueChange={setPeriod}>
-              <SelectTrigger className="w-[130px] h-9 text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PERIOD_PRESETS.map(p => (
-                  <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={sourceFilter} onValueChange={setSourceFilter}>
-              <SelectTrigger className="w-[140px] h-9 text-sm">
-                <SelectValue placeholder="Origem" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas origens</SelectItem>
-                {uniqueSources.map(s => (
-                  <SelectItem key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={sellerFilter} onValueChange={setSellerFilter}>
-              <SelectTrigger className="w-[160px] h-9 text-sm">
-                <SelectValue placeholder="Vendedor" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos vendedores</SelectItem>
-                {sellers.map((s: Seller) => (
-                  <SelectItem key={s.id as string} value={s.id as string}>{s.name as string}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Filters Bar */}
+      <div className="flex flex-wrap items-center gap-3 bg-white/50 backdrop-blur-sm p-3 rounded-[2rem] border border-admin-border/40 shadow-sm">
+        <div className="flex items-center gap-2 px-3 border-r border-admin-border/20 mr-2 h-10">
+          <Filter className="h-4 w-4 text-admin-primary/40" />
+          <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Filtros</span>
+        </div>
+        
+        <Select value={period} onValueChange={setPeriod}>
+          <SelectTrigger className="w-[130px] h-10 rounded-xl border-admin-border/40 bg-white/50 font-bold text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="rounded-2xl border-admin-border/40 shadow-xl">
+            {PERIOD_PRESETS.map(p => (
+              <SelectItem key={p.value} value={p.value} className="rounded-xl font-bold text-xs">{p.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={sourceFilter} onValueChange={setSourceFilter}>
+          <SelectTrigger className="w-[140px] h-10 rounded-xl border-admin-border/40 bg-white/50 font-bold text-xs">
+            <SelectValue placeholder="Origem" />
+          </SelectTrigger>
+          <SelectContent className="rounded-2xl border-admin-border/40 shadow-xl">
+            <SelectItem value="all" className="rounded-xl font-bold text-xs">Todas origens</SelectItem>
+            {uniqueSources.map(s => (
+              <SelectItem key={s} value={s} className="rounded-xl font-bold text-xs">{s.charAt(0).toUpperCase() + s.slice(1)}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={sellerFilter} onValueChange={setSellerFilter}>
+          <SelectTrigger className="w-[160px] h-10 rounded-xl border-admin-border/40 bg-white/50 font-bold text-xs">
+            <SelectValue placeholder="Vendedor" />
+          </SelectTrigger>
+          <SelectContent className="rounded-2xl border-admin-border/40 shadow-xl">
+            <SelectItem value="all" className="rounded-xl font-bold text-xs">Todos vendedores</SelectItem>
+            {sellers.map((s: Seller) => (
+              <SelectItem key={s.id as string} value={s.id as string} className="rounded-xl font-bold text-xs">{s.name as string}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {[
-          { title: "Total Prospects", value: kpis.total, icon: Users, color: "text-primary", bg: "bg-primary/10" },
+          { title: "Total Prospects", value: kpis.total, icon: Users, color: "text-admin-primary", bg: "bg-admin-primary/10" },
           { title: "Aguardando", value: kpis.awaiting, icon: AlertCircle, color: "text-destructive", bg: "bg-destructive/10" },
-          { title: "Conversão", value: `${kpis.convRate}%`, icon: TrendingUp, color: "text-green-500", bg: "bg-green-500/10" },
-          { title: "Receita", value: fmt(kpis.revenue), icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-600/10", small: true },
-          { title: "Ticket Médio", value: fmt(kpis.avgTicket), icon: BarChart3, color: "text-blue-500", bg: "bg-blue-500/10", small: true },
-          { title: "Meta Mensal", value: `${kpis.goalPct}%`, icon: Target, color: "text-orange-500", bg: "bg-orange-500/10", progress: kpis.goalPct },
+          { title: "Conversão", value: `${kpis.convRate}%`, icon: TrendingUp, color: "text-emerald-600", bg: "bg-emerald-600/10" },
+          { title: "Receita", value: fmt(kpis.revenue), icon: DollarSign, color: "text-admin-primary", bg: "bg-admin-primary/10", small: true },
+          { title: "Ticket Médio", value: fmt(kpis.avgTicket), icon: BarChart3, color: "text-blue-600", bg: "bg-blue-600/10", small: true },
+          { title: "Meta Mensal", value: `${kpis.goalPct}%`, icon: Target, color: "text-orange-600", bg: "bg-orange-600/10", progress: kpis.goalPct },
         ].map(card => {
           const Icon = card.icon;
           return (
-            <Card key={card.title} className="shadow-sm">
-              <CardContent className="pt-5 pb-4 px-4">
-                <div className="flex items-start gap-3">
-                  <div className={`p-2.5 rounded-xl ${card.bg} shrink-0`}>
-                    <Icon className={`h-4 w-4 ${card.color}`} />
+            <motion.div key={card.title} whileHover={{ y: -4 }}>
+              <Card className="rounded-[2rem] border-admin-border/60 shadow-sm relative overflow-hidden group">
+                <CardContent className="p-5">
+                  <div className="flex items-start gap-3">
+                    <div className={`p-2.5 rounded-2xl ${card.bg} shrink-0`}>
+                      <Icon className={`h-4 w-4 ${card.color}`} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted-foreground/60 mb-0.5">{card.title}</p>
+                      <p className={`font-black text-admin-primary tracking-tight ${card.small ? 'text-sm' : 'text-xl'}`}>{card.value}</p>
+                      {card.progress !== undefined && (
+                        <div className="mt-2.5 space-y-1">
+                          <Progress value={card.progress} className="h-1.5 bg-admin-muted rounded-full" />
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-xs text-muted-foreground truncate">{card.title}</p>
-                    <p className={`font-bold text-foreground ${card.small ? 'text-base' : 'text-xl'}`}>{card.value}</p>
-                    {card.progress !== undefined && (
-                      <Progress value={card.progress} className="h-1.5 mt-1.5" />
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </motion.div>
           );
         })}
       </div>
 
-      {/* Charts row 1: Evolution + Pipeline */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Evolução Mensal</CardTitle>
-            <CardDescription>Últimos 6 meses — prospects, propostas e aceitas</CardDescription>
+      {/* Charts Row 1: Evolution + Pipeline */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <Card className="rounded-[2rem] border-admin-border/60 shadow-sm bg-white/50 backdrop-blur-sm overflow-hidden">
+          <CardHeader className="p-8 pb-4">
+            <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-admin-primary flex items-center gap-2">
+              <TrendingUp className="h-3.5 w-3.5" />
+              Evolução Mensal
+            </CardTitle>
+            <CardDescription className="text-xs font-bold text-muted-foreground/40 uppercase tracking-widest mt-1">Últimos 6 meses — prospects e propostas</CardDescription>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={monthlyData} barGap={2}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
-                <XAxis dataKey="month" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
-                <YAxis tick={{ fontSize: 12 }} className="fill-muted-foreground" />
+          <CardContent className="p-8 pt-4">
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={monthlyData} barGap={4}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-admin-border/20" />
+                <XAxis dataKey="month" tick={{ fontSize: 10, fontWeight: 'bold' }} axisLine={false} tickLine={false} className="fill-muted-foreground/40" />
+                <YAxis tick={{ fontSize: 10, fontWeight: 'bold' }} axisLine={false} tickLine={false} className="fill-muted-foreground/40" />
                 <Tooltip
-                  contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
+                  cursor={{ fill: 'rgba(var(--admin-primary), 0.03)' }}
+                  contentStyle={{ background: "rgba(255, 255, 255, 0.9)", backdropFilter: "blur(8px)", border: "1px solid rgba(var(--admin-border), 0.4)", borderRadius: 16, fontSize: 11, fontWeight: 'bold' }}
                 />
-                <Bar dataKey="prospects" name="Prospects" fill="hsl(var(--primary))" radius={[4,4,0,0]} />
-                <Bar dataKey="propostas" name="Propostas" fill="#F59E0B" radius={[4,4,0,0]} />
-                <Bar dataKey="aceitas" name="Aceitas" fill="#10B981" radius={[4,4,0,0]} />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Bar dataKey="prospects" name="Prospects" fill="hsl(var(--admin-primary))" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="propostas" name="Propostas" fill="#F59E0B" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="aceitas" name="Aceitas" fill="#10B981" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Pipeline (Funil)</CardTitle>
-            <CardDescription>Distribuição de prospects por etapa</CardDescription>
+        <Card className="rounded-[2rem] border-admin-border/60 shadow-sm bg-white/50 backdrop-blur-sm overflow-hidden">
+          <CardHeader className="p-8 pb-4">
+            <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-admin-primary flex items-center gap-2">
+              <Target className="h-3.5 w-3.5" />
+              Pipeline (Funil)
+            </CardTitle>
+            <CardDescription className="text-xs font-bold text-muted-foreground/40 uppercase tracking-widest mt-1">Distribuição de prospects por etapa estratégica</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
+          <CardContent className="p-8 pt-4">
+            <div className="space-y-4">
               {pipelineData.map((stage, i) => {
                 const max = Math.max(...pipelineData.map(d => d.count), 1);
                 const pct = (stage.count / max) * 100;
                 return (
-                  <div key={i} className="flex items-center gap-3">
-                    <span className="text-xs text-muted-foreground w-[120px] truncate text-right">{stage.name}</span>
-                    <div className="flex-1 h-7 bg-muted rounded-md overflow-hidden relative">
-                      <div
-                        className="h-full rounded-md transition-all duration-500 flex items-center px-2"
-                        style={{ width: `${Math.max(pct, 8)}%`, backgroundColor: stage.color }}
-                      >
-                        <span className="text-xs font-bold text-white drop-shadow">{stage.count}</span>
-                      </div>
+                  <div key={i} className="group">
+                    <div className="flex items-center justify-between mb-1.5 px-1">
+                      <span className="text-[10px] font-black text-admin-primary uppercase tracking-wider">{stage.name}</span>
+                      <span className="text-[10px] font-black text-muted-foreground/40">{stage.count} leads</span>
+                    </div>
+                    <div className="h-8 bg-admin-muted/40 rounded-2xl overflow-hidden relative border border-admin-border/10">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.max(pct, 5)}%` }}
+                        className="h-full rounded-2xl transition-all duration-500 shadow-sm"
+                        style={{ backgroundColor: stage.color }}
+                      />
                     </div>
                   </div>
                 );
@@ -465,15 +464,17 @@ export default function AdminDashboardB2C() {
         </Card>
       </div>
 
-      {/* Charts row 2: Source donut + Source table */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Origem dos Prospects</CardTitle>
-            <CardDescription>De onde vêm os leads</CardDescription>
+      {/* Row 2: Source analysis */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+        <Card className="lg:col-span-2 rounded-[2rem] border-admin-border/60 shadow-sm bg-white/50 backdrop-blur-sm overflow-hidden">
+          <CardHeader className="p-8 pb-4">
+            <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-admin-primary flex items-center gap-2">
+              <Globe className="h-3.5 w-3.5" />
+              Origem dos Leads
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={280}>
+          <CardContent className="p-8 pt-4">
+            <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
                   data={sourceDonut.filter(d => d.value > 0)}
@@ -481,261 +482,181 @@ export default function AdminDashboardB2C() {
                   nameKey="name"
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
+                  innerRadius={65}
                   outerRadius={100}
-                  paddingAngle={3}
-                  label={({ name, value }) => `${name} (${value})`}
+                  paddingAngle={6}
+                  stroke="none"
                 >
                   {sourceDonut.map((d, i) => <Cell key={i} fill={d.color} />)}
                 </Pie>
-                <Tooltip />
+                <Tooltip 
+                  contentStyle={{ background: "rgba(255, 255, 255, 0.9)", backdropFilter: "blur(8px)", border: "1px solid rgba(var(--admin-border), 0.4)", borderRadius: 16, fontSize: 11, fontWeight: 'bold' }}
+                />
               </PieChart>
             </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Conversão por Origem</CardTitle>
-            <CardDescription>Performance de cada canal de aquisição</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-xs">Origem</TableHead>
-                  <TableHead className="text-xs text-center">Prospects</TableHead>
-                  <TableHead className="text-xs text-center">Propostas</TableHead>
-                  <TableHead className="text-xs text-center">Aceitas</TableHead>
-                  <TableHead className="text-xs text-center">Conv.</TableHead>
-                  <TableHead className="text-xs text-right">Receita</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sourceData.length === 0 ? (
-                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground text-sm py-8">Sem dados no período</TableCell></TableRow>
-                ) : sourceData.map(s => {
-                  const SrcIcon = SOURCE_ICONS[s.name] ?? Globe;
-                  return (
-                    <TableRow key={s.name}>
-                      <TableCell className="text-sm font-medium flex items-center gap-2">
-                        <SrcIcon className="h-3.5 w-3.5" style={{ color: SOURCE_COLORS[s.name] ?? "#6B7280" }} />
-                        {s.name.charAt(0).toUpperCase() + s.name.slice(1)}
-                      </TableCell>
-                      <TableCell className="text-center text-sm">{s.prospects}</TableCell>
-                      <TableCell className="text-center text-sm">{s.proposals}</TableCell>
-                      <TableCell className="text-center text-sm">{s.accepted}</TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant={s.convRate >= 30 ? "default" : "secondary"} className="text-xs">
-                          {s.convRate}%
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right text-sm font-medium">{fmt(s.revenue)}</TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Row 3: Top Clients + Seller Ranking */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Award className="h-4 w-4 text-primary" /> Top 10 Clientes
-            </CardTitle>
-            <CardDescription>Por receita acumulada (propostas aceitas)</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {topClients.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-8 text-center">Sem dados no período</p>
-            ) : (
-              <div className="space-y-2">
-                {topClients.map((c, i) => (
-                  <div key={i} className="flex items-center justify-between p-2.5 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs font-bold text-muted-foreground w-5 text-right">{i + 1}.</span>
-                      <div>
-                        <p className="text-sm font-medium">{c.name}</p>
-                        <p className="text-xs text-muted-foreground">{c.count} proposta{c.count > 1 ? "s" : ""} · Ticket {fmt(c.revenue / c.count)}</p>
-                      </div>
-                    </div>
-                    <span className="text-sm font-bold text-foreground">{fmt(c.revenue)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Ranking Vendedores</CardTitle>
-            <CardDescription>Performance por vendedor no período</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {sellerRanking.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-8 text-center">Sem dados no período</p>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-xs">Vendedor</TableHead>
-                    <TableHead className="text-xs text-center">Prosp.</TableHead>
-                    <TableHead className="text-xs text-center">Prop.</TableHead>
-                    <TableHead className="text-xs text-center">Conv.</TableHead>
-                    <TableHead className="text-xs text-right">Receita</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sellerRanking.map(s => (
-                    <TableRow key={s.name}>
-                      <TableCell className="text-sm font-medium">{s.name}</TableCell>
-                      <TableCell className="text-center text-sm">{s.prospects}</TableCell>
-                      <TableCell className="text-center text-sm">{s.proposals}</TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant={s.convRate >= 30 ? "default" : "secondary"} className="text-xs">{s.convRate}%</Badge>
-                      </TableCell>
-                      <TableCell className="text-right text-sm font-medium">{fmt(s.revenue)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Row 4: Country + Seasonality + Conversion Time */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-primary" /> Origem por País
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {countryData.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">Sem dados</p>
-            ) : (
-              <div className="space-y-2">
-                {countryData.map((c, i) => {
-                  const max = countryData[0]?.count ?? 1;
-                  return (
-                    <div key={i} className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground w-[90px] truncate text-right">{c.name}</span>
-                      <div className="flex-1 h-5 bg-muted rounded overflow-hidden">
-                        <div
-                          className="h-full bg-primary/70 rounded transition-all"
-                          style={{ width: `${(c.count / max) * 100}%` }}
-                        />
-                      </div>
-                      <span className="text-xs font-bold w-6 text-right">{c.count}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <CalIcon className="h-4 w-4 text-primary" /> Sazonalidade
-            </CardTitle>
-            <CardDescription>Meses de viagem (propostas aceitas)</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <AreaChart data={seasonality}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
-                <XAxis dataKey="month" tick={{ fontSize: 10 }} className="fill-muted-foreground" />
-                <YAxis tick={{ fontSize: 10 }} className="fill-muted-foreground" />
-                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
-                <Area type="monotone" dataKey="viagens" fill="hsl(var(--primary) / 0.2)" stroke="hsl(var(--primary))" strokeWidth={2} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Clock className="h-4 w-4 text-primary" /> Tempo de Conversão
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center justify-center py-8">
-            <p className="text-4xl font-bold text-foreground">{avgConvDays}</p>
-            <p className="text-sm text-muted-foreground mt-1">dias em média</p>
-            <p className="text-xs text-muted-foreground mt-3">Do primeiro contato à proposta aceita</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Followups + Quick Access */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="shadow-sm">
-          <CardHeader className="flex-row items-center justify-between pb-2">
-            <CardTitle className="text-base">Próximos Follow-ups</CardTitle>
-            <Link to="/admin/calendario" className="text-xs text-primary hover:underline flex items-center gap-1">
-              Ver calendário <ArrowRight className="h-3 w-3" />
-            </Link>
-          </CardHeader>
-          <CardContent>
-            {upcomingFollowups.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4">Nenhum follow-up agendado.</p>
-            ) : (
-              <div className="space-y-2">
-                {upcomingFollowups.map((p: Prospect) => (
-                  <Link key={p.id as string} to="/admin/b2c/prospects" className="flex items-center justify-between p-3 rounded-lg bg-muted hover:bg-muted/80 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <Users className="h-4 w-4 text-primary" />
-                      <div>
-                        <p className="text-sm font-medium">{p.name as string}</p>
-                        <p className="text-xs text-muted-foreground">{p.source as string}</p>
-                      </div>
-                    </div>
-                    <Badge variant="outline" className="text-xs">
-                      <Clock className="h-3 w-3 mr-1" />
-                      {format(new Date(p.next_followup_at as string), "dd/MM HH:mm", { locale: ptBR })}
-                    </Badge>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Acesso Rápido</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {[
-                { to: "/admin/b2c/prospects", label: "Prospects", desc: "Lista completa", icon: Users },
-                { to: "/admin/b2c/pipeline", label: "Pipeline", desc: "Kanban visual", icon: TrendingUp },
-                { to: "/admin/b2c/propostas", label: "Propostas", desc: "Orçamentos", icon: DollarSign },
-              ].map(item => (
-                <Link key={item.to} to={item.to} className="flex items-center justify-between p-3.5 rounded-lg bg-muted/50 border border-border hover:shadow-md transition-shadow group">
-                  <div className="flex items-center gap-2.5">
-                    <item.icon className="h-4 w-4 text-primary" />
-                    <div>
-                      <p className="text-sm font-medium">{item.label}</p>
-                      <p className="text-xs text-muted-foreground">{item.desc}</p>
-                    </div>
-                  </div>
-                  <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                </Link>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-3 mt-4 px-2">
+              {sourceDonut.filter(d => d.value > 0).map((s, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full" style={{ backgroundColor: s.color }} />
+                  <span className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest">{s.name}</span>
+                  <span className="text-[10px] font-black text-admin-primary ml-auto">{s.value}</span>
+                </div>
               ))}
             </div>
           </CardContent>
         </Card>
+
+        <Card className="lg:col-span-3 rounded-[2rem] border-admin-border/60 shadow-sm bg-white/50 backdrop-blur-sm overflow-hidden">
+          <CardHeader className="p-8 pb-4">
+            <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-admin-primary">Performance por Canal</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader className="bg-admin-muted/30">
+                  <TableRow className="hover:bg-transparent border-none">
+                    <TableHead className="text-[9px] font-black uppercase tracking-widest h-10 px-8">Canal</TableHead>
+                    <TableHead className="text-[9px] font-black uppercase tracking-widest h-10 text-center">Prospects</TableHead>
+                    <TableHead className="text-[9px] font-black uppercase tracking-widest h-10 text-center">Aceitas</TableHead>
+                    <TableHead className="text-[9px] font-black uppercase tracking-widest h-10 text-center">Conv.</TableHead>
+                    <TableHead className="text-[9px] font-black uppercase tracking-widest h-10 text-right px-8">Receita</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sourceData.map((s, idx) => {
+                    const SrcIcon = SOURCE_ICONS[s.name] ?? Globe;
+                    return (
+                      <TableRow key={s.name} className="group border-admin-border/10">
+                        <TableCell className="px-8 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-xl bg-white shadow-sm border border-admin-border/20 group-hover:scale-110 transition-transform">
+                              <SrcIcon className="h-3.5 w-3.5" style={{ color: SOURCE_COLORS[s.name] ?? "#6B7280" }} />
+                            </div>
+                            <span className="text-xs font-black text-admin-primary uppercase tracking-tight">{s.name}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center font-bold text-xs">{s.prospects}</TableCell>
+                        <TableCell className="text-center font-bold text-xs">{s.accepted}</TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="outline" className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-lg ${s.convRate >= 30 ? "bg-emerald-100 text-emerald-800 border-emerald-200" : "bg-admin-muted text-muted-foreground/60 border-admin-border/40"}`}>
+                            {s.convRate}%
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right px-8 font-black text-xs text-admin-primary">{fmt(s.revenue)}</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
       </div>
-    </div>
+
+      {/* Row 3: Metrics + Followups */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <Card className="rounded-[2rem] border-admin-border/60 shadow-sm bg-white/50 backdrop-blur-sm overflow-hidden">
+          <CardHeader className="p-8 pb-4">
+            <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-admin-primary flex items-center gap-2">
+              <Clock className="h-3.5 w-3.5" />
+              Tempo de Conversão
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-8 pt-4 text-center">
+            <div className="relative inline-block">
+              <div className="text-6xl font-black text-admin-primary tracking-tighter">{avgConvDays}</div>
+              <div className="absolute -top-1 -right-4 h-2 w-2 rounded-full bg-orange-500 animate-ping" />
+            </div>
+            <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em] mt-2">Dias em média</p>
+            <div className="mt-8 pt-8 border-t border-admin-border/20 text-left">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest">Sazonalidade</span>
+                <CalIcon className="h-3.5 w-3.5 text-admin-primary/20" />
+              </div>
+              <ResponsiveContainer width="100%" height={100}>
+                <AreaChart data={seasonality}>
+                  <defs>
+                    <linearGradient id="colorViagens" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--admin-primary))" stopOpacity={0.1}/>
+                      <stop offset="95%" stopColor="hsl(var(--admin-primary))" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <Area type="monotone" dataKey="viagens" stroke="hsl(var(--admin-primary))" strokeWidth={2} fillOpacity={1} fill="url(#colorViagens)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-2 rounded-[2rem] border-admin-border/60 shadow-sm bg-white/50 backdrop-blur-sm overflow-hidden">
+          <CardHeader className="p-8 pb-4 flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-admin-primary">Próximos Follow-ups</CardTitle>
+              <CardDescription className="text-xs font-bold text-muted-foreground/40 uppercase tracking-widest mt-1">Lembretes para os próximos 7 dias</CardDescription>
+            </div>
+            <Button asChild variant="ghost" className="h-10 rounded-xl font-black text-[9px] uppercase tracking-widest bg-admin-primary/5 text-admin-primary hover:bg-admin-primary hover:text-white transition-all px-4">
+              <Link to="/admin/calendario">
+                Ver Agenda <ArrowRight className="h-3 w-3 ml-2" />
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent className="p-4">
+            <div className="space-y-3">
+              {upcomingFollowups.map((p: Prospect) => (
+                <Link 
+                  key={p.id as string} 
+                  to="/admin/b2c/prospects" 
+                  className="flex items-center justify-between p-4 rounded-[1.5rem] bg-white border border-admin-border/10 hover:border-admin-primary/40 hover:shadow-lg hover:shadow-admin-primary/5 transition-all group"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="p-2.5 rounded-xl bg-admin-muted/40 group-hover:bg-admin-primary/10 transition-colors">
+                      <Users className="h-4 w-4 text-admin-primary" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-admin-primary uppercase tracking-tight">{p.name as string}</p>
+                      <p className="text-[9px] font-black text-muted-foreground/40 uppercase tracking-widest">{p.source as string}</p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="text-[10px] font-black uppercase px-3 py-1 rounded-xl bg-admin-primary/5 text-admin-primary border-admin-primary/10 flex items-center gap-2">
+                    <Clock className="h-3 w-3 opacity-40" />
+                    {format(new Date(p.next_followup_at as string), "dd/MM HH:mm", { locale: ptBR })}
+                  </Badge>
+                </Link>
+              ))}
+              {upcomingFollowups.length === 0 && (
+                <div className="py-12 text-center">
+                  <CalIcon className="h-8 w-8 text-admin-primary/20 mx-auto mb-3" />
+                  <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest">Nenhum follow-up agendado</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Quick Access Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        {[
+          { to: "/admin/b2c/prospects", label: "Prospects", desc: "Gestão de leads", icon: Users },
+          { to: "/admin/b2c/pipeline", label: "Pipeline", desc: "Gestão visual", icon: TrendingUp },
+          { to: "/admin/b2c/propostas", label: "Propostas", desc: "Vendas enviadas", icon: DollarSign },
+        ].map(item => (
+          <Link 
+            key={item.to} 
+            to={item.to} 
+            className="flex items-center justify-between p-6 rounded-[2rem] bg-admin-primary text-white shadow-xl shadow-admin-primary/20 hover:scale-[1.02] transition-all relative overflow-hidden group"
+          >
+            <div className="absolute top-0 right-0 p-8 opacity-10 -mr-4 -mt-4 group-hover:scale-110 transition-transform">
+              <item.icon className="h-24 w-24" />
+            </div>
+            <div className="relative z-10">
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-60 mb-1">{item.desc}</p>
+              <h3 className="text-xl font-black tracking-tight">{item.label}</h3>
+            </div>
+            <ArrowRight className="h-5 w-5 relative z-10 opacity-60 group-hover:translate-x-2 transition-transform" />
+          </Link>
+        ))}
+      </div>
+    </motion.div>
   );
 }

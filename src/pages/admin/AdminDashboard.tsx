@@ -1,13 +1,14 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { 
-  Users, Heart, FileText, TrendingUp, ShoppingBag 
+  Users, Heart, FileText, TrendingUp, ShoppingBag, Download 
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { subDays, startOfMonth, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { DashboardKPIs } from "@/components/admin/dashboard/DashboardKPIs";
 import { DashboardCharts } from "@/components/admin/dashboard/DashboardCharts";
@@ -256,7 +257,11 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="p-8 space-y-12 max-w-[1600px] mx-auto pb-24">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="p-8 space-y-12 max-w-[1600px] mx-auto pb-24"
+    >
       {/* 1. Filters & Header */}
       <DashboardFilters 
         segmentFilter={segmentFilter}
@@ -275,38 +280,63 @@ export default function AdminDashboard() {
       />
 
       {/* 3. Main Analytics Tabs */}
-      <Tabs defaultValue="analytics" className="space-y-8">
-        <div className="flex items-center justify-between">
-           <TabsList className="bg-admin-muted/50 p-1 rounded-xl">
-            <TabsTrigger value="analytics" className="text-[10px] font-black uppercase tracking-widest px-6 h-9 rounded-lg data-[state=on]:bg-white data-[state=on]:text-admin-primary data-[state=on]:shadow-sm">Visão Geral</TabsTrigger>
-            <TabsTrigger value="tables" className="text-[10px] font-black uppercase tracking-widest px-6 h-9 rounded-lg data-[state=on]:bg-white data-[state=on]:text-admin-primary data-[state=on]:shadow-sm">Tabelas & Detalhes</TabsTrigger>
-          </TabsList>
+      <Tabs defaultValue="analytics" className="space-y-12">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 bg-white/40 backdrop-blur-sm p-6 rounded-[2.5rem] border border-admin-border/40 shadow-sm">
+          <div className="flex items-center gap-6">
+            <TabsList className="bg-admin-muted/40 p-1.5 rounded-2xl border border-admin-border/20">
+              <TabsTrigger 
+                value="analytics" 
+                className="text-[10px] font-black uppercase tracking-widest px-8 h-10 rounded-xl data-[state=on]:bg-admin-primary data-[state=on]:text-white data-[state=on]:shadow-lg transition-all"
+              >
+                Visão Geral
+              </TabsTrigger>
+              <TabsTrigger 
+                value="tables" 
+                className="text-[10px] font-black uppercase tracking-widest px-8 h-10 rounded-xl data-[state=on]:bg-admin-primary data-[state=on]:text-white data-[state=on]:shadow-lg transition-all"
+              >
+                Tabelas & Detalhes
+              </TabsTrigger>
+            </TabsList>
+            <div className="h-8 w-[1px] bg-admin-border/40 hidden md:block" />
+            <p className="text-[10px] font-black text-muted-foreground/30 uppercase tracking-[0.2em] hidden md:block">
+              Inteligência de Negócio Atmos
+            </p>
+          </div>
           
           <div className="flex items-center gap-3">
-             <ExportButton data={topProducts} filename="top_produtos" />
+             <Button 
+               variant="ghost" 
+               size="sm" 
+               className="h-11 px-6 rounded-xl bg-admin-primary/5 text-admin-primary hover:bg-admin-primary hover:text-white transition-all font-black text-[10px] uppercase tracking-widest flex items-center gap-3 shadow-sm"
+               onClick={() => {/* potential global export */}}
+             >
+               <Download className="h-4 w-4" /> Exportar Dados
+             </Button>
           </div>
         </div>
 
-        <TabsContent value="analytics" className="mt-0 animate-in fade-in slide-in-from-bottom-2 duration-500">
-          <DashboardCharts 
-            monthlyTrend={monthlyTrend}
-            funnelB2C={funnelB2C}
-            funnelB2B={funnelB2B}
-            langData={langData}
-            quoteStatusData={quoteStatusData}
-            colors={COLORS}
-          />
-        </TabsContent>
+        <AnimatePresence mode="wait">
+          <TabsContent value="analytics" className="mt-0 outline-none">
+            <DashboardCharts 
+              monthlyTrend={monthlyTrend}
+              funnelB2C={funnelB2C}
+              funnelB2B={funnelB2B}
+              langData={langData}
+              quoteStatusData={quoteStatusData}
+              colors={COLORS}
+            />
+          </TabsContent>
 
-        <TabsContent value="tables" className="mt-0 animate-in fade-in slide-in-from-bottom-2 duration-500">
-          <DashboardTables 
-            latestQuotes={latestQuotes}
-            topProducts={topProducts}
-            statusColor={statusColor}
-            typeLabel={typeLabel}
-          />
-        </TabsContent>
+          <TabsContent value="tables" className="mt-0 outline-none">
+            <DashboardTables 
+              latestQuotes={latestQuotes}
+              topProducts={topProducts}
+              statusColor={statusColor}
+              typeLabel={typeLabel}
+            />
+          </TabsContent>
+        </AnimatePresence>
       </Tabs>
-    </div>
+    </motion.div>
   );
 }

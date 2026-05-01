@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { 
   DollarSign, TrendingUp, AlertTriangle, Percent, Users, Target, 
   Download, XCircle, ArrowRight, Wallet, PieChart, Activity,
-  ArrowUpRight, ArrowDownRight, Calendar, Filter
+  ArrowUpRight, ArrowDownRight, Calendar, Filter, Receipt
 } from "lucide-react";
 import { 
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, 

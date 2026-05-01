@@ -16,7 +16,7 @@ import {
   DollarSign, TrendingUp, TrendingDown, Plus, Pencil, Trash2, 
   ArrowDownLeft, ArrowUpRight, Search, Filter, Calendar, 
   Wallet, FileText, User, Receipt, CreditCard, Banknote, HelpCircle,
-  MoreHorizontal, CheckCircle2, AlertCircle
+  MoreHorizontal, CheckCircle2, AlertCircle, Activity
 } from "lucide-react";
 import {
   AlertDialog,

@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Search, X, Globe, UserCheck, Gauge, Tags } from "lucide-react";
 import PopoverFilter from "@/components/shared/PopoverFilter";
 
+import { motion, AnimatePresence } from "framer-motion";
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any;
 
@@ -179,74 +181,91 @@ export default function AdminPipeline({ segment }: AdminPipelineProps) {
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-4 min-w-0 flex flex-col h-full">
-      <h1 className="text-xl font-bold">
-        Pipeline {segment === "b2c" ? "B2C" : "B2B"}
-      </h1>
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="p-4 md:p-8 space-y-8 min-w-0 flex flex-col h-full"
+    >
+      <div className="space-y-1">
+        <h1 className="text-3xl font-black tracking-tight text-admin-primary">
+          Pipeline {segment === "b2c" ? "B2C" : "B2B"}
+        </h1>
+        <p className="text-muted-foreground text-sm font-medium">Gestão visual do funil de vendas e conversão</p>
+      </div>
 
-      {/* ── Search & Filters ── */}
-      <div className="flex flex-wrap items-end gap-4">
-        <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      {/* ── Search & Filters Bar ── */}
+      <div className="flex flex-col lg:flex-row gap-4 items-center bg-white/50 backdrop-blur-sm p-2 rounded-[2rem] border border-admin-border/40 shadow-sm">
+        <div className="relative flex-1 w-full lg:max-w-sm">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar por nome, email, telefone..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="pl-9 h-9 text-sm"
+            className="pl-11 h-12 bg-transparent border-none focus-visible:ring-0 text-base font-medium"
           />
         </div>
 
-        <PopoverFilter
-          label="Origem"
-          icon={<Globe className="h-4 w-4 text-muted-foreground" />}
-          options={sourceOptions}
-          selectedValues={filterSources}
-          onChange={setFilterSources}
-          multiSelect
-        />
-
-        {sellerOptions.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 pr-2">
           <PopoverFilter
-            label="Vendedor"
-            icon={<UserCheck className="h-4 w-4 text-muted-foreground" />}
-            options={sellerOptions}
-            selectedValues={filterSellers}
-            onChange={setFilterSellers}
+            label="Origem"
+            icon={<Globe className="h-3.5 w-3.5 text-muted-foreground" />}
+            options={sourceOptions}
+            selectedValues={filterSources}
+            onChange={setFilterSources}
             multiSelect
           />
-        )}
 
-        <PopoverFilter
-          label="Potencial"
-          icon={<Gauge className="h-4 w-4 text-muted-foreground" />}
-          options={potentialOptions}
-          selectedValues={filterPotentials}
-          onChange={setFilterPotentials}
-          multiSelect
-        />
+          {sellerOptions.length > 0 && (
+            <PopoverFilter
+              label="Vendedor"
+              icon={<UserCheck className="h-3.5 w-3.5 text-muted-foreground" />}
+              options={sellerOptions}
+              selectedValues={filterSellers}
+              onChange={setFilterSellers}
+              multiSelect
+            />
+          )}
 
-        {tagOptions.length > 0 && (
           <PopoverFilter
-            label="Tags"
-            icon={<Tags className="h-4 w-4 text-muted-foreground" />}
-            options={tagOptions}
-            selectedValues={filterTags}
-            onChange={setFilterTags}
+            label="Potencial"
+            icon={<Gauge className="h-3.5 w-3.5 text-muted-foreground" />}
+            options={potentialOptions}
+            selectedValues={filterPotentials}
+            onChange={setFilterPotentials}
             multiSelect
           />
-        )}
 
-        {hasActiveFilters && (
-          <button onClick={clearFilters} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
-            <X className="h-3.5 w-3.5" /> Limpar
-          </button>
-        )}
+          {tagOptions.length > 0 && (
+            <PopoverFilter
+              label="Tags"
+              icon={<Tags className="h-3.5 w-3.5 text-muted-foreground" />}
+              options={tagOptions}
+              selectedValues={filterTags}
+              onChange={setFilterTags}
+              multiSelect
+            />
+          )}
+
+          {hasActiveFilters && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={clearFilters} 
+              className="h-10 rounded-xl text-xs font-bold text-destructive hover:bg-destructive/5"
+            >
+              <X className="h-3.5 w-3.5 mr-2" /> Limpar
+            </Button>
+          )}
+        </div>
       </div>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground py-8 text-center">Carregando...</p>
+        <div className="flex-1 flex flex-col items-center justify-center py-24 text-center">
+          <RotateCcw className="h-8 w-8 text-admin-primary/20 animate-spin mb-4" />
+          <p className="text-sm font-bold text-muted-foreground/60 uppercase tracking-widest">Carregando pipeline...</p>
+        </div>
       ) : (
-        <div className="flex-1 min-w-0 overflow-x-auto">
+        <div className="flex-1 min-w-0 overflow-x-auto pb-4">
           <KanbanBoard
             stages={stages}
             prospects={filteredProspects}
@@ -278,6 +297,6 @@ export default function AdminPipeline({ segment }: AdminPipelineProps) {
         proposalId={proposalEditingId}
         segment={segment}
       />
-    </div>
+    </motion.div>
   );
 }
