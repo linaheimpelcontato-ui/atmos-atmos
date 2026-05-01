@@ -64,13 +64,32 @@ export const IMAGE_PRESETS = {
 };
 
 /**
- * Returns an optimized image URL. 
- * Since we moved to R2, we use R2 for raw assets.
- * Note: Cloudflare Images or Workers can handle transformations if needed,
- * for now we just return the R2 URL to ensure 100% Cloudflare usage.
+ * Returns an optimized image URL using Cloudflare Image Resizing.
+ * This is the fastest way to serve images as it handles resizing, 
+ * compression, and format conversion (WebP/AVIF) at the edge.
  */
 export function optimizedUrl(path: string, opts?: OptimizedOptions): string {
   if (!path) return "";
-  // Always use R2 as base
-  return storageUrl(path);
+  
+  // 1. Get the base storage URL (Cloudflare R2)
+  const rawUrl = storageUrl(path);
+  
+  // 2. If we don't have an R2 domain, we can't use Cloudflare Resizing easily
+  if (!R2_DOMAIN || !opts) return rawUrl;
+
+  const cleanDomain = R2_DOMAIN.replace(/\/$/, "");
+  const domainWithProtocol = cleanDomain.startsWith("http") ? cleanDomain : `https://${cleanDomain}`;
+  
+  // 3. Build Cloudflare Resizing parameters
+  const params = [];
+  if (opts.width) params.push(`width=${opts.width}`);
+  if (opts.height) params.push(`height=${opts.height}`);
+  if (opts.quality) params.push(`quality=${opts.quality}`);
+  if (opts.resize) params.push(`fit=${opts.resize}`);
+  if (opts.format && opts.format !== "origin") params.push(`format=${opts.format}`);
+  else params.push("format=auto"); // Let Cloudflare decide (WebP/AVIF)
+
+  // 4. Construct the transformation URL: https://domain.com/cdn-cgi/image/params/mappedPath
+  const mappedPath = MAP_R2_PATH(path);
+  return `${domainWithProtocol}/cdn-cgi/image/${params.join(",")}/${mappedPath}`;
 }

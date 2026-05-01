@@ -31,10 +31,22 @@ export function OptimizedImage({
 
   const handleError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     // Stage 1: If optimized URL failed, try the original storage URL
-    if (currentSrc.includes('/render/image/')) {
-      const original = currentSrc.replace('/render/image/', '/object/').split('?')[0];
+    if (currentSrc.includes('/render/image/') || currentSrc.includes('/cdn-cgi/image/')) {
+      const original = currentSrc.includes('/cdn-cgi/image/') 
+        ? currentSrc.split('/cdn-cgi/image/')[0] + '/' + currentSrc.split('/').pop() // simplistic recovery
+        : currentSrc.replace('/render/image/', '/object/').split('?')[0];
+      
+      // If it's a Cloudflare URL, we can just get the last part or rebuild it
+      // Let's be more robust:
+      if (currentSrc.includes('/cdn-cgi/image/')) {
+        const parts = currentSrc.split('/cdn-cgi/image/');
+        const pathPart = parts[1].split('/').slice(1).join('/'); // Skip the params part
+        setCurrentSrc(parts[0] + '/' + pathPart);
+      } else {
+        setCurrentSrc(original);
+      }
+      
       setLoaded(false);
-      setCurrentSrc(original);
       return;
     }
 
