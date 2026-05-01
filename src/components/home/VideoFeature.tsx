@@ -64,6 +64,8 @@ export default function VideoFeature() {
         <video
           ref={videoRef}
           playsInline
+          preload="metadata"
+          poster={storageUrl("home/curadoria-bg.jpg")}
           className="w-full h-auto max-h-[82vh] object-cover block"
           onEnded={() => setIsPlaying(false)}
         >

@@ -25,7 +25,8 @@ export default function HeroMain({
           loop
           muted
           playsInline
-          preload="auto"
+          preload="metadata"
+          poster={storageUrl("home/hero-bg-poster.jpg")}
           className="w-full h-full object-cover object-bottom opacity-80"
         >
           <source

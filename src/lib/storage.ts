@@ -74,8 +74,9 @@ export function optimizedUrl(path: string, opts?: OptimizedOptions): string {
   // 1. Get the base storage URL (Cloudflare R2)
   const rawUrl = storageUrl(path);
   
-  // 2. If we don't have an R2 domain, we can't use Cloudflare Resizing easily
-  if (!R2_DOMAIN || !opts) return rawUrl;
+  // 2. If we don't have an R2 domain or it's a public R2.dev domain, we can't use Cloudflare Resizing
+  // Cloudflare Image Resizing ONLY works on custom domains proxied by Cloudflare.
+  if (!R2_DOMAIN || !opts || R2_DOMAIN.includes('r2.dev')) return rawUrl;
 
   const cleanDomain = R2_DOMAIN.replace(/\/$/, "");
   const domainWithProtocol = cleanDomain.startsWith("http") ? cleanDomain : `https://${cleanDomain}`;

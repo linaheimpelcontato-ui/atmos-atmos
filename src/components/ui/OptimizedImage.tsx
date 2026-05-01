@@ -31,21 +31,27 @@ export function OptimizedImage({
 
   const handleError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     // Stage 1: If optimized URL failed, try the original storage URL
-    if (currentSrc.includes('/render/image/') || currentSrc.includes('/cdn-cgi/image/')) {
-      const original = currentSrc.includes('/cdn-cgi/image/') 
-        ? currentSrc.split('/cdn-cgi/image/')[0] + '/' + currentSrc.split('/').pop() // simplistic recovery
-        : currentSrc.replace('/render/image/', '/object/').split('?')[0];
+    if (currentSrc.includes('/cdn-cgi/image/')) {
+      const parts = currentSrc.split('/cdn-cgi/image/');
+      const domainPart = parts[0];
+      const afterCgi = parts[1]; // e.g. "width=400,format=auto/produtos/EXPERIENCIAS/Araras.jpg"
       
-      // If it's a Cloudflare URL, we can just get the last part or rebuild it
-      // Let's be more robust:
-      if (currentSrc.includes('/cdn-cgi/image/')) {
-        const parts = currentSrc.split('/cdn-cgi/image/');
-        const pathPart = parts[1].split('/').slice(1).join('/'); // Skip the params part
-        setCurrentSrc(parts[0] + '/' + pathPart);
-      } else {
+      // The path starts after the first slash in the second part
+      const firstSlashIndex = afterCgi.indexOf('/');
+      if (firstSlashIndex !== -1) {
+        const pathPart = afterCgi.substring(firstSlashIndex + 1);
+        const original = `${domainPart}/${pathPart}`;
+        console.log(`[Atmos] Cloudflare Resizing failed. Falling back to original: ${original}`);
         setCurrentSrc(original);
+        setLoaded(false);
+        return;
       }
-      
+    }
+
+    // Legacy fallback for Supabase render service
+    if (currentSrc.includes('/render/image/')) {
+      const original = currentSrc.replace('/render/image/', '/object/').split('?')[0];
+      setCurrentSrc(original);
       setLoaded(false);
       return;
     }
