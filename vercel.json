@@ -1,4 +1,8 @@
 {
+  "images": {
+    "sizes": [400, 800, 1200, 1920],
+    "domains": ["assets.atmos.tur.br", "pub-657a87eab0a44a528948ce019b3e43a0.r2.dev", "ekbsqckzelabjabuodmo.supabase.co"]
+  },
   "rewrites": [
     {
       "source": "/(.*)",

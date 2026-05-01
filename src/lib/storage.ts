@@ -69,9 +69,8 @@ export const IMAGE_PRESETS = {
 };
 
 /**
- * Returns an optimized image URL using Cloudflare Image Resizing.
- * This is the fastest way to serve images as it handles resizing, 
- * compression, and format conversion (WebP/AVIF) at the edge.
+ * Returns an optimized image URL using Vercel Image Optimization.
+ * This handles resizing, compression, and format conversion (WebP/AVIF) at the edge without extra costs.
  */
 export function optimizedUrl(path: string, opts?: OptimizedOptions): string {
   if (!path) return "";
@@ -79,23 +78,11 @@ export function optimizedUrl(path: string, opts?: OptimizedOptions): string {
   // 1. Get the base storage URL (Cloudflare R2)
   const rawUrl = storageUrl(path);
   
-  // 2. If we don't have an R2 domain or it's a public R2.dev domain, we can't use Cloudflare Resizing
-  // Cloudflare Image Resizing ONLY works on custom domains proxied by Cloudflare.
-  if (!R2_DOMAIN || !opts || R2_DOMAIN.includes('r2.dev')) return rawUrl;
+  // 2. Build Vercel Image Resizing parameters
+  // Vercel uses: /_vercel/image?url=ENCODED_URL&w=WIDTH&q=QUALITY
+  // Widths must match those configured in vercel.json sizes array (e.g. 400, 800, 1200, 1920)
+  const width = opts?.width || 800;
+  const quality = opts?.quality || 75;
 
-  const cleanDomain = R2_DOMAIN.replace(/\/$/, "");
-  const domainWithProtocol = cleanDomain.startsWith("http") ? cleanDomain : `https://${cleanDomain}`;
-  
-  // 3. Build Cloudflare Resizing parameters
-  const params = [];
-  if (opts.width) params.push(`width=${opts.width}`);
-  if (opts.height) params.push(`height=${opts.height}`);
-  if (opts.quality) params.push(`quality=${opts.quality}`);
-  if (opts.resize) params.push(`fit=${opts.resize}`);
-  if (opts.format && opts.format !== "origin") params.push(`format=${opts.format}`);
-  else params.push("format=auto"); // Let Cloudflare decide (WebP/AVIF)
-
-  // 4. Construct the transformation URL: https://domain.com/cdn-cgi/image/params/mappedPath
-  const mappedPath = MAP_R2_PATH(path);
-  return `${domainWithProtocol}/cdn-cgi/image/${params.join(",")}/${mappedPath}`;
+  return `/_vercel/image?url=${encodeURIComponent(rawUrl)}&w=${width}&q=${quality}`;
 }

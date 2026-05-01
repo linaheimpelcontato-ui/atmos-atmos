@@ -31,20 +31,18 @@ export function OptimizedImage({
 
   const handleError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     // Stage 1: If optimized URL failed, try the original storage URL
-    if (currentSrc.includes('/cdn-cgi/image/')) {
-      const parts = currentSrc.split('/cdn-cgi/image/');
-      const domainPart = parts[0];
-      const afterCgi = parts[1]; // e.g. "width=400,format=auto/produtos/EXPERIENCIAS/Araras.jpg"
-      
-      // The path starts after the first slash in the second part
-      const firstSlashIndex = afterCgi.indexOf('/');
-      if (firstSlashIndex !== -1) {
-        const pathPart = afterCgi.substring(firstSlashIndex + 1);
-        const original = `${domainPart}/${pathPart}`;
-        console.log(`[Atmos] Cloudflare Resizing failed. Falling back to original: ${original}`);
-        setCurrentSrc(original);
-        setLoaded(false);
-        return;
+    if (currentSrc.includes('/_vercel/image?url=')) {
+      try {
+        const urlParam = new URL(currentSrc, window.location.origin).searchParams.get('url');
+        if (urlParam) {
+          const original = decodeURIComponent(urlParam);
+          console.log(`[Atmos] Vercel Resizing failed. Falling back to original: ${original}`);
+          setCurrentSrc(original);
+          setLoaded(false);
+          return;
+        }
+      } catch (err) {
+        console.error("Failed to parse Vercel image URL fallback", err);
       }
     }
 
