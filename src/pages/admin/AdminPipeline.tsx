@@ -6,7 +6,7 @@ import ProspectSheet from "@/components/admin/ProspectSheet";
 import ProposalFormDialog from "@/components/admin/ProposalFormDialog";
 import { toast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
-import { Search, X, Globe, UserCheck, Gauge, Tags } from "lucide-react";
+import { Search, X, Globe, UserCheck, Gauge, Tags, RotateCcw } from "lucide-react";
 import PopoverFilter from "@/components/shared/PopoverFilter";
 
 import { motion, AnimatePresence } from "framer-motion";

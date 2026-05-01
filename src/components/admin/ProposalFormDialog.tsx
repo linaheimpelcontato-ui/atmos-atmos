@@ -2606,9 +2606,9 @@ export default function ProposalFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleDialogClose}>
-      <DialogContent className="max-w-[95vw] max-h-[90vh] flex flex-col p-0">
-        <div className="sticky top-0 z-10 bg-background border-b border-border px-4 md:px-6 py-3 flex items-center justify-between shrink-0">
-          <DialogTitle>{proposalId ? "Editar Proposta" : "Nova Proposta"}</DialogTitle>
+      <DialogContent className="max-w-[95vw] md:max-w-[1200px] max-h-[90vh] flex flex-col p-0 sm:rounded-[2rem] overflow-hidden shadow-2xl border-none">
+        <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border/50 px-8 py-5 flex items-center justify-between shrink-0">
+          <DialogTitle className="font-black uppercase tracking-widest text-lg">{proposalId ? "Editar Proposta" : "Nova Proposta"}</DialogTitle>
           <div className="flex items-center gap-2">
             {prospectId && (
               <Button
@@ -2665,14 +2665,14 @@ export default function ProposalFormDialog({
             )}
           </div>
         </div>
-        <div className="overflow-y-auto flex-1 px-4 md:px-6 py-4">
+        <div className="overflow-y-auto flex-1 px-4 md:px-8 py-8 bg-stone-50/50">
         <DialogHeader className="sr-only"><DialogTitle>{proposalId ? "Editar Proposta" : "Nova Proposta"}</DialogTitle></DialogHeader>
         <form className="space-y-5" onChangeCapture={() => setIsDirty(true)} onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(); }}>
 
           {/* ── Section 1: Dados Gerais ─────────────────────────── */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Dados Gerais</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="space-y-4 bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-black/[0.04]">
+            <h3 className="text-xs font-black text-foreground/80 uppercase tracking-widest mb-2">Dados Gerais</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
               <div className="space-y-1.5 col-span-2 md:col-span-1">
                 <Label className="text-xs">Título *</Label>
                 <Input className="h-8 text-sm" value={title} onChange={(e) => setTitle(e.target.value)} required />
@@ -2811,8 +2811,8 @@ export default function ProposalFormDialog({
           })()}
 
           {/* ── Section 2: Configuração do Roteiro ─────────────── */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Configuração do Roteiro</h3>
+          <div className="space-y-4 bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-black/[0.04]">
+            <h3 className="text-xs font-black text-foreground/80 uppercase tracking-widest mb-2">Configuração do Roteiro</h3>
 
             {/* Itinerary type toggle */}
             <div className="flex items-center gap-2 p-3 border border-border rounded-lg bg-muted/20">
@@ -2857,7 +2857,7 @@ export default function ProposalFormDialog({
               )}
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-5 pt-2">
               <div className="space-y-1.5">
                 <Label className="text-xs">Nº Total Grupo</Label>
                 <Input className="h-8 text-sm" type="number" min={1} value={numPeople === 0 ? "" : numPeople} onChange={(e) => { const v = e.target.value; if (v === "") { setNumPeople(0); return; } const n = parseInt(v); if (!isNaN(n) && n >= 0) setNumPeople(n); }} onBlur={() => { if (numPeople < 1) setNumPeople(1); }} />
@@ -2930,9 +2930,9 @@ export default function ProposalFormDialog({
 
 
           {/* ── Section 3: Itens do Roteiro (with sidebar) ──────── */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Itens do Roteiro</h3>
+          <div className="space-y-4 bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-black/[0.04]">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs font-black text-foreground/80 uppercase tracking-widest">Itens do Roteiro</h3>
               <div className="flex items-center gap-1 border border-border rounded-md p-0.5">
                 <button
                   type="button"
@@ -2975,8 +2975,8 @@ export default function ProposalFormDialog({
           />
 
           {/* ── Section 4: Serviço ATMOS ───────────────────────── */}
-          <div className="border border-primary/30 rounded-lg p-4 space-y-3 bg-primary/5">
-            <h4 className="font-semibold text-sm flex items-center gap-2">
+          <div className="rounded-[2rem] p-6 md:p-8 space-y-5 bg-gradient-to-br from-primary/[0.08] to-primary/[0.02] border border-primary/20 shadow-sm">
+            <h4 className="font-black text-sm uppercase tracking-widest flex items-center gap-2 mb-2">
               <TrendingUp className="h-4 w-4 text-primary" />
               Serviço ATMOS (obrigatório)
             </h4>
@@ -3006,8 +3006,8 @@ export default function ProposalFormDialog({
           </div>
 
           {/* ── Section 5: Custos Operacionais ──────── */}
-          <div className="border border-border rounded-lg p-4 space-y-3 bg-accent/10">
-            <h4 className="font-semibold text-sm flex items-center gap-2">
+          <div className="rounded-[2rem] p-6 md:p-8 space-y-5 bg-white shadow-sm border border-black/[0.04]">
+            <h4 className="font-black text-sm uppercase tracking-widest flex items-center gap-2 mb-2">
               <TrendingUp className="h-4 w-4 text-primary" />
               Custos Operacionais
               <ProposalCostChecklistButton proposalId={proposalId} grid={grid} onClick={() => setCostCheckOpen(true)} />
