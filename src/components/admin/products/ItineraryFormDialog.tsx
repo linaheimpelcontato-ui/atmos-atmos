@@ -49,6 +49,7 @@ type ItineraryVars = {
   seo_title?: string;
   seo_description?: string;
   seo_keywords?: string;
+  favorites?: string[];
 };
 
 interface Props {
@@ -99,6 +100,7 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
   const [seoTitle, setSeoTitle] = useState("");
   const [seoDescription, setSeoDescription] = useState("");
   const [seoKeywords, setSeoKeywords] = useState("");
+  const [favorites, setFavorites] = useState<string[]>([]);
 
   const calculateEntranceFees = (daysData: Day[]) => {
     let total = 0;
@@ -166,6 +168,7 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
     setSeoTitle((vars.seo_title as any) || "");
     setSeoDescription((vars.seo_description as any) || "");
     setSeoKeywords((vars.seo_keywords as any) || "");
+    setFavorites((vars.favorites as any) || []);
     setCategory(product?.category || "");
     setSubcategory((vars.subcategory as any) || "");
     setDescription(product?.description || "");
@@ -260,6 +263,7 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
         seo_title: seoTitle,
         seo_description: seoDescription,
         seo_keywords: seoKeywords,
+        favorites: favorites,
       },
     });
   };
@@ -480,7 +484,22 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
 
               <TabsContent value="images" className="mt-0 p-6 space-y-6 animate-in fade-in slide-in-from-right-2 duration-300">
                 {product || name.trim() ? (
-                  <ProductMediaTab product={product || { name, type: "itinerary", variables: { days, extraCosts: { equipmentFees: parseFloat(equipFees), equipmentItems: equipItems, entranceFees: parseFloat(entranceFees) } } } as any} />
+                  <ProductMediaTab 
+                    product={product || { 
+                      name, 
+                      type: "itinerary", 
+                      variables: { 
+                        days, 
+                        extraCosts: { equipmentFees: parseFloat(equipFees), equipmentItems: equipItems, entranceFees: parseFloat(entranceFees) },
+                        favorites: favorites
+                      } 
+                    } as any} 
+                    onFavoriteToggle={(file) => {
+                      setFavorites(prev => 
+                        prev.includes(file) ? prev.filter(f => f !== file) : [...prev.slice(-4), file]
+                      );
+                    }}
+                  />
                 ) : (
                   <div className="flex flex-col items-center justify-center py-20 text-muted-foreground bg-muted/5 rounded-2xl border-2 border-dashed border-border/40 text-center">
                     <ImageIcon className="h-12 w-12 mb-4 opacity-20" />

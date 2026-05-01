@@ -17,8 +17,6 @@ export function ProductImageCell({ product }: { product: Product }) {
   const [images, setImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
-  const replaceRef = useRef<HTMLInputElement>(null);
-  const [replaceTarget, setReplaceTarget] = useState<string | null>(null);
 
   const info = getStorageInfo(product);
 
@@ -125,17 +123,6 @@ export function ProductImageCell({ product }: { product: Product }) {
     e.target.value = "";
   };
 
-  const handleReplaceChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && replaceTarget) await handleUpload(file, replaceTarget);
-    e.target.value = "";
-    setReplaceTarget(null);
-  };
-
-  const startReplace = (fileName: string) => {
-    setReplaceTarget(fileName);
-    setTimeout(() => replaceRef.current?.click(), 50);
-  };
 
   // Thumbnail: show first image
   const thumbUrl = images.length > 0
@@ -194,15 +181,6 @@ export function ProductImageCell({ product }: { product: Product }) {
                       />
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                         <Button
-                          variant="secondary"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => startReplace(fileName)}
-                          title="Substituir"
-                        >
-                          <Replace className="h-4 w-4" />
-                        </Button>
-                        <Button
                           variant="destructive"
                           size="icon"
                           className="h-8 w-8"
@@ -230,7 +208,6 @@ export function ProductImageCell({ product }: { product: Product }) {
           )}
 
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-          <input ref={replaceRef} type="file" accept="image/*" className="hidden" onChange={handleReplaceChange} />
         </DialogContent>
       </Dialog>
     </>

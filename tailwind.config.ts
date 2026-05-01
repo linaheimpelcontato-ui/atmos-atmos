@@ -77,6 +77,16 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        admin: {
+          bg: "hsl(var(--admin-bg))",
+          surface: "hsl(var(--admin-surface))",
+          primary: "hsl(var(--admin-primary))",
+          "primary-foreground": "hsl(var(--admin-primary-foreground))",
+          accent: "hsl(var(--admin-accent))",
+          "accent-foreground": "hsl(var(--admin-accent-foreground))",
+          border: "hsl(var(--admin-border))",
+          muted: "hsl(var(--admin-muted))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

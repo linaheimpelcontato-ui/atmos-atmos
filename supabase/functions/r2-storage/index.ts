@@ -13,7 +13,8 @@ serve(async (req) => {
   }
 
   try {
-    const { action, folder, fileName, bucket } = await req.json()
+    const body = await req.json()
+    const { action, folder, fileName, bucket, sourceKey, destinationKey } = body
     
     // Credentials from environment variables
     const R2_ACCESS_KEY_ID = Deno.env.get('R2_ACCESS_KEY_ID')
@@ -71,10 +72,9 @@ serve(async (req) => {
     }
 
     if (action === 'copy') {
-      const { sourceKey, destinationKey } = await req.json()
       const command = new CopyObjectCommand({
         Bucket: BUCKET_NAME,
-        CopySource: `${BUCKET_NAME}/${sourceKey}`,
+        CopySource: `/${BUCKET_NAME}/${sourceKey}`,
         Key: destinationKey,
       })
       await s3Client.send(command)

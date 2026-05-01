@@ -1,8 +1,22 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Trash2, Upload, Replace, X, Loader2, Film, ImageIcon, Play, ChevronLeft, ChevronRight, Expand, Star } from "lucide-react";
+import { 
+  Trash2, 
+  Upload, 
+  X, 
+  Loader2, 
+  Film, 
+  ImageIcon, 
+  Play, 
+  Star,
+  GripVertical,
+  CheckSquare,
+  Square,
+  Download,
+  ChevronLeft,
+  ChevronRight
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
 import { optimizedUrl, storageUrl, IMAGE_PRESETS } from "@/lib/storage";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { toast } from "sonner";
@@ -10,6 +24,27 @@ import { r2 } from "@/lib/r2";
 import type { Product } from "./shared";
 import { getStorageInfo } from "./shared";
 import { cn } from "@/lib/utils";
+import { 
+  DndContext, 
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragStartEvent,
+  DragOverlay,
+  defaultDropAnimationSideEffects
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+  useSortable
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { motion, AnimatePresence } from "framer-motion";
 
 /* ─── Storage path mapping ─────────────────────────────────────────── */
 
@@ -140,28 +175,163 @@ function Lightbox({
   );
 }
 
+/* ─── Sortable Item ────────────────────────────────────────────────── */
+
+function SortableItem({ 
+  id, 
+  fullKey, 
+  idx, 
+  isSelected, 
+  isFav, 
+  isVid, 
+  onSelect, 
+  onFavorite, 
+  onDelete, 
+  onDownload,
+  onClick
+}: any) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    transition,
+    zIndex: isDragging ? 100 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "relative group rounded-2xl overflow-hidden border transition-all duration-300 aspect-[4/3] bg-white/5",
+        isSelected ? "ring-2 ring-[#2D241E] border-transparent scale-[0.98]" : "border-black/5 hover:border-black/10 hover:shadow-xl",
+        isDragging && "opacity-0"
+      )}
+    >
+      <div 
+        className="absolute inset-0 z-10 cursor-pointer"
+        onClick={onClick}
+      />
+
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); onSelect(); }}
+        className={cn(
+          "absolute top-3 left-3 z-30 w-6 h-6 rounded-lg border-2 transition-all flex items-center justify-center backdrop-blur-md",
+          isSelected ? "bg-[#2D241E] border-[#2D241E] text-white shadow-lg" : "bg-black/10 border-white/60 opacity-0 group-hover:opacity-100 text-white"
+        )}
+      >
+        {isSelected ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
+      </button>
+
+      <div 
+        {...attributes} 
+        {...listeners}
+        className="absolute top-3 right-3 z-30 p-2.5 rounded-xl bg-white/10 backdrop-blur-xl border border-white/20 opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-grab active:cursor-grabbing text-white hover:bg-white/20 shadow-lg"
+        title="Arraste para reordenar"
+      >
+        <GripVertical className="h-5 w-5" />
+      </div>
+
+      <div className="w-full h-full">
+        {isVid ? (
+          <div className="w-full h-full flex items-center justify-center bg-[#2D241E]">
+            <Film className="h-8 w-8 text-white/20" />
+            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+              <Play className="h-8 w-8 text-white fill-white/20" />
+            </div>
+          </div>
+        ) : (
+          <OptimizedImage
+            src={optimizedUrl(fullKey, IMAGE_PRESETS.thumbnail)}
+            alt={fullKey}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            containerClassName="w-full h-full"
+          />
+        )}
+      </div>
+
+      {isFav && (
+        <div className="absolute bottom-3 left-3 z-20">
+          <Badge className="bg-yellow-400 text-[#2D241E] border-none text-[8px] font-black uppercase px-2 h-5 shadow-lg shadow-yellow-400/20 backdrop-blur-md">
+            Capa
+          </Badge>
+        </div>
+      )}
+      
+      <div className={cn(
+        "absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 z-20 pointer-events-none group-hover:pointer-events-auto",
+        isSelected && "opacity-0"
+      )}>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onFavorite(); }}
+          className={cn(
+            "h-10 w-10 rounded-xl flex items-center justify-center transition-all backdrop-blur-md shadow-lg",
+            isFav ? "bg-yellow-400 text-black scale-110" : "bg-white/20 border border-white/30 text-white hover:bg-white/40"
+          )}
+          title="Definir como Capa"
+        >
+          <Star className={cn("h-5 w-5", isFav && "fill-current")} />
+        </button>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onDownload(); }}
+          className="h-10 w-10 rounded-xl bg-white/20 backdrop-blur-md border border-white/30 text-white hover:bg-white/40 flex items-center justify-center transition-all shadow-lg"
+          title="Baixar"
+        >
+          <Download className="h-5 w-5" />
+        </button>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          className="h-10 w-10 rounded-xl bg-red-500/80 backdrop-blur-md text-white hover:bg-red-600 flex items-center justify-center transition-all shadow-lg"
+          title="Deletar"
+        >
+          <Trash2 className="h-5 w-5" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Component ────────────────────────────────────────────────────── */
 
 export function ProductMediaTab({ 
-  product, 
-  onDelete,
-  favorites = [],
-  onToggleFavorite
+  product,
+  onFavoriteToggle
 }: { 
-  product: Partial<Product> & { name: string; type: string; tempId?: string };
-  onDelete?: (fileName: string) => void;
-  favorites?: string[];
-  onToggleFavorite?: (fileName: string) => void;
+  product: Product;
+  onFavoriteToggle?: (fileName: string) => void;
 }) {
   const [media, setMedia] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
-  const replaceRef = useRef<HTMLInputElement>(null);
-  const [replaceTarget, setReplaceTarget] = useState<string | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [isMoving, setIsMoving] = useState(false);
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  const favorites = (product.variables as any)?.favorites || [];
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const info = getStorageInfo(product);
 
@@ -169,9 +339,7 @@ export function ProductMediaTab({
     if (!info) return;
     setLoading(true);
     try {
-      console.log("Listing folder:", info.folder);
       const data = await r2.list(info.folder);
-      console.log("R2 Data found:", data?.length || 0, "objects");
       
       const normalize = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
       const normalizedPrefix = normalize(info.prefix);
@@ -188,22 +356,28 @@ export function ProductMediaTab({
                  key.includes(`/${normalizedPrefix}/`) ||
                  key.includes(`/${normalizedRawName}/`);
         })
-        .map((f: any) => f.Key) // Store full Key
+        .map((f: any) => f.Key)
         .sort((a, b) => {
-          const nameA = a.split('/').pop() || "";
-          const nameB = b.split('/').pop() || "";
+          const nameA = a.toLowerCase();
+          const nameB = b.toLowerCase();
+          
+          const isFavA = nameA.includes('_capa');
+          const isFavB = nameB.includes('_capa');
+          if (isFavA && !isFavB) return -1;
+          if (!isFavA && isFavB) return 1;
+
           const numA = parseInt(nameA.match(/-(\d+)\./)?.[1] || "0");
           const numB = parseInt(nameB.match(/-(\d+)\./)?.[1] || "0");
           return numA - numB;
         });
       setMedia(matching);
     } catch (err) {
-      console.error("Error loading R2 media:", err);
+      console.error(err);
       setMedia([]);
     } finally {
       setLoading(false);
     }
-  }, [info?.folder, info?.prefix]);
+  }, [info?.folder, info?.prefix, info?.rawName]);
 
   useEffect(() => {
     loadMedia();
@@ -212,217 +386,278 @@ export function ProductMediaTab({
   const handleDelete = async (fullKey: string) => {
     if (!info) return;
     try {
-      // The r2.delete expects folder and fileName. 
-      // If fullKey is 'produtos/CACHOEIRAS/Almecegas/Almecegas-1.jpg' 
-      // and info.folder is 'produtos/CACHOEIRAS'
-      // we need to pass the relative part.
       const relativePath = fullKey.replace(`${info.folder}/`, "");
       await r2.delete(info.folder, relativePath);
-      toast.success("Arquivo removido do Cloudflare");
-      setMedia((prev) => prev.filter((f) => f !== fullKey));
-      onDelete?.(fullKey.split('/').pop() || "");
-    } catch (err) {
-      console.error(err);
-      toast.error("Erro ao deletar arquivo");
-    }
-  };
-
-  const handleUpload = async (files: FileList | File[], targetName?: string) => {
-    if (!info) return;
-    setUploading(true);
-    try {
-      const fileArray = Array.from(files);
-      for (const file of fileArray) {
-        if (!fileName) {
-          const nums = media
-            .map((f) => {
-              const baseName = f.split('/').pop() || "";
-              const match = baseName.match(new RegExp(`^${info.prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}-(\\d+)\\.`));
-              return match ? parseInt(match[1]) : 0;
-            })
-            .filter((n) => n > 0);
-          const next = nums.length > 0 ? Math.max(...nums) + 1 : 1;
-          const ext = file.name.split(".").pop() || "jpg";
-          fileName = `${info.prefix}-${next}.${ext}`;
-        }
-        
-        // If we found subfolders in existing media, let's keep them if it's a replacement or specific case
-        // But for new uploads, we'll use the info.folder root to keep it simple unless we want to maintain the nesting.
-        // Given the user's preference for nesting, let's try to put it in the same subfolder if it exists.
-        const firstWithSubfolder = media.find(m => m.includes(`${info.folder}/`) && m.split('/').length > (info.folder.split('/').length + 1));
-        const uploadFolder = firstWithSubfolder 
-          ? firstWithSubfolder.substring(0, firstWithSubfolder.lastIndexOf('/'))
-          : info.folder;
-
-        const finalRelativeName = uploadFolder === info.folder ? fileName : `${uploadFolder.replace(`${info.folder}/`, "")}/${fileName}`;
-
-        await r2.upload(info.folder, finalRelativeName, file);
-      }
-      toast.success(targetName ? "Arquivo substituído" : `${fileArray.length} arquivo(s) enviado(s) para Cloudflare`);
+      toast.success("Imagem removida");
       await loadMedia();
     } catch (err) {
       console.error(err);
-      toast.error("Erro ao enviar arquivo");
+      toast.error("Erro ao deletar");
+    }
+  };
+
+  const handleUpload = async (files: File[]) => {
+    if (!info) return;
+    setUploading(true);
+    try {
+      const nums = media
+        .map((f) => {
+          const baseName = f.split('/').pop() || "";
+          const match = baseName.match(/-(\d+)\./);
+          return match ? parseInt(match[1]) : 0;
+        })
+        .filter((n) => n > 0);
+      let nextNum = nums.length > 0 ? Math.max(...nums) + 1 : 1;
+
+      const firstWithSubfolder = media.find(m => m.includes(`${info.folder}/`) && m.split('/').length > (info.folder.split('/').length + 1));
+      const uploadFolder = firstWithSubfolder 
+        ? firstWithSubfolder.substring(0, firstWithSubfolder.lastIndexOf('/'))
+        : info.folder;
+
+      for (const file of files) {
+        const ext = file.name.split(".").pop() || "jpg";
+        const fileName = `${info.prefix}-${nextNum}.${ext}`;
+        const finalRelativeName = uploadFolder === info.folder ? fileName : `${uploadFolder.replace(`${info.folder}/`, "")}/${fileName}`;
+        
+        await r2.upload(info.folder, finalRelativeName, file);
+        nextNum++;
+      }
+      toast.success(`${files.length} arquivos enviados`);
+      await loadMedia();
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro no upload");
     } finally {
       setUploading(false);
     }
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.length) await handleUpload(e.target.files);
-    e.target.value = "";
-  };
+  const onDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+    if (!over || active.id === over.id || !info) return;
 
-  const handleReplaceChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && replaceTarget) await handleUpload([file], replaceTarget);
-    e.target.value = "";
-    setReplaceTarget(null);
-  };
+    const oldIndex = media.indexOf(active.id as string);
+    const newIndex = media.indexOf(over.id as string);
+    
+    const newMedia = arrayMove(media, oldIndex, newIndex);
+    setMedia(newMedia);
 
-  const startReplace = (fileName: string) => {
-    setReplaceTarget(fileName);
-    setTimeout(() => replaceRef.current?.click(), 50);
-  };
-
-  const downloadFile = async (url: string, fileName: string) => {
+    setIsMoving(true);
     try {
-      const response = await fetch(url);
+      // Reordering is expensive in R2 because we have to rename files to keep numerical order.
+      // We'll do it in chunks to avoid timeouts.
+      const tempKeys: string[] = [];
+      const baseFolder = info.folder;
+
+      // 1. Copy to temp
+      for (let i = 0; i < newMedia.length; i++) {
+        const currentKey = newMedia[i];
+        const fileName = currentKey.split('/').pop() || "";
+        const tempKey = `${baseFolder}/.temp_${Date.now()}_${i}_${fileName}`;
+        await r2.copy(currentKey, tempKey);
+        tempKeys.push(tempKey);
+      }
+
+      // 2. Delete originals
+      for (const key of media) {
+        await r2.delete(baseFolder, key.replace(`${baseFolder}/`, ""));
+      }
+
+      // 3. Move from temp to final names
+      for (let i = 0; i < tempKeys.length; i++) {
+        const tempKey = tempKeys[i];
+        const originalKey = newMedia[i];
+        const ext = originalKey.split('.').pop();
+        const isFav = originalKey.includes('_capa');
+        const newName = `${info.prefix}-${i + 1}${isFav ? '_capa' : ''}.${ext}`;
+        
+        // Find subfolder if any
+        const parts = originalKey.replace(`${baseFolder}/`, "").split('/');
+        const subfolder = parts.length > 1 ? parts.slice(0, -1).join('/') + '/' : '';
+        const finalKey = `${baseFolder}/${subfolder}${newName}`;
+        
+        await r2.copy(tempKey, finalKey);
+        await r2.delete(baseFolder, tempKey.replace(`${baseFolder}/`, ""));
+      }
+      
+      toast.success("Ordem sincronizada");
+      await loadMedia();
+    } catch (err) {
+      console.error("Reorder error:", err);
+      toast.error("Erro ao sincronizar ordem. Tente novamente.");
+      await loadMedia();
+    } finally {
+      setIsMoving(false);
+    }
+  };
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
+  const downloadFile = async (url: string, fullKey: string) => {
+    const fileName = fullKey.split('/').pop() || "image.jpg";
+    try {
+      const response = await fetch(url, { mode: 'cors' });
+      if (!response.ok) throw new Error("CORS or Network issue");
+      
       const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = fileName.split('/').pop() || "download";
+      link.href = blobUrl;
+      link.download = fileName;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
     } catch (err) {
-      console.error(err);
-      toast.error("Erro ao baixar arquivo");
+      console.warn("Standard download failed, trying alternative:", err);
+      const link = document.createElement("a");
+      link.href = url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.info(`Download iniciado: ${fileName}`, { duration: 2000 });
     }
   };
 
   const bulkDownload = async () => {
-    toast.info("Iniciando downloads...");
-    for (const key of selectedKeys) {
+    if (selectedKeys.length === 0) return;
+    toast.info(`Preparando download de ${selectedKeys.length} arquivos...`);
+    
+    for (let i = 0; i < selectedKeys.length; i++) {
+      const key = selectedKeys[i];
       const url = storageUrl(key);
       await downloadFile(url, key);
-      // Small delay to prevent browser blocking
-      await new Promise(r => setTimeout(r, 300));
+      if (i < selectedKeys.length - 1) {
+        await new Promise(r => setTimeout(r, 600));
+      }
     }
   };
 
-  const toggleFavorite = async (fullKey: string) => {
-    if (!info) return;
-    setIsMoving(true);
-    try {
-      const isFav = fullKey.includes('_capa');
-      const newKey = isFav 
-        ? fullKey.replace('_capa', '') 
-        : fullKey.replace(/(\.[^.]+)$/, '_capa$1');
-      
-      await r2.copy(fullKey, newKey);
-      await r2.delete(info.folder, fullKey.replace(`${info.folder}/`, ""));
-      
-      toast.success(isFav ? "Removido dos destaques" : "Definido como imagem de capa");
-      await loadMedia();
-    } catch (err) {
-      console.error(err);
-      toast.error("Erro ao favoritar imagem");
-    } finally {
-      setIsMoving(false);
+  const toggleFavorite = (fullKey: string) => {
+    const fileName = fullKey.split('/').pop() || "";
+    if (onFavoriteToggle) {
+      onFavoriteToggle(fileName);
+      toast.success("Destaque atualizado", {
+        icon: <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />,
+        duration: 2000
+      });
     }
   };
 
-  const moveMedia = async (idx: number, direction: 'left' | 'right') => {
-    if (!info || isMoving) return;
-    const targetIdx = direction === 'left' ? idx - 1 : idx + 1;
-    if (targetIdx < 0 || targetIdx >= media.length) return;
-
-    setIsMoving(true);
-    try {
-      const keyA = media[idx];
-      const keyB = media[targetIdx];
-      
-      // Temporary name to avoid collision during swap
-      const tempKey = `${keyA}_temp`;
-      
-      await r2.copy(keyA, tempKey);
-      await r2.copy(keyB, keyA);
-      await r2.copy(tempKey, keyB);
-      
-      await r2.delete(info.folder, tempKey.replace(`${info.folder}/`, ""));
-      
-      toast.success("Ordem atualizada");
-      await loadMedia();
-    } catch (err) {
-      console.error(err);
-      toast.error("Erro ao reordenar");
-    } finally {
-      setIsMoving(false);
+  const toggleSelectAll = () => {
+    if (selectedKeys.length === media.length && media.length > 0) {
+      setSelectedKeys([]);
+    } else {
+      setSelectedKeys([...media]);
     }
-  };
-
-  const toggleSelect = (key: string) => {
-    setSelectedKeys(prev => 
-      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
-    );
   };
 
   const bulkDelete = async () => {
     if (!info || selectedKeys.length === 0) return;
-    if (!confirm(`Deseja deletar ${selectedKeys.length} arquivos?`)) return;
+    if (!confirm(`Deseja deletar ${selectedKeys.length} arquivos permanentemente?`)) return;
 
     setLoading(true);
     try {
       for (const key of selectedKeys) {
         await r2.delete(info.folder, key.replace(`${info.folder}/`, ""));
       }
-      toast.success(`${selectedKeys.length} arquivos removidos`);
+      toast.success(`${selectedKeys.length} arquivos removidos com sucesso`);
       setSelectedKeys([]);
       await loadMedia();
     } catch (err) {
       console.error(err);
-      toast.error("Erro ao deletar arquivos");
+      toast.error("Erro ao deletar alguns arquivos");
     } finally {
       setLoading(false);
     }
   };
 
-  if (!info) return <div className="p-8 text-center text-muted-foreground">Tipo de produto não suportado para mídia.</div>;
+  if (!info) return <div className="p-8 text-center text-[#8d7b63] font-medium italic">Tipo de produto não suportado para mídia.</div>;
 
   const mediaUrls = media.map((f) => storageUrl(f));
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between bg-white/40 backdrop-blur-md p-4 rounded-2xl border border-white/20 sticky top-0 z-30 shadow-sm">
-        <div className="flex flex-col">
-          <h3 className="text-sm font-bold text-[#2D241E]">
-            {selectedKeys.length > 0 ? `${selectedKeys.length} selecionados` : "Galeria de Fotos & Vídeos"}
-          </h3>
-          <p className="text-[10px] text-[#8d7b63] uppercase tracking-wider font-medium">
-            {selectedKeys.length > 0 ? "Escolha uma ação para os itens" : "Gerencie a ordem e destaque do site"}
-          </p>
+      <div className="flex items-center justify-between bg-white/60 backdrop-blur-xl p-5 rounded-3xl border border-white/20 sticky top-0 z-30 shadow-xl shadow-black/5">
+        <div className="flex items-center gap-4">
+          <button 
+            type="button"
+            onClick={toggleSelectAll}
+            className={cn(
+              "w-10 h-10 rounded-2xl flex items-center justify-center transition-all border",
+              selectedKeys.length > 0 && selectedKeys.length === media.length
+                ? "bg-[#2D241E] border-[#2D241E] text-white"
+                : "bg-white/50 border-black/5 text-[#2D241E] hover:border-black/10"
+            )}
+          >
+            {selectedKeys.length > 0 ? (
+              selectedKeys.length === media.length ? <CheckSquare className="h-5 w-5" /> : <div className="h-2 w-3 bg-current rounded-sm" />
+            ) : <Square className="h-5 w-5" />}
+          </button>
+
+          <div className="flex flex-col">
+            <h3 className="text-sm font-black text-[#2D241E] uppercase tracking-tighter">
+              {selectedKeys.length > 0 ? `${selectedKeys.length} Selecionados` : "Galeria Atmos"}
+            </h3>
+            <p className="text-[10px] text-[#8d7b63] uppercase tracking-[0.2em] font-bold opacity-70 leading-tight">
+              {selectedKeys.length > 0 ? "Escolha uma ação global" : `${media.length} itens no total`}
+            </p>
+          </div>
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           {selectedKeys.length > 0 ? (
-            <>
-              <Button type="button" variant="outline" size="sm" onClick={bulkDownload} className="h-9 rounded-xl text-xs border-[#8d7b63]/20 hover:bg-[#8d7b63]/5">
-                Exportar {selectedKeys.length}
-              </Button>
-              <Button type="button" variant="destructive" size="sm" onClick={bulkDelete} className="h-9 rounded-xl text-xs bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/20">
-                <Trash2 className="h-3.5 w-3.5 mr-2" />
-                Remover {selectedKeys.length}
-              </Button>
-            </>
+            <AnimatePresence mode="wait">
+              <motion.div 
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                className="flex gap-2"
+              >
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={bulkDownload} 
+                  className="h-10 px-5 rounded-2xl text-xs font-bold border-black/5 bg-white/50 hover:bg-white transition-all shadow-sm active:scale-95"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Exportar
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="destructive" 
+                  size="sm" 
+                  onClick={bulkDelete} 
+                  className="h-10 px-5 rounded-2xl text-xs font-bold bg-red-500 hover:bg-red-600 border-none shadow-lg shadow-red-500/20 active:scale-95 transition-all"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Apagar
+                </Button>
+              </motion.div>
+            </AnimatePresence>
           ) : (
-            <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading || isMoving} className="h-9 rounded-xl text-xs bg-[#2D241E] text-white border-none hover:bg-[#3D342E] shadow-lg shadow-black/10 transition-all active:scale-95">
-              {uploading ? <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" /> : <Upload className="h-3.5 w-3.5 mr-2" />}
-              Upload em Massa
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm" 
+              onClick={() => fileRef.current?.click()} 
+              disabled={uploading || isMoving} 
+              className="h-11 px-6 rounded-2xl text-xs font-black bg-[#2D241E] text-white border-none hover:bg-[#3D342E] shadow-xl shadow-black/10 transition-all active:scale-95 flex items-center gap-2"
+            >
+              {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+              ADICIONAR MÍDIA
             </Button>
           )}
         </div>
       </div>
+
 
       {loading || isMoving ? (
         <div className="flex flex-col items-center justify-center py-24 gap-4">
@@ -432,197 +667,115 @@ export function ProductMediaTab({
               <div className="h-2 w-2 bg-[#8d7b63] rounded-full animate-ping" />
             </div>
           </div>
-          <p className="text-xs font-medium text-[#8d7b63] animate-pulse">
-            {isMoving ? "Sincronizando ordem..." : "Carregando galeria..."}
+          <p className="text-xs font-medium text-[#8d7b63] animate-pulse text-center max-w-[200px]">
+            {isMoving ? "Sincronizando nova ordem no Cloudflare..." : "Carregando galeria..."}
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 pt-2">
-          {media.map((fullKey, idx) => {
-            const fileName = fullKey.split('/').pop() || "";
-            const isVid = isVideo(fileName);
-            const isSelected = selectedKeys.includes(fullKey);
-            const isFav = fileName.includes('_capa');
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={onDragEnd}
+        >
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 pt-2">
+            <SortableContext
+              items={media}
+              strategy={rectSortingStrategy}
+            >
+              {media.map((fullKey, idx) => {
+                const fileName = fullKey.split('/').pop() || "";
+                const isFav = fullKey.includes('_capa') || favorites.includes(fileName);
+                return (
+                  <SortableItem
+                    key={fullKey}
+                    id={fullKey}
+                    fullKey={fullKey}
+                    idx={idx}
+                    isSelected={selectedKeys.includes(fullKey)}
+                    isFav={isFav}
+                    isVid={isVideo(fullKey)}
+                    onSelect={() => {
+                      setSelectedKeys(prev => 
+                        prev.includes(fullKey) ? prev.filter(k => k !== fullKey) : [...prev, fullKey]
+                      );
+                    }}
+                    onFavorite={() => toggleFavorite(fullKey)}
+                    onDelete={() => handleDelete(fullKey)}
+                    onDownload={() => downloadFile(storageUrl(fullKey), fullKey)}
+                    onClick={() => selectedKeys.length > 0 ? (
+                      setSelectedKeys(prev => 
+                        prev.includes(fullKey) ? prev.filter(k => k !== fullKey) : [...prev, fullKey]
+                      )
+                    ) : setLightboxIndex(idx)}
+                  />
+                );
+              })}
+            </SortableContext>
             
-            return (
-              <div 
-                key={fullKey} 
-                className={cn(
-                  "relative group rounded-2xl overflow-hidden border transition-all duration-300 aspect-[4/3] shadow-sm",
-                  isSelected ? "ring-2 ring-[#2D241E] border-transparent scale-[0.98]" : "border-black/5 hover:border-black/10 hover:shadow-xl hover:-translate-y-1"
-                )}
-              >
-                {/* Checkbox selector */}
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); toggleSelect(fullKey); }}
-                  className={cn(
-                    "absolute top-3 left-3 z-30 w-5 h-5 rounded-full border-2 transition-all flex items-center justify-center backdrop-blur-md",
-                    isSelected ? "bg-[#2D241E] border-[#2D241E]" : "bg-black/10 border-white/60 opacity-0 group-hover:opacity-100"
-                  )}
-                >
-                  {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
-                </button>
+            <button 
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="border-2 border-dashed border-[#8d7b63]/20 rounded-2xl flex flex-col items-center justify-center gap-3 hover:border-[#2D241E]/40 hover:bg-[#2D241E]/5 transition-all aspect-[4/3] group relative overflow-hidden"
+            >
+              <div className="h-12 w-12 rounded-2xl bg-[#8d7b63]/10 flex items-center justify-center group-hover:bg-[#2D241E]/10 group-hover:scale-110 transition-all duration-300">
+                <Upload className="h-6 w-6 text-[#8d7b63] group-hover:text-[#2D241E] transition-colors" />
+              </div>
+              <div className="flex flex-col items-center">
+                <span className="text-[10px] font-bold text-[#8d7b63] group-hover:text-[#2D241E] uppercase tracking-widest">Adicionar</span>
+                <span className="text-[8px] text-[#8d7b63]/60 group-hover:text-[#2D241E]/60 uppercase tracking-tighter mt-1">Fotos ou Vídeos</span>
+              </div>
+            </button>
+          </div>
 
-                {/* Media Content */}
-                <div 
-                  className="w-full h-full cursor-pointer"
-                  onClick={() => selectedKeys.length > 0 ? toggleSelect(fullKey) : setLightboxIndex(idx)}
-                >
-                  {isVid ? (
-                    <div className="w-full h-full flex items-center justify-center bg-[#2D241E]">
-                      <Film className="h-8 w-8 text-white/20" />
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                        <Play className="h-8 w-8 text-white fill-white/20" />
-                      </div>
-                    </div>
-                  ) : (
-                    <OptimizedImage
-                      src={optimizedUrl(fullKey, IMAGE_PRESETS.thumbnail)}
-                      alt={fullKey}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      containerClassName="w-full h-full"
-                    />
-                  )}
-                </div>
-
-                {/* Cover Badge */}
-                {isFav && (
-                  <div className="absolute top-3 right-3 z-20">
-                    <Badge className="bg-yellow-400 text-[#2D241E] border-none text-[8px] font-black uppercase px-2 h-5 shadow-lg shadow-yellow-400/20 backdrop-blur-md">
-                      Destaque
-                    </Badge>
+          <DragOverlay dropAnimation={{
+            sideEffects: defaultDropAnimationSideEffects({
+              styles: {
+                active: {
+                  opacity: '0.5',
+                },
+              },
+            }),
+          }}>
+            {activeId ? (
+              <div className="w-full h-full rounded-2xl overflow-hidden border-2 border-[#2D241E] shadow-2xl scale-105 aspect-[4/3]">
+                {isVideo(activeId) ? (
+                  <div className="w-full h-full flex items-center justify-center bg-[#2D241E]">
+                    <Film className="h-8 w-8 text-white/50" />
                   </div>
-                )}
-                
-                {/* Actions Overlay */}
-                <div className={cn(
-                  "absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-300 flex flex-col justify-end p-3 gap-3 z-20 pointer-events-none",
-                  selectedKeys.length > 0 ? "opacity-0" : "opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto"
-                )}>
-                  {/* Reordering Row */}
-                  <div className="flex items-center justify-center gap-1.5 translate-y-4 group-hover:translate-y-0 transition-transform duration-300 delay-75">
-                    <button
-                      type="button"
-                      disabled={idx === 0}
-                      onClick={(e) => { e.stopPropagation(); moveMedia(idx, 'left'); }}
-                      className="h-8 w-8 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white hover:bg-white/40 disabled:opacity-20 transition-all"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </button>
-                    
-                    <div className="h-8 px-3 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-[10px] font-bold text-white uppercase tracking-widest">
-                      Pos {idx + 1}
-                    </div>
-
-                    <button
-                      type="button"
-                      disabled={idx === media.length - 1}
-                      onClick={(e) => { e.stopPropagation(); moveMedia(idx, 'right'); }}
-                      className="h-8 w-8 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white hover:bg-white/40 disabled:opacity-20 transition-all"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
-                  </div>
-
-                  {/* Utility Row */}
-                  <div className="flex items-center justify-between translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                    <div className="flex gap-1.5">
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); toggleFavorite(fullKey); }}
-                        className={cn(
-                          "h-8 w-8 rounded-xl flex items-center justify-center transition-all",
-                          isFav ? "bg-yellow-400 text-black shadow-lg shadow-yellow-400/30" : "bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/30"
-                        )}
-                        title="Imagem de Capa"
-                      >
-                        <Star className={cn("h-4 w-4", isFav && "fill-current")} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); downloadFile(storageUrl(fullKey), fileName); }}
-                        className="h-8 w-8 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/30 flex items-center justify-center transition-all"
-                        title="Baixar"
-                      >
-                        <ImageIcon className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); startReplace(fileName); }}
-                        className="h-8 w-8 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/30 flex items-center justify-center transition-all"
-                        title="Substituir"
-                      >
-                        <Replace className="h-4 w-4" />
-                      </button>
-                    </div>
-                    
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); handleDelete(fullKey); }}
-                      className="h-8 w-8 rounded-xl bg-red-500/80 backdrop-blur-md text-white hover:bg-red-600 shadow-lg shadow-red-500/20 flex items-center justify-center transition-all"
-                      title="Deletar"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-                
-                {/* Video Indicator */}
-                {!isFav && isVid && (
-                  <div className="absolute bottom-3 left-3 z-10 pointer-events-none">
-                    <Badge className="bg-blue-500/80 backdrop-blur-md border-none text-[8px] font-black uppercase px-2 h-5 shadow-lg shadow-blue-500/20">
-                      Vídeo
-                    </Badge>
-                  </div>
+                ) : (
+                  <img
+                    src={optimizedUrl(activeId, IMAGE_PRESETS.thumbnail)}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
                 )}
               </div>
-            );
-          })}
-          
-          <button 
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            className="border-2 border-dashed border-[#8d7b63]/20 rounded-2xl flex flex-col items-center justify-center gap-3 hover:border-[#2D241E]/40 hover:bg-[#2D241E]/5 transition-all aspect-[4/3] group relative overflow-hidden"
-          >
-            <div className="h-12 w-12 rounded-2xl bg-[#8d7b63]/10 flex items-center justify-center group-hover:bg-[#2D241E]/10 group-hover:scale-110 transition-all duration-300">
-              <Upload className="h-6 w-6 text-[#8d7b63] group-hover:text-[#2D241E] transition-colors" />
-            </div>
-            <div className="flex flex-col items-center">
-              <span className="text-[10px] font-bold text-[#8d7b63] group-hover:text-[#2D241E] uppercase tracking-widest">Adicionar</span>
-              <span className="text-[8px] text-[#8d7b63]/60 group-hover:text-[#2D241E]/60 uppercase tracking-tighter mt-1">Fotos ou Vídeos</span>
-            </div>
-            
-            {/* Animated bg elements */}
-            <div className="absolute -bottom-4 -right-4 w-12 h-12 bg-[#8d7b63]/5 rounded-full blur-2xl group-hover:bg-[#2D241E]/10 transition-colors" />
-          </button>
-        </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
       )}
-
-      {media.length === 0 && !loading && (
-        <div className="border-2 border-dashed border-border/40 rounded-2xl p-12 text-center bg-muted/5">
-          <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-4">
-            <ImageIcon className="h-6 w-6 text-muted-foreground/60" />
-          </div>
-          <h4 className="text-sm font-semibold">Nenhuma mídia encontrada</h4>
-          <p className="text-xs text-muted-foreground max-w-[240px] mx-auto mt-1">
-            Faça upload das fotos e vídeos que serão exibidos no site para este produto.
-          </p>
-        </div>
-      )}
-
-      <input ref={fileRef} type="file" accept="image/*,video/*" multiple className="hidden" onChange={handleFileChange} />
-      <input ref={replaceRef} type="file" accept="image/*,video/*" className="hidden" onChange={handleReplaceChange} />
-
-      {/* Lightbox */}
       {lightboxIndex !== null && (
         <Lightbox
-          urls={mediaUrls}
+          urls={media.map(storageUrl)}
           fileNames={media}
           index={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
         />
       )}
+
+      <input
+        ref={fileRef}
+        type="file"
+        multiple
+        accept="image/*,video/*"
+        className="hidden"
+        onChange={(e) => {
+          const files = Array.from(e.target.files || []);
+          if (files.length > 0) handleUpload(files);
+          e.target.value = "";
+        }}
+      />
     </div>
   );
 }

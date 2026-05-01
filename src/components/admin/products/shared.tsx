@@ -334,6 +334,8 @@ export function getDialogFields(type: string, category?: string): FieldDef[] {
 
 // ─── Inline Price Editor ────────────────────────────────────────────
 
+// ─── Inline Price Editor ────────────────────────────────────────────
+
 export function InlinePrice({ value, onSave }: { value: number; onSave: (v: number) => void }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value.toString());
@@ -341,35 +343,43 @@ export function InlinePrice({ value, onSave }: { value: number; onSave: (v: numb
   if (!editing) {
     return (
       <button
-        className={`text-right tabular-nums cursor-pointer hover:underline ${value === 0 ? "text-orange-500" : ""}`}
+        className={`text-right font-semibold tabular-nums cursor-pointer px-2 py-1 rounded-md transition-colors hover:bg-admin-muted hover:text-admin-primary ${value === 0 ? "text-orange-500" : "text-foreground"}`}
         onClick={() => { setDraft(value.toString()); setEditing(true); }}
       >
         {value === 0 ? (
-          <Badge variant="outline" className="text-orange-500 border-orange-300">definir</Badge>
+          <span className="text-[10px] uppercase tracking-wider font-bold opacity-70">Definir</span>
         ) : (
-          Number(value).toFixed(2)
+          `R$ ${Number(value).toFixed(2)}`
         )}
       </button>
     );
   }
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1.5 bg-white p-1 rounded-lg shadow-sm border border-admin-border animate-in fade-in zoom-in-95 duration-200">
       <Input
         type="number" step="0.01" min="0" value={draft}
         onChange={(e) => setDraft(e.target.value)}
-        className="w-24 h-7 text-xs" autoFocus
+        className="w-24 h-8 text-sm border-none focus-visible:ring-0 px-1 font-semibold" autoFocus
         onKeyDown={(e) => {
           if (e.key === "Enter") { onSave(parseFloat(draft) || 0); setEditing(false); }
           if (e.key === "Escape") setEditing(false);
         }}
       />
-      <button onClick={() => { onSave(parseFloat(draft) || 0); setEditing(false); }}>
-        <Check className="h-3.5 w-3.5 text-green-600" />
-      </button>
-      <button onClick={() => setEditing(false)}>
-        <X className="h-3.5 w-3.5 text-muted-foreground" />
-      </button>
+      <div className="flex items-center gap-0.5">
+        <button 
+          onClick={() => { onSave(parseFloat(draft) || 0); setEditing(false); }}
+          className="p-1 rounded-md hover:bg-green-50 text-green-600 transition-colors"
+        >
+          <Check className="h-4 w-4" />
+        </button>
+        <button 
+          onClick={() => setEditing(false)}
+          className="p-1 rounded-md hover:bg-red-50 text-red-400 transition-colors"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
     </div>
   );
 }
@@ -381,7 +391,7 @@ export function InlineText({
   onSave,
   placeholder = "-",
   className = "",
-  inputClassName = "w-28",
+  inputClassName = "w-32",
 }: {
   value: string;
   onSave: (v: string) => void;
@@ -395,7 +405,7 @@ export function InlineText({
   if (!editing) {
     return (
       <button
-        className={`cursor-pointer hover:underline text-left ${!value ? "text-muted-foreground" : ""} ${className}`}
+        className={`cursor-pointer px-2 py-1 rounded-md transition-colors hover:bg-admin-muted hover:text-admin-primary text-left truncate ${!value ? "text-muted-foreground/50 italic" : "font-medium"} ${className}`}
         onClick={() => { setDraft(value); setEditing(true); }}
       >
         {value || placeholder}
@@ -404,23 +414,25 @@ export function InlineText({
   }
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1.5 bg-white p-1 rounded-lg shadow-sm border border-admin-border animate-in fade-in zoom-in-95 duration-200">
       <Input
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
-        className={`h-7 text-xs ${inputClassName}`}
+        className={`h-8 text-sm border-none focus-visible:ring-0 px-1 font-medium ${inputClassName}`}
         autoFocus
         onKeyDown={(e) => {
           if (e.key === "Enter") { onSave(draft); setEditing(false); }
           if (e.key === "Escape") setEditing(false);
         }}
       />
-      <button onClick={() => { onSave(draft); setEditing(false); }}>
-        <Check className="h-3.5 w-3.5 text-green-600" />
-      </button>
-      <button onClick={() => setEditing(false)}>
-        <X className="h-3.5 w-3.5 text-muted-foreground" />
-      </button>
+      <div className="flex items-center gap-0.5">
+        <button onClick={() => { onSave(draft); setEditing(false); }} className="p-1 rounded-md hover:bg-green-50 text-green-600">
+          <Check className="h-4 w-4" />
+        </button>
+        <button onClick={() => setEditing(false)} className="p-1 rounded-md hover:bg-red-50 text-red-400">
+          <X className="h-4 w-4" />
+        </button>
+      </div>
     </div>
   );
 }
@@ -444,7 +456,7 @@ export function InlineNumber({
   if (!editing) {
     return (
       <button
-        className={`cursor-pointer hover:underline tabular-nums ${value === 0 ? "text-muted-foreground" : ""}`}
+        className={`cursor-pointer px-2 py-1 rounded-md transition-colors hover:bg-admin-muted hover:text-admin-primary tabular-nums font-medium ${value === 0 ? "text-muted-foreground/50" : ""}`}
         onClick={() => { setDraft(value.toString()); setEditing(true); }}
       >
         {value === 0 ? "-" : `${value}${suffix}`}
@@ -453,23 +465,25 @@ export function InlineNumber({
   }
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1.5 bg-white p-1 rounded-lg shadow-sm border border-admin-border animate-in fade-in zoom-in-95 duration-200">
       <Input
         type="number" step="0.1" min="0" value={draft}
         onChange={(e) => setDraft(e.target.value)}
-        className={`h-7 text-xs ${inputClassName}`}
+        className={`h-8 text-sm border-none focus-visible:ring-0 px-1 font-medium ${inputClassName}`}
         autoFocus
         onKeyDown={(e) => {
           if (e.key === "Enter") { onSave(parseFloat(draft) || 0); setEditing(false); }
           if (e.key === "Escape") setEditing(false);
         }}
       />
-      <button onClick={() => { onSave(parseFloat(draft) || 0); setEditing(false); }}>
-        <Check className="h-3.5 w-3.5 text-green-600" />
-      </button>
-      <button onClick={() => setEditing(false)}>
-        <X className="h-3.5 w-3.5 text-muted-foreground" />
-      </button>
+      <div className="flex items-center gap-0.5">
+        <button onClick={() => { onSave(parseFloat(draft) || 0); setEditing(false); }} className="p-1 rounded-md hover:bg-green-50 text-green-600">
+          <Check className="h-4 w-4" />
+        </button>
+        <button onClick={() => setEditing(false)} className="p-1 rounded-md hover:bg-red-50 text-red-400">
+          <X className="h-4 w-4" />
+        </button>
+      </div>
     </div>
   );
 }
@@ -487,12 +501,12 @@ export function InlineSelect({
 }) {
   return (
     <Select value={value} onValueChange={onSave}>
-      <SelectTrigger className="h-7 text-xs w-auto min-w-[80px]">
+      <SelectTrigger className="h-8 text-xs w-auto min-w-[100px] bg-white border-admin-border rounded-lg hover:bg-admin-muted transition-colors">
         <SelectValue />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent className="rounded-xl border-admin-border shadow-xl">
         {Object.entries(options).map(([k, label]) => (
-          <SelectItem key={k} value={k}>{label}</SelectItem>
+          <SelectItem key={k} value={k} className="text-xs">{label}</SelectItem>
         ))}
       </SelectContent>
     </Select>
@@ -518,10 +532,6 @@ export function ProductTable({
   selectedIds,
   onToggleRow,
   onToggleAll,
-  // Legacy props kept for compatibility
-  sortKey,
-  sortDir,
-  onSort,
 }: {
   products: Product[];
   columns?: string[];
@@ -532,29 +542,24 @@ export function ProductTable({
   selectedIds?: Set<string>;
   onToggleRow?: (id: string) => void;
   onToggleAll?: (ids: string[]) => void;
-  sortKey?: string | null;
-  sortDir?: import("@/components/admin/SmartTableHead").SortDir;
-  onSort?: (key: string) => void;
 }) {
-  if (isLoading) return <p className="text-sm text-muted-foreground py-4">Carregando...</p>;
-
   const headers: ColumnDef[] = columnDefs || (columns || []).map((c) => ({ label: c }));
-  const hasSelection = selectedIds && onToggleRow && onToggleAll;
+  const hasSelection = !!(selectedIds && onToggleRow && onToggleAll);
   const allIds = products.map(p => p.id);
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-      <div className="flex-1 overflow-auto overscroll-contain">
-        <table className="w-full text-sm border-collapse">
-          <thead className="bg-muted/40 sticky top-0 z-20 backdrop-blur-md border-b border-border/50">
+    <div className="flex flex-col">
+      <div className="flex-1 overflow-x-auto custom-scrollbar bg-white rounded-2xl border border-admin-border/50 shadow-sm">
+        <table className="w-full text-left border-collapse min-w-[800px]">
+          <thead className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-admin-border/40">
             <tr>
               {hasSelection && (
-                <th className="p-4 w-12 align-middle border-b border-border/50">
+                <th className="px-6 py-5 w-14 align-middle">
                   <div className="flex items-center justify-center">
                     <Checkbox
                       checked={allIds.length > 0 && allIds.every(id => selectedIds.has(id))}
                       onCheckedChange={() => onToggleAll(allIds)}
-                      className="border-muted-foreground/30 data-[state=checked]:bg-primary"
+                      className="border-admin-border data-[state=checked]:bg-admin-primary data-[state=checked]:border-admin-primary transition-all"
                     />
                   </div>
                 </th>
@@ -569,23 +574,48 @@ export function ProductTable({
                     data={products}
                     valueExtractor={c.valueExtractor}
                     labelMap={c.labelMap}
-                    className="p-4 border-b border-border/50"
+                    className="px-6 py-5"
                   />
                 ) : (
-                  <th key={c.label} className="text-left p-4 font-semibold text-muted-foreground/70 uppercase tracking-wider text-[10px] whitespace-nowrap border-b border-border/50">{c.label}</th>
+                  <th 
+                    key={c.label} 
+                    className="px-6 py-5 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50 whitespace-nowrap"
+                  >
+                    {c.label}
+                  </th>
                 )
               )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-border/40">
-            {products.map(renderRow)}
-          {products.length === 0 && (
-            <tr>
-              <td colSpan={headers.length + (hasSelection ? 1 : 0)} className="p-6 text-center text-muted-foreground">
-                Nenhum item encontrado
-              </td>
-            </tr>
-          )}
+          <tbody className="divide-y divide-admin-border/20">
+            {isLoading ? (
+              Array.from({ length: 8 }).map((_, i) => (
+                <tr key={i} className="animate-pulse">
+                  {hasSelection && <td className="px-6 py-7"><div className="h-4 w-4 bg-admin-muted rounded-full mx-auto" /></td>}
+                  {headers.map((_, j) => (
+                    <td key={j} className="px-6 py-7">
+                      <div className="h-4 w-full bg-admin-muted/60 rounded-lg" />
+                    </td>
+                  ))}
+                </tr>
+              ))
+            ) : products.length === 0 ? (
+              <tr>
+                <td colSpan={headers.length + (hasSelection ? 1 : 0)} className="px-6 py-24 text-center">
+                  <div className="flex flex-col items-center gap-4 max-w-xs mx-auto animate-in fade-in zoom-in duration-500">
+                    <div className="p-5 bg-admin-muted/50 rounded-3xl text-admin-primary/20">
+                      <X className="h-10 w-10" strokeWidth={1.5} />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-bold text-admin-primary uppercase tracking-widest">Nenhum item</p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">Não encontramos produtos com os filtros atuais.</p>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              products.map(renderRow)
+            )}
           </tbody>
         </table>
       </div>
@@ -656,56 +686,71 @@ export function SupplierCombobox({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
-          className={`flex items-center gap-1 cursor-pointer hover:underline text-left text-sm ${!displayName ? "text-muted-foreground" : ""}`}
+          className={`flex items-center gap-2 cursor-pointer group transition-all text-left text-sm ${!displayName ? "text-muted-foreground/40 italic" : "text-admin-primary font-bold hover:text-black"}`}
           onClick={() => { setOpen(true); setSearch(""); }}
         >
-          {displayName || "—"}
-          <ChevronsUpDown className="h-3 w-3 text-muted-foreground shrink-0" />
+          <span className="truncate max-w-[150px]">{displayName || "Selecionar Fornecedor"}</span>
+          <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50 group-hover:text-admin-primary shrink-0 transition-colors" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-56 p-2" align="start">
-        <Input
-          ref={inputRef}
-          placeholder="Buscar fornecedor..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="h-7 text-xs mb-1"
-          autoFocus
-        />
-        <div className="max-h-40 overflow-y-auto space-y-0.5">
+      <PopoverContent className="w-64 p-3 bg-white border-none shadow-2xl rounded-2xl animate-in fade-in zoom-in-95 duration-200" align="start">
+        <div className="relative mb-3">
+          <Input
+            ref={inputRef}
+            placeholder="Buscar parceiro..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="h-9 text-xs pl-3 bg-admin-bg border-admin-border rounded-xl focus:ring-2 focus:ring-admin-primary/10 transition-all"
+            autoFocus
+          />
+        </div>
+        
+        <div className="max-h-60 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
           {filtered.map((s) => (
             <button
               key={s.id}
-              className={`w-full text-left px-2 py-1.5 rounded text-xs hover:bg-muted flex items-center gap-2 ${s.id === supplierId ? "bg-muted font-medium" : ""}`}
+              className={`w-full text-left px-3 py-2 rounded-xl text-xs transition-all flex flex-col gap-0.5 ${s.id === supplierId ? "bg-admin-primary text-white font-bold" : "hover:bg-admin-muted text-admin-primary font-semibold"}`}
               onClick={() => { onSelect(s); setOpen(false); setSearch(""); }}
             >
               <span className="truncate">{s.name}</span>
-              {s.contact_name && <span className="text-muted-foreground truncate">({s.contact_name})</span>}
+              {s.contact_name && (
+                <span className={`text-[9px] truncate opacity-70 ${s.id === supplierId ? "text-white" : "text-muted-foreground"}`}>
+                  {s.contact_name}
+                </span>
+              )}
             </button>
           ))}
           {filtered.length === 0 && !search && (
-            <p className="text-xs text-muted-foreground px-2 py-1">Nenhum fornecedor</p>
+            <div className="py-8 text-center space-y-2">
+              <div className="h-8 w-8 rounded-full bg-admin-muted flex items-center justify-center mx-auto opacity-40">
+                <X className="h-4 w-4" />
+              </div>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Vazio</p>
+            </div>
           )}
         </div>
-        {search && !filtered.some((s) => s.name.toLowerCase() === search.toLowerCase()) && (
-          <Button
-            size="sm" variant="ghost"
-            className="w-full mt-1 text-xs h-7 justify-start"
-            onClick={handleCreate}
-            disabled={creating}
-          >
-            <Plus className="h-3 w-3 mr-1" /> Criar "{search}"
-          </Button>
-        )}
-        {supplierId && (
-          <Button
-            size="sm" variant="ghost"
-            className="w-full mt-1 text-xs h-7 justify-start text-muted-foreground"
-            onClick={() => { onSelect(null); setOpen(false); }}
-          >
-            <X className="h-3 w-3 mr-1" /> Remover vínculo
-          </Button>
-        )}
+        
+        {(search || supplierId) && <div className="mt-2 pt-2 border-t border-admin-border/50 space-y-1">
+          {search && !filtered.some((s) => s.name.toLowerCase() === search.toLowerCase()) && (
+            <Button
+              size="sm" variant="ghost"
+              className="w-full text-[10px] h-9 justify-start font-bold uppercase tracking-widest text-admin-primary hover:bg-admin-primary/5 rounded-xl"
+              onClick={handleCreate}
+              disabled={creating}
+            >
+              <Plus className="h-3 w-3 mr-2" /> Criar "{search}"
+            </Button>
+          )}
+          {supplierId && (
+            <Button
+              size="sm" variant="ghost"
+              className="w-full text-[10px] h-9 justify-start font-bold uppercase tracking-widest text-red-500 hover:bg-red-50 rounded-xl"
+              onClick={() => { onSelect(null); setOpen(false); }}
+            >
+              <X className="h-3 w-3 mr-2" /> Remover Parceiro
+            </Button>
+          )}
+        </div>}
       </PopoverContent>
     </Popover>
   );

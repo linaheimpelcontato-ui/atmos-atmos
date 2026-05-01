@@ -4,12 +4,12 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
-import { SmartTableHead, useSmartFilters } from "@/components/admin/SmartTableHead";
+import { SmartTh, useSmartFilters } from "@/components/admin/SmartTableHead";
 import { Button } from "@/components/ui/button";
-import { Download, DollarSign, Percent, TrendingUp, Target } from "lucide-react";
+import { Download, DollarSign, Percent, TrendingUp, Target, Activity, PieChart, Users, FileText, ChevronRight, Filter, Calendar } from "lucide-react";
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid,
-  Tooltip, Legend, ResponsiveContainer,
+  Tooltip, Legend, ResponsiveContainer, AreaChart, Area
 } from "recharts";
 import { useFinanceData } from "./finance/useFinanceData";
 import {
@@ -18,6 +18,7 @@ import {
   calcProposalProfit, fmt, fmtPct,
 } from "./finance/financeCalcs";
 import { exportOverview, exportGuideRanking, exportCategories, exportProducts } from "./finance/financeExport";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function AdminFinanceLucroMargem() {
   const now = new Date();
@@ -25,6 +26,7 @@ export default function AdminFinanceLucroMargem() {
   const [dateTo, setDateTo] = useState(format(now, "yyyy-MM-dd"));
   const [segment, setSegment] = useState("all");
   const [tab, setTab] = useState<"dre" | "proposals" | "guides" | "categories">("dre");
+  
   const proposalFilterState = useSmartFilters();
   const guideFilterState = useSmartFilters();
   const categoryFilterState = useSmartFilters();
@@ -37,7 +39,6 @@ export default function AdminFinanceLucroMargem() {
   const guideRanking = useMemo(() => calcGuideRanking(fd, guides, proposalCosts), [fd, guides, proposalCosts]);
   const categoryData = useMemo(() => calcCategoryBreakdown(fd), [fd]);
 
-  // Per-proposal margin
   const proposalMargins = useMemo(() => {
     return fd.accepted.map(p => {
       const pf = calcProposalProfit(p, fd.dayItems, proposalCosts);
@@ -50,138 +51,318 @@ export default function AdminFinanceLucroMargem() {
     margem: m.receita > 0 ? ((m.lucro / m.receita) * 100) : 0,
   })), [monthlyData]);
 
-  return (
-    <div className="p-4 md:p-6 space-y-6 max-w-[1400px] mx-auto">
-      <h1 className="text-2xl font-bold">Lucro & Margem</h1>
-
-      <div className="flex flex-wrap gap-3 items-end bg-card border border-border rounded-xl p-4">
-        <div className="space-y-1"><Label className="text-xs">De</Label><DatePicker size="sm" className="w-36" value={dateFrom} onChange={setDateFrom} /></div>
-        <div className="space-y-1"><Label className="text-xs">Até</Label><DatePicker size="sm" className="w-36" value={dateTo} onChange={setDateTo} /></div>
-        <div className="space-y-1"><Label className="text-xs">Segmento</Label>
-          <Select value={segment} onValueChange={setSegment}><SelectTrigger className="h-8 text-xs w-28"><SelectValue /></SelectTrigger>
-            <SelectContent><SelectItem value="all">Todos</SelectItem><SelectItem value="b2c">B2C</SelectItem><SelectItem value="b2b">B2B</SelectItem></SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {/* DRE Summary */}
-      <div className="bg-card border border-border rounded-xl p-5 space-y-3">
-        <h2 className="text-lg font-semibold">DRE — Demonstração de Resultado</h2>
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between py-1 border-b border-border"><span className="font-medium">Receita Bruta</span><span className="text-green-600 font-bold">{fmt(kpis.revenue)}</span></div>
-          <div className="flex justify-between py-1 border-b border-border pl-4"><span className="text-muted-foreground">(-) Custos Totais</span><span className="text-destructive">{fmt(kpis.totalCost)}</span></div>
-          <div className={`flex justify-between py-2 border-t-2 border-border font-bold text-base ${kpis.profit >= 0 ? "text-green-600" : "text-destructive"}`}>
-            <span>Lucro Líquido</span><span>{fmt(kpis.profit)}</span>
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white/90 backdrop-blur-md border border-admin-border/40 p-4 rounded-2xl shadow-xl">
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">{label}</p>
+          <div className="space-y-1.5">
+            {payload.map((p: any, i: number) => (
+              <div key={i} className="flex items-center justify-between gap-8">
+                <span className="text-[11px] font-bold text-admin-primary/60">{p.name}:</span>
+                <span className="text-sm font-black tabular-nums" style={{ color: p.color || p.fill }}>
+                  {p.name.includes('%') || p.name.includes('Margem') ? `${p.value.toFixed(1)}%` : fmt(p.value)}
+                </span>
+              </div>
+            ))}
           </div>
-          <div className="flex justify-between text-muted-foreground"><span>Margem</span><span>{fmtPct(kpis.margin)}</span></div>
-          <div className="flex justify-between text-muted-foreground"><span>ROI</span><span>{fmtPct(kpis.roi)}</span></div>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="p-4 md:p-8 space-y-8 max-w-full mx-auto"
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+        <div className="space-y-1">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-admin-primary/10">
+              <Activity className="h-6 w-6 text-admin-primary" />
+            </div>
+            <h1 className="text-3xl font-black tracking-tight text-admin-primary">Lucro & Margem</h1>
+          </div>
+          <p className="text-muted-foreground text-sm font-medium ml-14">Análise profunda de rentabilidade e DRE operacional</p>
+        </div>
+        <Button size="sm" variant="ghost" className="h-10 px-4 rounded-xl bg-admin-primary/5 text-admin-primary hover:bg-admin-primary hover:text-white transition-all font-bold text-xs uppercase tracking-widest flex items-center gap-2" onClick={() => exportOverview(kpis, monthlyData)}>
+          <Download className="h-4 w-4" /> Exportar Análise
+        </Button>
+      </div>
+
+      <div className="flex flex-col lg:flex-row gap-4 items-center bg-white/50 backdrop-blur-sm p-4 rounded-[2rem] border border-admin-border/40 shadow-sm">
+        <div className="flex items-center gap-3 px-4 border-r border-admin-border/40">
+          <Filter className="h-4 w-4 text-admin-primary/40" />
+          <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Período</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-4 flex-1">
+          <div className="flex items-center gap-2">
+            <DatePicker size="sm" className="h-10 rounded-xl border-none bg-admin-muted/40 font-bold text-xs" value={dateFrom} onChange={setDateFrom} />
+            <span className="text-[10px] font-black text-muted-foreground/40 uppercase">Até</span>
+            <DatePicker size="sm" className="h-10 rounded-xl border-none bg-admin-muted/40 font-bold text-xs" value={dateTo} onChange={setDateTo} />
+          </div>
+          <div className="h-6 w-[1px] bg-admin-border/40 hidden md:block" />
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Segmento:</span>
+            <Select value={segment} onValueChange={setSegment}>
+              <SelectTrigger className="h-10 border-none bg-admin-muted/40 hover:bg-admin-muted/60 rounded-xl transition-colors min-w-[120px] font-bold text-xs uppercase tracking-wider focus:ring-0">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="rounded-2xl border-none shadow-xl">
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="b2c">B2C</SelectItem>
+                <SelectItem value="b2b">B2B</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
-      {/* Margin evolution chart */}
-      <div className="bg-card border border-border rounded-xl p-4">
-        <h3 className="text-sm font-semibold mb-4">Evolução da Margem (%)</h3>
-        <ResponsiveContainer width="100%" height={260}>
-          <LineChart data={marginEvolution}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-            <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-            <YAxis tick={{ fontSize: 10 }} tickFormatter={v => `${v}%`} />
-            <Tooltip formatter={(v: number) => `${v.toFixed(1)}%`} />
-            <Line type="monotone" dataKey="margem" name="Margem %" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} />
-          </LineChart>
-        </ResponsiveContainer>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <motion.div className="lg:col-span-1 bg-white border border-admin-border/60 rounded-[2.5rem] p-8 shadow-sm relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-10 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity">
+            <FileText className="h-32 w-32 text-admin-primary" />
+          </div>
+          <div className="flex items-center gap-3 mb-8">
+            <div className="p-2 rounded-xl bg-admin-primary/10">
+              <FileText className="h-4 w-4 text-admin-primary" />
+            </div>
+            <h2 className="text-sm font-black uppercase tracking-[0.2em] text-admin-primary/80">DRE Operacional</h2>
+          </div>
+          <div className="space-y-6 relative">
+            <div className="flex justify-between items-baseline py-2 border-b border-admin-border/10">
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Receita Bruta</span>
+              <span className="text-lg font-black text-green-600 tabular-nums">{fmt(kpis.revenue)}</span>
+            </div>
+            <div className="flex justify-between items-baseline py-2 border-b border-admin-border/10">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Custos Totais</span>
+                <span className="text-[8px] font-bold text-muted-foreground/40 uppercase">Op + Comissões</span>
+              </div>
+              <span className="text-lg font-black text-destructive tabular-nums">{fmt(kpis.totalCost)}</span>
+            </div>
+            <motion.div 
+              whileHover={{ scale: 1.02 }}
+              className="bg-admin-primary/[0.03] p-6 rounded-[2rem] border border-admin-primary/10"
+            >
+              <div className="flex justify-between items-baseline mb-4">
+                <span className="text-[10px] font-black uppercase tracking-widest text-admin-primary/60">Lucro Líquido</span>
+                <span className={`text-2xl font-black tabular-nums ${kpis.profit >= 0 ? "text-green-600" : "text-destructive"}`}>
+                  {fmt(kpis.profit)}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-0.5">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/40">Margem</p>
+                  <p className={`text-sm font-black ${kpis.margin >= 0 ? "text-green-600" : "text-destructive"}`}>{fmtPct(kpis.margin)}</p>
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/40">ROI</p>
+                  <p className={`text-sm font-black ${kpis.roi >= 0 ? "text-green-600" : "text-destructive"}`}>{fmtPct(kpis.roi)}</p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </motion.div>
+
+        <motion.div className="lg:col-span-2 bg-white rounded-[2.5rem] p-8 border border-admin-border/60 shadow-sm relative overflow-hidden group">
+          <div className="flex items-center justify-between mb-8">
+            <div className="space-y-1">
+              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-admin-primary/80">Evolução da Margem</h3>
+              <p className="text-xs text-muted-foreground font-medium italic">Rentabilidade percentual mensal</p>
+            </div>
+            <div className="p-2 rounded-xl bg-admin-primary/10">
+              <Percent className="h-4 w-4 text-admin-primary" />
+            </div>
+          </div>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={marginEvolution} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+                <defs>
+                  <linearGradient id="colorMargem" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--admin-primary))" stopOpacity={0.2}/>
+                    <stop offset="95%" stopColor="hsl(var(--admin-primary))" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--admin-border)/40)" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(v) => `${v}%`} />
+                <Tooltip content={<CustomTooltip />} />
+                <Area type="monotone" dataKey="margem" name="Margem %" stroke="hsl(var(--admin-primary))" strokeWidth={4} fillOpacity={1} fill="url(#colorMargem)" dot={{ r: 4, fill: "white", stroke: "hsl(var(--admin-primary))", strokeWidth: 2 }} activeDot={{ r: 6, strokeWidth: 0 }} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </motion.div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2">
-        {[{ key: "proposals", label: "Por Proposta" }, { key: "guides", label: "Por Guia" }, { key: "categories", label: "Por Categoria" }].map(t => (
-          <Button key={t.key} variant={tab === t.key ? "default" : "outline"} size="sm" className="text-xs" onClick={() => setTab(t.key as any)}>{t.label}</Button>
-        ))}
+      <div className="space-y-6">
+        <div className="flex flex-wrap gap-2 p-1.5 bg-admin-muted/40 rounded-2xl w-fit">
+          {[
+            { key: "dre", label: "Visão Geral", icon: FileText },
+            { key: "proposals", label: "Por Proposta", icon: DollarSign },
+            { key: "guides", label: "Por Guia", icon: Users },
+            { key: "categories", label: "Por Categoria", icon: PieChart }
+          ].map(t => (
+            <Button 
+              key={t.key} 
+              variant="ghost" 
+              size="sm" 
+              className={`h-10 px-4 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all gap-2 ${tab === t.key ? "bg-white text-admin-primary shadow-sm" : "text-muted-foreground/60 hover:text-admin-primary"}`}
+              onClick={() => setTab(t.key as any)}
+            >
+              <t.icon className="h-3.5 w-3.5" />
+              {t.label}
+            </Button>
+          ))}
+        </div>
+
+        <div className="bg-white rounded-[2rem] border border-admin-border/60 shadow-sm overflow-hidden relative">
+          <div className="overflow-x-auto">
+            {tab === "proposals" && (
+              <Table className="w-full text-sm border-collapse">
+                <TableHeader>
+                  <TableRow className="border-b border-admin-border/60 bg-admin-muted/30 hover:bg-transparent">
+                    <SmartTh label="Proposta" sortKey="title" filterState={proposalFilterState} data={proposalMargins} className="text-admin-primary/40 font-black uppercase tracking-widest text-[10px]" />
+                    <SmartTh label="Segmento" sortKey="segment" filterState={proposalFilterState} data={proposalMargins} className="text-admin-primary/40 font-black uppercase tracking-widest text-[10px]" />
+                    <SmartTh label="Receita" sortKey="revenue" filterState={proposalFilterState} data={proposalMargins} className="text-admin-primary/40 font-black uppercase tracking-widest text-[10px] text-right" />
+                    <SmartTh label="Custo" sortKey="cost" filterState={proposalFilterState} data={proposalMargins} className="text-admin-primary/40 font-black uppercase tracking-widest text-[10px] text-right" />
+                    <SmartTh label="Lucro" sortKey="profit" filterState={proposalFilterState} data={proposalMargins} className="text-admin-primary/40 font-black uppercase tracking-widest text-[10px] text-right" />
+                    <SmartTh label="Margem" sortKey="margin" filterState={proposalFilterState} data={proposalMargins} className="text-admin-primary/40 font-black uppercase tracking-widest text-[10px] text-right" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="divide-y divide-admin-border/40">
+                  {proposalFilterState.applyFilters(proposalMargins).length === 0 ? (
+                    <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-20 font-black uppercase tracking-widest text-[10px] opacity-40">Nenhum dado encontrado</TableCell></TableRow>
+                  ) : (
+                    proposalFilterState.applyFilters(proposalMargins).map((p: any) => (
+                      <TableRow key={p.id} className="group transition-all duration-300 hover:bg-admin-muted/50">
+                        <TableCell className="p-4 font-bold text-admin-primary">{p.title}</TableCell>
+                        <TableCell className="p-4">
+                          <Badge variant="outline" className="rounded-lg bg-admin-muted/60 text-[10px] font-black text-admin-primary/60 px-2 uppercase tracking-tighter">
+                            {p.segment}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="p-4 text-right font-bold text-admin-primary/80 tabular-nums">{fmt(p.revenue)}</TableCell>
+                        <TableCell className="p-4 text-right font-bold text-destructive/60 tabular-nums">{fmt(p.cost)}</TableCell>
+                        <TableCell className={`p-4 text-right font-black tabular-nums ${p.profit >= 0 ? "text-green-600" : "text-destructive"}`}>
+                          {fmt(p.profit)}
+                        </TableCell>
+                        <TableCell className="p-4 text-right">
+                          <Badge variant="outline" className={`rounded-lg px-2 py-0.5 text-[10px] font-black tabular-nums ${p.margin >= 0 ? "bg-green-50 text-green-700 border-green-100" : "bg-red-50 text-red-700 border-red-100"}`}>
+                            {fmtPct(p.margin)}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            )}
+
+            {tab === "guides" && (
+              <Table className="w-full text-sm border-collapse">
+                <TableHeader>
+                  <TableRow className="border-b border-admin-border/60 bg-admin-muted/30 hover:bg-transparent">
+                    <SmartTh label="Guia" sortKey="name" filterState={guideFilterState} data={guideRanking} className="text-admin-primary/40 font-black uppercase tracking-widest text-[10px]" />
+                    <SmartTh label="Propostas" sortKey="proposals" filterState={guideFilterState} data={guideRanking} className="text-admin-primary/40 font-black uppercase tracking-widest text-[10px] text-right" />
+                    <SmartTh label="Faturamento" sortKey="revenue" filterState={guideFilterState} data={guideRanking} className="text-admin-primary/40 font-black uppercase tracking-widest text-[10px] text-right" />
+                    <SmartTh label="Lucro" sortKey="profit" filterState={guideFilterState} data={guideRanking} className="text-admin-primary/40 font-black uppercase tracking-widest text-[10px] text-right" />
+                    <SmartTh label="Margem" sortKey="margin" filterState={guideFilterState} data={guideRanking} className="text-admin-primary/40 font-black uppercase tracking-widest text-[10px] text-right" />
+                    <SmartTh label="ROI" sortKey="roi" filterState={guideFilterState} data={guideRanking} className="text-admin-primary/40 font-black uppercase tracking-widest text-[10px] text-right" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="divide-y divide-admin-border/40">
+                  {guideFilterState.applyFilters(guideRanking).length === 0 ? (
+                    <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-20 font-black uppercase tracking-widest text-[10px] opacity-40">Nenhum dado encontrado</TableCell></TableRow>
+                  ) : (
+                    guideFilterState.applyFilters(guideRanking).map((g: any) => (
+                      <TableRow key={g.id} className="group transition-all duration-300 hover:bg-admin-muted/50">
+                        <TableCell className="p-4 font-bold text-admin-primary">{g.name}</TableCell>
+                        <TableCell className="p-4 text-right font-black text-admin-primary/40 tabular-nums">{g.proposals}</TableCell>
+                        <TableCell className="p-4 text-right font-bold text-admin-primary/80 tabular-nums">{fmt(g.revenue)}</TableCell>
+                        <TableCell className={`p-4 text-right font-black tabular-nums ${g.profit >= 0 ? "text-green-600" : "text-destructive"}`}>
+                          {fmt(g.profit)}
+                        </TableCell>
+                        <TableCell className="p-4 text-right">
+                          <Badge variant="outline" className={`rounded-lg px-2 py-0.5 text-[10px] font-black tabular-nums ${g.margin >= 0 ? "bg-green-50 text-green-700 border-green-100" : "bg-red-50 text-red-700 border-red-100"}`}>
+                            {fmtPct(g.margin)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="p-4 text-right font-bold text-admin-primary/60 tabular-nums">{fmtPct(g.roi)}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            )}
+
+            {tab === "categories" && (
+              <Table className="w-full text-sm border-collapse">
+                <TableHeader>
+                  <TableRow className="border-b border-admin-border/60 bg-admin-muted/30 hover:bg-transparent">
+                    <SmartTh label="Categoria" sortKey="category" filterState={categoryFilterState} data={categoryData} className="text-admin-primary/40 font-black uppercase tracking-widest text-[10px]" />
+                    <SmartTh label="Faturamento" sortKey="revenue" filterState={categoryFilterState} data={categoryData} className="text-admin-primary/40 font-black uppercase tracking-widest text-[10px] text-right" />
+                    <SmartTh label="Quantidade" sortKey="count" filterState={categoryFilterState} data={categoryData} className="text-admin-primary/40 font-black uppercase tracking-widest text-[10px] text-right" />
+                    <SmartTh label="% de Participação" sortKey="percent" filterState={categoryFilterState} data={categoryData} className="text-admin-primary/40 font-black uppercase tracking-widest text-[10px] text-right" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="divide-y divide-admin-border/40">
+                  {categoryFilterState.applyFilters(categoryData).length === 0 ? (
+                    <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-20 font-black uppercase tracking-widest text-[10px] opacity-40">Nenhum dado encontrado</TableCell></TableRow>
+                  ) : (
+                    categoryFilterState.applyFilters(categoryData).map((c: any) => (
+                      <TableRow key={c.category} className="group transition-all duration-300 hover:bg-admin-muted/50">
+                        <TableCell className="p-4 font-bold text-admin-primary uppercase tracking-tight">{c.category}</TableCell>
+                        <TableCell className="p-4 text-right font-black text-admin-primary/80 tabular-nums">{fmt(c.revenue)}</TableCell>
+                        <TableCell className="p-4 text-right font-bold text-admin-primary/40 tabular-nums">{c.count}</TableCell>
+                        <TableCell className="p-4 text-right">
+                          <div className="flex items-center justify-end gap-3">
+                            <div className="w-24 h-1.5 bg-admin-muted rounded-full overflow-hidden">
+                              <motion.div 
+                                initial={{ width: 0 }}
+                                animate={{ width: `${c.percent}%` }}
+                                className="h-full bg-admin-primary opacity-60" 
+                              />
+                            </div>
+                            <span className="text-[10px] font-black text-admin-primary/60 tabular-nums">{fmtPct(c.percent)}</span>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            )}
+
+            {tab === "dre" && (
+               <div className="p-12 flex flex-col items-center justify-center text-center space-y-4">
+                  <div className="p-4 rounded-[2rem] bg-admin-primary/5">
+                    <FileText className="h-12 w-12 text-admin-primary/20" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-black text-admin-primary/80 uppercase tracking-widest">Resumo Consolidado</p>
+                    <p className="text-xs text-muted-foreground font-medium italic">Selecione as outras abas para detalhamento granular</p>
+                  </div>
+                  <div className="pt-8 grid grid-cols-2 gap-8 w-full max-w-2xl">
+                    <div className="text-left space-y-2 p-6 rounded-3xl bg-admin-muted/20">
+                      <p className="text-[9px] font-black text-muted-foreground/60 uppercase tracking-widest">Ponto de Equilíbrio</p>
+                      <p className="text-xl font-black text-admin-primary tabular-nums">{fmt(kpis.totalCost)}</p>
+                    </div>
+                    <div className="text-left space-y-2 p-6 rounded-3xl bg-admin-muted/20">
+                      <p className="text-[9px] font-black text-muted-foreground/60 uppercase tracking-widest">Eficiência ROI</p>
+                      <p className={`text-xl font-black tabular-nums ${kpis.roi >= 0 ? "text-green-600" : "text-destructive"}`}>
+                        {fmtPct(kpis.roi)}
+                      </p>
+                    </div>
+                  </div>
+               </div>
+            )}
+          </div>
+        </div>
       </div>
-
-      {/* Per proposal */}
-      {tab === "proposals" && (
-        <div className="bg-card border border-border rounded-xl overflow-x-auto overscroll-x-contain">
-          <Table>
-            <TableHeader><TableRow>
-              <SmartTableHead label="Proposta" sortKey="title" filterState={proposalFilterState} data={proposalMargins} className="text-xs" />
-              <SmartTableHead label="Segmento" sortKey="segment" filterState={proposalFilterState} data={proposalMargins} className="text-xs" />
-              <SmartTableHead label="Receita" sortKey="revenue" filterState={proposalFilterState} data={proposalMargins} className="text-xs text-right" />
-              <SmartTableHead label="Custo" sortKey="cost" filterState={proposalFilterState} data={proposalMargins} className="text-xs text-right" />
-              <SmartTableHead label="Lucro" sortKey="profit" filterState={proposalFilterState} data={proposalMargins} className="text-xs text-right" />
-              <SmartTableHead label="Margem" sortKey="margin" filterState={proposalFilterState} data={proposalMargins} className="text-xs text-right" />
-            </TableRow></TableHeader>
-            <TableBody>
-              {proposalFilterState.applyFilters(proposalMargins).length === 0 ? <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhum dado</TableCell></TableRow>
-              : proposalFilterState.applyFilters(proposalMargins).map((p: any) => (
-                <TableRow key={p.id}>
-                  <TableCell className="text-xs font-medium">{p.title}</TableCell>
-                  <TableCell className="text-xs uppercase">{p.segment}</TableCell>
-                  <TableCell className="text-xs text-right">{fmt(p.revenue)}</TableCell>
-                  <TableCell className="text-xs text-right">{fmt(p.cost)}</TableCell>
-                  <TableCell className={`text-xs text-right font-medium ${p.profit >= 0 ? "text-green-600" : "text-destructive"}`}>{fmt(p.profit)}</TableCell>
-                  <TableCell className="text-xs text-right">{fmtPct(p.margin)}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-
-      {/* Per guide */}
-      {tab === "guides" && (
-        <div className="bg-card border border-border rounded-xl overflow-x-auto overscroll-x-contain">
-          <Table>
-            <TableHeader><TableRow>
-              <SmartTableHead label="Guia" sortKey="name" filterState={guideFilterState} data={guideRanking} className="text-xs" />
-              <SmartTableHead label="Propostas" sortKey="proposals" filterState={guideFilterState} data={guideRanking} className="text-xs text-right" />
-              <SmartTableHead label="Faturamento" sortKey="revenue" filterState={guideFilterState} data={guideRanking} className="text-xs text-right" />
-              <SmartTableHead label="Custo Guia" sortKey="guideCost" filterState={guideFilterState} data={guideRanking} className="text-xs text-right" />
-              <SmartTableHead label="Lucro" sortKey="profit" filterState={guideFilterState} data={guideRanking} className="text-xs text-right" />
-              <SmartTableHead label="Margem" sortKey="margin" filterState={guideFilterState} data={guideRanking} className="text-xs text-right" />
-              <SmartTableHead label="ROI" sortKey="roi" filterState={guideFilterState} data={guideRanking} className="text-xs text-right" />
-            </TableRow></TableHeader>
-            <TableBody>
-              {guideFilterState.applyFilters(guideRanking).length === 0 ? <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Nenhum dado</TableCell></TableRow>
-              : guideFilterState.applyFilters(guideRanking).map((g: any) => (
-                <TableRow key={g.id}>
-                  <TableCell className="text-xs font-medium">{g.name}</TableCell>
-                  <TableCell className="text-xs text-right">{g.proposals}</TableCell>
-                  <TableCell className="text-xs text-right">{fmt(g.revenue)}</TableCell>
-                  <TableCell className="text-xs text-right">{fmt(g.guideCost)}</TableCell>
-                  <TableCell className={`text-xs text-right font-medium ${g.profit >= 0 ? "text-green-600" : "text-destructive"}`}>{fmt(g.profit)}</TableCell>
-                  <TableCell className="text-xs text-right">{fmtPct(g.margin)}</TableCell>
-                  <TableCell className="text-xs text-right">{fmtPct(g.roi)}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-
-      {tab === "categories" && (
-        <div className="bg-card border border-border rounded-xl overflow-x-auto overscroll-x-contain">
-          <Table>
-            <TableHeader><TableRow>
-              <SmartTableHead label="Categoria" sortKey="category" filterState={categoryFilterState} data={categoryData} className="text-xs" />
-              <SmartTableHead label="Faturamento" sortKey="revenue" filterState={categoryFilterState} data={categoryData} className="text-xs text-right" />
-              <SmartTableHead label="Qtd" sortKey="count" filterState={categoryFilterState} data={categoryData} className="text-xs text-right" />
-              <SmartTableHead label="% Total" sortKey="percent" filterState={categoryFilterState} data={categoryData} className="text-xs text-right" />
-            </TableRow></TableHeader>
-            <TableBody>
-              {categoryFilterState.applyFilters(categoryData).length === 0 ? <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Nenhum dado</TableCell></TableRow>
-              : categoryFilterState.applyFilters(categoryData).map((c: any) => (
-                <TableRow key={c.category}>
-                  <TableCell className="text-xs font-medium">{c.category}</TableCell>
-                  <TableCell className="text-xs text-right">{fmt(c.revenue)}</TableCell>
-                  <TableCell className="text-xs text-right">{c.count}</TableCell>
-                  <TableCell className="text-xs text-right">{fmtPct(c.percent)}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-    </div>
+    </motion.div>
   );
 }

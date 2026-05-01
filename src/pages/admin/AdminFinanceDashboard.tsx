@@ -5,21 +5,23 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import {
-  DollarSign, TrendingUp, AlertTriangle, Percent, Users, Target,
-  Download, XCircle, ArrowRight,
+import { 
+  DollarSign, TrendingUp, AlertTriangle, Percent, Users, Target, 
+  Download, XCircle, ArrowRight, Wallet, PieChart, Activity,
+  ArrowUpRight, ArrowDownRight, Calendar, Filter
 } from "lucide-react";
-import {
-  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid,
-  Tooltip, Legend, ResponsiveContainer,
+import { 
+  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, 
+  Tooltip, Legend, ResponsiveContainer, AreaChart, Area
 } from "recharts";
 import { Link } from "react-router-dom";
 import { useFinanceData } from "./finance/useFinanceData";
-import {
+import { 
   filterProposals, calcOverviewKPIs, calcMonthlyEvolution,
   fmt, fmtPct,
 } from "./finance/financeCalcs";
 import { exportOverview } from "./finance/financeExport";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function AdminFinanceDashboard() {
   const now = new Date();
@@ -35,7 +37,7 @@ export default function AdminFinanceDashboard() {
 
   // Alerts
   const today = format(now, "yyyy-MM-dd");
-  const overdue = useMemo(() =>
+  const overdue = useMemo(() => 
     transactions.filter((t: any) => (t.status === "pending" || t.status === "overdue") && t.due_date < today),
   [transactions, today]);
 
@@ -46,115 +48,269 @@ export default function AdminFinanceDashboard() {
     return { in: pIn, out: pOut, net: pIn - pOut };
   }, [transactions, today]);
 
-  const KPICard = ({ icon: Icon, label, value, sub, color = "text-foreground" }: any) => (
-    <div className="bg-card border border-border rounded-xl p-4 min-w-0">
-      <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1"><Icon className="h-4 w-4 shrink-0" /> <span className="truncate">{label}</span></div>
-      <p className={`text-lg font-bold ${color} truncate`}>{value}</p>
-      {sub && <p className="text-[10px] text-muted-foreground mt-0.5">{sub}</p>}
-    </div>
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white/90 backdrop-blur-md border border-admin-border/40 p-4 rounded-2xl shadow-xl">
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">{label}</p>
+          <div className="space-y-1.5">
+            {payload.map((p: any, i: number) => (
+              <div key={i} className="flex items-center justify-between gap-8">
+                <span className="text-[11px] font-bold text-admin-primary/60">{p.name}:</span>
+                <span className="text-sm font-black tabular-nums" style={{ color: p.color || p.fill }}>
+                  {typeof p.value === 'number' ? (p.name.includes('Clientes') ? p.value : fmt(p.value)) : p.value}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const KPICard = ({ icon: Icon, label, value, sub, color = "text-admin-primary", trend }: any) => (
+    <motion.div 
+      whileHover={{ y: -4, scale: 1.01 }}
+      className="bg-white rounded-[2rem] p-6 border border-admin-border/60 shadow-sm relative overflow-hidden group"
+    >
+      <div className={`absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity ${color}`}>
+        <Icon className="h-24 w-24" />
+      </div>
+      <div className="flex items-center gap-2 mb-3">
+        <div className={`p-2 rounded-xl ${color.replace('text-', 'bg-')}/10`}>
+          <Icon className={`h-4 w-4 ${color}`} />
+        </div>
+        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">{label}</span>
+      </div>
+      <div className="flex items-baseline gap-2">
+        <p className={`text-3xl font-black tracking-tighter ${color}`}>{value}</p>
+        {trend && (
+          <div className={`flex items-center text-[10px] font-bold ${trend > 0 ? "text-green-600" : "text-destructive"}`}>
+            {trend > 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+            {Math.abs(trend)}%
+          </div>
+        )}
+      </div>
+      {sub && <p className="text-[10px] font-bold text-muted-foreground/40 uppercase mt-2">{sub}</p>}
+    </motion.div>
   );
 
   return (
-    <div className="p-4 md:p-6 space-y-6 max-w-[1400px] mx-auto">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Dashboard Financeiro</h1>
-        <Button size="sm" variant="outline" className="text-xs gap-1" onClick={() => exportOverview(kpis, monthlyData)}>
-          <Download className="h-3 w-3" /> Exportar
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="p-4 md:p-8 space-y-8 max-w-full mx-auto"
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+        <div className="space-y-1">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-admin-primary/10">
+              <PieChart className="h-6 w-6 text-admin-primary" />
+            </div>
+            <h1 className="text-3xl font-black tracking-tight text-admin-primary">Dashboard Financeiro</h1>
+          </div>
+          <p className="text-muted-foreground text-sm font-medium ml-14">Visão consolidada e inteligência de performance</p>
+        </div>
+        <Button size="sm" variant="ghost" className="h-10 px-4 rounded-xl bg-admin-primary/5 text-admin-primary hover:bg-admin-primary hover:text-white transition-all font-bold text-xs uppercase tracking-widest flex items-center gap-2" onClick={() => exportOverview(kpis, monthlyData)}>
+          <Download className="h-4 w-4" /> Exportar Relatórios
         </Button>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3 items-end bg-card border border-border rounded-xl p-4">
-        <div className="space-y-1"><Label className="text-xs">De</Label><DatePicker size="sm" className="w-36" value={dateFrom} onChange={setDateFrom} /></div>
-        <div className="space-y-1"><Label className="text-xs">Até</Label><DatePicker size="sm" className="w-36" value={dateTo} onChange={setDateTo} /></div>
-        <div className="space-y-1"><Label className="text-xs">Segmento</Label>
-          <Select value={segment} onValueChange={setSegment}><SelectTrigger className="h-8 text-xs w-28"><SelectValue /></SelectTrigger>
-            <SelectContent><SelectItem value="all">Todos</SelectItem><SelectItem value="b2c">B2C</SelectItem><SelectItem value="b2b">B2B</SelectItem></SelectContent>
-          </Select>
+      <div className="flex flex-col lg:flex-row gap-4 items-center bg-white/50 backdrop-blur-sm p-4 rounded-[2rem] border border-admin-border/40 shadow-sm">
+        <div className="flex items-center gap-3 px-4 border-r border-admin-border/40">
+          <Filter className="h-4 w-4 text-admin-primary/40" />
+          <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Período</span>
         </div>
-      </div>
-
-      {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <KPICard icon={DollarSign} label="Faturamento" value={fmt(kpis.revenue)} />
-        <KPICard icon={TrendingUp} label="Custo Total" value={fmt(kpis.totalCost)} color="text-destructive" />
-        <KPICard icon={DollarSign} label="Lucro Líquido" value={fmt(kpis.profit)} color={kpis.profit >= 0 ? "text-green-600" : "text-destructive"} />
-        <KPICard icon={Percent} label="Margem" value={fmtPct(kpis.margin)} color={kpis.margin >= 0 ? "text-green-600" : "text-destructive"} />
-        <KPICard icon={Target} label="ROI" value={fmtPct(kpis.roi)} color={kpis.roi >= 0 ? "text-green-600" : "text-destructive"} />
-      </div>
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <KPICard icon={Users} label="Nº Clientes" value={kpis.clients} />
-        <KPICard icon={DollarSign} label="Ticket Médio" value={fmt(kpis.avgTicket)} />
-        <KPICard icon={DollarSign} label="Ticket B2C" value={fmt(kpis.ticketB2C)} />
-        <KPICard icon={DollarSign} label="Ticket B2B" value={fmt(kpis.ticketB2B)} />
-        <KPICard icon={XCircle} label="Taxa Cancelamento" value={fmtPct(kpis.cancelRate)} color={kpis.cancelRate > 20 ? "text-destructive" : "text-foreground"} />
-      </div>
-
-      {/* Alert cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Link to="/admin/financeiro/contas-receber" className="bg-card border border-border rounded-xl p-4 hover:border-primary/40 transition-colors">
-          <div className="flex items-center justify-between mb-1">
-            <p className="text-xs text-muted-foreground">Previsão Caixa (30d)</p>
-            <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+        <div className="flex flex-wrap items-center gap-4 flex-1">
+          <div className="flex items-center gap-2">
+            <DatePicker size="sm" className="h-10 rounded-xl border-none bg-admin-muted/40 font-bold text-xs" value={dateFrom} onChange={setDateFrom} />
+            <span className="text-[10px] font-black text-muted-foreground/40 uppercase">Até</span>
+            <DatePicker size="sm" className="h-10 rounded-xl border-none bg-admin-muted/40 font-bold text-xs" value={dateTo} onChange={setDateTo} />
           </div>
-          <p className={`text-lg font-bold ${pendingIn30.net >= 0 ? "text-green-600" : "text-destructive"}`}>{fmt(pendingIn30.net)}</p>
-          <p className="text-[10px] text-muted-foreground">+{fmt(pendingIn30.in)} / -{fmt(pendingIn30.out)}</p>
-        </Link>
-        <Link to="/admin/financeiro/contas-pagar" className="bg-card border border-destructive/20 rounded-xl p-4 hover:border-destructive/40 transition-colors">
-          <div className="flex items-center justify-between mb-1">
-            <p className="text-xs text-destructive flex items-center gap-1"><AlertTriangle className="h-3.5 w-3.5" /> Contas Vencidas</p>
-            <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+          <div className="h-6 w-[1px] bg-admin-border/40 hidden md:block" />
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Segmento:</span>
+            <Select value={segment} onValueChange={setSegment}>
+              <SelectTrigger className="h-10 border-none bg-admin-muted/40 hover:bg-admin-muted/60 rounded-xl transition-colors min-w-[120px] font-bold text-xs uppercase tracking-wider focus:ring-0">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="rounded-2xl border-none shadow-xl">
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="b2c">B2C</SelectItem>
+                <SelectItem value="b2b">B2B</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <p className="text-lg font-bold text-destructive">{overdue.length}</p>
-          <p className="text-[10px] text-muted-foreground">{fmt(overdue.reduce((s: number, t: any) => s + Number(t.amount), 0))}</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+        <KPICard icon={DollarSign} label="Faturamento" value={fmt(kpis.revenue)} sub="Receita Total Gerada" />
+        <KPICard icon={TrendingUp} label="Custo Total" value={fmt(kpis.totalCost)} color="text-destructive" sub="Operacional + Comissões" />
+        <KPICard icon={Activity} label="Lucro Líquido" value={fmt(kpis.profit)} color={kpis.profit >= 0 ? "text-green-600" : "text-destructive"} sub="EBITDA Ajustado" />
+        <KPICard icon={Percent} label="Margem" value={fmtPct(kpis.margin)} color={kpis.margin >= 0 ? "text-green-600" : "text-destructive"} sub="Eficiência Operacional" />
+        <KPICard icon={Target} label="ROI" value={fmtPct(kpis.roi)} color={kpis.roi >= 0 ? "text-green-600" : "text-destructive"} sub="Retorno sobre Custo" />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+        <KPICard icon={Users} label="Nº Clientes" value={kpis.clients} sub="Base Ativa no Período" />
+        <KPICard icon={DollarSign} label="Ticket Médio" value={fmt(kpis.avgTicket)} sub="Valor Médio por Cliente" />
+        <KPICard icon={Wallet} label="Ticket B2C" value={fmt(kpis.ticketB2C)} sub="Performance Varejo" />
+        <KPICard icon={Target} label="Ticket B2B" value={fmt(kpis.ticketB2B)} sub="Performance Corporativo" />
+        <KPICard icon={XCircle} label="Cancelamentos" value={fmtPct(kpis.cancelRate)} color={kpis.cancelRate > 20 ? "text-destructive" : "text-admin-primary"} sub="Taxa de Churn Financeiro" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Link to="/admin/financeiro/contas-receber" className="group">
+          <motion.div whileHover={{ scale: 1.01 }} className="bg-white border border-admin-border/60 rounded-[2.5rem] p-8 shadow-sm transition-all hover:shadow-lg relative overflow-hidden h-full">
+            <div className="absolute top-0 right-0 p-10 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity">
+              <TrendingUp className="h-32 w-32 text-green-600" />
+            </div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="space-y-1">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">Previsão Caixa (30d)</p>
+                <div className="flex items-baseline gap-3">
+                  <p className={`text-4xl font-black tracking-tighter ${pendingIn30.net >= 0 ? "text-green-600" : "text-destructive"}`}>
+                    {fmt(pendingIn30.net)}
+                  </p>
+                  <ArrowRight className="h-5 w-5 text-muted-foreground opacity-20 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-6">
+              <div className="space-y-1">
+                <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/40">Entradas</p>
+                <p className="text-sm font-black text-green-600">+{fmt(pendingIn30.in)}</p>
+              </div>
+              <div className="h-8 w-[1px] bg-admin-border/40" />
+              <div className="space-y-1">
+                <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/40">Saídas</p>
+                <p className="text-sm font-black text-destructive">-{fmt(pendingIn30.out)}</p>
+              </div>
+            </div>
+          </motion.div>
+        </Link>
+
+        <Link to="/admin/financeiro/contas-pagar" className="group">
+          <motion.div whileHover={{ scale: 1.01 }} className="bg-white border border-destructive/10 rounded-[2.5rem] p-8 shadow-sm transition-all hover:shadow-lg relative overflow-hidden h-full">
+            <div className="absolute top-0 right-0 p-10 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity">
+              <AlertTriangle className="h-32 w-32 text-destructive" />
+            </div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="space-y-1">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-destructive/60 flex items-center gap-2">
+                  <AlertTriangle className="h-3 w-3" /> Contas Vencidas
+                </p>
+                <div className="flex items-baseline gap-3">
+                  <p className="text-4xl font-black tracking-tighter text-destructive">
+                    {overdue.length} <span className="text-lg text-destructive/40 font-bold uppercase ml-1">Lançamentos</span>
+                  </p>
+                  <ArrowRight className="h-5 w-5 text-muted-foreground opacity-20 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                </div>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/40">Total em atraso</p>
+              <p className="text-lg font-black text-destructive/80">
+                {fmt(overdue.reduce((s: number, t: any) => s + Number(t.amount), 0))}
+              </p>
+            </div>
+          </motion.div>
         </Link>
       </div>
 
-      {/* Charts */}
-      <div className="grid md:grid-cols-2 gap-6">
-        <div className="bg-card border border-border rounded-xl p-4">
-          <h3 className="text-sm font-semibold mb-4">Evolução Mensal</h3>
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={monthlyData}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-              <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-              <YAxis tick={{ fontSize: 10 }} />
-              <Tooltip formatter={(v: number) => fmt(v)} />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="receita" name="Receita" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="custos" name="Custos" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="lucro" name="Lucro" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="bg-card border border-border rounded-xl p-4">
-          <h3 className="text-sm font-semibold mb-4">Clientes por Mês</h3>
-          <ResponsiveContainer width="100%" height={260}>
-            <LineChart data={monthlyData}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-              <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-              <YAxis tick={{ fontSize: 10 }} />
-              <Tooltip />
-              <Line type="monotone" dataKey="clientes" name="Clientes" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <motion.div className="bg-white rounded-[2.5rem] p-8 border border-admin-border/60 shadow-sm relative overflow-hidden group">
+          <div className="flex items-center justify-between mb-8">
+            <div className="space-y-1">
+              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-admin-primary/80">Evolução Mensal</h3>
+              <p className="text-xs text-muted-foreground font-medium italic">Receita vs Custos vs Lucro</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1.5">
+                <div className="h-2 w-2 rounded-full bg-admin-primary" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Receita</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="h-2 w-2 rounded-full bg-destructive" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Custos</span>
+              </div>
+            </div>
+          </div>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+                <defs>
+                  <linearGradient id="colorReceita" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--admin-primary))" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="hsl(var(--admin-primary))" stopOpacity={0.1}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--admin-border)/40)" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(v) => `R$ ${v/1000}k`} />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.02)' }} />
+                <Bar dataKey="receita" name="Receita" fill="hsl(var(--admin-primary))" radius={[10, 10, 10, 10]} barSize={24} />
+                <Bar dataKey="custos" name="Custos" fill="hsl(var(--destructive))" radius={[10, 10, 10, 10]} barSize={24} opacity={0.6} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </motion.div>
+
+        <motion.div className="bg-white rounded-[2.5rem] p-8 border border-admin-border/60 shadow-sm relative overflow-hidden group">
+          <div className="flex items-center justify-between mb-8">
+            <div className="space-y-1">
+              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-admin-primary/80">Fluxo de Clientes</h3>
+              <p className="text-xs text-muted-foreground font-medium italic">Aquisição e Retenção Mensal</p>
+            </div>
+            <div className="p-2 rounded-xl bg-admin-primary/10">
+              <Users className="h-4 w-4 text-admin-primary" />
+            </div>
+          </div>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={monthlyData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+                <defs>
+                  <linearGradient id="colorClients" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--admin-primary))" stopOpacity={0.2}/>
+                    <stop offset="95%" stopColor="hsl(var(--admin-primary))" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--admin-border)/40)" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} />
+                <Tooltip content={<CustomTooltip />} />
+                <Area type="monotone" dataKey="clientes" name="Clientes" stroke="hsl(var(--admin-primary))" strokeWidth={4} fillOpacity={1} fill="url(#colorClients)" dot={{ r: 4, fill: "white", stroke: "hsl(var(--admin-primary))", strokeWidth: 2 }} activeDot={{ r: 6, strokeWidth: 0 }} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </motion.div>
       </div>
 
-      {/* Quick links */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: "Receitas", path: "/admin/financeiro/receitas" },
-          { label: "Despesas", path: "/admin/financeiro/despesas" },
-          { label: "Lucro & Margem", path: "/admin/financeiro/lucro-margem" },
-          { label: "Fluxo de Caixa", path: "/admin/financeiro/fluxo-caixa" },
+          { label: "Receitas", path: "/admin/financeiro/receitas", icon: Wallet, color: "text-green-600" },
+          { label: "Despesas", path: "/admin/financeiro/despesas", icon: Receipt, color: "text-destructive" },
+          { label: "Lucro & Margem", path: "/admin/financeiro/lucro-margem", icon: Activity, color: "text-admin-primary" },
+          { label: "Fluxo de Caixa", path: "/admin/financeiro/fluxo-caixa", icon: Calendar, color: "text-admin-primary" },
         ].map(link => (
-          <Link key={link.path} to={link.path} className="bg-card border border-border rounded-xl p-4 hover:border-primary/40 transition-colors flex items-center justify-between">
-            <span className="text-sm font-medium">{link.label}</span>
-            <ArrowRight className="h-4 w-4 text-muted-foreground" />
+          <Link key={link.path} to={link.path} className="group">
+            <motion.div 
+              whileHover={{ y: -4, scale: 1.02 }}
+              className="bg-white border border-admin-border/60 rounded-3xl p-6 shadow-sm transition-all hover:shadow-md flex items-center justify-between"
+            >
+              <div className="flex items-center gap-4">
+                <div className={`p-2.5 rounded-2xl ${link.color.replace('text-', 'bg-')}/10`}>
+                  <link.icon className={`h-5 w-5 ${link.color}`} />
+                </div>
+                <span className="text-sm font-black uppercase tracking-widest text-admin-primary/80">{link.label}</span>
+              </div>
+              <ArrowRight className="h-4 w-4 text-muted-foreground opacity-20 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+            </motion.div>
           </Link>
         ))}
       </div>
-    </div>
+    </motion.div>
   );
 }

@@ -7,14 +7,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { SmartTableHead, useSmartFilters } from "@/components/admin/SmartTableHead";
-import { CheckCircle2, Clock, Search, Filter } from "lucide-react";
+import { SmartTh, useSmartFilters } from "@/components/admin/SmartTableHead";
+import { CheckCircle2, Clock, Search, Filter, Receipt, ArrowDownCircle, AlertCircle, Calendar, Hash } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format, differenceInDays } from "date-fns";
 import { fmt } from "./finance/financeCalcs";
 import { useRowSelection } from "@/hooks/useRowSelection";
-import BulkActionBar, { type BulkField } from "@/components/admin/BulkActionBar";
+import BulkActionBar from "@/components/admin/BulkActionBar";
 import * as XLSX from "xlsx";
+import { motion } from "framer-motion";
 
 const db = supabase as any;
 
@@ -63,7 +64,6 @@ export default function AdminFinanceContasPagar() {
 
   const today = format(new Date(), "yyyy-MM-dd");
 
-  // Enrich
   const enriched = useMemo(() => {
     return transactions.map((tx: any) => {
       const acc = chartAccounts.find((a: any) => a.id === tx.account_id);
@@ -75,7 +75,6 @@ export default function AdminFinanceContasPagar() {
     });
   }, [transactions, chartAccounts, today]);
 
-  // Filter
   const filtered = useMemo(() => {
     return enriched.filter(tx => {
       if (search) {
@@ -94,8 +93,8 @@ export default function AdminFinanceContasPagar() {
   }, [enriched, search, statusFilter, dateFrom, dateTo, accountFilter, recurringFilter]);
 
   const sorted = filterState.applyFilters(filtered);
+  const allIds = useMemo(() => sorted.map((t: any) => t.id), [sorted]);
 
-  // Aging
   const aging = useMemo(() => {
     const buckets = { current: [] as any[], d30: [] as any[], d60: [] as any[], d90: [] as any[], d90plus: [] as any[] };
     transactions.forEach((t: any) => {
@@ -118,137 +117,241 @@ export default function AdminFinanceContasPagar() {
   }));
   const totalFixo = sumArr(transactions.filter((t: any) => t.is_recurring));
 
-  const AgingCard = ({ label, items, color }: { label: string; items: any[]; color: string }) => (
-    <div className="bg-card border border-border rounded-xl p-3">
-      <p className="text-[10px] text-muted-foreground">{label}</p>
-      <p className={`text-sm font-bold ${color}`}>{fmt(sumArr(items))}</p>
-      <p className="text-[10px] text-muted-foreground">{items.length} itens</p>
-    </div>
+  const AgingCard = ({ label, items, color, bg }: { label: string; items: any[]; color: string; bg: string }) => (
+    <motion.div whileHover={{ y: -2 }} className={`flex-1 min-w-[120px] ${bg} rounded-2xl p-4 border border-admin-border/40 shadow-sm transition-all`}>
+      <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">{label}</p>
+      <p className={`text-lg font-black ${color} tracking-tight`}>{fmt(sumArr(items))}</p>
+      <div className="flex items-center justify-between mt-2">
+        <p className="text-[9px] font-bold text-muted-foreground/40 uppercase">{items.length} itens</p>
+        <div className={`h-1.5 w-1.5 rounded-full ${color.replace('text-', 'bg-')} animate-pulse`} />
+      </div>
+    </motion.div>
   );
 
   return (
-    <div className="p-4 md:p-6 space-y-5">
-      <h1 className="text-2xl font-bold">Contas a Pagar</h1>
-
-      {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-card border border-border rounded-xl p-4">
-          <p className="text-xs text-muted-foreground">Total a Pagar</p>
-          <p className="text-lg font-bold">{fmt(totalPagar)}</p>
-          <p className="text-[10px] text-muted-foreground">{transactions.length} lançamentos</p>
-        </div>
-        <div className="bg-card border border-border rounded-xl p-4">
-          <p className="text-xs text-muted-foreground">Vencidos</p>
-          <p className="text-lg font-bold text-destructive">{fmt(totalVencido)}</p>
-        </div>
-        <div className="bg-card border border-border rounded-xl p-4">
-          <p className="text-xs text-muted-foreground">Próximos 7 dias</p>
-          <p className="text-lg font-bold text-yellow-600">{fmt(proximos7)}</p>
-        </div>
-        <div className="bg-card border border-border rounded-xl p-4">
-          <p className="text-xs text-muted-foreground">Custos Fixos</p>
-          <p className="text-lg font-bold text-muted-foreground">{fmt(totalFixo)}</p>
-        </div>
-      </div>
-
-      {/* Aging */}
-      <div>
-        <h2 className="text-xs font-semibold mb-2 flex items-center gap-1.5 text-muted-foreground"><Clock className="h-3.5 w-3.5" /> Aging Report</h2>
-        <div className="grid grid-cols-5 gap-2">
-          <AgingCard label="A vencer" items={aging.current} color="text-green-600" />
-          <AgingCard label="1-30 dias" items={aging.d30} color="text-yellow-600" />
-          <AgingCard label="31-60 dias" items={aging.d60} color="text-orange-600" />
-          <AgingCard label="61-90 dias" items={aging.d90} color="text-destructive" />
-          <AgingCard label="90+ dias" items={aging.d90plus} color="text-destructive" />
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="bg-card border border-border rounded-xl p-3 space-y-3">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground"><Filter className="h-3.5 w-3.5" /> Filtros</div>
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
-          <div className="relative col-span-2">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-            <Input className="h-8 text-xs pl-8" placeholder="Buscar descrição, conta..." value={search} onChange={e => setSearch(e.target.value)} />
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="p-4 md:p-8 space-y-8 min-w-0"
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+        <div className="space-y-1">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-destructive/10">
+              <Receipt className="h-6 w-6 text-destructive" />
+            </div>
+            <h1 className="text-3xl font-black tracking-tight text-admin-primary">Contas a Pagar</h1>
           </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="pending">Pendentes</SelectItem>
-              <SelectItem value="overdue">Vencidos</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={recurringFilter} onValueChange={setRecurringFilter}>
-            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Tipo" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="recurring">Custos Fixos</SelectItem>
-              <SelectItem value="one-time">Avulsos</SelectItem>
-            </SelectContent>
-          </Select>
-          <DatePicker size="sm" value={dateFrom} onChange={setDateFrom} />
-          <DatePicker size="sm" value={dateTo} onChange={setDateTo} />
+          <p className="text-muted-foreground text-sm font-medium ml-14">Gestão de obrigações e aging financeiro</p>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-card border border-border rounded-xl overflow-auto overscroll-x-contain max-h-[calc(100vh-280px)]">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <th className="p-2 w-10">
-                <Checkbox
-                  checked={sorted.length > 0 && sorted.every((t: any) => selection.isSelected(t.id))}
-                  onCheckedChange={() => selection.toggleAll(sorted.map((t: any) => t.id))}
-                />
-              </th>
-              <SmartTableHead label="Vencimento" sortKey="due_date" filterState={filterState} data={filtered} className="text-xs" />
-              <SmartTableHead label="Descrição" sortKey="description" filterState={filterState} data={filtered} className="text-xs" />
-              <SmartTableHead label="Conta Contábil" sortKey="_account_label" filterState={filterState} data={filtered} className="text-xs" />
-              <SmartTableHead label="Parcela" sortKey="installment_number" filterState={filterState} data={filtered} className="text-xs" />
-              <SmartTableHead label="Valor" sortKey="amount" filterState={filterState} data={filtered} className="text-xs text-right" />
-              <SmartTableHead label="Status" sortKey="_isOverdue" filterState={filterState} data={filtered} className="text-xs" />
-              <SmartTableHead label="" sortKey="_actions" filterState={filterState} data={[]} className="text-xs w-20" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Carregando...</TableCell></TableRow>
-            ) : sorted.length === 0 ? (
-              <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Nenhuma conta encontrada</TableCell></TableRow>
-            ) : sorted.map((tx: any) => (
-              <TableRow key={tx.id} className={`${tx._isOverdue ? "bg-destructive/5" : ""} ${selection.isSelected(tx.id) ? "bg-primary/5" : ""}`}>
-                <TableCell className="w-10">
-                  <Checkbox checked={selection.isSelected(tx.id)} onCheckedChange={() => selection.toggle(tx.id)} />
-                </TableCell>
-                <TableCell className="text-xs">{tx.due_date}</TableCell>
-                <TableCell className="text-xs max-w-[180px] truncate">
-                  {tx.description}
-                  {tx.is_recurring && <Badge variant="outline" className="ml-1 text-[9px]">Fixo</Badge>}
-                </TableCell>
-                <TableCell className="text-xs text-muted-foreground">{tx._account_label || "—"}</TableCell>
-                <TableCell className="text-xs text-muted-foreground">{tx.installment_number && tx.installment_total ? `${tx.installment_number}/${tx.installment_total}` : "—"}</TableCell>
-                <TableCell className="text-xs text-right font-medium">{fmt(Number(tx.amount))}</TableCell>
-                <TableCell>
-                  {tx._isOverdue
-                    ? <Badge className="text-[10px] bg-red-100 text-red-800">Vencido</Badge>
-                    : <Badge className="text-[10px] bg-yellow-100 text-yellow-800">Pendente</Badge>
-                  }
-                </TableCell>
-                <TableCell>
-                  <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handleMarkPaid(tx.id)}>
-                    <CheckCircle2 className="h-3 w-3" /> Pagar
-                  </Button>
-                </TableCell>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <motion.div whileHover={{ y: -4 }} className="bg-white rounded-[2rem] p-6 border border-admin-border/60 shadow-sm relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+            <ArrowDownCircle className="h-24 w-24 text-destructive" />
+          </div>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-1">Total a Pagar</p>
+          <p className="text-3xl font-black text-destructive tracking-tight">{fmt(totalPagar)}</p>
+          <p className="text-[10px] font-bold text-muted-foreground/60 uppercase mt-2">{transactions.length} lançamentos ativos</p>
+        </motion.div>
+
+        <motion.div whileHover={{ y: -4 }} className="bg-white rounded-[2rem] p-6 border border-admin-border/60 shadow-sm relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+            <AlertCircle className="h-24 w-24 text-destructive" />
+          </div>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-1">Vencidos</p>
+          <p className="text-3xl font-black text-destructive tracking-tight">{fmt(totalVencido)}</p>
+          <div className="mt-4 h-1 w-full bg-red-100 rounded-full overflow-hidden">
+            <div className="h-full bg-destructive rounded-full w-1/3 opacity-60" />
+          </div>
+        </motion.div>
+
+        <motion.div whileHover={{ y: -4 }} className="bg-white rounded-[2rem] p-6 border border-admin-border/60 shadow-sm relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+            <Clock className="h-24 w-24 text-yellow-600" />
+          </div>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-1">Próximos 7 dias</p>
+          <p className="text-3xl font-black text-yellow-600 tracking-tight">{fmt(proximos7)}</p>
+          <div className="mt-4 h-1 w-full bg-yellow-100 rounded-full overflow-hidden">
+            <div className="h-full bg-yellow-500 rounded-full w-2/3 opacity-60" />
+          </div>
+        </motion.div>
+
+        <motion.div whileHover={{ y: -4 }} className="bg-white rounded-[2rem] p-6 border border-admin-border/60 shadow-sm relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+            <Calendar className="h-24 w-24 text-admin-primary" />
+          </div>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-1">Custos Fixos</p>
+          <p className="text-3xl font-black text-admin-primary tracking-tight">{fmt(totalFixo)}</p>
+          <p className="text-[10px] font-bold text-muted-foreground/60 uppercase mt-2">Comprometimento mensal</p>
+        </motion.div>
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex items-center gap-3 ml-2">
+          <div className="p-1.5 rounded-xl bg-destructive/10">
+            <Clock className="h-4 w-4 text-destructive" />
+          </div>
+          <h2 className="text-xs font-black uppercase tracking-[0.2em] text-destructive/60">Aging Report</h2>
+        </div>
+        <div className="flex flex-wrap gap-4">
+          <AgingCard label="A vencer" items={aging.current} color="text-green-600" bg="bg-green-50/30" />
+          <AgingCard label="1-30 dias" items={aging.d30} color="text-yellow-600" bg="bg-yellow-50/30" />
+          <AgingCard label="31-60 dias" items={aging.d60} color="text-orange-600" bg="bg-orange-50/30" />
+          <AgingCard label="61-90 dias" items={aging.d90} color="text-destructive" bg="bg-red-50/30" />
+          <AgingCard label="90+ dias" items={aging.d90plus} color="text-destructive" bg="bg-destructive/5" />
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-4 bg-white/50 backdrop-blur-sm p-6 rounded-[2rem] border border-admin-border/40 shadow-sm">
+        <div className="flex flex-col lg:flex-row gap-4 items-center">
+          <div className="relative flex-1 w-full group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-destructive transition-colors" />
+            <Input 
+              placeholder="Buscar descrição, conta..." 
+              className="pl-11 h-12 bg-admin-muted/40 border-none rounded-2xl text-base focus-visible:ring-destructive/20" 
+              value={search} 
+              onChange={e => setSearch(e.target.value)} 
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+            <div className="flex items-center bg-admin-muted/40 rounded-2xl p-1 gap-1">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="h-10 border-none bg-transparent hover:bg-white/50 rounded-xl transition-colors min-w-[140px] font-bold text-xs uppercase tracking-wider">
+                  <Filter className="h-3 w-3 mr-2 opacity-40" />
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl border-none shadow-xl">
+                  <SelectItem value="all">Todos Status</SelectItem>
+                  <SelectItem value="pending">Pendentes</SelectItem>
+                  <SelectItem value="overdue">Vencidos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center bg-admin-muted/40 rounded-2xl p-1 gap-1">
+              <Select value={recurringFilter} onValueChange={setRecurringFilter}>
+                <SelectTrigger className="h-10 border-none bg-transparent hover:bg-white/50 rounded-xl transition-colors min-w-[140px] font-bold text-xs uppercase tracking-wider">
+                  <Calendar className="h-3 w-3 mr-2 opacity-40" />
+                  <SelectValue placeholder="Tipo" />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl border-none shadow-xl">
+                  <SelectItem value="all">Todos Tipos</SelectItem>
+                  <SelectItem value="recurring">Custos Fixos</SelectItem>
+                  <SelectItem value="one-time">Avulsos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="h-8 w-[1px] bg-admin-border/40 mx-2 hidden lg:block" />
+            <div className="flex items-center gap-2">
+              <DatePicker size="sm" className="h-10 rounded-xl border-none bg-admin-muted/40 font-bold text-xs" value={dateFrom} onChange={setDateFrom} placeholder="De" />
+              <span className="text-[10px] font-black text-muted-foreground/40 uppercase">Até</span>
+              <DatePicker size="sm" className="h-10 rounded-xl border-none bg-admin-muted/40 font-bold text-xs" value={dateTo} onChange={setDateTo} placeholder="Até" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-[2rem] border border-admin-border/60 shadow-sm overflow-hidden relative">
+        <div className="overflow-x-auto">
+          <Table className="w-full text-sm border-collapse">
+            <TableHeader>
+              <TableRow className="border-b border-admin-border/60 bg-admin-muted/30 hover:bg-transparent">
+                <th className="p-4 w-12 text-center">
+                  <Checkbox
+                    checked={allIds.length > 0 && allIds.every(id => selection.isSelected(id))}
+                    onCheckedChange={() => selection.toggleAll(allIds)}
+                    className="rounded-md border-admin-primary/20 data-[state=checked]:bg-admin-primary"
+                  />
+                </th>
+                <SmartTh label="Vencimento" sortKey="due_date" filterState={filterState} data={filtered} className="text-admin-primary/40 font-black uppercase tracking-widest text-[10px]" />
+                <SmartTh label="Descrição" sortKey="description" filterState={filterState} data={filtered} className="text-admin-primary/40 font-black uppercase tracking-widest text-[10px]" />
+                <SmartTh label="Conta Contábil" sortKey="_account_label" filterState={filterState} data={filtered} className="text-admin-primary/40 font-black uppercase tracking-widest text-[10px]" />
+                <SmartTh label="Parcela" sortKey="installment_number" filterState={filterState} data={filtered} className="text-admin-primary/40 font-black uppercase tracking-widest text-[10px] text-center" />
+                <SmartTh label="Valor" sortKey="amount" filterState={filterState} data={filtered} className="text-admin-primary/40 font-black uppercase tracking-widest text-[10px] text-right" />
+                <SmartTh label="Status" sortKey="_isOverdue" filterState={filterState} data={filtered} className="text-admin-primary/40 font-black uppercase tracking-widest text-[10px] text-center" />
+                <th className="p-4 w-28" />
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody className="divide-y divide-admin-border/40">
+              {loading ? (
+                <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-20 font-black uppercase tracking-widest text-[10px] opacity-40">Carregando...</TableCell></TableRow>
+              ) : sorted.length === 0 ? (
+                <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-20 font-black uppercase tracking-widest text-[10px] opacity-40">Nenhuma conta encontrada</TableCell></TableRow>
+              ) : sorted.map((tx: any) => (
+                <TableRow 
+                  key={tx.id} 
+                  className={`group transition-all duration-300 hover:bg-admin-muted/50 ${tx._isOverdue ? "bg-destructive/[0.02]" : ""} ${selection.isSelected(tx.id) ? "bg-admin-primary/[0.03]" : ""}`}
+                >
+                  <TableCell className="p-4 text-center">
+                    <Checkbox 
+                      checked={selection.isSelected(tx.id)} 
+                      onCheckedChange={() => selection.toggle(tx.id)}
+                      className="rounded-md border-admin-primary/20 data-[state=checked]:bg-admin-primary"
+                    />
+                  </TableCell>
+                  <TableCell className="p-4 font-bold text-admin-primary tabular-nums">{tx.due_date}</TableCell>
+                  <TableCell className="p-4">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-bold text-admin-primary/80 truncate max-w-[180px]">
+                        {tx.description}
+                      </span>
+                      {tx.is_recurring && (
+                        <Badge variant="outline" className="w-fit text-[8px] font-black uppercase tracking-tight py-0 px-1 border-admin-primary/20 text-admin-primary/60">
+                          Fixo
+                        </Badge>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="p-4 text-[11px] font-mono text-muted-foreground/60">{tx._account_label || "—"}</TableCell>
+                  <TableCell className="p-4 text-center">
+                    {tx.installment_number && tx.installment_total ? (
+                      <Badge variant="ghost" className="rounded-lg bg-admin-muted/60 text-[10px] font-black text-admin-primary/60 px-2">
+                        {tx.installment_number}/{tx.installment_total}
+                      </Badge>
+                    ) : "—"}
+                  </TableCell>
+                  <TableCell className="p-4 text-right font-black text-destructive tabular-nums text-base">{fmt(Number(tx.amount))}</TableCell>
+                  <TableCell className="p-4 text-center">
+                    {tx._isOverdue ? (
+                      <Badge variant="outline" className="rounded-lg border-red-200 bg-red-50 text-red-700 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider">
+                        Vencido
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="rounded-lg border-yellow-200 bg-yellow-50 text-yellow-700 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider">
+                        Pendente
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="p-4">
+                    <div className="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        className="h-8 px-3 rounded-xl bg-green-50 text-green-600 hover:bg-green-600 hover:text-white transition-all font-bold text-[9px] uppercase tracking-wider flex items-center gap-2"
+                        onClick={() => handleMarkPaid(tx.id)}
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Pagar
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
         {sorted.length > 0 && (
-          <div className="border-t border-border px-4 py-2 flex justify-between text-xs text-muted-foreground">
-            <span>{sorted.length} registro(s)</span>
-            <span className="font-medium">Total filtrado: {fmt(sumArr(sorted))}</span>
+          <div className="bg-admin-muted/20 px-8 py-4 flex justify-between items-center border-t border-admin-border/40">
+            <div className="flex items-center gap-4">
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">{sorted.length} registros</span>
+              <div className="h-4 w-[1px] bg-admin-border/40" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Total Selecionado: {selection.count}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mr-2">Subtotal Filtrado</span>
+              <span className="text-xl font-black text-destructive tracking-tight">{fmt(sumArr(sorted))}</span>
+            </div>
           </div>
         )}
       </div>
@@ -293,6 +396,6 @@ export default function AdminFinanceContasPagar() {
           fetchAll();
         }}
       />
-    </div>
+    </motion.div>
   );
 }
