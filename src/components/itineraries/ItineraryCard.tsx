@@ -10,7 +10,7 @@ import { Heart, Check, Mountain, Flame, Truck, Car, Ticket, Footprints } from "l
 import HelmetIcon from "@/components/icons/HelmetIcon";
 import { toast } from "@/hooks/use-toast";
 import DayDetailDialog from "./DayDetailDialog";
-import { dayImages } from "./dayImages";
+import { dayImages, getDayImage } from "./dayImages";
 import { getItineraryImage } from "./itineraryImages";
 import { OptimizedImage } from "../ui/OptimizedImage";
 

@@ -484,7 +484,7 @@ export default function AdminGuides() {
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent className="rounded-[2.5rem] border-none shadow-2xl">
+                        <AlertDialogContent className="rounded-[2rem] border-none shadow-2xl">
                           <AlertDialogHeader>
                             <AlertDialogTitle className="text-xl font-black text-admin-primary uppercase tracking-tight">Remover Especialista?</AlertDialogTitle>
                             <AlertDialogDescription className="font-medium text-muted-foreground">
@@ -523,7 +523,7 @@ export default function AdminGuides() {
       <GuideDetailSheet guide={detailGuide} open={detailOpen} onOpenChange={setDetailOpen} />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-2xl rounded-[2.5rem] border-none shadow-2xl overflow-hidden p-0 h-[90vh] flex flex-col">
+        <DialogContent className="sm:max-w-2xl rounded-[2rem] border-none shadow-2xl overflow-hidden p-0 h-[90vh] flex flex-col">
           <Tabs defaultValue="geral" className="flex-1 flex flex-col min-h-0">
             <div className="bg-admin-primary p-8 text-white relative shrink-0">
               <div className="absolute top-0 right-0 p-10 opacity-10">
@@ -727,7 +727,7 @@ export default function AdminGuides() {
 
           <TabsContent value="cachoeiras" className="mt-0 space-y-6 animate-in fade-in slide-in-from-bottom-2 h-full">
                 {!editing ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-center space-y-4 bg-admin-muted/20 rounded-[2.5rem] border-2 border-dashed border-admin-primary/10">
+                  <div className="flex flex-col items-center justify-center py-12 text-center space-y-4 bg-admin-muted/20 rounded-[2rem] border-2 border-dashed border-admin-primary/10">
                     <ShieldCheck className="h-12 w-12 text-admin-primary/20" />
                     <div className="space-y-1">
                       <p className="text-sm font-black text-admin-primary uppercase tracking-tight">Primeiro, salve o guia</p>

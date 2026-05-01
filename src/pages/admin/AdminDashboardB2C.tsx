@@ -1,4 +1,17 @@
+import { useState, useCallback, useMemo, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { isAfter, subDays, subMonths, startOfMonth, endOfMonth, format, differenceInDays, addDays } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Instagram, Globe, MessageCircle, UserPlus, Users, RotateCcw, BarChart3, Filter, AlertCircle, TrendingUp, DollarSign, Target, Clock, ArrowRight, CalendarIcon as CalIcon } from "lucide-react";
+import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Bar, PieChart, Pie, Cell, AreaChart, Area } from "recharts";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any;

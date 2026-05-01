@@ -63,15 +63,15 @@ export default function KanbanBoard({ stages, prospects, onMoveProspect, onCardC
         return (
           <div
             key={stage.id}
-            className={`flex-shrink-0 w-[75vw] sm:w-72 rounded-xl flex flex-col transition-colors snap-start ${isOver ? "bg-accent/50" : "bg-muted/40"}`}
+            className={`flex-shrink-0 w-[75vw] sm:w-72 rounded-[2rem] flex flex-col transition-all snap-start border border-admin-border/20 ${isOver ? "bg-admin-primary/10" : "bg-admin-muted/40"}`}
             onDragOver={e => handleDragOver(e, stage.id)}
             onDragLeave={() => setOverStageId(null)}
             onDrop={e => handleDrop(e, stage.id)}
           >
             {/* Column header */}
-            <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border">
-              <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: stage.color }} />
-              <span className="text-sm font-semibold flex-1 truncate">{stage.name}</span>
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-admin-border/40 bg-white/40 backdrop-blur-sm rounded-t-2xl">
+              <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: stage.color }} />
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80 flex-1 truncate">{stage.name}</span>
               {stage.description && (
                 <TooltipProvider delayDuration={200}>
                   <Tooltip>

@@ -371,7 +371,7 @@ export function SmartTableHead({
       labelMap={labelMap}
     >
       <TableHead
-        className={cn("cursor-pointer select-none hover:bg-muted/70 transition-colors group/th", className)}
+        className={cn("cursor-pointer select-none hover:bg-muted/70 transition-colors group/th text-[10px] font-black uppercase tracking-widest text-muted-foreground/60", className)}
       >
         <span className="flex items-center gap-1 whitespace-nowrap">
           {label}
@@ -416,7 +416,7 @@ export function SmartTh({
     >
       <th
         className={cn(
-          "text-left p-3 font-medium whitespace-nowrap cursor-pointer select-none hover:bg-muted/70 transition-colors group/th",
+          "text-left p-3 font-black uppercase tracking-widest text-[10px] text-muted-foreground/60 whitespace-nowrap cursor-pointer select-none hover:bg-muted/70 transition-colors group/th",
           className
         )}
       >
@@ -558,7 +558,7 @@ export function SortableSmartTableHead({
       <TableHead
         ref={setNodeRef}
         style={style}
-        className={cn("select-none hover:bg-muted/70 transition-colors group/th", className)}
+        className={cn("select-none hover:bg-muted/70 transition-colors group/th text-[10px] font-black uppercase tracking-widest text-muted-foreground/60", className)}
       >
         <span className="flex items-center gap-1 whitespace-nowrap">
           <span

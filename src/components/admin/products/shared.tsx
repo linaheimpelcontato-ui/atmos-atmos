@@ -549,7 +549,7 @@ export function ProductTable({
 
   return (
     <div className="flex flex-col">
-      <div className="flex-1 overflow-x-auto custom-scrollbar bg-white rounded-2xl border border-admin-border/50 shadow-sm">
+      <div className="flex-1 overflow-x-auto custom-scrollbar bg-white rounded-[2rem] border border-admin-border/50 shadow-sm">
         <table className="w-full text-left border-collapse min-w-[800px]">
           <thead className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-admin-border/40">
             <tr>
@@ -579,7 +579,7 @@ export function ProductTable({
                 ) : (
                   <th 
                     key={c.label} 
-                    className="px-6 py-5 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50 whitespace-nowrap"
+                    className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground/50 whitespace-nowrap"
                   >
                     {c.label}
                   </th>

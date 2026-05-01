@@ -43,20 +43,20 @@ const SOURCE_LABELS: Record<string, string> = {
 };
 
 const SOURCE_COLORS: Record<string, string> = {
-  site: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
-  whatsapp: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400",
-  manychat: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400",
-  manual: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400",
-  import: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
+  site: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+  whatsapp: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+  manychat: "bg-purple-500/10 text-purple-600 border-purple-500/20",
+  manual: "bg-gray-500/10 text-gray-600 border-gray-500/20",
+  import: "bg-orange-500/10 text-orange-600 border-orange-500/20",
 };
 
 const POTENTIAL_LABELS: Record<string, string> = {
   high: "Alto", medium: "Médio", low: "Baixo",
 };
 const POTENTIAL_COLORS: Record<string, string> = {
-  high: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-  medium: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
-  low: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+  high: "bg-green-500/10 text-green-600 border-green-500/20",
+  medium: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
+  low: "bg-red-500/10 text-red-600 border-red-500/20",
 };
 
 const PRIORITY_LABELS: Record<string, string> = {
@@ -106,7 +106,7 @@ const COLUMN_DEFS: ColumnDef[] = [
   {
     key: "source", label: "Origem", labelMap: SOURCE_LABELS,
     render: (p) => (
-      <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${SOURCE_COLORS[p.source as string] ?? SOURCE_COLORS.manual}`}>
+      <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${SOURCE_COLORS[p.source as string] ?? "bg-gray-500/10 text-gray-600 border-gray-500/20"}`}>
         {SOURCE_LABELS[p.source as string] ?? (p.source as string)}
       </span>
     ),
@@ -118,7 +118,7 @@ const COLUMN_DEFS: ColumnDef[] = [
     render: (p) => (
       <div className="flex gap-1 flex-wrap">
         {((p.tags as string[]) ?? []).slice(0, 3).map((t: string) => (
-          <Badge key={t} variant="outline" className="text-[10px]">{t}</Badge>
+          <Badge key={t} variant="outline" className="text-[9px] font-black uppercase tracking-widest bg-admin-primary/5 border-admin-border/40 text-admin-primary px-2">{t}</Badge>
         ))}
       </div>
     ),
@@ -128,7 +128,7 @@ const COLUMN_DEFS: ColumnDef[] = [
     key: "stage_id", label: "Etapa",
     render: (p, stages) => {
       const name = stages.find(s => s.id === p.stage_id)?.name ?? "—";
-      return <Badge variant="outline" className="text-xs">{name}</Badge>;
+      return <Badge variant="outline" className="text-[10px] font-bold border-admin-border/60">{name}</Badge>;
     },
   },
   // 7. Nº Propostas
@@ -147,7 +147,7 @@ const COLUMN_DEFS: ColumnDef[] = [
       return (
         <div className="flex gap-1 flex-wrap">
           {proposals.map((pr) => (
-            <Badge key={pr.code} variant={pr.status === "accepted" ? "default" : "outline"} className="text-[10px]">
+            <Badge key={pr.code} variant={pr.status === "accepted" ? "default" : "outline"} className="text-[9px] font-bold">
               {pr.code}
             </Badge>
           ))}
@@ -174,7 +174,7 @@ const COLUMN_DEFS: ColumnDef[] = [
       if (!title) return <span className="text-xs text-muted-foreground">—</span>;
       return (
         <span className="text-xs">
-          {title} <Badge variant="outline" className="text-[9px] ml-1">{status}</Badge>
+          {title} <Badge variant="outline" className="text-[9px] font-bold ml-1 border-admin-border/60">{status}</Badge>
         </span>
       );
     },
@@ -216,7 +216,7 @@ const COLUMN_DEFS: ColumnDef[] = [
   {
     key: "potential", label: "Potencial", labelMap: POTENTIAL_LABELS,
     render: (p) => POTENTIAL_LABELS[p.potential as string] ? (
-      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${POTENTIAL_COLORS[p.potential as string]}`}>
+      <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${POTENTIAL_COLORS[p.potential as string]}`}>
         {POTENTIAL_LABELS[p.potential as string]}
       </span>
     ) : <span className="text-xs text-muted-foreground">—</span>,

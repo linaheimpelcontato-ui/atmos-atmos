@@ -15,7 +15,7 @@ import { Droplets, Sparkles, Home, Wrench, Heart, Search, ChevronDown } from "lu
 import { waterfalls as staticWaterfalls, Waterfall, regionLabels as wfRegionLabels, difficultyLabels, seasonalityLabels } from "@/data/waterfalls";
 import { experiences as staticExperiences, Experience, ExperienceCategory, categoryLabels as expCategoryLabels, parseMinPrice } from "@/data/experiences";
 import { accommodations as staticAccommodations, Accommodation, AccRegion, AccType, accRegionLabels, accTypeLabels, amenityLabels, getAllAmenities, parsePriceRange } from "@/data/accommodations";
-import { services as staticServices, Service, categoryLabels as srvCategoryLabels } from "@/data/services";
+import { services as staticServices, Service, categoryLabels as srvCategoryLabels, ServiceCategory } from "@/data/services";
 
 // Components
 import WaterfallCard from "@/components/waterfalls/WaterfallCard";
@@ -189,13 +189,14 @@ export default function MonteSeuRoteiro() {
       const mapped: Waterfall = {
         id: db.source_id || db.id,
         name: { pt: db.name, en: db.name, es: db.name },
-        region: db.region || (idx > -1 ? merged[idx].region : "alto-paraiso"),
+        region: (db as any).region || (idx > -1 ? merged[idx].region : "alto-paraiso"),
         distanceKm: vars.distanceKm || (idx > -1 ? merged[idx].distanceKm : 0),
         distanceCarKm: vars.distanceCarKm || (idx > -1 ? merged[idx].distanceCarKm : 0),
         difficulty: vars.difficulty || (idx > -1 ? merged[idx].difficulty : "facil"),
-        seasonality: vars.seasonality || (idx > -1 ? merged[idx].seasonality : "ano-todo"),
+        seasonality: vars.seasonality || (idx > -1 ? merged[idx].seasonality : "anual"),
+        requiresGuide: vars.requiresGuide || (idx > -1 ? merged[idx].requiresGuide : false),
         description: { pt: db.description || "", en: db.description || "", es: db.description || "" },
-        coordinates: vars.coordinates || (idx > -1 ? merged[idx].coordinates : { lat: 0, lng: 0 }),
+        imageIndex: vars.imageIndex || (idx > -1 ? merged[idx].imageIndex : 1),
       };
       if (idx > -1) merged[idx] = mapped; else merged.push(mapped);
     });
@@ -244,7 +245,7 @@ export default function MonteSeuRoteiro() {
       const mapped: Accommodation = {
         id: db.source_id || db.id,
         name: db.name,
-        region: (db.region || staticEntry?.region || "alto-paraiso") as AccRegion,
+        region: ((db as any).region || staticEntry?.region || "alto-paraiso") as AccRegion,
         type: (db.segment || staticEntry?.type || "pousada") as AccType,
         priceRange: staticEntry?.priceRange || vars.priceRange || "",
         amenities: vars.amenities || staticEntry?.amenities || [],

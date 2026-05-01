@@ -399,7 +399,7 @@ export default function AdminFinance() {
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl rounded-[2.5rem] border-none shadow-2xl overflow-hidden p-0">
+        <DialogContent className="max-w-2xl rounded-[2rem] border-none shadow-2xl overflow-hidden p-0">
           <div className="bg-admin-primary p-8 text-white relative">
             <div className="absolute top-0 right-0 p-10 opacity-10">
               <Plus className="h-32 w-32" />

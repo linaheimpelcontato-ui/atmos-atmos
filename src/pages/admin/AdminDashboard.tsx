@@ -4,6 +4,7 @@ import {
   Users, Heart, FileText, TrendingUp, ShoppingBag, Download 
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { subDays, startOfMonth, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { format } from "date-fns";
@@ -281,7 +282,7 @@ export default function AdminDashboard() {
 
       {/* 3. Main Analytics Tabs */}
       <Tabs defaultValue="analytics" className="space-y-12">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 bg-white/40 backdrop-blur-sm p-6 rounded-[2.5rem] border border-admin-border/40 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 bg-white/40 backdrop-blur-sm p-6 rounded-[2rem] border border-admin-border/40 shadow-sm">
           <div className="flex items-center gap-6">
             <TabsList className="bg-admin-muted/40 p-1.5 rounded-2xl border border-admin-border/20">
               <TabsTrigger 

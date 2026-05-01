@@ -89,7 +89,7 @@ export default function AdminUsers() {
         </Button>
       </div>
 
-      <div className="flex flex-col gap-4 bg-white/50 backdrop-blur-sm p-6 rounded-[2.5rem] border border-admin-border/40 shadow-sm">
+      <div className="flex flex-col gap-4 bg-white/50 backdrop-blur-sm p-6 rounded-[2rem] border border-admin-border/40 shadow-sm">
         <div className="flex flex-col lg:flex-row gap-4 items-center">
           <div className="relative flex-1 w-full group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-admin-primary transition-colors" />
@@ -121,7 +121,7 @@ export default function AdminUsers() {
         </div>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] border border-admin-border/60 shadow-sm overflow-hidden relative">
+      <div className="bg-white rounded-[2rem] border border-admin-border/60 shadow-sm overflow-hidden relative">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>

@@ -406,7 +406,7 @@ const Wishlist = () => {
                       Suas escolhas definem a alma da experiência. Agora, responda a perguntas rápidas para que nosso time consiga criar o seu roteiro.
                     </p>
                     <Button
-                      size="xl"
+                      size="lg"
                       className="rounded-full px-16 py-10 bg-[#1A261B] hover:bg-black text-white font-bold uppercase tracking-[0.3em] text-[12px] shadow-2xl transition-all hover:scale-105"
                       onClick={handleStartQuote}
                     >

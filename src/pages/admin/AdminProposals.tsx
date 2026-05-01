@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -442,9 +443,9 @@ export default function AdminProposals({ segment }: { segment: "b2c" | "b2b" }) 
           {totalPillCount > 0 && (
             <Popover>
               <PopoverTrigger asChild>
-                <Button size="sm" variant="destructive" className="h-10 rounded-xl uppercase font-black tracking-widest text-[10px] gap-0 px-0 overflow-hidden shadow-lg shadow-destructive/20 transition-all hover:scale-105 active:scale-95">
+                <Button size="sm" variant="destructive" className="h-10 rounded-xl uppercase font-black tracking-widest text-[10px] gap-0 px-0 overflow-hidden shadow-xl shadow-destructive/30 transition-all hover:scale-105 active:scale-95 border-none bg-gradient-to-r from-destructive to-red-500 group">
                   <span className="px-4">Alertas</span>
-                  <span className="bg-white/20 px-3 self-stretch flex items-center border-l border-white/20">{totalPillCount}</span>
+                  <span className="bg-white/20 backdrop-blur-md px-3 self-stretch flex items-center border-l border-white/20 font-extrabold">{totalPillCount}</span>
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-80 p-0 rounded-[2rem] border-admin-border/60 shadow-2xl overflow-hidden" align="end">
@@ -493,7 +494,7 @@ export default function AdminProposals({ segment }: { segment: "b2c" | "b2b" }) 
                                 <PenLine className="h-3.5 w-3.5" />
                                 {f.proposal_title}
                               </span>
-                              <Badge className="bg-orange-500 text-white border-none text-[10px] h-5 min-w-[20px] rounded-full">{f.count}</Badge>
+                              <Badge className="bg-orange-500/90 backdrop-blur-sm text-white border-none text-[10px] h-5 min-w-[20px] rounded-full shadow-md shadow-orange-500/20 transition-transform hover:scale-110">{f.count}</Badge>
                             </button>
                             {expandedFeedback === `change-${f.proposal_id}` && (
                               <div className="mx-2 mb-2 p-3 space-y-2 bg-orange-500/[0.03] border border-orange-500/10 rounded-2xl">
@@ -502,7 +503,7 @@ export default function AdminProposals({ segment }: { segment: "b2c" | "b2b" }) 
                                     <p className="font-medium italic">"{m.content}"</p>
                                     <p className="text-[9px] opacity-50 mt-1">{new Date(m.created_at).toLocaleString("pt-BR")}</p>
                                   </div>
-                                ))}
+                                )) }
                                 <Button size="sm" variant="ghost" className="w-full text-[10px] font-black uppercase tracking-widest h-8 rounded-xl bg-orange-500/10 text-orange-600 hover:bg-orange-500 hover:text-white transition-all" onClick={() => { setEditingId(f.proposal_id); setInitialProspectId(null); setDialogOpen(true); }}>
                                   Resolver Ajustes
                                 </Button>
@@ -521,7 +522,7 @@ export default function AdminProposals({ segment }: { segment: "b2c" | "b2b" }) 
                                 <HelpCircle className="h-3.5 w-3.5" />
                                 {f.proposal_title}
                               </span>
-                              <Badge className="bg-blue-500 text-white border-none text-[10px] h-5 min-w-[20px] rounded-full">{f.count}</Badge>
+                              <Badge className="bg-blue-500/90 backdrop-blur-sm text-white border-none text-[10px] h-5 min-w-[20px] rounded-full shadow-md shadow-blue-500/20 transition-transform hover:scale-110">{f.count}</Badge>
                             </button>
                             {expandedFeedback === `question-${f.proposal_id}` && (
                               <div className="mx-2 mb-2 p-3 space-y-2 bg-blue-500/[0.03] border border-blue-500/10 rounded-2xl">
@@ -866,7 +867,7 @@ export default function AdminProposals({ segment }: { segment: "b2c" | "b2b" }) 
                             <Search className="h-8 w-8 text-admin-primary/20" />
                           </div>
                           <p className="text-muted-foreground font-bold tracking-tight">Nenhuma proposta encontrada com os filtros atuais.</p>
-                          <Button variant="ghost" className="text-xs font-black uppercase tracking-widest text-admin-primary" onClick={() => { setSearch(""); setFilterStatus("all"); filterState.clearFilters(); }}>Limpar Filtros</Button>
+                          <Button variant="ghost" className="text-xs font-black uppercase tracking-widest text-admin-primary" onClick={() => { setSearch(""); setFilterStatus("all"); filterState.clearAll(); }}>Limpar Filtros</Button>
                         </div>
                       </td>
                     </tr>

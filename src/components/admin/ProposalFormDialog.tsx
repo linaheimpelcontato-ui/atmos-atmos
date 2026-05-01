@@ -1211,6 +1211,7 @@ export default function ProposalFormDialog({
         value_text: "",
         description: "",
         catalog_item_id: waterfallProduct?.id || null,
+        variation_id: null,
         item_index: idx++,
         qty: numPeople,
       });

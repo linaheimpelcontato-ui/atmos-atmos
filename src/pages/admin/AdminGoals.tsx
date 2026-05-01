@@ -239,7 +239,7 @@ export default function AdminGoals() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <Card className="lg:col-span-2 rounded-[2.5rem] border-admin-border/60 shadow-sm overflow-hidden bg-white">
+        <Card className="lg:col-span-2 rounded-[2rem] border-admin-border/60 shadow-sm overflow-hidden bg-white">
           <CardHeader className="p-8 pb-4">
             <CardTitle className="text-sm font-black uppercase tracking-[0.2em] text-admin-primary flex items-center gap-2">
               <TrendingUp className="h-4 w-4" /> Evolução de Vendas vs Metas
@@ -288,7 +288,7 @@ export default function AdminGoals() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-[2.5rem] border-admin-border/60 shadow-sm overflow-hidden bg-white">
+        <Card className="rounded-[2rem] border-admin-border/60 shadow-sm overflow-hidden bg-white">
           <CardHeader className="p-8 pb-4">
             <div className="flex flex-col gap-4">
               <CardTitle className="text-sm font-black uppercase tracking-[0.2em] text-admin-primary flex items-center gap-2">
@@ -334,7 +334,7 @@ export default function AdminGoals() {
         </Card>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] border border-admin-border/60 shadow-sm overflow-hidden relative p-8 space-y-6">
+      <div className="bg-white rounded-[2rem] border border-admin-border/60 shadow-sm overflow-hidden relative p-8 space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <h3 className="text-sm font-black uppercase tracking-[0.2em] text-admin-primary/60">Detalhamento de Objetivos</h3>
           <div className="flex flex-wrap gap-4 items-center">
@@ -408,7 +408,7 @@ export default function AdminGoals() {
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </AlertDialogTrigger>
-                          <AlertDialogContent className="rounded-[2.5rem] border-none shadow-2xl">
+                          <AlertDialogContent className="rounded-[2rem] border-none shadow-2xl">
                             <AlertDialogHeader>
                               <AlertDialogTitle className="text-xl font-black text-admin-primary uppercase tracking-tight">Remover Objetivo?</AlertDialogTitle>
                               <AlertDialogDescription className="font-medium text-muted-foreground">
@@ -440,7 +440,7 @@ export default function AdminGoals() {
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md rounded-[2.5rem] border-none shadow-2xl overflow-hidden p-0">
+        <DialogContent className="max-w-md rounded-[2rem] border-none shadow-2xl overflow-hidden p-0">
           <div className="bg-admin-primary p-8 text-white relative">
             <div className="absolute top-0 right-0 p-10 opacity-10">
               <Target className="h-24 w-24" />

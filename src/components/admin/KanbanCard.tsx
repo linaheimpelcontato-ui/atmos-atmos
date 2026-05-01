@@ -27,19 +27,19 @@ interface KanbanCardProps {
 }
 
 const POTENTIAL_COLORS: Record<string, string> = {
-  high: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-  medium: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
-  low: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+  high: "bg-green-500/10 text-green-600 border-green-500/20",
+  medium: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
+  low: "bg-red-500/10 text-red-600 border-red-500/20",
 };
 
 const SOURCE_STYLES: Record<string, string> = {
-  instagram: "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400",
-  whatsapp: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-  site: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  indicacao: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  email: "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400",
-  manychat: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-  manual: "bg-gray-100 text-gray-600 dark:bg-gray-800/40 dark:text-gray-400",
+  instagram: "bg-pink-500/10 text-pink-600 border-pink-500/20",
+  whatsapp: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+  site: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+  indicacao: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+  email: "bg-violet-500/10 text-violet-600 border-violet-500/20",
+  manychat: "bg-purple-500/10 text-purple-600 border-purple-500/20",
+  manual: "bg-gray-500/10 text-gray-600 border-gray-500/20",
 };
 
 function MiniStars({ priority }: { priority: string | null | undefined }) {
@@ -63,7 +63,7 @@ export default function KanbanCard({ prospect, onClick, onDragStart, feedbackCou
       draggable
       onDragStart={onDragStart}
       onClick={onClick}
-      className="bg-card border border-border rounded-lg p-3 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow group"
+      className="bg-white/80 dark:bg-admin-surface/80 backdrop-blur-sm border border-admin-border/40 rounded-2xl p-4 cursor-grab active:cursor-grabbing shadow-[0_4px_12px_-4px_rgba(0,0,0,0.05)] hover:shadow-xl hover:shadow-admin-primary/10 hover:border-admin-primary/30 transition-all duration-300 group"
     >
       <div className="flex items-start gap-1.5">
         <GripVertical className="h-4 w-4 text-muted-foreground/40 mt-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -72,12 +72,12 @@ export default function KanbanCard({ prospect, onClick, onDragStart, feedbackCou
             {prospect.logo_url && (
               <img src={prospect.logo_url} alt="" className="h-5 w-5 rounded object-cover shrink-0" />
             )}
-            <p className="font-medium text-sm truncate flex-1">{prospect.name}</p>
-            <span className={`text-[10px] font-medium px-1.5 py-0 rounded-full shrink-0 capitalize ${SOURCE_STYLES[prospect.source] ?? SOURCE_STYLES.manual}`}>
+            <p className="font-black text-sm truncate flex-1 text-admin-primary dark:text-white">{prospect.name}</p>
+            <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border shrink-0 ${SOURCE_STYLES[prospect.source] ?? SOURCE_STYLES.manual}`}>
               {prospect.source}
             </span>
             {prospect.tags?.includes("manychat") && (
-              <span className="text-[9px] font-bold px-1 py-0 rounded bg-purple-200 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300 shrink-0">MC</span>
+              <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0 rounded border border-purple-500/20 bg-purple-500/10 text-purple-600 shrink-0">MC</span>
             )}
           </div>
 
@@ -90,7 +90,7 @@ export default function KanbanCard({ prospect, onClick, onDragStart, feedbackCou
 
           <div className="flex flex-wrap items-center gap-1 mt-1.5">
             {prospect.potential && (
-              <span className={`text-[10px] font-medium px-1.5 py-0 rounded-full ${POTENTIAL_COLORS[prospect.potential] ?? ""}`}>
+              <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${POTENTIAL_COLORS[prospect.potential] ?? ""}`}>
                 {prospect.potential === "high" ? "Alto" : prospect.potential === "low" ? "Baixo" : "Médio"}
               </span>
             )}
@@ -116,7 +116,7 @@ export default function KanbanCard({ prospect, onClick, onDragStart, feedbackCou
             {feedbackCount > 0 && (
               <button
                 onClick={(e) => { e.stopPropagation(); onFeedbackClick?.(); }}
-                className="ml-auto flex items-center gap-1 bg-destructive text-destructive-foreground rounded-full px-1.5 py-0.5 text-[10px] font-bold hover:opacity-80 transition-opacity"
+                className="ml-auto flex items-center gap-1 bg-gradient-to-r from-destructive to-red-500 text-white rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-widest shadow-lg shadow-destructive/20 hover:scale-105 transition-all"
               >
                 <MessageSquare className="h-2.5 w-2.5" />
                 {feedbackCount}

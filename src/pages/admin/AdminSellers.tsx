@@ -305,7 +305,7 @@ export default function AdminSellers() {
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent className="rounded-[2.5rem] border-none shadow-2xl">
+                        <AlertDialogContent className="rounded-[2rem] border-none shadow-2xl">
                           <AlertDialogHeader>
                             <AlertDialogTitle className="text-xl font-black text-admin-primary uppercase tracking-tight">Remover Membro?</AlertDialogTitle>
                             <AlertDialogDescription className="font-medium text-muted-foreground">
@@ -342,7 +342,7 @@ export default function AdminSellers() {
       />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-2xl rounded-[2.5rem] border-none shadow-2xl overflow-hidden p-0">
+        <DialogContent className="sm:max-w-2xl rounded-[2rem] border-none shadow-2xl overflow-hidden p-0">
           <div className="bg-admin-primary p-8 text-white relative">
             <div className="absolute top-0 right-0 p-10 opacity-10">
               <UserCheck className="h-24 w-24" />

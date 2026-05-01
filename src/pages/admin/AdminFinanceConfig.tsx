@@ -420,7 +420,7 @@ export default function AdminFinanceConfig() {
 
       {/* Account form dialog */}
       <Dialog open={accDialogOpen} onOpenChange={setAccDialogOpen}>
-        <DialogContent className="max-w-md rounded-[2.5rem] border-none shadow-2xl overflow-hidden p-0">
+        <DialogContent className="max-w-md rounded-[2rem] border-none shadow-2xl overflow-hidden p-0">
           <div className="bg-admin-primary p-8 text-white relative">
             <div className="absolute top-0 right-0 p-10 opacity-10"><BookOpen className="h-24 w-24" /></div>
             <DialogHeader><DialogTitle className="text-2xl font-black uppercase tracking-tight">{accEditingId ? "Editar Conta" : "Nova Conta"}</DialogTitle></DialogHeader>
@@ -448,7 +448,7 @@ export default function AdminFinanceConfig() {
 
       {/* Bank Account form dialog */}
       <Dialog open={bankDialogOpen} onOpenChange={setBankDialogOpen}>
-        <DialogContent className="max-w-md rounded-[2.5rem] border-none shadow-2xl overflow-hidden p-0">
+        <DialogContent className="max-w-md rounded-[2rem] border-none shadow-2xl overflow-hidden p-0">
           <div className="bg-admin-primary p-8 text-white relative">
             <div className="absolute top-0 right-0 p-10 opacity-10"><Landmark className="h-24 w-24" /></div>
             <DialogHeader><DialogTitle className="text-2xl font-black uppercase tracking-tight">{bankEditingId ? "Editar Banco" : "Nova Conta Bancária"}</DialogTitle></DialogHeader>
@@ -476,7 +476,7 @@ export default function AdminFinanceConfig() {
 
       {/* Branch form dialog */}
       <Dialog open={branchDialogOpen} onOpenChange={setBranchDialogOpen}>
-        <DialogContent className="max-w-md rounded-[2.5rem] border-none shadow-2xl overflow-hidden p-0">
+        <DialogContent className="max-w-md rounded-[2rem] border-none shadow-2xl overflow-hidden p-0">
           <div className="bg-admin-primary p-8 text-white relative">
             <div className="absolute top-0 right-0 p-10 opacity-10"><Building2 className="h-24 w-24" /></div>
             <DialogHeader><DialogTitle className="text-2xl font-black uppercase tracking-tight">{branchEditingId ? "Editar Filial" : "Nova Unidade Atmos"}</DialogTitle></DialogHeader>

@@ -163,7 +163,7 @@ export default function AdminFinanceDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Link to="/admin/financeiro/contas-receber" className="group">
-          <motion.div whileHover={{ scale: 1.01 }} className="bg-white border border-admin-border/60 rounded-[2.5rem] p-8 shadow-sm transition-all hover:shadow-lg relative overflow-hidden h-full">
+          <motion.div whileHover={{ scale: 1.01 }} className="bg-white border border-admin-border/60 rounded-[2rem] p-8 shadow-sm transition-all hover:shadow-lg relative overflow-hidden h-full">
             <div className="absolute top-0 right-0 p-10 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity">
               <TrendingUp className="h-32 w-32 text-green-600" />
             </div>
@@ -193,7 +193,7 @@ export default function AdminFinanceDashboard() {
         </Link>
 
         <Link to="/admin/financeiro/contas-pagar" className="group">
-          <motion.div whileHover={{ scale: 1.01 }} className="bg-white border border-destructive/10 rounded-[2.5rem] p-8 shadow-sm transition-all hover:shadow-lg relative overflow-hidden h-full">
+          <motion.div whileHover={{ scale: 1.01 }} className="bg-white border border-destructive/10 rounded-[2rem] p-8 shadow-sm transition-all hover:shadow-lg relative overflow-hidden h-full">
             <div className="absolute top-0 right-0 p-10 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity">
               <AlertTriangle className="h-32 w-32 text-destructive" />
             </div>
@@ -221,7 +221,7 @@ export default function AdminFinanceDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <motion.div className="bg-white rounded-[2.5rem] p-8 border border-admin-border/60 shadow-sm relative overflow-hidden group">
+        <motion.div className="bg-white rounded-[2rem] p-8 border border-admin-border/60 shadow-sm relative overflow-hidden group">
           <div className="flex items-center justify-between mb-8">
             <div className="space-y-1">
               <h3 className="text-sm font-black uppercase tracking-[0.2em] text-admin-primary/80">Evolução Mensal</h3>
@@ -258,7 +258,7 @@ export default function AdminFinanceDashboard() {
           </div>
         </motion.div>
 
-        <motion.div className="bg-white rounded-[2.5rem] p-8 border border-admin-border/60 shadow-sm relative overflow-hidden group">
+        <motion.div className="bg-white rounded-[2rem] p-8 border border-admin-border/60 shadow-sm relative overflow-hidden group">
           <div className="flex items-center justify-between mb-8">
             <div className="space-y-1">
               <h3 className="text-sm font-black uppercase tracking-[0.2em] text-admin-primary/80">Fluxo de Clientes</h3>

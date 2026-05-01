@@ -122,7 +122,7 @@ export default function AdminFinanceLucroMargem() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <motion.div className="lg:col-span-1 bg-white border border-admin-border/60 rounded-[2.5rem] p-8 shadow-sm relative overflow-hidden group">
+        <motion.div className="lg:col-span-1 bg-white border border-admin-border/60 rounded-[2rem] p-8 shadow-sm relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-10 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity">
             <FileText className="h-32 w-32 text-admin-primary" />
           </div>
@@ -168,7 +168,7 @@ export default function AdminFinanceLucroMargem() {
           </div>
         </motion.div>
 
-        <motion.div className="lg:col-span-2 bg-white rounded-[2.5rem] p-8 border border-admin-border/60 shadow-sm relative overflow-hidden group">
+        <motion.div className="lg:col-span-2 bg-white rounded-[2rem] p-8 border border-admin-border/60 shadow-sm relative overflow-hidden group">
           <div className="flex items-center justify-between mb-8">
             <div className="space-y-1">
               <h3 className="text-sm font-black uppercase tracking-[0.2em] text-admin-primary/80">Evolução da Margem</h3>

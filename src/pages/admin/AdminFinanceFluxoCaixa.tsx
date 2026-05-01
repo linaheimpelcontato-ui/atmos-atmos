@@ -156,7 +156,7 @@ export default function AdminFinanceFluxoCaixa() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <motion.div className="bg-white rounded-[2.5rem] p-8 border border-admin-border/60 shadow-sm relative overflow-hidden group">
+        <motion.div className="bg-white rounded-[2rem] p-8 border border-admin-border/60 shadow-sm relative overflow-hidden group">
           <div className="flex items-center justify-between mb-8">
             <div className="space-y-1">
               <h3 className="text-sm font-black uppercase tracking-[0.2em] text-admin-primary/80">Evolução Mensal (Realizado)</h3>
@@ -177,7 +177,7 @@ export default function AdminFinanceFluxoCaixa() {
           </div>
         </motion.div>
 
-        <motion.div className="bg-white rounded-[2.5rem] p-8 border border-admin-border/60 shadow-sm relative overflow-hidden group">
+        <motion.div className="bg-white rounded-[2rem] p-8 border border-admin-border/60 shadow-sm relative overflow-hidden group">
           <div className="flex items-center justify-between mb-8">
             <div className="space-y-1">
               <h3 className="text-sm font-black uppercase tracking-[0.2em] text-admin-primary/80">Saldo Acumulado</h3>
@@ -204,7 +204,7 @@ export default function AdminFinanceFluxoCaixa() {
         </motion.div>
       </div>
 
-      <motion.div className="bg-white rounded-[2.5rem] p-8 border border-admin-border/60 shadow-sm relative overflow-hidden group">
+      <motion.div className="bg-white rounded-[2rem] p-8 border border-admin-border/60 shadow-sm relative overflow-hidden group">
         <div className="flex items-center justify-between mb-8">
           <div className="space-y-1">
             <h3 className="text-sm font-black uppercase tracking-[0.2em] text-admin-primary/80">Previsão de Caixa (4 semanas)</h3>
@@ -230,7 +230,7 @@ export default function AdminFinanceFluxoCaixa() {
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white border border-destructive/20 rounded-[2.5rem] p-8 shadow-sm relative overflow-hidden group"
+            className="bg-white border border-destructive/20 rounded-[2rem] p-8 shadow-sm relative overflow-hidden group"
           >
             <div className="absolute top-0 right-0 p-10 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity">
               <AlertTriangle className="h-32 w-32 text-destructive" />

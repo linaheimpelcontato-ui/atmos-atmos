@@ -209,7 +209,7 @@ export default function AdminFinanceReports() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="bg-gradient-to-br from-admin-primary/10 via-white to-admin-primary/5 border border-admin-primary/20 rounded-[2.5rem] p-8 shadow-xl relative overflow-hidden group"
+            className="bg-gradient-to-br from-admin-primary/10 via-white to-admin-primary/5 border border-admin-primary/20 rounded-[2rem] p-8 shadow-xl relative overflow-hidden group"
           >
             <div className="absolute top-0 right-0 p-10 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity">
               <Sparkles className="h-32 w-32 text-admin-primary" />
@@ -238,7 +238,7 @@ export default function AdminFinanceReports() {
 
         <TabsContent value="dre" className="space-y-8 focus-visible:ring-0">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <motion.div className="lg:col-span-1 bg-white border border-admin-border/60 rounded-[2.5rem] p-8 shadow-sm relative overflow-hidden group">
+            <motion.div className="lg:col-span-1 bg-white border border-admin-border/60 rounded-[2rem] p-8 shadow-sm relative overflow-hidden group">
               <div className="absolute top-0 right-0 p-10 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity">
                 <TrendingUp className="h-32 w-32 text-admin-primary" />
               </div>
@@ -276,7 +276,7 @@ export default function AdminFinanceReports() {
               </div>
             </motion.div>
 
-            <motion.div className="lg:col-span-2 bg-white rounded-[2.5rem] p-8 border border-admin-border/60 shadow-sm relative overflow-hidden group">
+            <motion.div className="lg:col-span-2 bg-white rounded-[2rem] p-8 border border-admin-border/60 shadow-sm relative overflow-hidden group">
               <div className="flex items-center justify-between mb-8">
                 <div className="space-y-1">
                   <h3 className="text-sm font-black uppercase tracking-[0.2em] text-admin-primary/80">Fluxo de Caixa Mensal</h3>
@@ -302,7 +302,7 @@ export default function AdminFinanceReports() {
             </motion.div>
           </div>
 
-          <motion.div className="bg-white rounded-[2.5rem] p-8 border border-admin-border/60 shadow-sm relative overflow-hidden group">
+          <motion.div className="bg-white rounded-[2rem] p-8 border border-admin-border/60 shadow-sm relative overflow-hidden group">
             <div className="flex items-center justify-between mb-8">
               <div className="space-y-1">
                 <h3 className="text-sm font-black uppercase tracking-[0.2em] text-admin-primary/80">Detalhamento por Conta</h3>
@@ -349,7 +349,7 @@ export default function AdminFinanceReports() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <motion.div className="bg-white rounded-[2.5rem] p-8 border border-admin-border/60 shadow-sm relative overflow-hidden group">
+            <motion.div className="bg-white rounded-[2rem] p-8 border border-admin-border/60 shadow-sm relative overflow-hidden group">
               <div className="flex items-center justify-between mb-8">
                 <div className="space-y-1">
                   <h3 className="text-sm font-black uppercase tracking-[0.2em] text-admin-primary/80">Pipeline por Etapa</h3>
@@ -381,7 +381,7 @@ export default function AdminFinanceReports() {
               </div>
             </motion.div>
 
-            <motion.div className="bg-white rounded-[2.5rem] p-8 border border-admin-border/60 shadow-sm relative overflow-hidden group">
+            <motion.div className="bg-white rounded-[2rem] p-8 border border-admin-border/60 shadow-sm relative overflow-hidden group">
               <div className="flex items-center justify-between mb-8">
                 <div className="space-y-1">
                   <h3 className="text-sm font-black uppercase tracking-[0.2em] text-admin-primary/80">Ranking Vendedores</h3>

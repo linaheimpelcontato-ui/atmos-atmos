@@ -1,4 +1,4 @@
-import { optimizedUrl, IMAGE_PRESETS } from "@/lib/storage";
+import { optimizedUrl, IMAGE_PRESETS, storageUrl } from "@/lib/storage";
 import { useStorageImages } from "@/hooks/useStorageImages";
 import type { ServiceCategory } from "@/data/services";
 
