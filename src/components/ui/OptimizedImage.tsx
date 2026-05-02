@@ -31,18 +31,18 @@ export function OptimizedImage({
 
   const handleError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     // Stage 1: If optimized URL failed, try the original storage URL
-    if (currentSrc.includes('/_vercel/image?url=')) {
+    if (currentSrc.includes('wsrv.nl')) {
       try {
-        const urlParam = new URL(currentSrc, window.location.origin).searchParams.get('url');
+        const urlParam = new URL(currentSrc).searchParams.get('url');
         if (urlParam) {
           const original = decodeURIComponent(urlParam);
-          console.log(`[Atmos] Vercel Resizing failed. Falling back to original: ${original}`);
+          console.log(`[Atmos] Wsrv.nl Resizing failed. Falling back to original: ${original}`);
           setCurrentSrc(original);
           setLoaded(false);
           return;
         }
       } catch (err) {
-        console.error("Failed to parse Vercel image URL fallback", err);
+        console.error("Failed to parse wsrv.nl image URL fallback", err);
       }
     }
 

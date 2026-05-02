@@ -75,14 +75,18 @@ export const IMAGE_PRESETS = {
 export function optimizedUrl(path: string, opts?: OptimizedOptions): string {
   if (!path) return "";
   
-  // 1. Get the base storage URL (Cloudflare R2)
+  // 1. Get the base storage URL (Cloudflare R2 or Supabase)
   const rawUrl = storageUrl(path);
   
-  // 2. Build Vercel Image Resizing parameters
-  // Vercel uses: /_vercel/image?url=ENCODED_URL&w=WIDTH&q=QUALITY
-  // Widths must match those configured in vercel.json sizes array (e.g. 400, 800, 1200, 1920)
+  // 2. Build wsrv.nl optimization parameters
+  // wsrv.nl caches and compresses images perfectly for free
   const width = opts?.width || 800;
   const quality = opts?.quality || 75;
 
-  return `/_vercel/image?url=${encodeURIComponent(rawUrl)}&w=${width}&q=${quality}`;
+  // We must ensure the URL is absolute for wsrv.nl
+  const absoluteUrl = rawUrl.startsWith('http') 
+    ? rawUrl 
+    : `https://www.atmos.tur.br${rawUrl}`;
+
+  return `https://wsrv.nl/?url=${encodeURIComponent(absoluteUrl)}&w=${width}&q=${quality}&output=webp`;
 }
