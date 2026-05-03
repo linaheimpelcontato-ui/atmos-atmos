@@ -6,12 +6,11 @@ import { storageUrl } from "@/lib/storage";
 
 // Supabase Storage Public URLs for Joao's photos
 const JOAO_IMAGES = [
-  storageUrl("home/joao/joao-1.jpg"),
-  storageUrl("home/joao/joao-2.jpg"),
-  storageUrl("home/joao/joao-3.jpg"),
-  storageUrl("home/joao/joao-4.jpg"),
-  storageUrl("home/joao/joao-5.jpg"),
-  storageUrl("home/joao/joao-6.jpg"),
+  storageUrl("home/Joao/joao-1.jpg"),
+  storageUrl("home/Joao/joao-2.jpg"),
+  storageUrl("home/Joao/joao-4.jpg"),
+  storageUrl("home/Joao/joao-5.jpg"),
+  storageUrl("home/Joao/joao-6.jpg"),
 ];
 
 // Real Guide Images from public folder
