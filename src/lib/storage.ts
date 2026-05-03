@@ -16,7 +16,13 @@ export function storageUrl(path: string): string {
   // Clean up leading slashes just in case
   const cleanPath = path.replace(/^\//, "");
   
-  return `${STORAGE_BASE}/${cleanPath}`;
+  // Encode each segment of the path to handle spaces, '&', etc.
+  const encodedPath = cleanPath
+    .split('/')
+    .map(segment => encodeURIComponent(segment))
+    .join('/');
+  
+  return `${STORAGE_BASE}/${encodedPath}`;
 }
 
 interface OptimizedOptions {
