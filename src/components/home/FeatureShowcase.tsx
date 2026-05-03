@@ -314,138 +314,128 @@ export default function FeatureShowcase() {
                         exit={{ opacity: 0 }}
                         className="absolute inset-0 bg-white flex flex-col overflow-hidden"
                       >
-                        {/* Static Navigation Bar */}
-                        <div className="p-4 border-b border-black/5 flex items-center justify-between bg-white shrink-0 z-30 relative">
-                          <img src={storageUrl("brand/logo-horizontal.svg")} className="h-3" />
-                          <div className="flex gap-3">
-                             <Heart className="w-4 h-4 text-[#2C3E2D]" />
-                             <div className="w-4 h-4 rounded-full bg-[#A88B4C] flex items-center justify-center text-[8px] text-white font-bold">L</div>
+                        {/* Header Fixo do Mockup (Layout Real) */}
+                        <div className="bg-white shrink-0 z-30 relative border-b border-black/5">
+                          {/* Logo Bar */}
+                          <div className="p-3 flex items-center justify-between">
+                            <img src={logoAtmos} className="h-3" alt="Atmos" />
+                            <div className="flex gap-2">
+                               <Heart className="w-3.5 h-3.5 text-[#2C3E2D]" />
+                               <div className="w-4 h-4 rounded-full bg-[#2C3E2D]/10 flex items-center justify-center text-[8px] text-[#2C3E2D] font-bold">U</div>
+                            </div>
+                          </div>
+
+                          {/* 4 Category Cards (Compact Sticky Style) */}
+                          <div className="px-4 pb-4">
+                            <div className="grid grid-cols-4 gap-1.5">
+                              {[
+                                { id: 'wf', label: 'CACH', img: 'destaques-categorias/Cachoeira-Destaque-1.jpg' },
+                                { id: 'exp', label: 'EXP', img: 'destaques-categorias/Experiencias-Destaque-1.jpeg' },
+                                { id: 'acc', label: 'HOSP', img: 'destaques-categorias/Hospedagens-Destaque-1.jpeg' },
+                                { id: 'srv', label: 'SERV', img: 'destaques-categorias/Serviços-Destaque-1.jpg' }
+                              ].map((cat, i) => {
+                                const isCatActive = (subStep < 2 && i === 0) || (subStep >= 2 && i === 1);
+                                return (
+                                  <div key={cat.id} className={`relative h-12 rounded-lg overflow-hidden border ${isCatActive ? 'border-[#2C3E2D] ring-1 ring-[#2C3E2D]' : 'border-transparent opacity-60'}`}>
+                                    <img src={getProductionUrl(cat.img)} className="w-full h-full object-cover" />
+                                    <div className={`absolute inset-0 flex items-center justify-center ${isCatActive ? 'bg-[#2C3E2D]/40' : 'bg-black/20'}`}>
+                                      <span className="text-[6px] text-white font-display tracking-widest">{cat.label}</span>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {/* Search Bar & Category Title (Compact) */}
+                          <div className="px-4 pb-4 space-y-3">
+                            <div className="h-8 bg-[#FAF9F6] rounded-full border border-black/5 flex items-center px-4 gap-2">
+                              <Search className="w-2.5 h-2.5 text-black/20" />
+                              <span className="text-[7px] text-black/20 uppercase tracking-widest">Buscar...</span>
+                            </div>
+                            <div>
+                               <span className="text-[6px] font-bold text-[#A88B4C] tracking-[0.3em] uppercase block">Explorando</span>
+                               <h5 className="text-sm font-display text-[#2C3E2D] uppercase tracking-widest">
+                                 {subStep < 2 ? "Cachoeiras" : "Experiências"}
+                               </h5>
+                            </div>
                           </div>
                         </div>
 
-                        <div className="flex-1 relative overflow-hidden bg-[#F9F8F3]">
+                        {/* Product List Content */}
+                        <div className="flex-1 relative overflow-hidden bg-[#FAF9F6]">
                           <AnimatePresence mode="wait">
-                            {/* SUB-PHASE 0 & 2: CATEGORY MENU */}
-                            {(subStep === 0 || subStep === 2) && (
+                            {/* SUB-PHASE 0-1: WATERFALLS */}
+                            {subStep < 2 && (
                               <motion.div 
-                                key={`menu-${subStep}`}
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 1.05 }}
-                                className="p-4 space-y-3 h-full overflow-y-auto no-scrollbar"
+                                key="explorer-wf"
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -20 }}
+                                className="p-4 space-y-4"
                               >
-                                <span className="text-[7px] font-bold text-black/30 tracking-[0.3em] uppercase block mb-4">Escolha uma categoria</span>
-                                {[
-                                  { label: 'CACHOEIRAS', img: 'destaques-categorias/Cachoeira-Destaque-1.jpg' },
-                                  { label: 'EXPERIÊNCIAS', img: 'destaques-categorias/Experiencias-Destaque-1.jpeg' },
-                                  { label: 'HOSPEDAGENS', img: 'destaques-categorias/Hospedagens-Destaque-1.jpeg' },
-                                  { label: 'SERVIÇOS', img: 'destaques-categorias/Serviços-Destaque-1.jpg' }
-                                ].map((cat, i) => (
-                                  <div key={cat.label} className="h-28 rounded-[1.5rem] overflow-hidden relative border border-black/5 shadow-sm">
-                                    <img src={getProductionUrl(cat.img)} className="w-full h-full object-cover" />
-                                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                                      <span className="text-white font-display text-xl tracking-[0.2em] uppercase">{cat.label}</span>
+                                {CURATION_CATEGORIES_DATA.CACHOEIRAS.map((item, i) => (
+                                  <motion.div 
+                                    key={i} 
+                                    animate={{ y: [0, -20, 0] }}
+                                    transition={{ duration: 4, repeat: Infinity, delay: i * 0.5 }}
+                                    className="rounded-2xl overflow-hidden bg-white shadow-sm border border-black/5"
+                                  >
+                                    <div className="aspect-video relative">
+                                      <img src={getProductionUrl(item.img)} className="w-full h-full object-cover" />
+                                      <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/40 backdrop-blur-md flex items-center justify-center">
+                                        <motion.div
+                                          animate={{ scale: (subStep === 1 && i === 0) ? [1, 1.4, 1] : 1 }}
+                                        >
+                                          <Heart 
+                                            className={`w-4 h-4 ${((subStep === 1 || subStep > 1) && i === 0) ? "text-[#540202] fill-[#540202]" : "text-white"}`} 
+                                          />
+                                        </motion.div>
+                                      </div>
                                     </div>
-                                    {/* Simulation of click highlight */}
-                                    {((subStep === 0 && i === 0) || (subStep === 2 && i === 1)) && (
-                                      <motion.div 
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: [0, 1, 0] }}
-                                        transition={{ duration: 0.5, repeat: 1 }}
-                                        className="absolute inset-0 bg-white/20 z-10" 
-                                      />
-                                    )}
-                                  </div>
+                                    <div className="p-3">
+                                      <h6 className="text-[8px] font-bold text-[#2C3E2D] uppercase tracking-widest">{item.t}</h6>
+                                      <p className="text-[6px] text-black/40 uppercase tracking-widest mt-0.5">{item.d}</p>
+                                    </div>
+                                  </motion.div>
                                 ))}
                               </motion.div>
                             )}
 
-                            {/* SUB-PHASE 1: EXPLORING CACHOEIRAS */}
-                            {subStep === 1 && (
+                            {/* SUB-PHASE 2-3: EXPERIENCES */}
+                            {subStep >= 2 && (
                               <motion.div 
-                                key="explorer-cachoeiras"
+                                key="explorer-exp"
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: -20 }}
-                                className="flex flex-col h-full relative"
+                                className="p-4 space-y-4"
                               >
-                                {/* Header Fixo com Z-Index Alto */}
-                                <div className="p-6 bg-white border-b border-black/5 z-20 relative shadow-sm">
-                                   <span className="text-[7px] font-bold text-[#A88B4C] tracking-[0.3em] uppercase block mb-1">Explorando</span>
-                                   <h5 className="text-2xl font-display text-[#2C3E2D] uppercase tracking-wider mb-4">Cachoeiras</h5>
-                                   <div className="h-10 bg-gray-50 rounded-xl flex items-center px-4 gap-3 border border-black/5">
-                                      <Search className="w-3 h-3 text-black/20" />
-                                      <span className="text-[8px] text-black/20 uppercase tracking-widest">Buscar...</span>
-                                   </div>
-                                </div>
-
-                                {/* Container de Scroll Animado */}
-                                <div className="flex-1 overflow-hidden z-10">
+                                {CURATION_CATEGORIES_DATA.EXPERIÊNCIAS.map((item, i) => (
                                   <motion.div 
-                                    animate={{ y: [0, -500] }}
-                                    transition={{ duration: 5, ease: "linear" }}
-                                    className="p-6 space-y-6"
+                                    key={i} 
+                                    animate={{ y: [0, -20, 0] }}
+                                    transition={{ duration: 4, repeat: Infinity, delay: i * 0.5 }}
+                                    className="rounded-2xl overflow-hidden bg-white shadow-sm border border-black/5"
                                   >
-                                     {CURATION_CATEGORIES_DATA.CACHOEIRAS.map((item, i) => (
-                                       <div key={i} className="rounded-[2rem] overflow-hidden bg-white shadow-md border border-black/5">
-                                          <div className="aspect-[4/3] relative">
-                                            <img src={getProductionUrl(item.img)} className="w-full h-full object-cover" />
-                                            <div className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center">
-                                              <Heart className={`w-5 h-5 text-white ${i === 0 ? "fill-white" : ""}`} />
-                                            </div>
-                                          </div>
-                                          <div className="p-5">
-                                            <h6 className="text-[9px] font-bold text-[#2C3E2D] uppercase tracking-[0.2em]">{item.t}</h6>
-                                            <p className="text-[7px] text-black/40 uppercase tracking-widest mt-1">{item.d}</p>
-                                          </div>
-                                       </div>
-                                     ))}
+                                    <div className="aspect-video relative">
+                                      <img src={getProductionUrl(item.img)} className="w-full h-full object-cover" />
+                                      <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/40 backdrop-blur-md flex items-center justify-center">
+                                        <motion.div
+                                          animate={{ scale: (subStep === 3 && i === 0) ? [1, 1.4, 1] : 1 }}
+                                        >
+                                          <Heart 
+                                            className={`w-4 h-4 ${((subStep === 3 || subStep > 3) && i === 0) ? "text-[#540202] fill-[#540202]" : "text-white"}`} 
+                                          />
+                                        </motion.div>
+                                      </div>
+                                    </div>
+                                    <div className="p-3">
+                                      <h6 className="text-[8px] font-bold text-[#2C3E2D] uppercase tracking-widest">{item.t}</h6>
+                                      <p className="text-[6px] text-black/40 uppercase tracking-widest mt-0.5">{item.d}</p>
+                                    </div>
                                   </motion.div>
-                                </div>
-                              </motion.div>
-                            )}
-
-                            {/* SUB-PHASE 3: EXPLORING EXPERIÊNCIAS */}
-                            {subStep === 3 && (
-                              <motion.div 
-                                key="explorer-experiencias"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                className="flex flex-col h-full relative"
-                              >
-                                {/* Header Fixo */}
-                                <div className="p-6 bg-white border-b border-black/5 z-20 relative shadow-sm">
-                                   <span className="text-[7px] font-bold text-[#A88B4C] tracking-[0.3em] uppercase block mb-1">Explorando</span>
-                                   <h5 className="text-2xl font-display text-[#2C3E2D] uppercase tracking-wider mb-4">Experiências</h5>
-                                   <div className="h-10 bg-gray-50 rounded-xl flex items-center px-4 gap-3 border border-black/5">
-                                      <Search className="w-3 h-3 text-black/20" />
-                                      <span className="text-[8px] text-black/20 uppercase tracking-widest">Buscar...</span>
-                                   </div>
-                                </div>
-
-                                <div className="flex-1 overflow-hidden z-10">
-                                  <motion.div 
-                                    animate={{ y: [0, -500] }}
-                                    transition={{ duration: 5, ease: "linear" }}
-                                    className="p-6 space-y-6"
-                                  >
-                                     {CURATION_CATEGORIES_DATA.EXPERIÊNCIAS.map((item, i) => (
-                                       <div key={i} className="rounded-[2rem] overflow-hidden bg-white shadow-md border border-black/5">
-                                          <div className="aspect-[4/3] relative">
-                                            <img src={getProductionUrl(item.img)} className="w-full h-full object-cover" />
-                                            <div className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center">
-                                              <Heart className="w-5 h-5 text-white" />
-                                            </div>
-                                          </div>
-                                          <div className="p-5">
-                                            <h6 className="text-[9px] font-bold text-[#2C3E2D] uppercase tracking-[0.2em]">{item.t}</h6>
-                                            <p className="text-[7px] text-black/40 uppercase tracking-widest mt-1">{item.d}</p>
-                                          </div>
-                                       </div>
-                                     ))}
-                                  </motion.div>
-                                </div>
+                                ))}
                               </motion.div>
                             )}
                           </AnimatePresence>
