@@ -18,21 +18,27 @@ export function useStorageImages(folder: string, prefix: string, enabled = true)
 
 /** Non-hook version for use outside React components */
 export async function fetchStorageImages(folder: string, prefix: string): Promise<string[]> {
+  if (!prefix) return [];
+  
   const normPrefix = normalize(prefix);
   
-  // Try these specific folders first for maximum speed
+  // Try these specific folders first for maximum speed and accuracy
   const priorityFolders = [
     `${folder}/${prefix}`,
     `${folder}/${normPrefix}`,
-    `${folder}/${prefix.charAt(0).toUpperCase() + prefix.slice(1)}`, // Capitalized
   ];
+
+  // Also try common variants if prefix is an ID
+  if (prefix.length < 30) {
+    priorityFolders.push(`${folder}/${prefix.toLowerCase()}`);
+  }
 
   const fallbackFolders = [
     folder,
-    'produtos/experiencias',
+    'produtos/experiências', // Correct spelling
     'produtos/cachoeiras',
     'produtos/hospedagens',
-    'produtos/servicos',
+    'produtos/serviços',
     'produtos/roteiros',
     'home'
   ];
@@ -41,19 +47,23 @@ export async function fetchStorageImages(folder: string, prefix: string): Promis
   
   for (const f of allFolders) {
     try {
-      // Don't try empty folders
       if (!f || f === '/') continue;
       
       const files = await r2.list(f);
       if (!files || files.length === 0) continue;
 
+      // Filter and sort
       const matching = files
         .filter((file: any) => isImageMatch(file.Key, prefix))
         .sort((a: any, b: any) => {
           const nameA = a.Key.toLowerCase();
           const nameB = b.Key.toLowerCase();
+          
+          // Capa always first
           if (nameA.includes('_capa') && !nameB.includes('_capa')) return -1;
           if (!nameA.includes('_capa') && nameB.includes('_capa')) return 1;
+          
+          // Numeric sort for gallery
           const numA = parseInt(nameA.match(/-(\d+)\./)?.[1] || "0");
           const numB = parseInt(nameB.match(/-(\d+)\./)?.[1] || "0");
           return numA - numB;
@@ -62,7 +72,6 @@ export async function fetchStorageImages(folder: string, prefix: string): Promis
 
       if (matching.length > 0) return matching;
     } catch (err) {
-      // Silently fail for specific folder tries, log only for category fallbacks
       continue;
     }
   }

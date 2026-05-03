@@ -107,7 +107,7 @@ export default function WaterfallDetailDialog({
 }: WaterfallDetailDialogProps) {
   const { language } = useLanguage();
   const { addItem, removeItem, isInWishlist } = useWishlist();
-  const { images } = useWaterfallImages(waterfall?.id || "", waterfall?.imageIndex);
+  const { images } = useWaterfallImages(waterfall?.id || "", waterfall?.name.pt || "");
 
   useEffect(() => {
     if (open) {
