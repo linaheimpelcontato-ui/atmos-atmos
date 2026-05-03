@@ -40,10 +40,10 @@ const heroBg = storageUrl("home/cat-waterfalls.jpg");
 
 
 const TABS = [
-  { id: 'waterfalls', label: 'Cachoeiras', icon: Droplets, image: storageUrl("cachoeiras/bocaina-farias-1.jpg"), description: "Quedas d'água secretas" },
-  { id: 'experiences', label: 'Experiências', icon: Sparkles, image: storageUrl("experiencias/cavalo-1.jpg"), description: "Momentos imersivos" },
-  { id: 'hospedagens', label: 'Hospedagens', icon: Home, image: storageUrl("hospedagens/casa-poema-1.jpg"), description: "Refúgios extraordinários" },
-  { id: 'services', label: 'Serviços', icon: Wrench, image: storageUrl("servicos/drone.jpg"), description: "Comodidade total" },
+  { id: 'waterfalls', label: 'Cachoeiras', icon: Droplets, image: storageUrl("destaques-categorias/Cachoeira-Destaque-1.jpg"), description: "Quedas d'água secretas" },
+  { id: 'experiences', label: 'Experiências', icon: Sparkles, image: storageUrl("destaques-categorias/Experiencias-Destaque-1.jpeg"), description: "Momentos imersivos" },
+  { id: 'hospedagens', label: 'Hospedagens', icon: Home, image: storageUrl("destaques-categorias/Hospedagens-Destaque-1.jpeg"), description: "Refúgios extraordinários" },
+  { id: 'services', label: 'Serviços', icon: Wrench, image: storageUrl("destaques-categorias/Serviços-Destaque-1.jpg"), description: "Comodidade total" },
 ];
 
 // Shared MultiSelect Component

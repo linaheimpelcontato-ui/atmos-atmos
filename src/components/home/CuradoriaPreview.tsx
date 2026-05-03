@@ -24,11 +24,11 @@ const CATEGORIES = [
     unit: "experiências",
     description: "Curadoria de experiências para deixar sua viagem mais completa",
     images: [
-      "destaques-categorias/Experiencia-Destaque-1.jpg",
-      "destaques-categorias/Experiencias-Destaque-2.jpg",
-      "destaques-categorias/Experiencias-Destaque-3.jpg",
-      "destaques-categorias/Experiencias-Destaque-4.jpg",
-      "destaques-categorias/Experiencias-Destaque-5.png"
+      "destaques-categorias/Experiencias-Destaque-1.jpeg",
+      "destaques-categorias/Experiencias-Destaque-2.jpeg",
+      "destaques-categorias/Experiencias-Destaque-3.jpeg",
+      "destaques-categorias/Experiencias-Destaque-4.jpeg",
+      "destaques-categorias/Experiencias-Destaque-5.jpeg"
     ]
   },
   {
@@ -53,7 +53,9 @@ const CATEGORIES = [
     description: "A ATMOS oferece diversos serviços para facilitar sua viagem.",
     images: [
       "destaques-categorias/Serviços-Destaque-1.jpg",
-      "destaques-categorias/Serviços-Destaque-3.jpg"
+      "destaques-categorias/Serviços-Destaque-2.jpg",
+      "destaques-categorias/Serviços-Destaque-3.jpg",
+      "destaques-categorias/Serviços-Destaque-4.jpg"
     ]
   }
 ];
