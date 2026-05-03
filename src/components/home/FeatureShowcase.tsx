@@ -366,7 +366,7 @@ export default function FeatureShowcase() {
                           </div>
                         </div>
 
-                        {/* Product List Content with STAGGERED LIKES Simulation */}
+                        {/* Product List Content with PROGRESS-DRIVEN Scroll */}
                         <div className="flex-1 relative overflow-hidden bg-[#FAF9F6]">
                           <AnimatePresence mode="wait">
                             {/* SUB-PHASE 0-1: WATERFALLS */}
@@ -379,8 +379,10 @@ export default function FeatureShowcase() {
                                 className="flex flex-col h-full"
                               >
                                 <motion.div 
-                                  animate={{ y: [0, -240] }}
-                                  transition={{ duration: 5, ease: "easeInOut", repeat: Infinity, repeatType: "reverse" }}
+                                  animate={{ 
+                                    y: p < 15 ? 0 : p > 40 ? -240 : -((p - 15) / 25) * 240 
+                                  }}
+                                  transition={{ type: "spring", damping: 30, stiffness: 100 }}
                                   className="p-4 space-y-4"
                                 >
                                   {CURATION_CATEGORIES_DATA.CACHOEIRAS.map((item, i) => {
@@ -421,8 +423,10 @@ export default function FeatureShowcase() {
                                 className="flex flex-col h-full"
                               >
                                 <motion.div 
-                                  animate={{ y: [0, -240] }}
-                                  transition={{ duration: 5, ease: "easeInOut", repeat: Infinity, repeatType: "reverse" }}
+                                  animate={{ 
+                                    y: (p - 50) < 15 ? 0 : (p - 50) > 40 ? -240 : -(((p - 50) - 15) / 25) * 240 
+                                  }}
+                                  transition={{ type: "spring", damping: 30, stiffness: 100 }}
                                   className="p-4 space-y-4"
                                 >
                                   {CURATION_CATEGORIES_DATA.EXPERIÊNCIAS.map((item, i) => {
