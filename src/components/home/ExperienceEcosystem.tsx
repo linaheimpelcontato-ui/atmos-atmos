@@ -60,6 +60,7 @@ const pillars = [
     title: "AÇÃO",
     description: "Vivências participativas que convidam o turista a agir, interagir e se integrar à cultura e à comunidade.",
     image: "/assets/home/Acao.png",
+    scale: 1.4,
     bg: "bg-[#744404]",
     textColor: "text-white"
   },
@@ -68,6 +69,7 @@ const pillars = [
     title: "PENSAMENTO",
     description: "Propostas que estimulam a criatividade, o aprendizado e novas formas de olhar o mundo.",
     image: "/assets/home/Pensamento.png",
+    scale: 1.2,
     bg: "bg-[#8d7b63]",
     textColor: "text-white"
   },
@@ -76,6 +78,7 @@ const pillars = [
     title: "IDENTIFICAÇÃO",
     description: "Experiências pessoais e autênticas, nas quais o viajante se reconhece no território e em suas histórias.",
     image: "/assets/home/Identificacao.png",
+    scale: 1.3,
     bg: "bg-[#566952]",
     textColor: "text-white"
   },
@@ -84,6 +87,7 @@ const pillars = [
     title: "ATENDIMENTO",
     description: "Atividades que despertam afeto e empatia, criando laços entre o visitante, o destino e as pessoas locais.",
     image: "/assets/home/Atendimentoatmos.png",
+    scale: 0.9,
     bg: "bg-[#1f2c17]",
     textColor: "text-white"
   },
@@ -92,6 +96,7 @@ const pillars = [
     title: "SENTIDO",
     description: "Experiências que envolvem os cinco sentidos (visão, audição, tato, paladar, olfato) gerando encantamento e presença.",
     image: "/assets/home/Sentido.png",
+    scale: 1.0,
     bg: "bg-[#2e2019]",
     textColor: "text-white"
   }
@@ -256,15 +261,16 @@ export default function ExperienceEcosystem() {
                     style={{ 
                       maskImage: `url(${pillar.image})`, 
                       WebkitMaskImage: `url(${pillar.image})`,
-                      maskSize: 'contain',
-                      WebkitMaskSize: 'contain',
                       maskRepeat: 'no-repeat',
                       WebkitMaskRepeat: 'no-repeat',
+                      maskSize: 'contain',
+                      WebkitMaskSize: 'contain',
                       backgroundColor: pillar.bg.match(/\[(.*?)\]/)?.[1] || 'currentColor',
                       maskPosition: 'center',
-                      WebkitMaskPosition: 'center'
+                      WebkitMaskPosition: 'center',
+                      width: `${48 * pillar.scale}px`,
+                      height: `${48 * pillar.scale}px`
                     }}
-                    className="w-48 h-48"
                     role="img"
                     aria-label={pillar.title}
                   />
