@@ -15,17 +15,25 @@ export const r2 = {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     console.log(`Invoking r2-storage at ${supabaseUrl}/functions/v1/r2-storage`);
     
-    const { data, error: functionError } = await supabase.functions.invoke('r2-storage', {
-      body: { 
-        action: 'get-upload-url', 
-        bucket: 'atmos',
-        folder: mappedFolder, 
-        fileName 
-      },
-      headers: {
-        'x-content-type': file.type
-      }
-    });
+    let result;
+    try {
+      result = await supabase.functions.invoke('r2-storage', {
+        body: { 
+          action: 'get-upload-url', 
+          bucket: 'atmos',
+          folder: mappedFolder, 
+          fileName 
+        },
+        headers: {
+          'x-content-type': file.type
+        }
+      });
+    } catch (networkErr: any) {
+      console.error('Network Error during Invoke:', networkErr);
+      throw new Error(`[Network Error] Não foi possível alcançar o servidor: ${networkErr.message || 'Erro de conexão'}`);
+    }
+
+    const { data, error: functionError } = result;
 
     if (functionError || !data?.url) {
       console.error('R2 Invoke Detailed Error:', functionError);
