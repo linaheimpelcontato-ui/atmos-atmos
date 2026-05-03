@@ -516,8 +516,19 @@ export default function FeatureShowcase() {
                                     <p className="text-[7px] text-white/70 uppercase tracking-widest mt-0.5">{item.d}</p>
                                   </div>
                                 </div>
-                              </motion.div>
                             ))}
+                          </div>
+
+                          <div className="mt-6 mb-8">
+                            <motion.button 
+                              initial={{ y: 20, opacity: 0 }}
+                              animate={{ y: 0, opacity: 1 }}
+                              transition={{ delay: 0.5 }}
+                              className="w-full py-4 bg-[#2C3E2D] text-white rounded-full text-[9px] font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-2 shadow-xl"
+                            >
+                              Prosseguir para roteiro
+                              <ChevronRight className="w-3 h-3" />
+                            </motion.button>
                           </div>
                         </div>
                       </motion.div>
