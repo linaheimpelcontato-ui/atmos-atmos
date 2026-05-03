@@ -59,7 +59,7 @@ const pillars = [
     id: "acao",
     title: "AÇÃO",
     description: "Vivências participativas que convidam o turista a agir, interagir e se integrar à cultura e à comunidade.",
-    image: storageUrl("home/Acao.png"),
+    image: "/assets/home/Acao.png",
     bg: "bg-[#744404]",
     textColor: "text-white"
   },
@@ -67,7 +67,7 @@ const pillars = [
     id: "pensamento",
     title: "PENSAMENTO",
     description: "Propostas que estimulam a criatividade, o aprendizado e novas formas de olhar o mundo.",
-    image: storageUrl("home/Pensamento.png"),
+    image: "/assets/home/Pensamento.png",
     bg: "bg-[#8d7b63]",
     textColor: "text-white"
   },
@@ -75,7 +75,7 @@ const pillars = [
     id: "identificacao",
     title: "IDENTIFICAÇÃO",
     description: "Experiências pessoais e autênticas, nas quais o viajante se reconhece no território e em suas histórias.",
-    image: storageUrl("home/Identificacao.png"),
+    image: "/assets/home/Identificacao.png",
     bg: "bg-[#566952]",
     textColor: "text-white"
   },
@@ -83,7 +83,7 @@ const pillars = [
     id: "atendimento",
     title: "ATENDIMENTO",
     description: "Atividades que despertam afeto e empatia, criando laços entre o visitante, o destino e as pessoas locais.",
-    image: storageUrl("home/Atendimentoatmos.png"),
+    image: "/assets/home/Atendimentoatmos.png",
     bg: "bg-[#1f2c17]",
     textColor: "text-white"
   },
@@ -91,7 +91,7 @@ const pillars = [
     id: "sentido",
     title: "SENTIDO",
     description: "Experiências que envolvem os cinco sentidos (visão, audição, tato, paladar, olfato) gerando encantamento e presença.",
-    image: storageUrl("home/Sentido.png"),
+    image: "/assets/home/Sentido.png",
     bg: "bg-[#2e2019]",
     textColor: "text-white"
   }
