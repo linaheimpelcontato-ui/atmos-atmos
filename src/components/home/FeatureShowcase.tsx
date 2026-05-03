@@ -55,12 +55,12 @@ const JOURNEY_STEPS = [
 
 const CURATION_CATEGORIES_DATA = {
   CACHOEIRAS: [
-    { t: "BOCAINA DO FARIAS", d: "RIO PRETO", img: "produtos/cachoeiras/Bocaina do Farias/Bocaina-do-Farias-1.jpg" },
-    { t: "COUROS", d: "ALTO PARAÍSO", img: "produtos/cachoeiras/Couros/Couros-1.jpg" }
+    { t: "BOCAINA DO FARIAS", d: "RIO PRETO", img: "produtos/cachoeiras/bocaina-do-farias/bocaina-do-farias-1.jpg" },
+    { t: "COUROS", d: "ALTO PARAÍSO", img: "produtos/cachoeiras/couros/couros-1.jpg" }
   ],
   EXPERIÊNCIAS: [
-    { t: "VOO DE BALÃO", d: "ALTO PARAÍSO", img: "produtos/experiencias/Voo de Balao/Voo-de-Balao-1.jpg" },
-    { t: "PASSEIO A CAVALO", d: "FAZENDA SÃO BENTO", img: "produtos/experiencias/Passeio a Cavalo/Passeio-a-Cavalo-1.png" }
+    { t: "VOO DE BALÃO", d: "ALTO PARAÍSO", img: "produtos/experiencias/voo-de-balao/voo-de-balao-1.jpg" },
+    { t: "PASSEIO A CAVALO", d: "FAZENDA SÃO BENTO", img: "produtos/experiencias/passeio-a-cavalo/passeio-a-cavalo-1.jpg" }
   ]
 };
 
@@ -382,7 +382,7 @@ export default function FeatureShowcase() {
                                 {/* Container de Scroll Animado */}
                                 <div className="flex-1 overflow-hidden z-10">
                                   <motion.div 
-                                    animate={{ y: [0, -350] }}
+                                    animate={{ y: [0, -500] }}
                                     transition={{ duration: 5, ease: "linear" }}
                                     className="p-6 space-y-6"
                                   >
@@ -426,7 +426,7 @@ export default function FeatureShowcase() {
 
                                 <div className="flex-1 overflow-hidden z-10">
                                   <motion.div 
-                                    animate={{ y: [0, -300] }}
+                                    animate={{ y: [0, -500] }}
                                     transition={{ duration: 5, ease: "linear" }}
                                     className="p-6 space-y-6"
                                   >
