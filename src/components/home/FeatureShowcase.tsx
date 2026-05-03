@@ -53,33 +53,23 @@ const JOURNEY_STEPS = [
   }
 ];
 
-const CURATION_CATEGORIES = [
-  {
-    id: 'cachoeiras',
-    label: 'CACHOEIRAS',
-    items: [
-      { t: 'Cachoeira do Dragão', d: 'Expedição Exclusiva', img: storageUrl('produtos/CACHOEIRAS/Dragão/Dragão-1.jpg') },
-      { t: 'Salto do Macacão', d: 'Vista Panorâmica', img: storageUrl('produtos/CACHOEIRAS/Macacão/Macacão-1.jpg') }
-    ]
-  },
-  {
-    id: 'hospedagens',
-    label: 'HOSPEDAGENS',
-    items: [
-      { t: 'Amaná Hotel', d: 'Boutique & Design', img: storageUrl('produtos/HOSPEDAGENS/Amana Hotel/Amana-Hotel-1.avif') },
-      { t: 'Vila Baru', d: 'Pousada de Charme', img: storageUrl('produtos/HOSPEDAGENS/Vila Baru/Vila-Baru-1.avif') }
-    ]
-  }
-];
+const CURATION_CATEGORIES_DATA = {
+  CACHOEIRAS: [
+    { t: "BOCAINA DO FARIAS", d: "RIO PRETO", img: "produtos/cachoeiras/Bocaina do Farias/Bocaina-do-Farias-1.jpg" },
+    { t: "COUROS", d: "ALTO PARAÍSO", img: "produtos/cachoeiras/Couros/Couros-1.jpg" }
+  ],
+  EXPERIÊNCIAS: [
+    { t: "VOO DE BALÃO", d: "ALTO PARAÍSO", img: "produtos/experiencias/Voo de Balao/Voo-de-Balao-1.jpg" },
+    { t: "PASSEIO A CAVALO", d: "FAZENDA SÃO BENTO", img: "produtos/experiencias/Passeio a Cavalo/Passeio-a-Cavalo-1.png" }
+  ]
+};
 
 export default function FeatureShowcase() {
   const [step, setStep] = useState(0);
   const [subStep, setSubStep] = useState(0);
   const [progress, setProgress] = useState(0);
   const [activeCategory, setActiveCategory] = useState(0);
-  const stepDuration = 6000;
 
-  // Unified Timer & Progress Logic
   // Helper to force production URL for uploaded assets, ensuring sync with Admin Panel
   const getProductionUrl = (path: string) => {
     if (!path) return "";
@@ -94,8 +84,27 @@ export default function FeatureShowcase() {
     return storageUrl(cleanPath);
   };
 
+  // Preload all critical emulator images to prevent black screens/flickering
   useEffect(() => {
-    const duration = step === 1 ? 16000 : 6000; // 16s for Step 2, 6s for others
+    const allImages = [
+      "destaques-categorias/Cachoeira-Destaque-1.jpg",
+      "destaques-categorias/Experiencias-Destaque-1.jpeg",
+      "destaques-categorias/Hospedagens-Destaque-1.jpeg",
+      "destaques-categorias/Serviços-Destaque-1.jpg",
+      ...CURATION_CATEGORIES_DATA.CACHOEIRAS.map(p => p.img),
+      ...CURATION_CATEGORIES_DATA.EXPERIÊNCIAS.map(p => p.img),
+      "produtos/CACHOEIRAS/Dragão/Dragão-1.jpg",
+      "produtos/CACHOEIRAS/Dragão/Dragão-5.jpg"
+    ];
+
+    allImages.forEach(path => {
+      const img = new Image();
+      img.src = getProductionUrl(path);
+    });
+  }, []);
+
+  useEffect(() => {
+    const duration = step === 1 ? 16000 : 6000; 
     const startTime = Date.now();
     
     const interval = setInterval(() => {
@@ -377,12 +386,7 @@ export default function FeatureShowcase() {
                                     transition={{ duration: 5, ease: "linear" }}
                                     className="p-6 space-y-6"
                                   >
-                                     {[
-                                       { t: 'Almecegas I', d: 'Fazenda São Bento', img: 'produtos/CACHOEIRAS/Almecegas/Almecegas-1.jpg' },
-                                       { t: 'Santa Bárbara', d: 'Cavalcante', img: 'produtos/CACHOEIRAS/Santa-Barbara/Santa-Barbara-1.jpg' },
-                                       { t: 'Cachoeira do Segredo', d: 'São Jorge', img: 'produtos/CACHOEIRAS/Segredo/Segredo-1.jpg' },
-                                       { t: 'Loquinhas', d: 'Alto Paraíso', img: 'produtos/CACHOEIRAS/Loquinhas/Loquinhas-1.jpg' }
-                                     ].map((item, i) => (
+                                     {CURATION_CATEGORIES_DATA.CACHOEIRAS.map((item, i) => (
                                        <div key={i} className="rounded-[2rem] overflow-hidden bg-white shadow-md border border-black/5">
                                           <div className="aspect-[4/3] relative">
                                             <img src={getProductionUrl(item.img)} className="w-full h-full object-cover" />
@@ -426,11 +430,7 @@ export default function FeatureShowcase() {
                                     transition={{ duration: 5, ease: "linear" }}
                                     className="p-6 space-y-6"
                                   >
-                                     {[
-                                       { t: 'Noturna Imersiva', d: 'Alto Paraíso', img: 'produtos/EXPERIENCIAS/Experiencia Noturna Imersiva/Experiencia-Noturna-Imersiva-1.png' },
-                                       { t: 'Yoga e Meditação', d: 'Espaço Gota', img: 'produtos/EXPERIENCIAS/Yoga e Meditacao/Yoga-e-Meditacao-1.png' },
-                                       { t: 'Tirolesa', d: 'Fazenda São Bento', img: 'produtos/EXPERIENCIAS/Tirolesa Fazenda Sao Bento/Tirolesa-Fazenda-Sao-Bento-1.png' }
-                                     ].map((item, i) => (
+                                     {CURATION_CATEGORIES_DATA.EXPERIÊNCIAS.map((item, i) => (
                                        <div key={i} className="rounded-[2rem] overflow-hidden bg-white shadow-md border border-black/5">
                                           <div className="aspect-[4/3] relative">
                                             <img src={getProductionUrl(item.img)} className="w-full h-full object-cover" />
