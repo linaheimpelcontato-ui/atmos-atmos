@@ -96,7 +96,7 @@ export default function AboutAtmosSection() {
         </div>
 
         {/* Full-width Impact Marquee with Background Watermark */}
-        <div className="relative w-screen py-32 overflow-hidden left-1/2 -translate-x-1/2 mt-12 bg-transparent flex items-center justify-center">
+        <div className="relative w-screen py-32 overflow-hidden left-1/2 -translate-x-1/2 mt-12 bg-transparent flex items-center">
 
           {/* Background Watermark (Static/Rotating behind the text) */}
           <div className="absolute inset-0 flex items-center justify-center opacity-[0.05] pointer-events-none z-0">
@@ -123,7 +123,7 @@ export default function AboutAtmosSection() {
             }
           `}</style>
 
-          <div className={`relative z-10 flex w-max animate-marquee-about ${isInView ? 'playing' : ''}`}>
+          <div className={`relative z-10 flex flex-none w-max animate-marquee-about ${isInView ? 'playing' : ''}`}>
             {/* First set of phrases */}
             <div className="flex items-center">
               {[...Array(3)].map((_, i) => (
@@ -215,7 +215,7 @@ export default function AboutAtmosSection() {
                 }
               `}</style>
 
-              <div className={`flex w-max animate-values-ticker pointer-events-none ${isInView ? 'playing' : ''}`}>
+              <div className={`flex flex-none w-max animate-values-ticker pointer-events-none ${isInView ? 'playing' : ''}`}>
                 {[...Array(2)].map((_, i) => (
                   <div key={i} className="flex items-center">
                     {[
