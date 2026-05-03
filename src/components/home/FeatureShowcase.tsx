@@ -490,7 +490,7 @@ export default function FeatureShowcase() {
                             <h5 className="text-lg font-display text-[#2C3E2D] uppercase tracking-widest leading-tight mt-1">Sua Lista de Desejo na Chapada</h5>
                           </div>
                           
-                          <div className="grid grid-cols-2 gap-4">
+                          <div className="grid grid-cols-2 gap-3">
                             {[
                               ...CURATION_CATEGORIES_DATA.CACHOEIRAS,
                               ...CURATION_CATEGORIES_DATA.EXPERIÊNCIAS
@@ -502,7 +502,7 @@ export default function FeatureShowcase() {
                                 transition={{ delay: i * 0.1 }}
                                 className="bg-white rounded-2xl overflow-hidden shadow-md border border-black/5 flex flex-col"
                               >
-                                <div className="aspect-[4/5] relative">
+                                <div className="aspect-square relative">
                                   <img 
                                     src={getProductionUrl(item.img)} 
                                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
