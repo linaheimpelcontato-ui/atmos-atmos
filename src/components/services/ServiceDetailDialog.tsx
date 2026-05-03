@@ -226,8 +226,6 @@ export default function ServiceDetailDialog({
                 {service.subtitle[language]}
               </p>
             </div>
-
-            </div>
           </motion.div>
         </section>
 

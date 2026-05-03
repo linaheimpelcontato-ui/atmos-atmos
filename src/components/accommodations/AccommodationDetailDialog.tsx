@@ -168,8 +168,6 @@ export default function AccommodationDetailDialog({
                 {accommodation.name}
               </h1>
             </div>
-
-            </div>
           </motion.div>
         </section>
 

@@ -189,8 +189,6 @@ export default function WaterfallDetailDialog({
                 {waterfall.name[language]}
               </h1>
             </div>
-
-            </div>
           </motion.div>
         </section>
 

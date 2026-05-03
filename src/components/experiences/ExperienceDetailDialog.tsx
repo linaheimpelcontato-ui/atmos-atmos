@@ -152,8 +152,6 @@ export default function ExperienceDetailDialog({
                 {experience.name?.[language as keyof typeof labels] || experience.name?.pt || "Atmos Experience"}
               </h1>
             </div>
-
-            </div>
           </motion.div>
         </section>
 
