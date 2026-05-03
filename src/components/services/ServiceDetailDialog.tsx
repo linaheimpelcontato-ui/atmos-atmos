@@ -229,161 +229,100 @@ export default function ServiceDetailDialog({
           </motion.div>
         </section>
 
-        <section className="max-w-7xl mx-auto px-6 mb-16">
-          <Carousel className="w-full">
-            <CarouselContent>
-              {displayImages.map((img, idx) => (
-                <CarouselItem key={idx} className="basis-full md:basis-1/2">
-                  <div className="aspect-[16/9] overflow-hidden rounded-[2px]">
-                    <OptimizedImage
-                      src={img} 
-                      alt={`${service.title[language as keyof typeof service.title]} ${idx + 1}`}
-                      className="w-full h-full object-cover"
-                      containerClassName="w-full h-full"
-                    />
-                  </div>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <div className="flex justify-end gap-2 mt-4">
-              <CarouselPrevious className="static translate-y-0" />
-              <CarouselNext className="static translate-y-0" />
-            </div>
-          </Carousel>
+        {/* Top 3 Fixed Images */}
+        <section className="max-w-7xl mx-auto px-6 mb-20">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {displayImages.slice(0, 3).map((img, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1 * index }}
+                className="aspect-[4/5] overflow-hidden rounded-[2px] border border-[#1A261B]/5"
+              >
+                <img 
+                  src={img} 
+                  className="w-full h-full object-cover grayscale-[0.2] hover:grayscale-0 transition-all duration-700 hover:scale-110" 
+                  alt={`${service.title[language as keyof typeof service.title]} ${index + 1}`} 
+                />
+              </motion.div>
+            ))}
+          </div>
         </section>
 
         {/* Content Section: Description + Vertical Video */}
-        <section className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12 md:gap-20 mb-20">
-          
-          {/* Left: Description & Options */}
-          <div className="lg:col-span-7 space-y-12">
-            <div className="space-y-6">
-              <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#1A261B]/30 border-b border-[#1A261B]/5 pb-4">
-                {l.about}
-              </h2>
-              <div className="prose prose-stone max-w-none">
-                <p className="text-lg md:text-xl text-[#2C3E2D]/80 font-light leading-relaxed">
+        <section className="max-w-7xl mx-auto px-6 mb-32">
+          <div className="grid lg:grid-cols-12 gap-16 md:gap-24">
+            
+            {/* Left Column: Description & Options */}
+            <div className="lg:col-span-7">
+              <div className="prose prose-stone max-w-none mb-12">
+                <p className="text-xl md:text-2xl text-[#1A261B]/80 leading-relaxed font-light">
                   {displayDescription}
                 </p>
               </div>
-            </div>
 
-            {/* Variations Selector */}
-            {variations.length > 0 && (
-              <div className="space-y-6">
-                <h3 className="text-xl font-display text-[#1A261B] border-l-2 border-[#C5A267] pl-4 uppercase tracking-widest">
-                  {l.flavors}
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {variations.map((v) => (
-                    <button
-                      key={v.id}
-                      onClick={() => toggleVariation(v.id)}
-                      className={cn(
-                        "group relative flex flex-col items-start p-6 rounded-[2px] border transition-all text-left",
-                        selectedVarIds.includes(v.id) 
-                          ? "bg-[#1A261B] border-[#1A261B] text-white shadow-xl scale-[1.02]" 
-                          : "bg-[#F8F9F8] border-[#1A261B]/5 text-[#1A261B] hover:bg-white hover:border-[#1A261B]/20"
-                      )}
-                    >
-                      <div className="flex justify-between items-center w-full mb-2">
-                        <span className={cn(
-                          "text-xs font-bold uppercase tracking-widest",
-                          selectedVarIds.includes(v.id) ? "text-white/60" : "text-[#1A261B]/40"
-                        )}>
-                          Variação
-                        </span>
-                        <span className={cn(
-                          "text-xs font-mono font-bold",
-                          selectedVarIds.includes(v.id) ? "text-[#C5A267]" : "text-[#C5A267]"
-                        )}>
-                          R$ {v.unit_price}
-                        </span>
-                      </div>
-                      <h4 className="text-lg font-display mb-2">{v.name}</h4>
-                      {v.description && (
-                        <p className={cn(
-                          "text-xs font-light leading-relaxed",
-                          selectedVarIds.includes(v.id) ? "text-white/70" : "text-[#1A261B]/60"
-                        )}>
-                          {v.description}
-                        </p>
-                      )}
-                      {selectedVarIds.includes(v.id) && (
-                        <motion.div 
-                          className="absolute top-4 right-4"
-                          initial={{ opacity: 0, scale: 0 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                        >
-                          <div className="bg-[#C5A267] rounded-full p-1">
-                            <Check className="h-3 w-3 text-white" strokeWidth={4} />
-                          </div>
-                        </motion.div>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Menu / Items Section */}
-            {service.items && (
-              <div className="space-y-8">
-                <h3 className="text-xl font-display text-[#1A261B] border-l-2 border-[#C5A267] pl-4">Opções Disponíveis</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {service.items.map((item) => (
-                    <div key={item.id} className="group p-6 bg-[#F8F9F8] rounded-[2px] hover:bg-[#F0F1F0] transition-colors">
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-bold text-[#1A261B] text-sm tracking-wide">{item.name[language]}</h4>
-                        {item.price && <span className="text-[#C5A267] text-[10px] font-bold tracking-widest">{item.price}</span>}
-                      </div>
-                      {item.flavors && (
-                        <div className="mt-4 space-y-2">
-                          {item.flavors[language].map((flavor, i) => (
-                            <div key={i} className="flex items-center gap-2 text-[11px] text-[#1A261B]/60 uppercase tracking-widest">
-                               <div className="w-1 h-1 rounded-full bg-[#C5A267]" />
-                               {flavor}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Transfer Table */}
-
+              {/* Variations Selector */}
               {variations.length > 0 && (
-                <div className="mb-12">
-                  <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#C5A267] mb-6">Variações</h3>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="border-b border-[#1A261B]/10">
-                          {headers.map((h, i) => (
-                            <th key={i} className="py-4 text-[10px] font-bold uppercase tracking-wider text-[#1A261B]/40">{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {rows.map((row, i) => (
-                          <tr key={i} className="border-b border-[#1A261B]/5 hover:bg-[#F8F9F8] transition-colors">
-                            {row.map((val, j) => (
-                              <td key={j} className="p-4 text-sm font-bold text-[#C5A267]">{val}</td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                <div className="space-y-8 mb-12">
+                  <h3 className="text-xl font-display text-[#1A261B] border-l-2 border-[#C5A267] pl-4 uppercase tracking-widest">
+                    {l.flavors}
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {variations.map((v) => (
+                      <button
+                        key={v.id}
+                        onClick={() => toggleVariation(v.id)}
+                        className={cn(
+                          "group relative flex flex-col items-start p-6 rounded-[2px] border transition-all text-left",
+                          selectedVarIds.includes(v.id) 
+                            ? "bg-[#1A261B] border-[#1A261B] text-white shadow-xl scale-[1.02]" 
+                            : "bg-[#F8F9F8] border-[#1A261B]/5 text-[#1A261B] hover:bg-white hover:border-[#1A261B]/20"
+                        )}
+                      >
+                        <div className="flex justify-between items-center w-full mb-2">
+                          <span className={cn(
+                            "text-xs font-bold uppercase tracking-widest",
+                            selectedVarIds.includes(v.id) ? "text-white/60" : "text-[#1A261B]/40"
+                          )}>
+                            Variação
+                          </span>
+                          <span className={cn(
+                            "text-xs font-mono font-bold",
+                            selectedVarIds.includes(v.id) ? "text-[#C5A267]" : "text-[#C5A267]"
+                          )}>
+                            R$ {v.unit_price}
+                          </span>
+                        </div>
+                        <h4 className="text-lg font-display mb-2">{v.name}</h4>
+                        {v.description && (
+                          <p className={cn(
+                            "text-xs font-light leading-relaxed",
+                            selectedVarIds.includes(v.id) ? "text-white/70" : "text-[#1A261B]/60"
+                          )}>
+                            {v.description}
+                          </p>
+                        )}
+                        {selectedVarIds.includes(v.id) && (
+                          <motion.div 
+                            className="absolute top-4 right-4"
+                            initial={{ opacity: 0, scale: 0 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                          >
+                            <div className="bg-[#C5A267] rounded-full p-1">
+                              <Check className="h-3 w-3 text-white" strokeWidth={4} />
+                            </div>
+                          </motion.div>
+                        )}
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
 
               <Button
                 onClick={toggleWishlist}
-                className="w-full md:w-auto rounded-full px-12 py-7 text-[11px] font-bold uppercase tracking-[0.3em] transition-all duration-500 shadow-2xl flex items-center justify-center gap-4 transform hover:scale-105 border border-white/10 bg-[#1A261B] text-white hover:bg-black"
+                className="w-full md:w-auto rounded-full px-12 py-7 text-[11px] font-bold uppercase tracking-[0.3em] transition-all duration-500 shadow-2xl flex items-center justify-center gap-4 transform hover:scale-105 border border-white/10 bg-[#1A261B] text-white hover:bg-black mt-8"
               >
                 <Heart className={cn("h-4 w-4 transition-colors", (variations.length === 0 && inWishlist) ? "fill-rose-500 text-rose-500" : "text-white/40")} />
                 {variations.length > 0 
@@ -394,7 +333,7 @@ export default function ServiceDetailDialog({
 
             {/* Right Column: Vertical Video */}
             <div className="lg:col-span-5">
-              <div className="sticky top-24">
+              <div className="sticky top-24 space-y-12">
                 <div className="aspect-[9/16] bg-[#F8F9F8] rounded-[2px] overflow-hidden relative group border border-[#1A261B]/5 shadow-2xl">
                   <div className="absolute inset-0 flex items-center justify-center z-10">
                     <div className="text-center space-y-4">
@@ -409,6 +348,18 @@ export default function ServiceDetailDialog({
                     className="w-full h-full object-cover grayscale-[0.2] transition-transform duration-1000 group-hover:scale-105" 
                     alt="Video thumbnail" 
                   />
+                </div>
+
+                <div className="bg-[#1A261B] text-white rounded-[2px] p-8 space-y-6 shadow-2xl">
+                  <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-white/40 border-b border-white/10 pb-2 block">
+                    {l.includes}
+                  </span>
+                  {service.tiers?.[0]?.includes?.[language]?.map((inc, idx) => (
+                    <div key={idx} className="flex items-start gap-3">
+                        <Check className="w-4 h-4 text-[#C5A267] mt-1 shrink-0" />
+                        <span className="text-sm font-light text-white/80">{inc}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

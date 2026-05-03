@@ -155,28 +155,25 @@ export default function ExperienceDetailDialog({
           </motion.div>
         </section>
 
-        {/* Carousel Section */}
+        {/* Top 3 Fixed Images */}
         <section className="max-w-7xl mx-auto px-6 mb-20">
-          <Carousel className="w-full">
-            <CarouselContent>
-              {images.map((img, index) => (
-                <CarouselItem key={index} className="basis-full md:basis-2/3 lg:basis-1/2">
-                  <div className="aspect-[16/9] overflow-hidden rounded-[2px]">
-                    <OptimizedImage 
-                      src={img} 
-                      className="w-full h-full object-cover" 
-                      alt={`${experience.name[language]} ${index + 1}`} 
-                      fallbackSrc="https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1200&q=80"
-                    />
-                  </div>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <div className="flex justify-end gap-2 mt-4">
-              <CarouselPrevious className="static translate-y-0" />
-              <CarouselNext className="static translate-y-0" />
-            </div>
-          </Carousel>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {images.slice(0, 3).map((img, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1 * index }}
+                className="aspect-[4/5] overflow-hidden rounded-[2px] border border-[#1A261B]/5"
+              >
+                <img 
+                  src={img} 
+                  className="w-full h-full object-cover grayscale-[0.2] hover:grayscale-0 transition-all duration-700 hover:scale-110" 
+                  alt={`${experience.name.pt} ${index + 1}`} 
+                />
+              </motion.div>
+            ))}
+          </div>
         </section>
         {/* Content Section: Description + Vertical Video */}
         <section className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12 md:gap-20 mb-20">
@@ -194,14 +191,9 @@ export default function ExperienceDetailDialog({
               </div>
             </div>
 
-            <Button
-              onClick={toggleWishlist}
-              className={cn(
-                "w-full md:w-auto rounded-full px-12 py-8 text-[11px] font-bold uppercase tracking-[0.3em] transition-all duration-500 shadow-2xl mt-8 flex items-center justify-center gap-4 transform hover:scale-105 border border-white/10",
-
               <Button
                 onClick={toggleWishlist}
-                className="w-full md:w-auto rounded-full px-12 py-7 text-[11px] font-bold uppercase tracking-[0.3em] transition-all duration-500 shadow-2xl flex items-center justify-center gap-4 transform hover:scale-105 border border-white/10 bg-[#1A261B] text-white hover:bg-black"
+                className="w-full md:w-auto rounded-full px-12 py-7 text-[11px] font-bold uppercase tracking-[0.3em] transition-all duration-500 shadow-2xl flex items-center justify-center gap-4 transform hover:scale-105 border border-white/10 bg-[#1A261B] text-white hover:bg-black mt-8"
               >
                 <Heart className={cn("h-4 w-4 fill-current", inWishlist ? "text-rose-500" : "text-rose-400")} />
                 {inWishlist ? l.removeWishlist : l.addWishlist}
@@ -261,7 +253,6 @@ export default function ExperienceDetailDialog({
                 </div>
               </div>
             </div>
-          </div>
         </section>
 
         {/* Photos Gallery (Pinterest/Cosmos Masonry) */}
