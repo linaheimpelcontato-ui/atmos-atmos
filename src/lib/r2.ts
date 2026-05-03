@@ -16,35 +16,38 @@ export const r2 = {
     const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
     const functionUrl = `${supabaseUrl}/functions/v1/r2-storage`;
     
-    console.log(`Uploading: Calling ${functionUrl}`);
-    
-    const response = await fetch(functionUrl, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${supabaseKey}`,
-        'Content-Type': 'application/json',
-        'x-content-type': file.type
-      },
-      body: JSON.stringify({ 
-        action: 'get-upload-url', 
-        bucket: 'atmos',
-        folder: mappedFolder, 
-        fileName 
-      })
-    });
+    let response;
+    try {
+      response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json',
+          'x-content-type': file.type
+        },
+        body: JSON.stringify({ 
+          action: 'get-upload-url', 
+          bucket: 'atmos',
+          folder: mappedFolder, 
+          fileName 
+        })
+      });
+    } catch (e: any) {
+      throw new Error(`Erro de rede: O site não conseguiu falar com o servidor. Verifique sua internet ou VPN. (${e.message})`);
+    }
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: 'Unknown server error' }));
-      throw new Error(`[Server Error] ${errorData.error || response.statusText}`);
+      const errorText = await response.text();
+      throw new Error(`Erro no servidor (${response.status}): ${errorText}`);
     }
 
     const data = await response.json();
     if (!data?.url) {
-      throw new Error('Server returned no upload URL');
+      throw new Error('O servidor não devolveu o link de upload.');
     }
 
     // 2. Upload directly to R2
-    console.log('Uploading to R2 via presigned URL...');
+    console.log('Enviando para o Cloudflare...');
     const uploadResponse = await fetch(data.url, {
       method: 'PUT',
       body: file,
@@ -54,9 +57,7 @@ export const r2 = {
     });
 
     if (!uploadResponse.ok) {
-      const errorText = await uploadResponse.text();
-      console.error('R2 Direct Upload Error:', errorText);
-      throw new Error(`[R2 Direct Error] ${errorText || uploadResponse.statusText}`);
+      throw new Error(`Erro no Cloudflare (${uploadResponse.status}): ${uploadResponse.statusText}`);
     }
   },
 
