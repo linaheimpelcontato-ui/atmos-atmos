@@ -22,14 +22,14 @@ export const r2 = {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${supabaseKey}`,
-          'Content-Type': 'application/json',
-          'x-content-type': file.type
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ 
           action: 'get-upload-url', 
           bucket: 'atmos',
           folder: mappedFolder, 
-          fileName 
+          fileName,
+          contentType: file.type
         })
       });
     } catch (e: any) {
