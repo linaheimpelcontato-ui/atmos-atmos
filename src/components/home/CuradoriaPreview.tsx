@@ -10,11 +10,11 @@ const CATEGORIES = [
     unit: "atrativos",
     description: "Curadoria das melhores cachoeiras da Chapada dos Veadeiros",
     images: [
-      "cachoeiras/almecegas-sao-bento-1.jpg",
-      "cachoeiras/santa-barbara-1.jpg",
-      "cachoeiras/anjos-arcanjos-1.jpg",
-      "cachoeiras/couros-1.jpg",
-      "cachoeiras/loquinhas-1.jpg"
+      "destaques-categorias/Cachoeira-Destaque-1.jpg",
+      "destaques-categorias/Cachoeira-Destaque-2.jpg",
+      "destaques-categorias/Cachoeira-Destaque-3.jpg",
+      "destaques-categorias/Cachoeira-Destaque-4.jpg",
+      "destaques-categorias/Cachoeira-Destaque-5.jpg"
     ]
   },
   {
@@ -24,10 +24,11 @@ const CATEGORIES = [
     unit: "experiências",
     description: "Curadoria de experiências para deixar sua viagem mais completa",
     images: [
-      "experiencias/balao-1.jpg",
-      "experiencias/noturna-1.jpg",
-      "experiencias/paramotor-1.jpg",
-      "experiencias/massagem-1.jpg"
+      "destaques-categorias/Experiencia-Destaque-1.jpg",
+      "destaques-categorias/Experiencias-Destaque-2.jpg",
+      "destaques-categorias/Experiencias-Destaque-3.jpg",
+      "destaques-categorias/Experiencias-Destaque-4.jpg",
+      "destaques-categorias/Experiencias-Destaque-5.png"
     ]
   },
   {
@@ -37,10 +38,11 @@ const CATEGORIES = [
     unit: "hospedagens",
     description: "Curadoria das melhores Hospedagens da Chapada dos Veadeiros",
     images: [
-      "hospedagens/vila-toa-1.jpg",
-      "hospedagens/vila-baru-1.jpg",
-      "hospedagens/villa-eya-1.jpg",
-      "hospedagens/vila-cerrado-1.jpg"
+      "destaques-categorias/Hospedagens-Destaque-1.jpeg",
+      "destaques-categorias/Hospedagens-Destaque-2.avif",
+      "destaques-categorias/Hospedagens-Destaque-3.jpeg",
+      "destaques-categorias/Hospedagens-Destaque-4.jpg",
+      "destaques-categorias/Hospedagens-Destaque-5.jpeg"
     ]
   },
   {
@@ -50,10 +52,8 @@ const CATEGORIES = [
     unit: "serviços curados",
     description: "A ATMOS oferece diversos serviços para facilitar sua viagem.",
     images: [
-      "servicos/drone.jpg",
-      "servicos/lanche.jpg",
-      "servicos/transfer.jpg",
-      "servicos/especial.jpg"
+      "destaques-categorias/Serviços-Destaque-1.jpg",
+      "destaques-categorias/Serviços-Destaque-3.jpg"
     ]
   }
 ];
