@@ -23,7 +23,7 @@ export default function FacilitadorSection() {
             </div>
             <h2 
               className="text-[#E4DBCC] text-2xl md:text-4xl lg:text-[52px] font-display tracking-tight max-w-none"
-              style={{ lineHeight: 2.3 }}
+              style={{ lineHeight: 1.2 }}
             >
               Construa conosco projetos que fortalecem o território <span className="font-light italic text-[#A88B4C]">e elevam o padrão das experiências dos seus clientes.</span>
             </h2>
