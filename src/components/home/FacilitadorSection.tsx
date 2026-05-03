@@ -103,7 +103,7 @@ export default function FacilitadorSection() {
             </h3>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-12 gap-y-16">
             {[
               { 
                 step: "01", 
@@ -128,15 +128,15 @@ export default function FacilitadorSection() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.1 }}
-                className="flex flex-col gap-6"
+                className="flex flex-col items-start gap-4"
               >
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 mb-2">
                   <span className="text-3xl font-display italic text-[#A88B4C] leading-none">
                     {item.step}
                   </span>
-                  <div className="h-px w-8 bg-[#A88B4C]/30" />
+                  <div className="h-px w-10 bg-[#A88B4C]/30" />
                 </div>
-                <p className="text-[#E4DBCC]/70 font-sans font-light text-[13px] leading-relaxed">
+                <p className="text-[#E4DBCC]/70 font-sans font-light text-[14px] leading-relaxed text-left max-w-[240px]">
                   {item.text}
                 </p>
               </motion.div>
