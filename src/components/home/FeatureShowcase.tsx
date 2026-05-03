@@ -318,16 +318,16 @@ export default function FeatureShowcase() {
                         <div className="bg-white shrink-0 z-30 relative border-b border-black/5">
                           {/* Logo Bar */}
                           <div className="p-3 flex items-center justify-between">
-                            <img src={logoAtmos} className="h-3" alt="Atmos" />
+                            <img src={logoAtmos} className="h-4" alt="Atmos" />
                             <div className="flex gap-2">
-                               <Heart className="w-3.5 h-3.5 text-[#2C3E2D]" />
-                               <div className="w-4 h-4 rounded-full bg-[#2C3E2D]/10 flex items-center justify-center text-[8px] text-[#2C3E2D] font-bold">U</div>
+                               <Heart className="w-4 h-4 text-[#2C3E2D]" />
+                               <div className="w-5 h-5 rounded-full bg-[#2C3E2D]/10 flex items-center justify-center text-[10px] text-[#2C3E2D] font-bold">U</div>
                             </div>
                           </div>
 
-                          {/* 4 Category Cards (Compact Sticky Style) */}
+                          {/* 4 Category Cards (More Visible) */}
                           <div className="px-4 pb-4">
-                            <div className="grid grid-cols-4 gap-1.5">
+                            <div className="grid grid-cols-4 gap-2">
                               {[
                                 { id: 'wf', label: 'CACH', img: 'destaques-categorias/Cachoeira-Destaque-1.jpg' },
                                 { id: 'exp', label: 'EXP', img: 'destaques-categorias/Experiencias-Destaque-1.jpeg' },
@@ -336,10 +336,10 @@ export default function FeatureShowcase() {
                               ].map((cat, i) => {
                                 const isCatActive = (subStep < 2 && i === 0) || (subStep >= 2 && i === 1);
                                 return (
-                                  <div key={cat.id} className={`relative h-12 rounded-lg overflow-hidden border ${isCatActive ? 'border-[#2C3E2D] ring-1 ring-[#2C3E2D]' : 'border-transparent opacity-60'}`}>
+                                  <div key={cat.id} className={`relative h-16 rounded-xl overflow-hidden border-2 transition-all ${isCatActive ? 'border-[#2C3E2D] shadow-md scale-105' : 'border-transparent opacity-60'}`}>
                                     <img src={getProductionUrl(cat.img)} className="w-full h-full object-cover" />
                                     <div className={`absolute inset-0 flex items-center justify-center ${isCatActive ? 'bg-[#2C3E2D]/40' : 'bg-black/20'}`}>
-                                      <span className="text-[6px] text-white font-display tracking-widest">{cat.label}</span>
+                                      <span className="text-[8px] text-white font-display tracking-widest font-bold">{cat.label}</span>
                                     </div>
                                   </div>
                                 );
@@ -349,20 +349,20 @@ export default function FeatureShowcase() {
 
                           {/* Search Bar & Category Title (Compact) */}
                           <div className="px-4 pb-4 space-y-3">
-                            <div className="h-8 bg-[#FAF9F6] rounded-full border border-black/5 flex items-center px-4 gap-2">
-                              <Search className="w-2.5 h-2.5 text-black/20" />
-                              <span className="text-[7px] text-black/20 uppercase tracking-widest">Buscar...</span>
+                            <div className="h-10 bg-[#FAF9F6] rounded-full border border-black/5 flex items-center px-4 gap-2 shadow-inner">
+                              <Search className="w-3 h-3 text-black/20" />
+                              <span className="text-[8px] text-black/20 uppercase tracking-widest">Buscar...</span>
                             </div>
                             <div>
-                               <span className="text-[6px] font-bold text-[#A88B4C] tracking-[0.3em] uppercase block">Explorando</span>
-                               <h5 className="text-sm font-display text-[#2C3E2D] uppercase tracking-widest">
+                               <span className="text-[7px] font-bold text-[#A88B4C] tracking-[0.3em] uppercase block">Explorando</span>
+                               <h5 className="text-base font-display text-[#2C3E2D] uppercase tracking-widest leading-none mt-1">
                                  {subStep < 2 ? "Cachoeiras" : "Experiências"}
                                </h5>
                             </div>
                           </div>
                         </div>
 
-                        {/* Product List Content */}
+                        {/* Product List Content with Auto-Scroll */}
                         <div className="flex-1 relative overflow-hidden bg-[#FAF9F6]">
                           <AnimatePresence mode="wait">
                             {/* SUB-PHASE 0-1: WATERFALLS */}
@@ -372,33 +372,34 @@ export default function FeatureShowcase() {
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: -20 }}
-                                className="p-4 space-y-4"
+                                className="flex flex-col h-full"
                               >
-                                {CURATION_CATEGORIES_DATA.CACHOEIRAS.map((item, i) => (
-                                  <motion.div 
-                                    key={i} 
-                                    animate={{ y: [0, -20, 0] }}
-                                    transition={{ duration: 4, repeat: Infinity, delay: i * 0.5 }}
-                                    className="rounded-2xl overflow-hidden bg-white shadow-sm border border-black/5"
-                                  >
-                                    <div className="aspect-video relative">
-                                      <img src={getProductionUrl(item.img)} className="w-full h-full object-cover" />
-                                      <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/40 backdrop-blur-md flex items-center justify-center">
-                                        <motion.div
-                                          animate={{ scale: (subStep === 1 && i === 0) ? [1, 1.4, 1] : 1 }}
-                                        >
-                                          <Heart 
-                                            className={`w-4 h-4 ${((subStep === 1 || subStep > 1) && i === 0) ? "text-[#540202] fill-[#540202]" : "text-white"}`} 
-                                          />
-                                        </motion.div>
+                                <motion.div 
+                                  animate={{ y: [0, -380] }}
+                                  transition={{ duration: 6, ease: "linear", repeat: Infinity, repeatType: "reverse" }}
+                                  className="p-4 space-y-4"
+                                >
+                                  {CURATION_CATEGORIES_DATA.CACHOEIRAS.map((item, i) => (
+                                    <div key={i} className="rounded-2xl overflow-hidden bg-white shadow-sm border border-black/5">
+                                      <div className="aspect-video relative">
+                                        <img src={getProductionUrl(item.img)} className="w-full h-full object-cover" />
+                                        <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/40 backdrop-blur-md flex items-center justify-center">
+                                          <motion.div
+                                            animate={{ scale: (subStep === 1 && i === 0) ? [1, 1.4, 1] : 1 }}
+                                          >
+                                            <Heart 
+                                              className={`w-4 h-4 ${((subStep === 1 || subStep > 1) && i === 0) ? "text-[#540202] fill-[#540202]" : "text-white"}`} 
+                                            />
+                                          </motion.div>
+                                        </div>
+                                      </div>
+                                      <div className="p-3">
+                                        <h6 className="text-[10px] font-bold text-[#2C3E2D] uppercase tracking-widest">{item.t}</h6>
+                                        <p className="text-[8px] text-black/40 uppercase tracking-widest mt-0.5">{item.d}</p>
                                       </div>
                                     </div>
-                                    <div className="p-3">
-                                      <h6 className="text-[8px] font-bold text-[#2C3E2D] uppercase tracking-widest">{item.t}</h6>
-                                      <p className="text-[6px] text-black/40 uppercase tracking-widest mt-0.5">{item.d}</p>
-                                    </div>
-                                  </motion.div>
-                                ))}
+                                  ))}
+                                </motion.div>
                               </motion.div>
                             )}
 
@@ -409,33 +410,34 @@ export default function FeatureShowcase() {
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: -20 }}
-                                className="p-4 space-y-4"
+                                className="flex flex-col h-full"
                               >
-                                {CURATION_CATEGORIES_DATA.EXPERIÊNCIAS.map((item, i) => (
-                                  <motion.div 
-                                    key={i} 
-                                    animate={{ y: [0, -20, 0] }}
-                                    transition={{ duration: 4, repeat: Infinity, delay: i * 0.5 }}
-                                    className="rounded-2xl overflow-hidden bg-white shadow-sm border border-black/5"
-                                  >
-                                    <div className="aspect-video relative">
-                                      <img src={getProductionUrl(item.img)} className="w-full h-full object-cover" />
-                                      <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/40 backdrop-blur-md flex items-center justify-center">
-                                        <motion.div
-                                          animate={{ scale: (subStep === 3 && i === 0) ? [1, 1.4, 1] : 1 }}
-                                        >
-                                          <Heart 
-                                            className={`w-4 h-4 ${((subStep === 3 || subStep > 3) && i === 0) ? "text-[#540202] fill-[#540202]" : "text-white"}`} 
-                                          />
-                                        </motion.div>
+                                <motion.div 
+                                  animate={{ y: [0, -380] }}
+                                  transition={{ duration: 6, ease: "linear", repeat: Infinity, repeatType: "reverse" }}
+                                  className="p-4 space-y-4"
+                                >
+                                  {CURATION_CATEGORIES_DATA.EXPERIÊNCIAS.map((item, i) => (
+                                    <div key={i} className="rounded-2xl overflow-hidden bg-white shadow-sm border border-black/5">
+                                      <div className="aspect-video relative">
+                                        <img src={getProductionUrl(item.img)} className="w-full h-full object-cover" />
+                                        <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/40 backdrop-blur-md flex items-center justify-center">
+                                          <motion.div
+                                            animate={{ scale: (subStep === 3 && i === 0) ? [1, 1.4, 1] : 1 }}
+                                          >
+                                            <Heart 
+                                              className={`w-4 h-4 ${((subStep === 3 || subStep > 3) && i === 0) ? "text-[#540202] fill-[#540202]" : "text-white"}`} 
+                                            />
+                                          </motion.div>
+                                        </div>
+                                      </div>
+                                      <div className="p-3">
+                                        <h6 className="text-[10px] font-bold text-[#2C3E2D] uppercase tracking-widest">{item.t}</h6>
+                                        <p className="text-[8px] text-black/40 uppercase tracking-widest mt-0.5">{item.d}</p>
                                       </div>
                                     </div>
-                                    <div className="p-3">
-                                      <h6 className="text-[8px] font-bold text-[#2C3E2D] uppercase tracking-widest">{item.t}</h6>
-                                      <p className="text-[6px] text-black/40 uppercase tracking-widest mt-0.5">{item.d}</p>
-                                    </div>
-                                  </motion.div>
-                                ))}
+                                  ))}
+                                </motion.div>
                               </motion.div>
                             )}
                           </AnimatePresence>
