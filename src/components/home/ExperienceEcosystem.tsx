@@ -59,7 +59,7 @@ const pillars = [
     id: "acao",
     title: "AÇÃO",
     description: "Vivências participativas que convidam o turista a agir, interagir e se integrar à cultura e à comunidade.",
-    image: storageUrl("home/Açao.png"),
+    image: storageUrl("home/Açao.png"),
     bg: "bg-[#744404]",
     textColor: "text-white"
   },
@@ -83,7 +83,7 @@ const pillars = [
     id: "atendimento",
     title: "ATENDIMENTO",
     description: "Atividades que despertam afeto e empatia, criando laços entre o visitante, o destino e as pessoas locais.",
-    image: storageUrl("home/Atendimento.png"),
+    image: storageUrl("home/Atendimentoatmos.png"),
     bg: "bg-[#1f2c17]",
     textColor: "text-white"
   },
@@ -91,7 +91,7 @@ const pillars = [
     id: "sentido",
     title: "SENTIDO",
     description: "Experiências que envolvem os cinco sentidos (visão, audição, tato, paladar, olfato) gerando encantamento e presença.",
-    image: storageUrl("home/Sentidos.png"),
+    image: storageUrl("home/Sentido.png"),
     bg: "bg-[#2e2019]",
     textColor: "text-white"
   }
