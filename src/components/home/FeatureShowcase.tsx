@@ -30,25 +30,34 @@ const JOURNEY_STEPS = [
     label: 'PREFERÊNCIAS',
     title: 'Adicione suas preferências',
     description: 'Salve o que faz seu coração vibrar. Basta clicar no coração nos itens que desejar.',
-    accentColor: '#744404',
+    accentColor: '#540202',
     icon: Heart
   },
   {
-    id: 'analise',
+    id: 'detalhes',
     num: '04',
+    label: 'DETALHES',
+    title: 'O Toque Final da Atmos',
+    description: 'Responda a perguntas rápidas para que nosso time consiga criar o seu roteiro personalizado.',
+    accentColor: '#2C3E2D',
+    icon: Calendar
+  },
+  {
+    id: 'analise',
+    num: '05',
     label: 'ANÁLISE',
-    title: 'Entendendo seu perfil',
-    description: 'Nossa equipe estuda suas escolhas para desenhar uma jornada autêntica e com a sua cara.',
-    accentColor: '#8D7B63',
-    icon: Users
+    title: 'Analisando seu Perfil',
+    description: 'Nossa inteligência editorial cruza seus desejos com a logística perfeita da Chapada.',
+    accentColor: '#A88B4C',
+    icon: Sparkles
   },
   {
     id: 'roteiro',
-    num: '05',
+    num: '06',
     label: 'ROTEIRO',
-    title: 'Seu Roteiro Sob Medida',
-    description: 'Criamos um roteiro personalizado especialmente para você que faça sentido com seu perfil.',
-    accentColor: '#540202',
+    title: 'Seu Roteiro Atmos',
+    description: 'O resultado final: uma jornada exclusiva, otimizada e pronta para ser vivida.',
+    accentColor: '#1B291C',
     icon: Map
   }
 ];
@@ -103,28 +112,26 @@ export default function FeatureShowcase() {
   }, []);
 
   useEffect(() => {
-    const duration = step === 1 ? 16000 : 6000; 
+    const totalTime = 38000;
     const startTime = Date.now();
     
     const interval = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const p = (elapsed / duration) * 100;
+      const time = (Date.now() - startTime) % totalTime;
+      const stepDuration = totalTime / JOURNEY_STEPS.length;
       
-      if (p >= 100) {
-        setStep((prev) => (prev + 1) % JOURNEY_STEPS.length);
-        setSubStep(0);
-        setProgress(0);
-      } else {
-        setProgress(p);
-        if (step === 1) {
-          const currentSub = Math.floor((p / 100) * 4);
-          setSubStep(currentSub);
-        }
+      const currentStepIndex = Math.floor(time / stepDuration);
+      setStep(currentStepIndex);
+      
+      const stepElapsed = time % stepDuration;
+      setProgress((stepElapsed / stepDuration) * 100);
+
+      if (currentStepIndex === 1) {
+        setSubStep(Math.floor((stepElapsed / stepDuration) * 4));
       }
     }, 50);
 
     return () => clearInterval(interval);
-  }, [step]);
+  }, []);
 
   const currentStep = JOURNEY_STEPS[step];
   const Icon = currentStep.icon;
@@ -135,10 +142,8 @@ export default function FeatureShowcase() {
         
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-24 items-start">
           
-          {/* Left Column: Content */}
           <div className="lg:col-span-5 flex flex-col gap-8 lg:gap-0 lg:justify-between lg:h-[75vh] lg:max-h-[680px] py-2 overflow-y-auto no-scrollbar">
             
-            {/* Header Area */}
             <div>
               <h2 className="text-3xl sm:text-4xl lg:text-6xl font-display text-[#2C3E2D] mb-4 tracking-tight leading-[0.85] pt-1">
                 Como montar seu roteiro
@@ -147,7 +152,6 @@ export default function FeatureShowcase() {
                 Entenda o que você acessa ao criar seu login gratuito na ATMOS.
               </p>
 
-              {/* Pulsing Next Step Button (Above Stepper) */}
               <motion.button 
                 animate={{ 
                   scale: [1, 1.03, 1],
@@ -170,7 +174,6 @@ export default function FeatureShowcase() {
               </motion.button>
             </div>
 
-            {/* Premium Stepper */}
             <div className="relative mt-8 mb-16 lg:my-6 px-4">
               <div className="absolute top-5 left-0 right-0 h-[1px] bg-[#2C3E2D]/10" />
               <div className="flex justify-between relative">
@@ -203,7 +206,6 @@ export default function FeatureShowcase() {
               </div>
             </div>
 
-            {/* Step Card (Ultra-compact & Status-bar style) */}
             <div className="w-full max-w-xl">
               <AnimatePresence mode="wait">
                 <motion.div
@@ -215,13 +217,11 @@ export default function FeatureShowcase() {
                   style={{ backgroundColor: currentStep.accentColor }}
                   className="p-6 lg:p-7 rounded-[2rem] shadow-xl relative overflow-hidden group"
                 >
-                  {/* Background Number (Smaller and subtle) */}
                   <span className="absolute -bottom-6 -left-6 text-[100px] font-display font-bold text-white/[0.03] leading-none select-none">
                     {currentStep.num}
                   </span>
 
                   <div className="relative z-10">
-                    {/* Top Row: Info */}
                     <div className="flex items-center gap-3 mb-3">
                       <div className="p-2 rounded-xl bg-white/10 text-white">
                         <Icon className="w-4 h-4" />
@@ -231,12 +231,11 @@ export default function FeatureShowcase() {
                           JORNADA ATMOS
                         </span>
                         <span className="text-[9px] font-bold text-white uppercase tracking-widest">
-                          PASSO {step + 1} DE 5
+                          PASSO {step + 1} DE 6
                         </span>
                       </div>
                     </div>
 
-                    {/* Middle: Content */}
                     <div className="flex flex-col gap-1.5">
                       <h3 className="text-xl lg:text-2xl font-display text-white leading-tight">
                         {currentStep.title}
@@ -247,7 +246,6 @@ export default function FeatureShowcase() {
                     </div>
                   </div>
 
-                  {/* Full-width Progress Bar at Bottom */}
                   <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/5">
                     <motion.div 
                       initial={{ width: 0 }}
@@ -261,13 +259,10 @@ export default function FeatureShowcase() {
             </div>
           </div>
 
-          {/* Right Column: Emulator */}
           <div className="lg:col-span-7 flex items-start justify-center relative min-h-[500px] lg:h-[75vh] lg:max-h-[680px]">
             <div className="relative w-full max-w-[420px] h-full">
-              {/* Device Frame */}
               <div className="absolute inset-0 bg-[#F5F5F3] rounded-[3.5rem] border-[12px] border-[#2C3E2D] shadow-[0_120px_240px_-40px_rgba(0,0,0,0.3)] overflow-hidden z-10">
                 
-                {/* Emulator Top Bar */}
                 <div className="absolute top-0 inset-x-0 h-14 bg-white/90 backdrop-blur-md border-b border-[#2C3E2D]/5 px-8 flex items-center justify-between z-[60]">
                   <img src={logoAtmos} alt="ATMOS" className="h-6" />
                   <div className="w-8 h-8 rounded-full bg-[#2C3E2D]/10 flex items-center justify-center">
@@ -275,11 +270,9 @@ export default function FeatureShowcase() {
                   </div>
                 </div>
 
-                {/* Screens Content */}
                 <div className="absolute inset-0 pt-14 overflow-hidden">
                   <AnimatePresence mode="wait">
                     
-                    {/* SCREEN 1: LOGIN */}
                     {step === 0 && (
                       <motion.div
                         key="login"
@@ -304,7 +297,6 @@ export default function FeatureShowcase() {
                       </motion.div>
                     )}
 
-                    {/* SCREEN 2: MONTE SEU ROTEIRO (CURADORIA) */}
                     {step === 1 && (
                       <motion.div
                         key="curadoria"
@@ -313,9 +305,7 @@ export default function FeatureShowcase() {
                         exit={{ opacity: 0 }}
                         className="absolute inset-0 bg-white flex flex-col overflow-hidden"
                       >
-                        {/* Header Fixo do Mockup (Layout Real) */}
                         <div className="bg-white shrink-0 z-30 relative border-b border-black/5">
-                          {/* Logo Bar */}
                           <div className="p-3 pb-2 flex items-center justify-between">
                             <img src={logoAtmos} className="h-4" alt="Atmos" />
                             <div className="flex gap-2">
@@ -324,7 +314,6 @@ export default function FeatureShowcase() {
                             </div>
                           </div>
 
-                          {/* 4 Category Cards (2x2 Grid with Generous Spacing) */}
                           <div className="px-4 pt-8 pb-4 mt-1">
                             <div className="grid grid-cols-2 gap-2">
                               {[
@@ -346,7 +335,6 @@ export default function FeatureShowcase() {
                             </div>
                           </div>
 
-                          {/* Search Bar & Category Title (Compact) */}
                           <div className="px-4 pb-4 space-y-3">
                             <div className="h-9 bg-[#FAF9F6] rounded-full border border-black/5 flex items-center px-4 gap-2 shadow-inner">
                               <Search className="w-3 h-3 text-black/20" />
@@ -361,10 +349,8 @@ export default function FeatureShowcase() {
                           </div>
                         </div>
 
-                        {/* Product List Content with PROGRESS-DRIVEN Scroll */}
                         <div className="flex-1 relative overflow-hidden bg-[#FAF9F6]">
                           <AnimatePresence mode="wait">
-                            {/* SUB-PHASE 0-1: WATERFALLS */}
                             {subStep < 2 && (
                               <motion.div 
                                 key="explorer-wf"
@@ -381,7 +367,6 @@ export default function FeatureShowcase() {
                                   className="p-4 space-y-4"
                                 >
                                   {CURATION_CATEGORIES_DATA.CACHOEIRAS.map((item, i) => {
-                                    // Simulated like: Item 1 likes early, Item 2 likes mid-scroll
                                     const isLiked = i === 0 ? progress > 8 : progress > 32;
                                     return (
                                       <div key={i} className="rounded-2xl overflow-hidden bg-white shadow-sm border border-black/5">
@@ -412,7 +397,6 @@ export default function FeatureShowcase() {
                               </motion.div>
                             )}
 
-                            {/* SUB-PHASE 2-3: EXPERIENCES */}
                             {subStep >= 2 && (
                               <motion.div 
                                 key="explorer-exp"
@@ -429,7 +413,6 @@ export default function FeatureShowcase() {
                                   className="p-4 space-y-4"
                                 >
                                   {CURATION_CATEGORIES_DATA.EXPERIÊNCIAS.map((item, i) => {
-                                    // Simulated like: Item 1 likes early in sub-phase, Item 2 likes mid-scroll
                                     const isLiked = i === 0 ? progress > 58 : progress > 82;
                                     return (
                                       <div key={i} className="rounded-2xl overflow-hidden bg-white shadow-sm border border-black/5">
@@ -464,7 +447,6 @@ export default function FeatureShowcase() {
                       </motion.div>
                     )}
 
-                    {/* SCREEN 3: PREFERENCIAS (WISHLIST) */}
                     {step === 2 && (
                       <motion.div
                         key="preferencias"
@@ -473,7 +455,6 @@ export default function FeatureShowcase() {
                         exit={{ opacity: 0 }}
                         className="absolute inset-0 bg-white flex flex-col overflow-hidden"
                       >
-                        {/* Header Fixo do Mockup (Consistency) */}
                         <div className="bg-white shrink-0 z-30 relative border-b border-black/5">
                           <div className="p-3 pb-2 flex items-center justify-between">
                             <img src={logoAtmos} className="h-4" alt="Atmos" />
@@ -484,7 +465,7 @@ export default function FeatureShowcase() {
                           </div>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-4 pt-8 mt-1 bg-[#FAF9F6]">
+                        <div className="flex-1 overflow-y-auto p-4 pt-8 mt-1 bg-[#FAF9F6] pb-20">
                           <div className="mb-4">
                             <span className="text-[7px] font-bold text-[#A88B4C] tracking-[0.4em] uppercase block">Minha Seleção</span>
                             <h5 className="text-lg font-display text-[#2C3E2D] uppercase tracking-widest leading-tight mt-1">Sua Lista de Desejo na Chapada</h5>
@@ -521,22 +502,79 @@ export default function FeatureShowcase() {
                           </div>
 
                           <div className="mt-6 mb-8">
-                            <motion.button 
-                              initial={{ y: 20, opacity: 0 }}
-                              animate={{ y: 0, opacity: 1 }}
-                              transition={{ delay: 0.5 }}
-                              className="w-full py-4 bg-[#2C3E2D] text-white rounded-full text-[9px] font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-2 shadow-xl"
+                            <motion.div
+                              animate={{ y: [0, -4, 0] }}
+                              transition={{ duration: 2, repeat: Infinity }}
                             >
-                              Prosseguir para roteiro
-                              <ChevronRight className="w-3 h-3" />
-                            </motion.button>
+                              <div className="w-full py-4 bg-[#2C3E2D] text-white rounded-full text-[9px] font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-2 shadow-xl">
+                                Prosseguir para roteiro
+                                <ChevronRight className="w-3 h-3" />
+                              </div>
+                            </motion.div>
                           </div>
                         </div>
                       </motion.div>
                     )}
 
-                    {/* SCREEN 4: ANALISE */}
                     {step === 3 && (
+                      <motion.div
+                        key="formulario"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 bg-white flex flex-col p-6 pt-12"
+                      >
+                        <div className="text-center mb-8">
+                          <span className="text-[7px] font-bold text-[#A88B4C] tracking-[0.4em] uppercase block mb-2">Próximo Passo</span>
+                          <h5 className="text-xl font-display text-[#2C3E2D] uppercase tracking-widest leading-tight">O Toque Final da Atmos</h5>
+                          <p className="text-[9px] text-black/50 mt-4 leading-relaxed max-w-[200px] mx-auto">
+                            Suas escolhas definem a alma da experiência. Agora, responda a perguntas rápidas.
+                          </p>
+                        </div>
+
+                        <div className="space-y-4 max-w-[240px] mx-auto w-full">
+                          {[
+                            { label: "Qual seu destino?", value: "Chapada dos Veadeiros" },
+                            { label: "Quando você vai?", value: "15 a 22 de Julho" },
+                            { label: "Com quem você vai?", value: "Em Casal" }
+                          ].map((field, i) => (
+                            <motion.div 
+                              key={i}
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: i * 0.5 + 0.5 }}
+                              className="space-y-1.5"
+                            >
+                              <label className="text-[7px] font-bold text-black/30 uppercase tracking-widest ml-1">{field.label}</label>
+                              <div className="h-10 bg-[#FAF9F6] border border-black/5 rounded-xl flex items-center px-4 overflow-hidden">
+                                <motion.span 
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  transition={{ delay: i * 0.5 + 1 }}
+                                  className="text-[10px] text-[#2C3E2D] font-medium"
+                                >
+                                  {field.value}
+                                </motion.span>
+                              </div>
+                            </motion.div>
+                          ))}
+                          
+                          <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 2.5 }}
+                            className="pt-4"
+                          >
+                            <div className="w-full py-4 bg-[#2C3E2D] text-white rounded-full text-[9px] font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-2 opacity-50">
+                              Gerando Roteiro...
+                              <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            </div>
+                          </motion.div>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {step === 4 && (
                       <motion.div
                         key="analise"
                         initial={{ opacity: 0 }}
@@ -570,8 +608,7 @@ export default function FeatureShowcase() {
                       </motion.div>
                     )}
 
-                    {/* SCREEN 5: ROTEIRO */}
-                    {step === 4 && (
+                    {step === 5 && (
                       <motion.div
                         key="roteiro"
                         initial={{ opacity: 0 }}
@@ -579,7 +616,6 @@ export default function FeatureShowcase() {
                         exit={{ opacity: 0 }}
                         className="absolute inset-0 bg-[#F5F5F3] flex"
                       >
-                        {/* Sidebar */}
                         <div className="w-1/3 bg-[#1B291C] h-full flex flex-col p-4 border-r border-white/5">
                            <div className="flex-1">
                              <div className="w-full aspect-[4/5] rounded-2xl bg-white/5 overflow-hidden mb-4 border border-white/10 relative">
