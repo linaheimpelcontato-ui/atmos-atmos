@@ -11,24 +11,31 @@ export const r2 = {
    */
   async upload(folder: string, fileName: string, file: File): Promise<void> {
     const mappedFolder = MAP_R2_PATH(folder.endsWith('/') ? folder : `${folder}/`).replace(/\/$/, "");
-    console.log(`R2: Requesting upload URL for folder: "${mappedFolder}", file: "${fileName}"`);
-    
     // 1. Get presigned URL from Edge Function
+    console.log('Invoking r2-storage function...');
     const { data, error: functionError } = await supabase.functions.invoke('r2-storage', {
-      body: { 
+      body: JSON.stringify({ 
         action: 'get-upload-url', 
         bucket: 'atmos',
         folder: mappedFolder, 
         fileName 
-      },
+      }),
       headers: {
-        'x-content-type': file.type
+        'x-content-type': file.type,
+        'Content-Type': 'application/json'
       }
     });
 
     if (functionError || !data?.url) {
-      console.error('R2 Invoke Error:', functionError);
-      const errorMsg = functionError?.message || (typeof functionError === 'object' ? JSON.stringify(functionError) : 'Failed to get upload URL');
+      console.error('R2 Invoke Detailed Error:', functionError);
+      let errorMsg = 'Failed to connect to the storage server.';
+      
+      if (functionError instanceof Error) {
+        errorMsg = functionError.message;
+      } else if (typeof functionError === 'object') {
+        errorMsg = (functionError as any).message || JSON.stringify(functionError);
+      }
+      
       throw new Error(`[EdgeFunction Error] ${errorMsg}`);
     }
 
