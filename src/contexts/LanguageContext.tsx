@@ -46,7 +46,7 @@ const translations: Record<Language, Record<string, string>> = {
     "paths.custom.bullet2": "Adicione experiências",
     "paths.custom.bullet3": "Selecione hospedagem e serviços",
     // About
-    "about.title": "O que é a ATMOS",
+    "about.title": "O que é a ATMOS?",
     "about.text1": "A ATMOS é uma curadoria de experiências imersivas na Chapada dos Veadeiros. Não somos uma agência — somos um convite para viver a Chapada de forma autêntica, profunda e transformadora.",
     "about.text2": "Cada roteiro é desenhado para conectar você à essência do Cerrado: suas cachoeiras escondidas, seus cânions milenares, sua energia única.",
     // Categories
@@ -174,7 +174,7 @@ const translations: Record<Language, Record<string, string>> = {
     "paths.custom.bullet1": "Choose your waterfalls",
     "paths.custom.bullet2": "Add experiences",
     "paths.custom.bullet3": "Select stays and services",
-    "about.title": "What is ATMOS",
+    "about.title": "What is ATMOS?",
     "about.text1": "ATMOS is a curation of immersive experiences in Chapada dos Veadeiros. We're not an agency — we're an invitation to live the Chapada authentically, deeply and transformatively.",
     "about.text2": "Each itinerary is designed to connect you with the essence of the Cerrado: its hidden waterfalls, ancient canyons, and unique energy.",
     "categories.title": "Explore by Category",
@@ -296,7 +296,7 @@ const translations: Record<Language, Record<string, string>> = {
     "paths.custom.bullet1": "Elige tus cascadas",
     "paths.custom.bullet2": "Agrega experiencias",
     "paths.custom.bullet3": "Selecciona hospedaje y servicios",
-    "about.title": "Qué es ATMOS",
+    "about.title": "¿Qué es ATMOS?",
     "about.text1": "ATMOS es una curaduría de experiencias inmersivas en Chapada dos Veadeiros. No somos una agencia — somos una invitación a vivir la Chapada de forma auténtica, profunda y transformadora.",
     "about.text2": "Cada itinerario está diseñado para conectarte con la esencia del Cerrado: sus cascadas escondidas, sus cañones milenarios, su energía única.",
     "categories.title": "Explora por Categoría",

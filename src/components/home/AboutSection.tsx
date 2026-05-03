@@ -5,7 +5,7 @@ export default function AboutSection() {
   return (
     <section className="py-20 md:py-28 bg-secondary">
       <div className="container max-w-3xl text-center px-4">
-        <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
+        <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-6">
           {t("about.title")}
         </h2>
         <p className="text-lg text-muted-foreground leading-relaxed mb-4">

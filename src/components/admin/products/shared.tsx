@@ -202,41 +202,38 @@ export const typeFields: Record<string, FieldDef[]> = {
   ],
 };
 
-export function getStorageInfo(product: Partial<Product> & { name: string; type: string; tempId?: string }): { folder: string; prefix: string } | null {
-  const nameSlug = slugify(product.name);
+export function getStorageInfo(product: Partial<Product> & { name: string; type: string; tempId?: string }): { folder: string; prefix: string; rawName: string } | null {
   const vars = (product.variables || {}) as Record<string, unknown>;
-  const prefix = (vars.storage_id as string) || product.id || product.tempId;
+  const nameSlug = slugify(product.name);
+  const prefix = (vars.storage_id as string) || nameSlug;
   
   if (!prefix || !product.name) return null;
 
-  let categoryFolder = "";
+  let categoryFolder = "produtos";
   switch (product.type) {
     case "waterfall":
-      categoryFolder = "cachoeiras";
+      categoryFolder += "/cachoeiras";
       break;
     case "experience":
-      categoryFolder = "experiencias";
+      categoryFolder += "/experiencias";
       break;
     case "accommodation":
-      categoryFolder = "hospedagens";
+      categoryFolder += "/hospedagens";
       break;
     case "service":
-      categoryFolder = "servicos";
+      categoryFolder += "/serviços";
       break;
     case "itinerary":
-      categoryFolder = "roteiros";
+      categoryFolder += "/roteiros";
       break;
     default:
-      categoryFolder = "outros";
+      categoryFolder += "/outros";
   }
 
-  // Return folder as the key that MAP_R2_PATH understands (e.g., 'experiencias', 'cachoeiras')
-  const folderPath = categoryFolder;
-  
-  // Return parent folder and raw name for better image matching
   return { 
-    folder: folderPath, 
-    prefix: nameSlug,
+    folder: categoryFolder, // Search in the whole category
+    productFolder: `${categoryFolder}/${prefix}`, // Upload specifically here
+    prefix: prefix,
     rawName: product.name
   };
 }

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { storageUrl } from "@/lib/storage";
+import { storageUrl, isImageMatch } from "@/lib/storage";
 import { r2 } from "@/lib/r2";
 
 /**
@@ -18,37 +18,42 @@ export function useStorageImages(folder: string, prefix: string, enabled = true)
 
 /** Non-hook version for use outside React components */
 export async function fetchStorageImages(folder: string, prefix: string): Promise<string[]> {
-  const folders = [folder, 'experiencias', 'cachoeiras', 'hospedagens', 'roteiros', 'servicos', 'home'];
-  const uniqueFolders = Array.from(new Set(folders));
+  const normPrefix = normalize(prefix);
   
-  for (const f of uniqueFolders) {
+  // Try these specific folders first for maximum speed
+  const priorityFolders = [
+    `${folder}/${prefix}`,
+    `${folder}/${normPrefix}`,
+    `${folder}/${prefix.charAt(0).toUpperCase() + prefix.slice(1)}`, // Capitalized
+  ];
+
+  const fallbackFolders = [
+    folder,
+    'produtos/experiencias',
+    'produtos/cachoeiras',
+    'produtos/hospedagens',
+    'produtos/servicos',
+    'produtos/roteiros',
+    'home'
+  ];
+
+  const allFolders = Array.from(new Set([...priorityFolders, ...fallbackFolders]));
+  
+  for (const f of allFolders) {
     try {
+      // Don't try empty folders
+      if (!f || f === '/') continue;
+      
       const files = await r2.list(f);
       if (!files || files.length === 0) continue;
 
-      const normalize = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-      const normalizedPrefix = normalize(prefix);
-      
       const matching = files
-        .filter((file: any) => {
-          const key = file.Key.toLowerCase();
-          const fileName = key.split('/').pop() || "";
-          const normalizedFileName = normalize(fileName);
-          
-          return normalizedFileName.startsWith(normalizedPrefix) || 
-                 key.includes(`/${normalizedPrefix}/`);
-        })
+        .filter((file: any) => isImageMatch(file.Key, prefix))
         .sort((a: any, b: any) => {
           const nameA = a.Key.toLowerCase();
           const nameB = b.Key.toLowerCase();
-          
-          // Priority 1: _capa files always first
-          const isFavA = nameA.includes('_capa');
-          const isFavB = nameB.includes('_capa');
-          if (isFavA && !isFavB) return -1;
-          if (!isFavA && isFavB) return 1;
-
-          // Priority 2: Numerical order
+          if (nameA.includes('_capa') && !nameB.includes('_capa')) return -1;
+          if (!nameA.includes('_capa') && nameB.includes('_capa')) return 1;
           const numA = parseInt(nameA.match(/-(\d+)\./)?.[1] || "0");
           const numB = parseInt(nameB.match(/-(\d+)\./)?.[1] || "0");
           return numA - numB;
@@ -57,7 +62,7 @@ export async function fetchStorageImages(folder: string, prefix: string): Promis
 
       if (matching.length > 0) return matching;
     } catch (err) {
-      console.error(`Error listing R2 for folder ${f}:`, err);
+      // Silently fail for specific folder tries, log only for category fallbacks
       continue;
     }
   }

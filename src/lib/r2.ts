@@ -15,6 +15,7 @@ export const r2 = {
     const { data, error: functionError } = await supabase.functions.invoke('r2-storage', {
       body: { 
         action: 'get-upload-url', 
+        bucket: 'atmos',
         folder: mappedFolder, 
         fileName 
       },
@@ -24,10 +25,12 @@ export const r2 = {
     });
 
     if (functionError || !data?.url) {
+      console.error('R2 Invoke Error:', functionError);
       throw new Error(functionError?.message || 'Failed to get upload URL');
     }
 
     // 2. Upload directly to R2
+    console.log('Uploading to R2 via presigned URL...');
     const uploadResponse = await fetch(data.url, {
       method: 'PUT',
       body: file,
@@ -37,6 +40,8 @@ export const r2 = {
     });
 
     if (!uploadResponse.ok) {
+      const errorText = await uploadResponse.text();
+      console.error('R2 Direct Upload Error:', errorText);
       throw new Error('Failed to upload to Cloudflare R2');
     }
   },
@@ -47,7 +52,7 @@ export const r2 = {
   async list(folder: string): Promise<any[]> {
     const mappedFolder = MAP_R2_PATH(folder.endsWith('/') ? folder : `${folder}/`).replace(/\/$/, "");
     const { data, error } = await supabase.functions.invoke('r2-storage', {
-      body: { action: 'list', folder: mappedFolder }
+      body: { action: 'list', bucket: 'atmos', folder: mappedFolder }
     });
 
     if (error) throw error;
@@ -60,7 +65,7 @@ export const r2 = {
   async delete(folder: string, fileName: string): Promise<void> {
     const mappedFolder = MAP_R2_PATH(folder.endsWith('/') ? folder : `${folder}/`).replace(/\/$/, "");
     const { error } = await supabase.functions.invoke('r2-storage', {
-      body: { action: 'delete', folder: mappedFolder, fileName }
+      body: { action: 'delete', bucket: 'atmos', folder: mappedFolder, fileName }
     });
 
     if (error) throw error;

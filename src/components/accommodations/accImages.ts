@@ -2,12 +2,12 @@ import { storageUrl } from "@/lib/storage";
 import { useStorageImages } from "@/hooks/useStorageImages";
 
 /** Hook: dynamically lists all images for an accommodation from Storage */
-export function useAccImages(id: string) {
-  const query = useStorageImages("hospedagens", id);
+export function useAccImages(id: string, name?: string) {
+  const query = useStorageImages("produtos/hospedagens", name || id);
 
-  // Fallback to 6 hardcoded URLs while loading
+  // Fallback using the new structure
   const fallback = Array.from({ length: 6 }, (_, i) =>
-    storageUrl(`hospedagens/${id}-${i + 1}.jpg`)
+    storageUrl(`produtos/hospedagens/${id}/${id}-${i + 1}.jpg`)
   );
 
   return {
@@ -17,13 +17,13 @@ export function useAccImages(id: string) {
 }
 
 /** Synchronous — card thumbnail (always first image) */
-export function getAccCardImage(id: string): string {
-  return storageUrl(`hospedagens/${id}-1.jpg`);
+export function getAccCardImage(id: string, name?: string): string {
+  return storageUrl(`produtos/hospedagens/${id}/${id}-1.jpg`);
 }
 
 /** Legacy sync function */
-export function getAccImages(id: string): string[] {
+export function getAccImages(id: string, name?: string): string[] {
   return Array.from({ length: 6 }, (_, i) =>
-    storageUrl(`hospedagens/${id}-${i + 1}.jpg`)
+    storageUrl(`produtos/hospedagens/${id}/${id}-${i + 1}.jpg`)
   );
 }

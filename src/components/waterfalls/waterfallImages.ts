@@ -12,12 +12,12 @@ function getStorageKey(id: string): string {
 }
 
 /** Hook: dynamically lists all images for a waterfall from Storage */
-export function useWaterfallImages(id: string, imageIndex = 1) {
-  const key = getStorageKey(id);
-  const query = useStorageImages("cachoeiras", key);
+export function useWaterfallImages(id: string, name: string) {
+  // Use the full name for better matching with R2 folders
+  const query = useStorageImages("produtos/cachoeiras", name);
 
-  // Fallback to 3 hardcoded URLs while loading or if empty
-  const fallback = [1, 2, 3].map((n) => storageUrl(`cachoeiras/${key}-${n}.jpg`));
+  // Fallback to optimized URLs using the new structure
+  const fallback = [1, 2, 3].map((n) => storageUrl(`produtos/cachoeiras/${id}/${id}-${n}.jpg`));
 
   return {
     images: query.data && query.data.length > 0 ? query.data : fallback,
@@ -26,13 +26,11 @@ export function useWaterfallImages(id: string, imageIndex = 1) {
 }
 
 /** Synchronous fallback — used for cards (always first image) */
-export function getWaterfallCardImage(id: string, imageIndex = 1): string {
-  const key = getStorageKey(id);
-  return storageUrl(`cachoeiras/${key}-1.jpg`);
+export function getWaterfallCardImage(id: string, name: string): string {
+  return storageUrl(`produtos/cachoeiras/${id}/${id}-1.jpg`);
 }
 
 /** Legacy sync function — kept for backward compatibility */
-export function getWaterfallImages(id: string, imageIndex: number): string[] {
-  const key = getStorageKey(id);
-  return [1, 2, 3].map((n) => storageUrl(`cachoeiras/${key}-${n}.jpg`));
+export function getWaterfallImages(id: string, name: string): string[] {
+  return [1, 2, 3].map((n) => storageUrl(`produtos/cachoeiras/${id}/${id}-n.jpg`));
 }

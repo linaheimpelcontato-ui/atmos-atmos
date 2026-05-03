@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { storageUrl, optimizedUrl, IMAGE_PRESETS } from "@/lib/storage";
+import { storageUrl, optimizedUrl, IMAGE_PRESETS, isImageMatch } from "@/lib/storage";
 import { toast } from "sonner";
 import { r2 } from "@/lib/r2";
 import { type Product, getStorageInfo } from "./shared";
@@ -26,21 +26,8 @@ export function ProductImageCell({ product }: { product: Product }) {
     try {
       const data = await r2.list(info.folder);
       
-      const normalize = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-      const normalizedPrefix = normalize(info.prefix);
-      const normalizedRawName = info.rawName ? normalize(info.rawName) : normalizedPrefix;
-
       const matching = (data || [])
-        .filter((f: any) => {
-          const key = f.Key.toLowerCase();
-          const fileName = key.split('/').pop() || "";
-          const normalizedFileName = normalize(fileName);
-          
-          return normalizedFileName.startsWith(normalizedPrefix) || 
-                 normalizedFileName.startsWith(normalizedRawName) ||
-                 key.includes(`/${normalizedPrefix}/`) ||
-                 key.includes(`/${normalizedRawName}/`);
-        })
+        .filter((f: any) => isImageMatch(f.Key, info.prefix, info.rawName))
         .map((f: any) => f.Key) // Store full Key
         .sort((a, b) => {
           const nameA = a.toLowerCase();
@@ -102,13 +89,8 @@ export function ProductImageCell({ product }: { product: Product }) {
 
     try {
       const firstWithSubfolder = images.find(m => m.includes(`${info.folder}/`) && m.split('/').length > (info.folder.split('/').length + 1));
-      const uploadFolder = firstWithSubfolder 
-        ? firstWithSubfolder.substring(0, firstWithSubfolder.lastIndexOf('/'))
-        : info.folder;
-
-      const finalRelativeName = uploadFolder === info.folder ? fileName : `${uploadFolder.replace(`${info.folder}/`, "")}/${fileName}`;
-
-      await r2.upload(info.folder, finalRelativeName, file);
+      const uploadFolder = (info as any).productFolder || info.folder;
+      await r2.upload(uploadFolder, fileName, file);
       toast.success(targetName ? "Imagem substituída" : "Imagem adicionada ao Cloudflare");
       await loadImages();
     } catch (err) {

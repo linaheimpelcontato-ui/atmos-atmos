@@ -57,42 +57,42 @@ const CURATION_CATEGORIES = [
     id: 'cachoeiras',
     label: 'CACHOEIRAS',
     items: [
-      { t: 'Dragão', d: 'Cachoeira', img: storageUrl('cachoeiras/Dragão/Dragão-1.jpg') },
-      { t: 'Macacão', d: 'Cachoeira', img: storageUrl('cachoeiras/Macacão/Macacão-1.jpg') },
-      { t: 'Canjica e Águas Lindas', d: 'Cachoeira', img: storageUrl('cachoeiras/Canjica e Águas lindas/Canjica e Águas lindas-1.jpg') },
-      { t: 'Prata', d: 'Cachoeira', img: storageUrl('cachoeiras/Prata/Prata-1.jpg') },
-      { t: 'Cânions São Félix', d: 'Cachoeira', img: storageUrl('cachoeiras/Cânion da São Félix/Cânion da São Félix-1.jpg') },
-      { t: 'Bocaina do Farias', d: 'Cachoeira', img: storageUrl('cachoeiras/Bocaina do Farias/Bocaina do Farias-1.jpg') },
-      { t: 'Macaquinhos', d: 'Cachoeira', img: storageUrl('cachoeiras/Macaquinhos/Macaquinhos-1.jpg') },
-      { t: 'Curriola (Guardião)', d: 'Cachoeira', img: storageUrl('cachoeiras/Guardião - Curriola/Guardião - Curriola-1.jpg') }
+      { t: 'Dragão', d: 'Cachoeira', img: storageUrl('cachoeiras/dragao-1.jpg') },
+      { t: 'Macacão', d: 'Cachoeira', img: storageUrl('cachoeiras/macacao-1.jpg') },
+      { t: 'Canjica e Águas Lindas', d: 'Cachoeira', img: storageUrl('cachoeiras/canjica-aguas-lindas-1.jpg') },
+      { t: 'Prata', d: 'Cachoeira', img: storageUrl('cachoeiras/prata-1.jpg') },
+      { t: 'Cânions Cariocas', d: 'Cachoeira', img: storageUrl('cachoeiras/cariocas-1.jpg') },
+      { t: 'Bocaina do Farias', d: 'Cachoeira', img: storageUrl('cachoeiras/bocaina-do-farias-1.jpg') },
+      { t: 'Macaquinhos', d: 'Cachoeira', img: storageUrl('cachoeiras/macaquinhos-1.jpg') },
+      { t: 'Santa Bárbara', d: 'Cachoeira', img: storageUrl('cachoeiras/santa-barbara-1.jpg') }
     ]
   },
   {
     id: 'hospedagens',
     label: 'HOSPEDAGENS',
     items: [
-      { t: 'Amana', d: 'Hospedagem', img: storageUrl('hospedagens/Amana Hotel/Amana Hotel-1.jpg') },
-      { t: 'Vila Baru', d: 'Hospedagem', img: storageUrl('hospedagens/Vila Baru/Vila Baru-1.jpg') },
-      { t: 'Vila Abaton', d: 'Hospedagem', img: storageUrl('hospedagens/Vila Abaton/Vila Abaton-1.jpg') },
-      { t: 'Villa Eya', d: 'Hospedagem', img: storageUrl('hospedagens/Villa Eya/Villa Eya-1.jpg') },
-      { t: 'Casa Poema', d: 'Hospedagem', img: storageUrl('hospedagens/Casa Poema/Casa Poema-1.jpg') },
-      { t: 'Bagua Bangalos', d: 'Hospedagem', img: storageUrl('hospedagens/Bagua Bangalos/Bagua Bangalos-1.jpg') },
-      { t: 'Vila Toa', d: 'Hospedagem', img: storageUrl('hospedagens/Vila Toa/Vila Toa-1.jpg') },
-      { t: 'Terra Gaia', d: 'Hospedagem', img: storageUrl('hospedagens/Terra Gaia/Terra Gaia-1.jpg') }
+      { t: 'Amana', d: 'Hospedagem', img: storageUrl('hospedagens/amana-hotel-1.jpg') },
+      { t: 'Vila Baru', d: 'Hospedagem', img: storageUrl('hospedagens/vila-baru-1.jpg') },
+      { t: 'Vila Abaton', d: 'Hospedagem', img: storageUrl('hospedagens/vila-abaton-1.jpg') },
+      { t: 'Villa Eya', d: 'Hospedagem', img: storageUrl('hospedagens/villa-eya-1.jpg') },
+      { t: 'Casa Poema', d: 'Hospedagem', img: storageUrl('hospedagens/casa-poema-1.jpg') },
+      { t: 'Bagua Bangalos', d: 'Hospedagem', img: storageUrl('hospedagens/bagua-bangalos-1.jpg') },
+      { t: 'Vila Toá', d: 'Hospedagem', img: storageUrl('hospedagens/vila-toa-1.jpg') },
+      { t: 'Terra Gaia', d: 'Hospedagem', img: storageUrl('hospedagens/terra-gaia-1.jpg') }
     ]
   },
   {
     id: 'experiencias',
     label: 'EXPERIÊNCIAS',
     items: [
-      { t: 'Noturna Imersiva', d: 'Experiência', img: storageUrl('experiencias/Experiencia Noturna Imersiva/Experiencia Noturna Imersiva-1.jpg') },
-      { t: 'Voo de Balão', d: 'Experiência', img: storageUrl('experiencias/Voo de Balao/Voo de Balao-1.jpg') },
-      { t: 'Passeio a Cavalo', d: 'Experiência', img: storageUrl('experiencias/Passeio a Cavalo/Passeio a Cavalo-1.jpg') },
-      { t: 'Canionismo', d: 'Experiência', img: storageUrl('experiencias/Canionismo/Canionismo-1.jpg') },
-      { t: 'Rapel', d: 'Experiência', img: storageUrl('experiencias/Rapel/Rapel-1.jpg') },
-      { t: 'Rafting', d: 'Experiência', img: storageUrl('experiencias/Rafting/Rafting-1.jpg') },
-      { t: 'Astro Turismo', d: 'Experiência', img: storageUrl('experiencias/Astro Turismo/Astro Turismo-1.jpg') },
-      { t: 'Yoga e Meditação', d: 'Experiência', img: storageUrl('experiencias/Yoga e Meditacao/Yoga e Meditacao-1.jpg') }
+      { t: 'Noturna Imersiva', d: 'Experiência', img: storageUrl('experiencias/noturna-1.jpg') },
+      { t: 'Voo de Balão', d: 'Experiência', img: storageUrl('experiencias/balao-1.jpg') },
+      { t: 'Passeio a Cavalo', d: 'Experiência', img: storageUrl('experiencias/cavalo-1.jpg') },
+      { t: 'Canionismo', d: 'Experiência', img: storageUrl('experiencias/canionismo-1.jpg') },
+      { t: 'Rapel', d: 'Experiência', img: storageUrl('experiencias/rapel-1.jpg') },
+      { t: 'Rafting', d: 'Experiência', img: storageUrl('experiencias/rafting-1.jpg') },
+      { t: 'Astro Turismo', d: 'Experiência', img: storageUrl('experiencias/astro-1.jpg') },
+      { t: 'Yoga e Meditação', d: 'Experiência', img: storageUrl('experiencias/yoga-1.jpg') }
     ]
   },
   {
@@ -158,7 +158,7 @@ export default function FeatureShowcase() {
             transition={{ delay: 0.1, duration: 0.8 }}
             className="text-[#1B291C] font-display text-4xl md:text-5xl tracking-tight"
           >
-            Entenda sua <span className="italic font-extralight italic">Jornada</span>
+            Entenda como montar seu <span className="italic font-extralight">roteiro</span>
           </motion.h2>
         </div>
 
@@ -212,6 +212,8 @@ export default function FeatureShowcase() {
           </div>
         </div>
 
+
+
         {/* Narrative Block - Redesigned for compactness and action */}
         <motion.div
           animate={{ backgroundColor: currentStep.btnColor }}
@@ -235,12 +237,12 @@ export default function FeatureShowcase() {
                 <h3 className="text-[#e4dbcc] font-display text-xl md:text-2xl">{currentStep.title}</h3>
               </div>
 
-              <div className="flex-grow max-w-xl">
-                <p className="text-[#e4dbcc]/80 text-xs md:text-sm font-light leading-relaxed flex items-center flex-wrap gap-x-1">
+              <div className="flex-grow max-w-2xl">
+                <p className="text-[#e4dbcc]/80 text-xs md:text-sm font-light leading-relaxed">
                   {currentStep.description.split('{heart}').map((part, i, arr) => (
                     <React.Fragment key={i}>
                       {part}
-                      {i < arr.length - 1 && <Heart className="w-3.5 h-3.5 inline text-[#e4dbcc] fill-current" />}
+                      {i < arr.length - 1 && <Heart className="w-3.5 h-3.5 inline-block align-middle mx-1 text-[#e4dbcc] fill-current" />}
                     </React.Fragment>
                   ))}
                 </p>
@@ -282,16 +284,7 @@ export default function FeatureShowcase() {
           />
         </motion.div>
 
-        {/* Transition Instructional Phrase */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          className="text-center mb-8"
-        >
-          <p className="text-[#2C3E2D]/70 font-poppins font-bold text-xs md:text-sm tracking-wide italic">
-            Clique próximos passos para descobrir como transformamos seus desejos em um itinerário autêntico.
-          </p>
-        </motion.div>
+
 
         {/* The Journey Emulator */}
         <div className="relative max-w-[1000px] mx-auto group">
@@ -441,7 +434,7 @@ export default function FeatureShowcase() {
                                 </div>
                               </div>
                               <div className="p-3">
-                                <h4 className="text-[9px] font-bold text-[#2C3E2D] uppercase tracking-wider mb-0.5">{item.t}</h4>
+                                <h4 className="text-[9px] font-display font-bold text-[#2C3E2D] uppercase tracking-wider mb-0.5">{item.t}</h4>
                                 <p className="text-[8px] font-light text-[#2C3E2D]/40 uppercase tracking-[0.1em]">{item.d}</p>
                               </div>
                             </motion.div>
@@ -463,9 +456,9 @@ export default function FeatureShowcase() {
                   >
                     {[
                       { t: 'Dragão', d: 'Cachoeira', img: storageUrl('cachoeiras/dragao-1.jpg'), fav: true },
-                      { t: 'Curriola', d: 'Cachoeira', img: storageUrl('cachoeiras/curriola-guardiao-1.jpg'), fav: true },
+                      { t: 'Santa Bárbara', d: 'Cachoeira', img: storageUrl('cachoeiras/santa-barbara-1.jpg'), fav: true },
                       { t: 'Passeio a Cavalo', d: 'Experiência', img: storageUrl('experiencias/cavalo-1.jpg'), fav: true },
-                      { t: 'Voo de Balao', d: 'Experiência', img: storageUrl('experiencias/balao-1.jpg'), fav: true },
+                      { t: 'Voo de Balão', d: 'Experiência', img: storageUrl('experiencias/balao-1.jpg'), fav: true },
                       { t: 'Amaná', d: 'Hospedagem', img: storageUrl('hospedagens/amana-hotel-1.jpg'), fav: true },
                       { t: 'Lanche de Trilha', d: 'Serviço', img: storageUrl('servicos/lanche.jpg'), fav: true },
                       { t: 'Registro de Drone', d: 'Serviço', img: storageUrl('servicos/drone.jpg'), fav: true },
@@ -486,7 +479,7 @@ export default function FeatureShowcase() {
                           )}
                         </div>
                         <div className="p-3">
-                          <h4 className="text-[9px] font-bold text-[#2C3E2D] uppercase tracking-wider mb-0.5">{item.t}</h4>
+                          <h4 className="text-[9px] font-display font-bold text-[#2C3E2D] uppercase tracking-wider mb-0.5">{item.t}</h4>
                           <p className="text-[8px] font-light text-[#2C3E2D]/40 uppercase tracking-[0.1em]">{item.d}</p>
                         </div>
                       </div>
@@ -509,7 +502,7 @@ export default function FeatureShowcase() {
                             />
                           </div>
                           <div className="h-4 w-px bg-white/20" />
-                          <span className="text-[11px] font-bold tracking-[0.3em] uppercase text-white/90">Curadoria Humana em Progresso</span>
+                          <span className="text-[11px] font-display font-bold tracking-[0.2em] uppercase text-white/90">Curadoria Humana em Progresso</span>
                         </div>
 
                         <div className="flex flex-col items-center gap-1.5">
@@ -682,7 +675,7 @@ export default function FeatureShowcase() {
                           <div className="absolute inset-0 bg-black/30" />
                           <div className="absolute bottom-8 left-12">
                             <h5 className="text-[10px] font-bold text-white/90 tracking-[0.5em] uppercase mb-2">Seu Roteiro Personalizado</h5>
-                            <h4 className="text-5xl font-display text-white">Chapada <span className="italic font-extralight text-[#E4DBCC]">Dos Veadeiros</span></h4>
+                            <h4 className="text-5xl font-display text-white">Chapada <span className="italic font-extralight text-[#E4DBCC]">dos Veadeiros</span></h4>
                           </div>
                         </div>
 
@@ -690,7 +683,7 @@ export default function FeatureShowcase() {
                           {[
                             { day: '01', title: 'Cachoeira do Dragão', desc: 'Sua escolha: Uma das trilhas mais místicas e exclusivas da Chapada.', img: storageUrl('cachoeiras/dragao-1.jpg') },
                             { day: '02', title: 'Voo de Balão ao Amanhecer', desc: 'Sua escolha: Contemplação única do cerrado seguida de estadia no Amaná.', img: storageUrl('experiencias/balao-1.jpg') },
-                            { day: '03', title: 'Cachoeira da Curriola', desc: 'Sua escolha: O refúgio perfeito com registro profissional de drone.', img: storageUrl('cachoeiras/curriola-guardiao-1.jpg') },
+                            { day: '03', title: 'Cachoeira da Prata', desc: 'Sua escolha: O refúgio perfeito com registro profissional de drone.', img: storageUrl('cachoeiras/prata-1.jpg') },
                           ].map((d, i) => (
                             <motion.div
                               key={i}
@@ -707,7 +700,7 @@ export default function FeatureShowcase() {
                                   <span className="text-[#A88B4C] text-[10px] font-bold tracking-widest uppercase">Dia {d.day}</span>
                                   <div className="w-12 h-[1px] bg-[#A88B4C]/20" />
                                 </div>
-                                <h5 className="text-[14px] font-bold text-[#1B291C] uppercase tracking-wider mb-2">{d.title}</h5>
+                                <h5 className="text-[14px] font-display font-bold text-[#1B291C] uppercase tracking-wider mb-2">{d.title}</h5>
                                 <p className="text-[12.5px] font-light text-[#2C3E2D]/60 leading-relaxed max-w-md">{d.desc}</p>
                               </div>
                             </motion.div>
@@ -747,7 +740,7 @@ export default function FeatureShowcase() {
             transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
           >
             <img
-              src={storageUrl("home/flower-symbol.png")}
+              src={storageUrl("home/simboloatmos.png")}
               alt="Atmos Symbol"
               className="w-16 h-16 object-contain"
               style={{ filter: "invert(41%) sepia(20%) saturate(464%) hue-rotate(58deg) brightness(95%) contrast(84%)" }}

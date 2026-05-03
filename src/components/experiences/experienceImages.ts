@@ -17,23 +17,25 @@ export const experienceSpecifics: Record<string, string> = {
 
 /** Hook: dynamically lists all images for an experience from Storage */
 export function useExperienceGallery(imageKey: string, namePt?: string, id?: string) {
-  // Use both imageKey and slugified name as potential prefixes
-  const slug = namePt ? namePt.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-').replace(/[^\w-]/g, '') : "";
-  const query = useStorageImages("experiencias", imageKey);
-  const slugQuery = useStorageImages("experiencias", slug, !!slug && slug !== imageKey);
+  // Use both imageKey and namePt as potential prefixes
+  const query = useStorageImages("produtos/experiencias", imageKey);
+  const nameQuery = useStorageImages("produtos/experiencias", namePt || "", !!namePt);
 
-  const fallbackPath = (id && experienceSpecifics[id]) || `experiencias/${imageKey}-1.jpg`;
+  const fallbackPath = (id && experienceSpecifics[id]) 
+    ? (experienceSpecifics[id].startsWith('produtos') ? experienceSpecifics[id] : `produtos/experiencias/${experienceSpecifics[id].split('/').pop()}`)
+    : `produtos/experiencias/${imageKey}/${imageKey}-1.jpg`;
+    
   const fallback = [storageUrl(fallbackPath)];
 
   const images = (query.data && query.data.length > 0) 
     ? query.data 
-    : (slugQuery.data && slugQuery.data.length > 0) 
-    ? slugQuery.data 
+    : (nameQuery.data && nameQuery.data.length > 0) 
+    ? nameQuery.data 
     : fallback;
 
   return {
     images,
-    isLoading: query.isLoading || slugQuery.isLoading,
+    isLoading: query.isLoading || nameQuery.isLoading,
   };
 }
 
@@ -42,14 +44,15 @@ export function getCardImage(id: string, imageKey?: string): string {
   if (!id) return "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&q=80";
   
   if (experienceSpecifics[id]) {
-    return storageUrl(experienceSpecifics[id]);
+    const path = experienceSpecifics[id];
+    return storageUrl(path.startsWith('produtos') ? path : `produtos/experiencias/${path.split('/').pop()}`);
   }
   
   const key = imageKey || id;
   if (key.startsWith('http')) return key;
   if (key.includes('/')) return storageUrl(key);
   
-  return storageUrl(`experiencias/${key}-1.jpg`);
+  return storageUrl(`produtos/experiencias/${key}/${key}-1.jpg`);
 }
 
 /** Legacy sync function — kept for backward compatibility */

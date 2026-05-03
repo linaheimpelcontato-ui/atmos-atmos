@@ -57,3 +57,36 @@ export function optimizedUrl(path: string, opts?: OptimizedOptions): string {
 
   return `https://wsrv.nl/?url=${encodeURIComponent(absoluteUrl)}&w=${width}&q=${quality}&output=webp`;
 }
+
+/** 
+ * Cleans a string for matching: no accents, lowercase, only letters/numbers 
+ */
+export const normalize = (str: string) => 
+  str.normalize("NFD")
+     .replace(/[\u0300-\u036f]/g, "")
+     .toLowerCase()
+     .replace(/[^a-z0-9]+/g, "-")
+     .replace(/(^-|-$)/g, "");
+
+/**
+ * Flexible matching for images.
+ * Matches if the filename contains the product name OR vice-versa.
+ */
+export function isImageMatch(fullKey: string, prefix: string, rawName?: string): boolean {
+  const fileName = fullKey.split('/').pop() || "";
+  const nameWithoutExt = fileName.split('.').shift() || "";
+  const normFile = normalize(nameWithoutExt).replace(/-\d+$/, ""); // remove trailing numbers
+  const normPrefix = normalize(prefix);
+  const normRaw = rawName ? normalize(rawName) : normPrefix;
+  const normFullKey = normalize(fullKey);
+
+  // 1. Check if filename matches
+  if (normFile.includes(normPrefix) || normPrefix.includes(normFile)) return true;
+  if (normFile.includes(normRaw) || normRaw.includes(normFile)) return true;
+
+  // 2. Check if the product identifier is anywhere in the full path (folder name)
+  if (normFullKey.includes(normPrefix) || normFullKey.includes(normRaw)) return true;
+
+  return false;
+}
+
