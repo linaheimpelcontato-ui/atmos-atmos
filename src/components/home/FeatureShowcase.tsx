@@ -59,8 +59,8 @@ const CURATION_CATEGORIES_DATA = {
     { t: "COUROS", d: "ALTO PARAÍSO", img: "produtos/cachoeiras/couros/couros-1.jpg" }
   ],
   EXPERIÊNCIAS: [
-    { t: "VOO DE BALÃO", d: "ALTO PARAÍSO", img: "experiencias/voo-balao-1.jpg" },
-    { t: "PASSEIO A CAVALO", d: "FAZENDA SÃO BENTO", img: "experiencias/cavalo-1.jpg" }
+    { t: "VOO DE BALÃO", d: "ALTO PARAÍSO", img: "produtos/experiencias/voo-de-balao/voo-de-balao-1.jpg" },
+    { t: "PASSEIO A CAVALO", d: "FAZENDA SÃO BENTO", img: "produtos/experiencias/passeio-a-cavalo/passeio-a-cavalo-1.jpg" }
   ]
 };
 
@@ -68,7 +68,6 @@ export default function FeatureShowcase() {
   const [step, setStep] = useState(0);
   const [subStep, setSubStep] = useState(0);
   const [progress, setProgress] = useState(0);
-  const [isReady, setIsReady] = useState(false);
 
   // Helper to force production URL for uploaded assets, ensuring sync with Admin Panel
   const getProductionUrl = (path: string) => {
@@ -76,14 +75,13 @@ export default function FeatureShowcase() {
     if (path.startsWith("http")) return path;
     const cleanPath = path.replace(/^\//, "");
     // Force production assets domain for images starting with 'produtos/' or 'destaques-categorias/'
-    // We also include 'experiencias/' here as it's a root folder in storage
-    if (cleanPath.startsWith("produtos/") || cleanPath.startsWith("destaques-categorias/") || cleanPath.startsWith("experiencias/")) {
+    if (cleanPath.startsWith("produtos/") || cleanPath.startsWith("destaques-categorias/")) {
       return `https://assets.atmos.tur.br/${encodeURI(cleanPath)}`;
     }
     return storageUrl(cleanPath);
   };
 
-  // Preload all critical emulator images with a READY state gate
+  // Preload all critical emulator images in the background to prevent black screens/flickering
   useEffect(() => {
     const allImages = [
       "destaques-categorias/Cachoeira-Destaque-1.jpg",
@@ -96,35 +94,13 @@ export default function FeatureShowcase() {
       ...CURATION_CATEGORIES_DATA.EXPERIÊNCIAS.map(p => p.img)
     ];
 
-    let loaded = 0;
-    const total = allImages.length;
-
-    if (total === 0) {
-      setIsReady(true);
-      return;
-    }
-
     allImages.forEach(path => {
       const img = new Image();
-      img.onload = () => {
-        loaded++;
-        if (loaded >= total) setIsReady(true);
-      };
-      img.onerror = () => {
-        loaded++; // Don't block if one fails
-        if (loaded >= total) setIsReady(true);
-      };
       img.src = getProductionUrl(path);
     });
-
-    // Safety timeout to show content even if some assets take too long
-    const timer = setTimeout(() => setIsReady(true), 4000);
-    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    if (!isReady) return;
-
     const duration = step === 1 ? 16000 : 6000; 
     const startTime = Date.now();
     
@@ -146,31 +122,10 @@ export default function FeatureShowcase() {
     }, 50);
 
     return () => clearInterval(interval);
-  }, [step, isReady]);
+  }, [step]);
 
   const currentStep = JOURNEY_STEPS[step];
   const Icon = currentStep.icon;
-
-  if (!isReady) {
-    return (
-      <div className="h-screen bg-white flex flex-col items-center justify-center">
-        <motion.img 
-          src={logoAtmos} 
-          className="h-12 mb-8" 
-          animate={{ opacity: [0.3, 0.6, 0.3] }}
-          transition={{ duration: 2, repeat: Infinity }}
-        />
-        <div className="w-48 h-[1px] bg-[#2C3E2D]/10 relative overflow-hidden">
-          <motion.div 
-            className="absolute inset-0 bg-[#2C3E2D]"
-            initial={{ x: "-100%" }}
-            animate={{ x: "100%" }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-          />
-        </div>
-      </div>
-    );
-  }
 
   return (
     <section className="min-h-screen lg:h-screen lg:min-h-[850px] bg-white flex items-center relative overflow-hidden py-12 lg:py-20">
