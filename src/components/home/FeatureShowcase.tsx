@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Heart, Sparkles, Users, Map, ArrowRight, Calendar, Search } from 'lucide-react';
+import { User, Heart, Sparkles, Users, Map, ArrowRight, Calendar, Search, ChevronRight } from 'lucide-react';
 import { storageUrl } from '@/lib/storage';
 
 const logoAtmos = storageUrl("home/logo-atmos.png");
@@ -516,6 +516,7 @@ export default function FeatureShowcase() {
                                     <p className="text-[7px] text-white/70 uppercase tracking-widest mt-0.5">{item.d}</p>
                                   </div>
                                 </div>
+                              </motion.div>
                             ))}
                           </div>
 
