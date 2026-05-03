@@ -137,7 +137,7 @@ export default function FeatureShowcase() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-24 items-start">
           
           {/* Left Column: Content */}
-          <div className="lg:col-span-5 flex flex-col gap-10 lg:gap-0 lg:justify-between lg:h-[75vh] lg:max-h-[680px] py-2">
+          <div className="lg:col-span-5 flex flex-col gap-8 lg:gap-0 lg:justify-between lg:h-[75vh] lg:max-h-[680px] py-2 overflow-y-auto no-scrollbar">
             
             {/* Header Area */}
             <div>
@@ -183,7 +183,7 @@ export default function FeatureShowcase() {
                     <button 
                       key={s.id}
                       onClick={() => { setStep(i); setProgress(0); }}
-                      className="flex flex-col items-center group relative"
+                      className="flex flex-col items-center group flex-1"
                     >
                       <motion.div 
                         animate={{ 
@@ -191,11 +191,11 @@ export default function FeatureShowcase() {
                           backgroundColor: (isActive || isDone) ? s.accentColor : '#F5F5F3',
                           color: (isActive || isDone) ? '#FFFFFF' : '#2C3E2D'
                         }}
-                        className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold z-10 shadow-sm transition-colors mb-4"
+                        className="w-9 h-9 lg:w-10 lg:h-10 rounded-full flex items-center justify-center text-[10px] font-bold z-10 shadow-sm transition-colors mb-3"
                       >
                         {i + 1}
                       </motion.div>
-                      <span className={`text-[8px] font-bold tracking-[0.25em] transition-all whitespace-nowrap absolute -bottom-8 ${isActive ? 'text-[#2C3E2D]' : 'text-[#2C3E2D]/30'}`}>
+                      <span className={`text-[7px] lg:text-[8px] font-bold tracking-[0.25em] transition-all uppercase text-center h-4 ${isActive ? 'text-[#2C3E2D]' : 'text-[#2C3E2D]/30'}`}>
                         {s.label}
                       </span>
                     </button>
@@ -467,7 +467,12 @@ export default function FeatureShowcase() {
                            <h5 className="text-sm font-display text-[#2C3E2D] uppercase mt-1">Favoritos Atmos</h5>
                          </div>
                          <div className="grid grid-cols-2 gap-3">
-                           {[1,2,3,4].map(i => (
+                           {[
+                             "produtos/cachoeiras/bocaina-do-farias/bocaina-do-farias-1.jpg",
+                             "produtos/cachoeiras/couros/couros-1.jpg",
+                             "produtos/experiencias/voo-de-balao/voo-de-balao-1.jpg",
+                             "produtos/experiencias/passeio-a-cavalo/passeio-a-cavalo-1.jpg"
+                           ].map((img, i) => (
                              <motion.div 
                                key={i}
                                initial={{ scale: 0.8, opacity: 0 }}
@@ -475,7 +480,7 @@ export default function FeatureShowcase() {
                                transition={{ delay: i * 0.1 }}
                                className="aspect-[4/5] rounded-2xl overflow-hidden relative shadow-lg group"
                              >
-                               <img src={getProductionUrl(`produtos/CACHOEIRAS/Dragão/Dragão-${i}.jpg`)} className="w-full h-full object-cover" />
+                               <img src={getProductionUrl(img)} className="w-full h-full object-cover" />
                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent p-3 flex flex-col justify-end">
                                  <Heart className="w-4 h-4 text-white fill-white mb-2" />
                                  <div className="h-1.5 w-12 bg-white/30 rounded" />
@@ -494,7 +499,7 @@ export default function FeatureShowcase() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         className="absolute inset-0 bg-cover bg-center"
-                        style={{ backgroundImage: `url(${getProductionUrl("produtos/CACHOEIRAS/Dragão/Dragão-5.jpg")})` }}
+                        style={{ backgroundImage: `url(${getProductionUrl("produtos/cachoeiras/bocaina-do-farias/bocaina-do-farias-1.jpg")})` }}
                       >
                         <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
                         <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
@@ -534,7 +539,7 @@ export default function FeatureShowcase() {
                         <div className="w-1/3 bg-[#1B291C] h-full flex flex-col p-4 border-r border-white/5">
                            <div className="flex-1">
                              <div className="w-full aspect-[4/5] rounded-2xl bg-white/5 overflow-hidden mb-4 border border-white/10 relative">
-                               <img src={getProductionUrl("produtos/CACHOEIRAS/Dragão/Dragão-1.jpg")} className="w-full h-full object-cover opacity-50" />
+                               <img src={getProductionUrl("produtos/cachoeiras/couros/couros-1.jpg")} className="w-full h-full object-cover opacity-50" />
                                <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
                                   <span className="text-[6px] text-white/40 tracking-[0.3em] uppercase text-center mb-1">Itinerário Exclusivo</span>
                                   <div className="h-[1px] w-8 bg-white/20 mb-4" />
@@ -581,7 +586,7 @@ export default function FeatureShowcase() {
                                      <span className="text-[6px] font-bold text-[#A88B4C] tracking-widest uppercase">DIA 0{i}</span>
                                      <div className="h-[1px] flex-1 bg-[#A88B4C]/20" />
                                    </div>
-                                   <h6 className="text-[8px] font-bold text-[#2C3E2D] uppercase tracking-wider mb-1">Cachoeira do Dragão</h6>
+                                   <h6 className="text-[8px] font-bold text-[#2C3E2D] uppercase tracking-wider mb-1">Cachoeira dos Couros</h6>
                                    <p className="text-[6px] text-black/40 leading-relaxed">Uma das trilhas mais místicas da Chapada.</p>
                                 </motion.div>
                               ))}
