@@ -251,7 +251,7 @@ export default function ExperienceEcosystem() {
                 className="flex flex-col items-center flex-1 min-w-[250px] max-w-[300px] group"
               >
                 {/* Extreme Proximity: Negative margin to stick text to symbol */}
-                <div className="mb-4 relative transition-transform duration-500 group-hover:scale-110 flex items-center justify-center">
+                <div className="mb-[-40px] relative transition-transform duration-500 group-hover:scale-110 flex items-center justify-center">
                   <div 
                     style={{ 
                       maskImage: `url(${pillar.image})`, 
@@ -264,7 +264,7 @@ export default function ExperienceEcosystem() {
                       maskPosition: 'center',
                       WebkitMaskPosition: 'center'
                     }}
-                    className="w-32 h-32"
+                    className="w-48 h-48"
                     role="img"
                     aria-label={pillar.title}
                   />
