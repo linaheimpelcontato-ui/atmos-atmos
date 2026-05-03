@@ -397,219 +397,193 @@ export default function MonteSeuRoteiro() {
             </p>
           </div>
 
-          {/* New Category Menu with Photos */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
-            {TABS.map((tab) => {
-              const isActive = activeTab === tab.id;
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => {
-                    setActiveTab(tab.id);
-                    setSearchQuery("");
-                    setAccRegionFilter([]);
-                    setAccTypeFilter([]);
-                    setAccPriceFilter([0, 5000]);
-                    setAccUnitsFilter([0, 50]);
-                    setAccCapacityFilter([0, 50]);
-                    setAccAmenityFilter([]);
-                    
-                    setWfRegionFilter([]);
-                    setWfDifficultyFilter([]);
-                    setWfSeasonalityFilter([]);
-                    setWfTrailFilter([0, 20]);
-                    setWfCarDistanceFilter([0, 200]);
-                    setExpCategoryFilter([]);
-                    setExpPriceFilter([0, 2000]);
-                    setSrvCategoryFilter([]);
-                  }}
-                  className={`group relative h-48 md:h-72 overflow-hidden transition-all duration-700 rounded-[2px] ${
-                    isActive ? "ring-2 ring-[#1A261B] ring-offset-4" : "opacity-90 hover:opacity-100"
-                  }`}
-                >
-                  {/* Background Image */}
-                  <img
-                    src={tab.image}
-                    alt={tab.label}
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
-                  />
-                  {/* Overlay */}
-                  <div className={`absolute inset-0 transition-colors duration-500 ${
-                    isActive ? "bg-[#1A261B]/40" : "bg-black/40 group-hover:bg-black/20"
-                  }`} />
-                  
-                  {/* Content */}
-                  <div className="relative h-full flex items-center justify-center text-white p-6">
-                    <h3 className="text-xl md:text-2xl font-display uppercase tracking-[0.3em] font-light text-center">{tab.label}</h3>
-                  </div>
+          {/* Sticky Navigation & Filters Container */}
+          <div className="sticky top-[80px] md:top-[112px] z-40 bg-white/95 backdrop-blur-md pt-4 pb-6 -mx-6 px-6 border-b border-[#1A261B]/5 transition-all duration-300">
+            {/* Category Menu with Photos */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+              {TABS.map((tab) => {
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      setActiveTab(tab.id);
+                      setSearchQuery("");
+                      // ... (rest of reset logic)
+                      setAccRegionFilter([]);
+                      setAccTypeFilter([]);
+                      setAccPriceFilter([0, 5000]);
+                      setAccUnitsFilter([0, 50]);
+                      setAccCapacityFilter([0, 50]);
+                      setAccAmenityFilter([]);
+                      
+                      setWfRegionFilter([]);
+                      setWfDifficultyFilter([]);
+                      setWfSeasonalityFilter([]);
+                      setWfTrailFilter([0, 20]);
+                      setWfCarDistanceFilter([0, 200]);
+                      setExpCategoryFilter([]);
+                      setExpPriceFilter([0, 2000]);
+                      setSrvCategoryFilter([]);
+                      
+                      // Smooth scroll back to start of products when switching tab
+                      const catalogElement = document.getElementById("catalog-grid");
+                      if (catalogElement) {
+                        const offset = 280; // Approximate height of sticky header
+                        const bodyRect = document.body.getBoundingClientRect().top;
+                        const elementRect = catalogElement.getBoundingClientRect().top;
+                        const elementPosition = elementRect - bodyRect;
+                        const offsetPosition = elementPosition - offset;
 
-                  {/* Active Indicator Bar */}
-                  {isActive && (
-                    <motion.div 
-                      layoutId="activeTab"
-                      className="absolute bottom-0 left-0 right-0 h-1 bg-white"
+                        window.scrollTo({
+                          top: offsetPosition,
+                          behavior: "smooth"
+                        });
+                      }
+                    }}
+                    className={`group relative h-20 md:h-28 overflow-hidden transition-all duration-500 rounded-lg ${
+                      isActive ? "ring-2 ring-[#1A261B] ring-offset-2" : "opacity-80 hover:opacity-100"
+                    }`}
+                  >
+                    {/* Background Image */}
+                    <img
+                      src={tab.image}
+                      alt={tab.label}
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                     />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Search and Filters Area */}
-          <div className="max-w-7xl mx-auto w-full mb-16 flex flex-col gap-4">
-            
-            {/* Search Bar */}
-            <div className="relative w-full max-w-[320px]">
-              <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#2C3E2D]/40" />
-              <input
-                type="text"
-                placeholder={language === "pt" ? "Buscar por nome..." : "Search by name..."}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#FAF9F6] border border-[#2C3E2D]/10 rounded-full py-3.5 pl-12 pr-6 text-sm text-[#1A261B] focus:outline-none focus:ring-1 focus:ring-[#2C3E2D]/30 transition-all placeholder:text-[#2C3E2D]/40 shadow-sm"
-              />
+                    {/* Overlay */}
+                    <div className={`absolute inset-0 transition-colors duration-500 ${
+                      isActive ? "bg-[#1A261B]/50" : "bg-black/40 group-hover:bg-black/20"
+                    }`} />
+                    
+                    {/* Content */}
+                    <div className="relative h-full flex items-center justify-center text-white p-2">
+                      <h3 className="text-xs md:text-sm font-display uppercase tracking-[0.2em] font-medium text-center">{tab.label}</h3>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
 
-            {/* Dynamic Dropdown Filters */}
-            <div className="w-full relative">
-              <AnimatePresence mode="popLayout">
-                <motion.div
-                  key={activeTab + "-filters"}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="flex flex-wrap items-center justify-start gap-3"
-                >
-                  {activeTab === 'hospedagens' && (
-                    <>
-                      <FilterMultiSelect 
-                        value={accRegionFilter}
-                        onChange={setAccRegionFilter}
-                        options={Object.entries(accRegionLabels).map(([k, v]) => ({ value: k, label: v[currentLang] }))}
-                        defaultLabel={language === "pt" ? "Região" : "Region"}
-                        language={language}
-                      />
-                      <FilterMultiSelect 
-                        value={accTypeFilter}
-                        onChange={setAccTypeFilter}
-                        options={Object.entries(accTypeLabels).map(([k, v]) => ({ value: k, label: v[currentLang] }))}
-                        defaultLabel={language === "pt" ? "Categoria" : "Category"}
-                        language={language}
-                      />
-                      <FilterSlider
-                        label={language === "pt" ? "Preço" : "Price"}
-                        value={accPriceFilter}
-                        onChange={setAccPriceFilter}
-                        min={0}
-                        max={5000}
-                        step={100}
-                        unit="/n"
-                      />
-                      <FilterSlider
-                        label={language === "pt" ? "Acomodações" : "Units"}
-                        value={accUnitsFilter}
-                        onChange={setAccUnitsFilter}
-                        min={0}
-                        max={50}
-                      />
-                      <FilterSlider
-                        label={language === "pt" ? "Capacidade" : "Capacity"}
-                        value={accCapacityFilter}
-                        onChange={setAccCapacityFilter}
-                        min={0}
-                        max={50}
-                      />
-                      <FilterMultiSelect 
-                        value={accAmenityFilter}
-                        onChange={setAccAmenityFilter}
-                        options={getAllAmenities().map(a => ({ value: a, label: amenityLabels[a][currentLang] }))}
-                        defaultLabel={language === "pt" ? "Comodidades" : "Amenities"}
-                        language={language}
-                      />
-                    </>
-                  )}
+            {/* Search and Filters Area */}
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+              
+              {/* Search Bar */}
+              <div className="relative w-full max-w-[280px]">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#2C3E2D]/40" />
+                <input
+                  type="text"
+                  placeholder={language === "pt" ? "Buscar..." : "Search..."}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-[#FAF9F6] border border-[#2C3E2D]/10 rounded-full py-2.5 pl-10 pr-4 text-xs text-[#1A261B] focus:outline-none focus:ring-1 focus:ring-[#2C3E2D]/30 transition-all placeholder:text-[#2C3E2D]/40 shadow-sm"
+                />
+              </div>
 
-                  {activeTab === 'waterfalls' && (
-                    <>
-                      <FilterMultiSelect 
-                        value={wfRegionFilter}
-                        onChange={setWfRegionFilter}
-                        options={Object.entries(wfRegionLabels).map(([k, v]) => ({ value: k, label: v[currentLang] }))}
-                        defaultLabel={language === "pt" ? "Região" : "Region"}
-                        language={language}
-                      />
-                      <FilterMultiSelect 
-                        value={wfDifficultyFilter}
-                        onChange={setWfDifficultyFilter}
-                        options={Object.entries(difficultyLabels).map(([k, v]) => ({ value: k, label: v[currentLang] }))}
-                        defaultLabel={language === "pt" ? "Dificuldade" : "Difficulty"}
-                        language={language}
-                      />
-                      <FilterMultiSelect 
-                        value={wfSeasonalityFilter}
-                        onChange={setWfSeasonalityFilter}
-                        options={Object.entries(seasonalityLabels).map(([k, v]) => ({ value: k, label: v[currentLang] }))}
-                        defaultLabel={language === "pt" ? "Sazonalidade" : "Seasonality"}
-                        language={language}
-                      />
-                      <FilterSlider
-                        label={language === "pt" ? "Trilha" : "Trail"}
-                        value={wfTrailFilter}
-                        onChange={setWfTrailFilter}
-                        min={0}
-                        max={20}
-                        step={0.5}
-                        unit="km"
-                      />
-                      <FilterSlider
-                        label={language === "pt" ? "Carro" : "Car"}
-                        value={wfCarDistanceFilter}
-                        onChange={setWfCarDistanceFilter}
-                        min={0}
-                        max={200}
-                        unit="km"
-                      />
-                    </>
-                  )}
+              {/* Dynamic Dropdown Filters */}
+              <div className="flex flex-wrap items-center justify-start gap-2">
+                <AnimatePresence mode="popLayout">
+                  <motion.div
+                    key={activeTab + "-filters"}
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    className="flex flex-wrap items-center justify-start gap-2"
+                  >
+                    {activeTab === 'hospedagens' && (
+                      <>
+                        <FilterMultiSelect 
+                          value={accRegionFilter}
+                          onChange={setAccRegionFilter}
+                          options={Object.entries(accRegionLabels).map(([k, v]) => ({ value: k, label: v[currentLang] }))}
+                          defaultLabel={language === "pt" ? "Região" : "Region"}
+                          language={language}
+                        />
+                        <FilterMultiSelect 
+                          value={accTypeFilter}
+                          onChange={setAccTypeFilter}
+                          options={Object.entries(accTypeLabels).map(([k, v]) => ({ value: k, label: v[currentLang] }))}
+                          defaultLabel={language === "pt" ? "Categoria" : "Category"}
+                          language={language}
+                        />
+                        <FilterSlider
+                          label={language === "pt" ? "Preço" : "Price"}
+                          value={accPriceFilter}
+                          onChange={setAccPriceFilter}
+                          min={0}
+                          max={5000}
+                          step={100}
+                          unit="/n"
+                        />
+                      </>
+                    )}
 
-                  {activeTab === 'experiences' && (
-                    <>
+                    {activeTab === 'waterfalls' && (
+                      <>
+                        <FilterMultiSelect 
+                          value={wfRegionFilter}
+                          onChange={setWfRegionFilter}
+                          options={Object.entries(wfRegionLabels).map(([k, v]) => ({ value: k, label: v[currentLang] }))}
+                          defaultLabel={language === "pt" ? "Região" : "Region"}
+                          language={language}
+                        />
+                        <FilterMultiSelect 
+                          value={wfDifficultyFilter}
+                          onChange={setWfDifficultyFilter}
+                          options={Object.entries(difficultyLabels).map(([k, v]) => ({ value: k, label: v[currentLang] }))}
+                          defaultLabel={language === "pt" ? "Dificuldade" : "Difficulty"}
+                          language={language}
+                        />
+                        <FilterSlider
+                          label={language === "pt" ? "Trilha" : "Trail"}
+                          value={wfTrailFilter}
+                          onChange={setWfTrailFilter}
+                          min={0}
+                          max={20}
+                          step={0.5}
+                          unit="km"
+                        />
+                      </>
+                    )}
+
+                    {activeTab === 'experiences' && (
+                      <>
+                        <FilterMultiSelect 
+                          value={expCategoryFilter}
+                          onChange={setExpCategoryFilter}
+                          options={Object.entries(expCategoryLabels).map(([k, v]) => ({ value: k, label: v[currentLang] }))}
+                          defaultLabel={language === "pt" ? "Categoria" : "Category"}
+                          language={language}
+                        />
+                        <FilterSlider
+                          label={language === "pt" ? "Preço" : "Price"}
+                          value={expPriceFilter}
+                          onChange={setExpPriceFilter}
+                          min={0}
+                          max={2000}
+                          step={50}
+                          unit="R$"
+                        />
+                      </>
+                    )}
+
+                    {activeTab === 'services' && (
                       <FilterMultiSelect 
-                        value={expCategoryFilter}
-                        onChange={setExpCategoryFilter}
-                        options={Object.entries(expCategoryLabels).map(([k, v]) => ({ value: k, label: v[currentLang] }))}
-                        defaultLabel={language === "pt" ? "Categoria" : "Category"}
+                        value={srvCategoryFilter}
+                        onChange={setSrvCategoryFilter}
+                        options={Object.entries(srvCategoryLabels).map(([k, v]) => ({ value: k, label: v[currentLang] }))}
+                        defaultLabel={language === "pt" ? "Todos os Serviços" : "All Services"}
                         language={language}
                       />
-                      <FilterSlider
-                        label={language === "pt" ? "Preço" : "Price"}
-                        value={expPriceFilter}
-                        onChange={setExpPriceFilter}
-                        min={0}
-                        max={2000}
-                        step={50}
-                        unit="R$"
-                      />
-                    </>
-                  )}
-
-                  {activeTab === 'services' && (
-                    <FilterMultiSelect 
-                      value={srvCategoryFilter}
-                      onChange={setSrvCategoryFilter}
-                      options={Object.entries(srvCategoryLabels).map(([k, v]) => ({ value: k, label: v[currentLang] }))}
-                      defaultLabel={language === "pt" ? "Todos os Serviços" : "All Services"}
-                      language={language}
-                    />
-                  )}
-                </motion.div>
-              </AnimatePresence>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
             </div>
           </div>
 
           {/* Selected Category Header */}
-          <div className="max-w-7xl mx-auto w-full mb-10">
+          <div className="max-w-7xl mx-auto w-full mb-10 pt-10" id="catalog-grid">
             <motion.div
               key={activeTab + "-header"}
               initial={{ opacity: 0, x: -10 }}
