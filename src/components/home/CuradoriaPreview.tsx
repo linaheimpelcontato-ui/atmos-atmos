@@ -98,19 +98,16 @@ const CategoryCard = ({ item, isLast }: { item: typeof CATEGORIES[0], isLast: bo
       <div className="absolute inset-x-0 bottom-0 p-8 md:p-12 pb-16 flex flex-col justify-end items-center md:items-start text-center md:text-left translate-y-4 hover:translate-y-0 transition-transform duration-700">
         
         {/* BIG NUMBERS - High Contrast & Minimalist */}
-        <div className="flex flex-col mb-4 items-center md:items-start">
-          <span className="text-[32px] md:text-[42px] font-sans font-light text-white tracking-tight leading-none">
+        <div className="flex flex-col mb-1 items-center md:items-start">
+          <span className="text-[42px] md:text-[54px] font-sans font-light text-white tracking-tighter leading-none">
             {item.bigNumber}
-          </span>
-          <span className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-bold mt-1.5">
-            {item.unit}
           </span>
         </div>
 
-        <h3 className="text-[16px] font-sans font-bold tracking-[0.3em] text-white uppercase mb-3">
+        <h3 className="text-[18px] md:text-[20px] font-sans font-bold tracking-[0.3em] text-white uppercase mb-4">
           {item.title}
         </h3>
-        <p className="text-[14px] font-sans font-light leading-relaxed text-white/70 max-w-[200px] md:max-w-xs transition-opacity duration-700">
+        <p className="text-[14px] font-sans font-light leading-relaxed text-white/70 max-w-[240px] md:max-w-xs transition-opacity duration-700">
           {item.description}
         </p>
 
