@@ -60,7 +60,7 @@ const CURATION_CATEGORIES_DATA = {
   ],
   EXPERIÊNCIAS: [
     { t: "VOO DE BALÃO", d: "ALTO PARAÍSO", img: "produtos/experiencias/voo-de-balao/voo-de-balao-1.jpg" },
-    { t: "PASSEIO A CAVALO", d: "FAZENDA SÃO BENTO", img: "produtos/experiencias/passeio-a-cavalo/passeio-a-cavalo-1.jpg" }
+    { t: "PASSEIO A CAVALO", d: "FAZENDA SÃO BENTO", img: "produtos/experiencias/passeio-a-cavalo/passeio-a-cavalo-1.jpeg" }
   ]
 };
 
@@ -99,7 +99,7 @@ export default function FeatureShowcase() {
       "produtos/cachoeiras/bocaina-do-farias/bocaina-do-farias-1.jpg",
       "produtos/cachoeiras/couros/couros-1.jpg",
       "produtos/experiencias/voo-de-balao/voo-de-balao-1.jpg",
-      "produtos/experiencias/passeio-a-cavalo/passeio-a-cavalo-1.jpg"
+      "produtos/experiencias/passeio-a-cavalo/passeio-a-cavalo-1.jpeg"
     ];
 
     allImages.forEach(path => {
@@ -387,18 +387,22 @@ export default function FeatureShowcase() {
                                   className="p-4 space-y-4"
                                 >
                                   {CURATION_CATEGORIES_DATA.CACHOEIRAS.map((item, i) => {
-                                    const isLiked = (subStep >= 1) || (subStep === 0 && i === 0);
+                                    // Simulated like: Item 1 likes early, Item 2 likes mid-scroll
+                                    const isLiked = i === 0 ? progress > 8 : progress > 32;
                                     return (
                                       <div key={i} className="rounded-2xl overflow-hidden bg-white shadow-sm border border-black/5">
                                         <div className="aspect-video relative">
                                           <img src={getProductionUrl(item.img)} className="w-full h-full object-cover" />
                                           <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/40 backdrop-blur-md flex items-center justify-center">
                                             <motion.div
-                                              animate={{ scale: isLiked ? [1, 1.4, 1] : 1 }}
+                                              animate={{ 
+                                                scale: isLiked ? [1, 1.4, 1] : 1,
+                                                color: isLiked ? "#540202" : "#FFFFFF"
+                                              }}
                                               transition={{ duration: 0.3 }}
                                             >
                                               <Heart 
-                                                className={`w-4 h-4 ${isLiked ? "text-[#540202] fill-[#540202]" : "text-white"}`} 
+                                                className={`w-4 h-4 ${isLiked ? "fill-[#540202]" : ""}`} 
                                               />
                                             </motion.div>
                                           </div>
@@ -431,18 +435,22 @@ export default function FeatureShowcase() {
                                   className="p-4 space-y-4"
                                 >
                                   {CURATION_CATEGORIES_DATA.EXPERIÊNCIAS.map((item, i) => {
-                                    const isLiked = (subStep >= 3) || (subStep === 2 && i === 0);
+                                    // Simulated like: Item 1 likes early in sub-phase, Item 2 likes mid-scroll
+                                    const isLiked = i === 0 ? progress > 58 : progress > 82;
                                     return (
                                       <div key={i} className="rounded-2xl overflow-hidden bg-white shadow-sm border border-black/5">
                                         <div className="aspect-video relative">
                                           <img src={getProductionUrl(item.img)} className="w-full h-full object-cover" />
                                           <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/40 backdrop-blur-md flex items-center justify-center">
                                             <motion.div
-                                              animate={{ scale: isLiked ? [1, 1.4, 1] : 1 }}
+                                              animate={{ 
+                                                scale: isLiked ? [1, 1.4, 1] : 1,
+                                                color: isLiked ? "#540202" : "#FFFFFF"
+                                              }}
                                               transition={{ duration: 0.3 }}
                                             >
                                               <Heart 
-                                                className={`w-4 h-4 ${isLiked ? "text-[#540202] fill-[#540202]" : "text-white"}`} 
+                                                className={`w-4 h-4 ${isLiked ? "fill-[#540202]" : ""}`} 
                                               />
                                             </motion.div>
                                           </div>
