@@ -366,7 +366,7 @@ export default function FeatureShowcase() {
                           </div>
                         </div>
 
-                        {/* Product List Content with ALL 4 LIKES Simulation */}
+                        {/* Product List Content with STAGGERED LIKES Simulation */}
                         <div className="flex-1 relative overflow-hidden bg-[#FAF9F6]">
                           <AnimatePresence mode="wait">
                             {/* SUB-PHASE 0-1: WATERFALLS */}
@@ -383,27 +383,30 @@ export default function FeatureShowcase() {
                                   transition={{ duration: 5, ease: "easeInOut", repeat: Infinity, repeatType: "reverse" }}
                                   className="p-4 space-y-4"
                                 >
-                                  {CURATION_CATEGORIES_DATA.CACHOEIRAS.map((item, i) => (
-                                    <div key={i} className="rounded-2xl overflow-hidden bg-white shadow-sm border border-black/5">
-                                      <div className="aspect-video relative">
-                                        <img src={getProductionUrl(item.img)} className="w-full h-full object-cover" />
-                                        <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/40 backdrop-blur-md flex items-center justify-center">
-                                          <motion.div
-                                            animate={{ scale: (subStep >= 1) ? [1, 1.4, 1] : 1 }}
-                                            transition={{ delay: i * 0.4 }}
-                                          >
-                                            <Heart 
-                                              className={`w-4 h-4 ${(subStep >= 1) ? "text-[#540202] fill-[#540202]" : "text-white"}`} 
-                                            />
-                                          </motion.div>
+                                  {CURATION_CATEGORIES_DATA.CACHOEIRAS.map((item, i) => {
+                                    const isLiked = (subStep >= 1) || (subStep === 0 && i === 0);
+                                    return (
+                                      <div key={i} className="rounded-2xl overflow-hidden bg-white shadow-sm border border-black/5">
+                                        <div className="aspect-video relative">
+                                          <img src={getProductionUrl(item.img)} className="w-full h-full object-cover" />
+                                          <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/40 backdrop-blur-md flex items-center justify-center">
+                                            <motion.div
+                                              animate={{ scale: isLiked ? [1, 1.4, 1] : 1 }}
+                                              transition={{ duration: 0.3 }}
+                                            >
+                                              <Heart 
+                                                className={`w-4 h-4 ${isLiked ? "text-[#540202] fill-[#540202]" : "text-white"}`} 
+                                              />
+                                            </motion.div>
+                                          </div>
+                                        </div>
+                                        <div className="p-3">
+                                          <h6 className="text-[10px] font-bold text-[#2C3E2D] uppercase tracking-widest">{item.t}</h6>
+                                          <p className="text-[8px] text-black/40 uppercase tracking-widest mt-0.5">{item.d}</p>
                                         </div>
                                       </div>
-                                      <div className="p-3">
-                                        <h6 className="text-[10px] font-bold text-[#2C3E2D] uppercase tracking-widest">{item.t}</h6>
-                                        <p className="text-[8px] text-black/40 uppercase tracking-widest mt-0.5">{item.d}</p>
-                                      </div>
-                                    </div>
-                                  ))}
+                                    );
+                                  })}
                                 </motion.div>
                               </motion.div>
                             )}
@@ -422,27 +425,30 @@ export default function FeatureShowcase() {
                                   transition={{ duration: 5, ease: "easeInOut", repeat: Infinity, repeatType: "reverse" }}
                                   className="p-4 space-y-4"
                                 >
-                                  {CURATION_CATEGORIES_DATA.EXPERIÊNCIAS.map((item, i) => (
-                                    <div key={i} className="rounded-2xl overflow-hidden bg-white shadow-sm border border-black/5">
-                                      <div className="aspect-video relative">
-                                        <img src={getProductionUrl(item.img)} className="w-full h-full object-cover" />
-                                        <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/40 backdrop-blur-md flex items-center justify-center">
-                                          <motion.div
-                                            animate={{ scale: (subStep >= 3) ? [1, 1.4, 1] : 1 }}
-                                            transition={{ delay: i * 0.4 }}
-                                          >
-                                            <Heart 
-                                              className={`w-4 h-4 ${(subStep >= 3) ? "text-[#540202] fill-[#540202]" : "text-white"}`} 
-                                            />
-                                          </motion.div>
+                                  {CURATION_CATEGORIES_DATA.EXPERIÊNCIAS.map((item, i) => {
+                                    const isLiked = (subStep >= 3) || (subStep === 2 && i === 0);
+                                    return (
+                                      <div key={i} className="rounded-2xl overflow-hidden bg-white shadow-sm border border-black/5">
+                                        <div className="aspect-video relative">
+                                          <img src={getProductionUrl(item.img)} className="w-full h-full object-cover" />
+                                          <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/40 backdrop-blur-md flex items-center justify-center">
+                                            <motion.div
+                                              animate={{ scale: isLiked ? [1, 1.4, 1] : 1 }}
+                                              transition={{ duration: 0.3 }}
+                                            >
+                                              <Heart 
+                                                className={`w-4 h-4 ${isLiked ? "text-[#540202] fill-[#540202]" : "text-white"}`} 
+                                              />
+                                            </motion.div>
+                                          </div>
+                                        </div>
+                                        <div className="p-3">
+                                          <h6 className="text-[10px] font-bold text-[#2C3E2D] uppercase tracking-widest">{item.t}</h6>
+                                          <p className="text-[8px] text-black/40 uppercase tracking-widest mt-0.5">{item.d}</p>
                                         </div>
                                       </div>
-                                      <div className="p-3">
-                                        <h6 className="text-[10px] font-bold text-[#2C3E2D] uppercase tracking-widest">{item.t}</h6>
-                                        <p className="text-[8px] text-black/40 uppercase tracking-widest mt-0.5">{item.d}</p>
-                                      </div>
-                                    </div>
-                                  ))}
+                                    );
+                                  })}
                                 </motion.div>
                               </motion.div>
                             )}
