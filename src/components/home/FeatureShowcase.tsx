@@ -92,7 +92,9 @@ export default function FeatureShowcase() {
       ...CURATION_CATEGORIES_DATA.CACHOEIRAS.map(p => p.img),
       ...CURATION_CATEGORIES_DATA.EXPERIÊNCIAS.map(p => p.img),
       "produtos/CACHOEIRAS/Dragão/Dragão-1.jpg",
-      "produtos/CACHOEIRAS/Dragão/Dragão-5.jpg"
+      "produtos/CACHOEIRAS/Dragão/Dragão-5.jpg",
+      "brand/logo-horizontal.svg",
+      "home/about-bg.jpg"
     ];
 
     allImages.forEach(path => {
@@ -315,7 +317,7 @@ export default function FeatureShowcase() {
                         {/* Header Fixo do Mockup (Layout Real) */}
                         <div className="bg-white shrink-0 z-30 relative border-b border-black/5">
                           {/* Logo Bar */}
-                          <div className="p-3 flex items-center justify-between">
+                          <div className="p-3 pb-1 flex items-center justify-between">
                             <img src={logoAtmos} className="h-4" alt="Atmos" />
                             <div className="flex gap-2">
                                <Heart className="w-4 h-4 text-[#2C3E2D]" />
@@ -323,8 +325,8 @@ export default function FeatureShowcase() {
                             </div>
                           </div>
 
-                          {/* 4 Category Cards (2x2 Grid for Legibility) */}
-                          <div className="px-4 pb-4">
+                          {/* 4 Category Cards (2x2 Grid with Correct Spacing) */}
+                          <div className="px-4 pt-4 pb-4">
                             <div className="grid grid-cols-2 gap-2">
                               {[
                                 { id: 'wf', label: 'Cachoeiras', img: 'destaques-categorias/Cachoeira-Destaque-1.jpg' },
@@ -360,7 +362,7 @@ export default function FeatureShowcase() {
                           </div>
                         </div>
 
-                        {/* Product List Content with Optimized Auto-Scroll */}
+                        {/* Product List Content with Multiple Likes Simulation */}
                         <div className="flex-1 relative overflow-hidden bg-[#FAF9F6]">
                           <AnimatePresence mode="wait">
                             {/* SUB-PHASE 0-1: WATERFALLS */}
@@ -383,10 +385,11 @@ export default function FeatureShowcase() {
                                         <img src={getProductionUrl(item.img)} className="w-full h-full object-cover" />
                                         <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/40 backdrop-blur-md flex items-center justify-center">
                                           <motion.div
-                                            animate={{ scale: (subStep === 1 && i === 0) ? [1, 1.4, 1] : 1 }}
+                                            animate={{ scale: (subStep === 1) ? [1, 1.4, 1] : 1 }}
+                                            transition={{ delay: i * 0.3 }}
                                           >
                                             <Heart 
-                                              className={`w-4 h-4 ${((subStep === 1 || subStep > 1) && i === 0) ? "text-[#540202] fill-[#540202]" : "text-white"}`} 
+                                              className={`w-4 h-4 ${(subStep >= 1) ? "text-[#540202] fill-[#540202]" : "text-white"}`} 
                                             />
                                           </motion.div>
                                         </div>
@@ -421,10 +424,11 @@ export default function FeatureShowcase() {
                                         <img src={getProductionUrl(item.img)} className="w-full h-full object-cover" />
                                         <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/40 backdrop-blur-md flex items-center justify-center">
                                           <motion.div
-                                            animate={{ scale: (subStep === 3 && i === 0) ? [1, 1.4, 1] : 1 }}
+                                            animate={{ scale: (subStep === 3) ? [1, 1.4, 1] : 1 }}
+                                            transition={{ delay: i * 0.3 }}
                                           >
                                             <Heart 
-                                              className={`w-4 h-4 ${((subStep === 3 || subStep > 3) && i === 0) ? "text-[#540202] fill-[#540202]" : "text-white"}`} 
+                                              className={`w-4 h-4 ${(subStep >= 3) ? "text-[#540202] fill-[#540202]" : "text-white"}`} 
                                             />
                                           </motion.div>
                                         </div>
