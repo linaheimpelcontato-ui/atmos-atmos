@@ -60,7 +60,7 @@ const CURATION_CATEGORIES_DATA = {
   ],
   EXPERIÊNCIAS: [
     { t: "VOO DE BALÃO", d: "ALTO PARAÍSO", img: "produtos/experiencias/voo-de-balao/voo-de-balao-1.jpg" },
-    { t: "PASSEIO A CAVALO", d: "FAZENDA SÃO BENTO", img: "produtos/experiencias/passeio-cavalo/passeio-cavalo-1.jpg" }
+    { t: "PASSEIO A CAVALO", d: "FAZENDA SÃO BENTO", img: "produtos/experiencias/passeio-a-cavalo/passeio-a-cavalo-1.png" }
   ]
 };
 
