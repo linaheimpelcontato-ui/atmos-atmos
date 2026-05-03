@@ -208,8 +208,6 @@ export function getStorageInfo(product: Partial<Product> & { name: string; type:
   const rawName = (product.name as any)?.pt || product.name || "";
   const prefix = (vars.storage_id as string) || normalize(rawName) || product.id || product.tempId || "item";
   
-  console.log(`Storage Info: prefix="${prefix}", rawName="${rawName}"`);
-
   let categoryFolder = "produtos";
   switch (product.type) {
     case "waterfall":
