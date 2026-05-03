@@ -155,7 +155,7 @@ export default function AccommodationFilters({
       <PopoverFilter
         label={l.region}
         icon={<MapPin className="h-4 w-4 text-accent" />}
-        options={getAccRegions().map((r) => ({ value: r, label: accRegionLabels[r][language] }))}
+        options={getAccRegions().map((r) => ({ value: r, label: accRegionLabels[r as AccRegion]?.[language] || String(r).replace(/-/g, " ") }))}
         selectedValues={selectedRegions}
         onChange={(vals) => onRegionsChange(vals as AccRegion[])}
         multiSelect
@@ -165,7 +165,7 @@ export default function AccommodationFilters({
       <PopoverFilter
         label={l.amenities}
         icon={<SlidersHorizontal className="h-4 w-4 text-accent" />}
-        options={getAllAmenities().map((a) => ({ value: a, label: amenityLabels[a][language] }))}
+        options={getAllAmenities().map((a) => ({ value: a, label: amenityLabels[a]?.[language] || String(a).replace(/-/g, " ") }))}
         selectedValues={selectedAmenities}
         onChange={(vals) => onAmenitiesChange(vals as Amenity[])}
         multiSelect

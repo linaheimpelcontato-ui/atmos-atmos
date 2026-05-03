@@ -1,55 +1,23 @@
 const BASE_URL = "https://zjavxhmxrbpidvssrbca.supabase.co";
 const STORAGE_BASE = `${BASE_URL}/storage/v1/object/public/assets`;
-const RENDER_BASE = `${BASE_URL}/storage/v1/render/image/public/assets`;
-
-// Cloudflare R2 Public Domain (configured in .env)
-const R2_DOMAIN = import.meta.env.VITE_R2_DOMAIN || "";
-
-const CATEGORY_MAPPINGS: Record<string, string> = {
-  'experiencias/': 'produtos/EXPERIENCIAS/',
-  'hospedagens/': 'produtos/HOSPEDAGENS/',
-  'servicos/': 'produtos/SERVIÇOS/',
-  'cachoeiras/': 'produtos/cachoeiras/',
-  'roteiros/': 'produtos/ROTEIROS/',
-  'lideranca/': 'home/lideranca/',
-  'home/': 'home/',
-  'duvidas/': 'duvidas/',
-  'preferencias/': 'preferencias/',
-  'monte-seu-roteiro/': 'monte-seu-roteiro/',
-  'proposta-visual-cliente/': 'proposta-visual-cliente/'
-};
 
 /**
- * Maps legacy folder names to the new R2 structure.
- * Helps transition without changing every call in the codebase.
+ * Legacy path mapping for R2. Kept as an identity function to prevent breaking 
+ * imports in r2.ts and shared.tsx, since we've migrated back to Supabase.
  */
 export const MAP_R2_PATH = (path: string): string => {
-  for (const [oldPrefix, newPrefix] of Object.entries(CATEGORY_MAPPINGS)) {
-    if (path.startsWith(oldPrefix)) {
-      const rest = path.slice(oldPrefix.length);
-      return newPrefix + rest;
-    }
-  }
   return path;
 };
 
-/** Returns the public URL for a storage asset */
-export function storageUrl(path: string, provider: 'supabase' | 'r2' = 'r2'): string {
-  // Priority 1: Local assets for core branding (reliable and instant)
-  if (path.startsWith("home/")) {
-    return `/assets/${path}`;
-  }
-
-  // Respect user request: 100% Cloudflare R2
-  if (R2_DOMAIN) {
-    const cleanDomain = R2_DOMAIN.replace(/\/$/, ""); 
-    const domainWithProtocol = cleanDomain.startsWith("http") ? cleanDomain : `https://${cleanDomain}`;
-    const mappedPath = MAP_R2_PATH(path);
-    return `${domainWithProtocol}/${mappedPath}`;
-  }
+/** Returns the public URL for a storage asset directly from Supabase */
+export function storageUrl(path: string): string {
+  // If the path is already a full URL, return it as is
+  if (path.startsWith("http")) return path;
   
-  // Fallback to Supabase ONLY if R2_DOMAIN is missing (safety)
-  return `${STORAGE_BASE}/${path}`;
+  // Clean up leading slashes just in case
+  const cleanPath = path.replace(/^\//, "");
+  
+  return `${STORAGE_BASE}/${cleanPath}`;
 }
 
 interface OptimizedOptions {

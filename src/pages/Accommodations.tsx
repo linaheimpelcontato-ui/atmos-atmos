@@ -75,8 +75,8 @@ const Accommodations = () => {
       const mapped: Accommodation = {
         id: dbProduct.id,
         name: dbProduct.name,
-        region: (dbProduct.segment || (staticIdx > -1 ? merged[staticIdx].region : "alto-paraiso")) as AccRegion,
-        type: (dbVars.type || (staticIdx > -1 ? merged[staticIdx].type : "pousada")) as AccType,
+        region: (dbVars.region || dbProduct.category || (staticIdx > -1 ? merged[staticIdx].region : "alto-paraiso")) as AccRegion,
+        type: (dbVars.type || dbVars.accommodation_type || (staticIdx > -1 ? merged[staticIdx].type : "pousada")) as AccType,
         priceRange: dbVars.priceRange || (staticIdx > -1 ? merged[staticIdx].priceRange : "R$ 0 – R$ 0"),
         capacity: dbVars.capacity || (staticIdx > -1 ? merged[staticIdx].capacity : "2"),
         units: Number(dbVars.units || (staticIdx > -1 ? merged[staticIdx].units : 1)),
@@ -84,9 +84,9 @@ const Accommodations = () => {
         instagram: dbVars.instagram || (staticIdx > -1 ? merged[staticIdx].instagram : undefined),
         amenities: (dbVars.amenities || (staticIdx > -1 ? merged[staticIdx].amenities : [])) as Amenity[],
         description: {
-          pt: dbProduct.description || (staticIdx > -1 ? merged[staticIdx].description.pt : ""),
-          en: (staticIdx > -1 ? merged[staticIdx].description.en : dbProduct.description || ""),
-          es: (staticIdx > -1 ? merged[staticIdx].description.es : dbProduct.description || ""),
+          pt: dbProduct.description || (staticIdx > -1 ? merged[staticIdx].description?.pt || "" : ""),
+          en: (staticIdx > -1 ? merged[staticIdx].description?.en || "" : dbProduct.description || ""),
+          es: (staticIdx > -1 ? merged[staticIdx].description?.es || "" : dbProduct.description || ""),
         },
         imageIndex: staticIdx > -1 ? merged[staticIdx].imageIndex : 1,
         website: dbVars.website || (staticIdx > -1 ? merged[staticIdx].website : undefined),
@@ -94,9 +94,9 @@ const Accommodations = () => {
         email: dbVars.email || (staticIdx > -1 ? merged[staticIdx].email : undefined),
         bookingUrl: dbVars.bookingUrl || (staticIdx > -1 ? merged[staticIdx].bookingUrl : undefined),
         longDescription: {
-          pt: dbVars.longDescription_pt || (staticIdx > -1 ? merged[staticIdx].longDescription?.pt : ""),
-          en: dbVars.longDescription_en || (staticIdx > -1 ? merged[staticIdx].longDescription?.en : ""),
-          es: dbVars.longDescription_es || (staticIdx > -1 ? merged[staticIdx].longDescription?.es : ""),
+          pt: dbVars.longDescription_pt || (staticIdx > -1 ? merged[staticIdx].longDescription?.pt || "" : ""),
+          en: dbVars.longDescription_en || (staticIdx > -1 ? merged[staticIdx].longDescription?.en || "" : ""),
+          es: dbVars.longDescription_es || (staticIdx > -1 ? merged[staticIdx].longDescription?.es || "" : ""),
         }
       };
 

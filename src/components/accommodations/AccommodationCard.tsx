@@ -132,12 +132,12 @@ export default function AccommodationCard({ accommodation, onClick }: Accommodat
             <div className="pt-4 flex flex-col gap-3">
               <div className="h-[1px] w-full bg-white/20" />
               <p className="text-white/80 text-sm line-clamp-2 md:line-clamp-3 font-light leading-relaxed">
-                {accommodation.description[language]}
+                {accommodation.description?.[language]}
               </p>
               <div className="flex flex-wrap gap-2">
                 {topAmenities.map((a) => (
                   <span key={a} className="text-[9px] uppercase font-bold tracking-wider text-white/90 bg-white/10 border border-white/10 px-2.5 py-1 rounded-sm">
-                    {amenityLabels[a][language]}
+                    {amenityLabels[a]?.[language] || String(a).replace(/-/g, " ")}
                   </span>
                 ))}
                 {accommodation.amenities.length > 2 && (
