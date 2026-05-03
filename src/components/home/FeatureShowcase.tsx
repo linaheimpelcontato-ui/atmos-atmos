@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, useInView } from 'framer-motion';
+import { motion, AnimatePresence, useInView, useScroll, useMotionValueEvent } from 'framer-motion';
 import { Search, Heart, User, CheckCircle2, ClipboardList, Map, Calendar, ArrowRight, Users } from 'lucide-react';
 import { storageUrl } from '@/lib/storage';
 const logoAtmos = storageUrl("home/logo-atmos.png");
@@ -113,14 +113,20 @@ export default function FeatureShowcase() {
   const sectionRef = useRef(null);
   const isInView = useInView(sectionRef, { amount: 0.3 });
 
-  useEffect(() => {
-    if (!isInView) return; // Only run if section is in view
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end end"]
+  });
 
-    const timer = setInterval(() => {
-      setStep((prev) => (prev + 1) % JOURNEY_STEPS.length);
-    }, 20000); // Progresses every 20 seconds
-    return () => clearInterval(timer);
-  }, [step, isInView]);
+  useMotionValueEvent(scrollYProgress, "change", (latest) => {
+    const newStep = Math.min(
+      Math.floor(latest * JOURNEY_STEPS.length),
+      JOURNEY_STEPS.length - 1
+    );
+    if (newStep !== step) {
+      setStep(newStep);
+    }
+  });
 
   // Secondary timer to cycle through categories during Step 2
   useEffect(() => {
@@ -139,8 +145,9 @@ export default function FeatureShowcase() {
   const currentStep = JOURNEY_STEPS[step];
 
   return (
-    <section ref={sectionRef} className="bg-white pb-16 pt-24 md:pt-32 relative overflow-hidden font-poppins">
-      <div className="max-w-7xl mx-auto px-6">
+    <section ref={sectionRef} className="bg-white relative h-[500vh]">
+      <div className="sticky top-0 h-screen flex flex-col justify-center overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 w-full">
 
         {/* Section Header: Minimalist Editorial Design */}
         <div className="text-center mb-12 relative">
@@ -746,6 +753,7 @@ export default function FeatureShowcase() {
               style={{ filter: "invert(41%) sepia(20%) saturate(464%) hue-rotate(58deg) brightness(95%) contrast(84%)" }}
             />
           </motion.div>
+        </div>
         </div>
       </div>
     </section>
