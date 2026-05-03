@@ -131,20 +131,20 @@ export default function FeatureShowcase() {
   const Icon = currentStep.icon;
 
   return (
-    <section className="h-screen min-h-[850px] bg-white flex items-center relative overflow-hidden py-16">
+    <section className="min-h-screen lg:h-screen lg:min-h-[850px] bg-white flex items-center relative overflow-hidden py-12 lg:py-20">
       <div className="max-w-7xl mx-auto px-6 w-full relative z-20 h-full">
         
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-24 items-start">
           
           {/* Left Column: Content */}
-          <div className="lg:col-span-5 flex flex-col justify-between h-[75vh] max-h-[640px] py-2">
+          <div className="lg:col-span-5 flex flex-col gap-10 lg:gap-0 lg:justify-between lg:h-[75vh] lg:max-h-[680px] py-2">
             
             {/* Header Area */}
             <div>
-              <h2 className="text-4xl lg:text-6xl font-display text-[#2C3E2D] mb-4 tracking-tight leading-[0.85] pt-1">
+              <h2 className="text-3xl sm:text-4xl lg:text-6xl font-display text-[#2C3E2D] mb-4 tracking-tight leading-[0.85] pt-1">
                 Como montar seu roteiro
               </h2>
-              <p className="text-sm lg:text-base font-sans text-[#2C3E2D] opacity-60 uppercase tracking-[0.2em] font-semibold mb-8">
+              <p className="text-sm lg:text-base font-sans text-[#2C3E2D] opacity-60 uppercase tracking-[0.2em] font-semibold mb-8 max-w-md">
                 Entenda o que você acessa ao criar seu login gratuito na ATMOS.
               </p>
 
@@ -172,7 +172,7 @@ export default function FeatureShowcase() {
             </div>
 
             {/* Premium Stepper */}
-            <div className="relative my-6 px-4">
+            <div className="relative mt-8 mb-16 lg:my-6 px-4">
               <div className="absolute top-5 left-0 right-0 h-[1px] bg-[#2C3E2D]/10" />
               <div className="flex justify-between relative">
                 {JOURNEY_STEPS.map((s, i) => {
@@ -195,7 +195,7 @@ export default function FeatureShowcase() {
                       >
                         {i + 1}
                       </motion.div>
-                      <span className={`text-[8px] font-bold tracking-[0.25em] transition-all whitespace-nowrap absolute -bottom-6 ${isActive ? 'text-[#2C3E2D]' : 'text-[#2C3E2D]/30'}`}>
+                      <span className={`text-[8px] font-bold tracking-[0.25em] transition-all whitespace-nowrap absolute -bottom-8 ${isActive ? 'text-[#2C3E2D]' : 'text-[#2C3E2D]/30'}`}>
                         {s.label}
                       </span>
                     </button>
@@ -239,7 +239,7 @@ export default function FeatureShowcase() {
 
                     {/* Middle: Content */}
                     <div className="flex flex-col gap-1.5">
-                      <h3 className="text-xl lg:text-2xl font-display text-white leading-tight whitespace-nowrap">
+                      <h3 className="text-xl lg:text-2xl font-display text-white leading-tight">
                         {currentStep.title}
                       </h3>
                       <p className="text-xs lg:text-sm text-white/80 leading-relaxed max-w-lg font-medium">
@@ -263,7 +263,7 @@ export default function FeatureShowcase() {
           </div>
 
           {/* Right Column: Emulator */}
-          <div className="lg:col-span-7 flex items-start justify-center relative h-[75vh] max-h-[640px]">
+          <div className="lg:col-span-7 flex items-start justify-center relative min-h-[500px] lg:h-[75vh] lg:max-h-[680px]">
             <div className="relative w-full max-w-[420px] h-full">
               {/* Device Frame */}
               <div className="absolute inset-0 bg-[#F5F5F3] rounded-[3.5rem] border-[12px] border-[#2C3E2D] shadow-[0_120px_240px_-40px_rgba(0,0,0,0.3)] overflow-hidden z-10">
