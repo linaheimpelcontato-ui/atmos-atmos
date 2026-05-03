@@ -11,6 +11,8 @@ export const r2 = {
    */
   async upload(folder: string, fileName: string, file: File): Promise<void> {
     const mappedFolder = MAP_R2_PATH(folder.endsWith('/') ? folder : `${folder}/`).replace(/\/$/, "");
+    console.log(`R2: Requesting upload URL for folder: "${mappedFolder}", file: "${fileName}"`);
+    
     // 1. Get presigned URL from Edge Function
     const { data, error: functionError } = await supabase.functions.invoke('r2-storage', {
       body: { 

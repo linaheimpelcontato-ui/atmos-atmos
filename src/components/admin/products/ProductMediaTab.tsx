@@ -406,9 +406,9 @@ export function ProductMediaTab({
       }
       toast.success(`${files.length} arquivos enviados`);
       await loadMedia();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast.error("Erro no upload");
+      toast.error(`Erro no upload: ${err.message || "Tente novamente"}`);
     } finally {
       setUploading(false);
     }

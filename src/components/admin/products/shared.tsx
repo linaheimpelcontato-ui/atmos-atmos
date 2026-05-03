@@ -202,12 +202,12 @@ export const typeFields: Record<string, FieldDef[]> = {
   ],
 };
 
-export function getStorageInfo(product: Partial<Product> & { name: string; type: string; tempId?: string }): { folder: string; prefix: string; rawName: string } | null {
+export function getStorageInfo(product: Partial<Product> & { name: string; type: string; tempId?: string }): { folder: string; productFolder: string; prefix: string; rawName: string } | null {
   const vars = (product.variables || {}) as Record<string, unknown>;
-  const nameSlug = slugify(product.name);
-  const prefix = (vars.storage_id as string) || nameSlug;
+  const rawName = (product.name as any)?.pt || product.name || "";
+  const prefix = (vars.storage_id as string) || rawName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-').replace(/[^\w-]/g, '') || product.id || product.tempId || "item";
   
-  if (!prefix || !product.name) return null;
+  console.log(`Storage Info: prefix="${prefix}", rawName="${rawName}"`);
 
   let categoryFolder = "produtos";
   switch (product.type) {
