@@ -256,7 +256,7 @@ export default function ExperienceEcosystem() {
                 className="flex flex-col items-center flex-1 min-w-[250px] max-w-[300px] group"
               >
                 {/* Extreme Proximity: Negative margin to stick text to symbol */}
-                <div className="mb-6 relative transition-transform duration-500 group-hover:scale-110 flex items-center justify-center h-40">
+                <div className="mb-6 relative transition-transform duration-500 group-hover:scale-110 flex items-center justify-center h-48">
                   <div 
                     style={{ 
                       maskImage: `url(${pillar.image})`, 
@@ -268,8 +268,8 @@ export default function ExperienceEcosystem() {
                       backgroundColor: pillar.bg.match(/\[(.*?)\]/)?.[1] || 'currentColor',
                       maskPosition: 'center',
                       WebkitMaskPosition: 'center',
-                      width: `${120 * (pillar.scale || 1)}px`,
-                      height: `${120 * (pillar.scale || 1)}px`
+                      width: `${160 * (pillar.scale || 1)}px`,
+                      height: `${160 * (pillar.scale || 1)}px`
                     }}
                     role="img"
                     aria-label={pillar.title}
