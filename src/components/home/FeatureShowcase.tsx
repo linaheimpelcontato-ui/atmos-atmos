@@ -60,7 +60,7 @@ const CURATION_CATEGORIES_DATA = {
   ],
   EXPERIÊNCIAS: [
     { t: "VOO DE BALÃO", d: "ALTO PARAÍSO", img: "produtos/experiencias/voo-de-balao/voo-de-balao-1.jpg" },
-    { t: "PASSEIO A CAVALO", d: "FAZENDA SÃO BENTO", img: "produtos/experiencias/passeio-a-cavalo/passeio-a-cavalo-1.png" }
+    { t: "PASSEIO A CAVALO", d: "FAZENDA SÃO BENTO", img: "produtos/experiencias/passeio-a-cavalo/passeio-a-cavalo-6.png" }
   ]
 };
 
@@ -75,13 +75,39 @@ export default function FeatureShowcase() {
     if (path.startsWith("http")) return path;
     const cleanPath = path.replace(/^\//, "");
     
-    // Check for any of the standard production folders
     const productionFolders = ["produtos/", "destaques-categorias/", "experiencias/"];
     if (productionFolders.some(folder => cleanPath.startsWith(folder))) {
       return `https://assets.atmos.tur.br/${encodeURI(cleanPath)}`;
     }
     
     return storageUrl(cleanPath);
+  };
+
+  // Smart fallback for images with unknown extensions
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    const img = e.currentTarget;
+    const currentSrc = img.src;
+    const extensions = [".jpg", ".jpeg", ".png", ".webp", ".avif"];
+    
+    // Check which extension is currently being used
+    const currentExtMatch = currentSrc.match(/\.(jpg|jpeg|png|webp|avif)$/i);
+    if (!currentExtMatch) return;
+    
+    const currentExt = currentExtMatch[0];
+    const currentIndex = extensions.indexOf(currentExt.toLowerCase());
+    
+    // Try the next extension in the list
+    if (currentIndex < extensions.length - 1) {
+      const nextExt = extensions[currentIndex + 1];
+      const newSrc = currentSrc.replace(currentExt, nextExt);
+      
+      // Prevent infinite loops if multiple extensions fail
+      if (!img.dataset.triedExtensions) img.dataset.triedExtensions = "";
+      if (!img.dataset.triedExtensions.includes(nextExt)) {
+        img.dataset.triedExtensions += nextExt;
+        img.src = newSrc;
+      }
+    }
   };
 
   // Preload all critical emulator images in the background to prevent black screens/flickering
@@ -504,7 +530,11 @@ export default function FeatureShowcase() {
                                 className="bg-white rounded-2xl overflow-hidden shadow-md border border-black/5 flex flex-col"
                               >
                                 <div className="aspect-[4/5] relative">
-                                  <img src={getProductionUrl(item.img)} className="w-full h-full object-cover" />
+                                  <img 
+                                    src={getProductionUrl(item.img)} 
+                                    className="w-full h-full object-cover" 
+                                    onError={handleImageError}
+                                  />
                                   <div className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/60 backdrop-blur-md flex items-center justify-center">
                                     <Heart className="w-3.5 h-3.5 text-[#540202] fill-[#540202]" />
                                   </div>
