@@ -484,13 +484,13 @@ export default function FeatureShowcase() {
                           </div>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-4 pt-10 mt-2 bg-[#FAF9F6]">
-                          <div className="mb-6">
+                        <div className="flex-1 overflow-y-auto p-4 pt-8 mt-1 bg-[#FAF9F6]">
+                          <div className="mb-4">
                             <span className="text-[7px] font-bold text-[#A88B4C] tracking-[0.4em] uppercase block">Minha Seleção</span>
                             <h5 className="text-lg font-display text-[#2C3E2D] uppercase tracking-widest leading-tight mt-1">Sua Lista de Desejo na Chapada</h5>
                           </div>
                           
-                          <div className="grid grid-cols-2 gap-3">
+                          <div className="grid grid-cols-2 gap-2">
                             {[
                               ...CURATION_CATEGORIES_DATA.CACHOEIRAS,
                               ...CURATION_CATEGORIES_DATA.EXPERIÊNCIAS
@@ -502,10 +502,10 @@ export default function FeatureShowcase() {
                                 transition={{ delay: i * 0.1 }}
                                 className="bg-white rounded-2xl overflow-hidden shadow-md border border-black/5 flex flex-col"
                               >
-                                <div className="aspect-square relative">
+                                <div className="relative w-full overflow-hidden" style={{ aspectRatio: '1/1' }}>
                                   <img 
                                     src={getProductionUrl(item.img)} 
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
                                   />
                                   <div className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/60 backdrop-blur-md flex items-center justify-center">
                                     <Heart className="w-3.5 h-3.5 text-[#540202] fill-[#540202]" />
