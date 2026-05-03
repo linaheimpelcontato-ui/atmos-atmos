@@ -1,4 +1,5 @@
-import { optimizedUrl, storageUrl, IMAGE_PRESETS } from "@/lib/storage";
+import { optimizedUrl, storageUrl, IMAGE_PRESETS, normalize } from "@/lib/storage";
+import { useStorageImages } from "@/hooks/useStorageImages";
 
 /** Card cover image for each itinerary (uses main waterfall's first photo) */
 export const itineraryImages: Record<string, string> = {
@@ -47,4 +48,19 @@ export function getItineraryImage(keyOrPath: string, name?: string): string {
 
   // If it's a bare key/ID, it's likely a dynamic itinerary from the database
   return storageUrl(`produtos/roteiros/${keyOrPath}/${keyOrPath}-1.jpg`);
+}
+
+export function useItineraryGallery(id: string, name?: string) {
+  const query = useStorageImages("produtos/roteiros", name || "");
+  const idQuery = useStorageImages("produtos/roteiros", id);
+
+  const allImages = [...(query.data || []), ...(idQuery.data || [])];
+  const uniqueImages = Array.from(new Set(allImages));
+
+  const fallback = [getItineraryImage(id, name)];
+
+  return {
+    images: uniqueImages.length > 0 ? uniqueImages : fallback,
+    isLoading: query.isLoading || idQuery.isLoading,
+  };
 }

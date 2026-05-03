@@ -21,20 +21,17 @@ export function useExperienceGallery(imageKey: string, namePt?: string, id?: str
   const query = useStorageImages("produtos/experiencias", imageKey);
   const nameQuery = useStorageImages("produtos/experiencias", namePt || "", !!namePt);
 
+  const allImages = [...(query.data || []), ...(nameQuery.data || [])];
+  const uniqueImages = Array.from(new Set(allImages));
+
   const fallbackPath = (id && experienceSpecifics[id]) 
     ? (experienceSpecifics[id].startsWith('produtos') ? experienceSpecifics[id] : `produtos/experiencias/${experienceSpecifics[id].split('/').pop()}`)
     : `produtos/experiencias/${imageKey}/${imageKey}-1.jpg`;
     
   const fallback = [storageUrl(fallbackPath)];
 
-  const images = (query.data && query.data.length > 0) 
-    ? query.data 
-    : (nameQuery.data && nameQuery.data.length > 0) 
-    ? nameQuery.data 
-    : fallback;
-
   return {
-    images,
+    images: uniqueImages.length > 0 ? uniqueImages : fallback,
     isLoading: query.isLoading || nameQuery.isLoading,
   };
 }

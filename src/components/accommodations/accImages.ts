@@ -1,9 +1,12 @@
 import { storageUrl } from "@/lib/storage";
 import { useStorageImages } from "@/hooks/useStorageImages";
 
-/** Hook: dynamically lists all images for an accommodation from Storage */
 export function useAccImages(id: string, name?: string) {
-  const query = useStorageImages("produtos/hospedagens", name || id);
+  const query = useStorageImages("produtos/hospedagens", name || "");
+  const idQuery = useStorageImages("produtos/hospedagens", id);
+
+  const allImages = [...(query.data || []), ...(idQuery.data || [])];
+  const uniqueImages = Array.from(new Set(allImages));
 
   // Fallback using the new structure
   const fallback = Array.from({ length: 6 }, (_, i) =>
@@ -11,8 +14,8 @@ export function useAccImages(id: string, name?: string) {
   );
 
   return {
-    images: query.data && query.data.length > 0 ? query.data : fallback,
-    isLoading: query.isLoading,
+    images: uniqueImages.length > 0 ? uniqueImages : fallback,
+    isLoading: query.isLoading || idQuery.isLoading,
   };
 }
 
