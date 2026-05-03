@@ -59,7 +59,7 @@ const pillars = [
     id: "acao",
     title: "AÇÃO",
     description: "Vivências participativas que convidam o turista a agir, interagir e se integrar à cultura e à comunidade.",
-    image: storageUrl("home/A%C3%A7ao.png"),
+    image: storageUrl("home/Acao.png"),
     bg: "bg-[#744404]",
     textColor: "text-white"
   },
