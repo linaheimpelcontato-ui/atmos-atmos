@@ -225,7 +225,7 @@ export default function ExperienceEcosystem() {
       {/* SECTION 2: CONCEITO SENSORIAL */}
       <section className="pt-32 pb-0 bg-[#FAF9F6] relative z-10 border-t border-black/5">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-24">
+          <div className="text-center mb-12">
             <motion.span
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
