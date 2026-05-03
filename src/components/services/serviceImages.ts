@@ -25,15 +25,18 @@ export const serviceImages: Record<ServiceCategory, string[]> = {
   ],
 };
 
-/** Hook: dynamically lists all images for a service from Storage */
-export function useServiceImages(id: string, category: ServiceCategory) {
-  const query = useStorageImages("servicos", id);
+export function useServiceImages(id: string, category: ServiceCategory, name?: string) {
+  const query = useStorageImages("produtos/serviços", name || "");
+  const idQuery = useStorageImages("produtos/serviços", id);
+
+  const allImages = [...(query.data || []), ...(idQuery.data || [])];
+  const uniqueImages = Array.from(new Set(allImages));
 
   // Fallback to category defaults while loading or if empty
   const fallback = serviceImages[category] || [storageUrl(`servicos/${category}.jpg`)];
 
   return {
-    images: query.data && query.data.length > 0 ? query.data : fallback,
-    isLoading: query.isLoading,
+    images: uniqueImages.length > 0 ? uniqueImages : fallback,
+    isLoading: query.isLoading || idQuery.isLoading,
   };
 }
