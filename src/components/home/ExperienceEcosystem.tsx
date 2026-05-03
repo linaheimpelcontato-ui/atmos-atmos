@@ -59,7 +59,7 @@ const pillars = [
     id: "acao",
     title: "AÇÃO",
     description: "Vivências participativas que convidam o turista a agir, interagir e se integrar à cultura e à comunidade.",
-    image: storageUrl("home/Acao.png"),
+    image: storageUrl("home/A%C3%A7ao.png"),
     bg: "bg-[#744404]",
     textColor: "text-white"
   },
@@ -251,7 +251,7 @@ export default function ExperienceEcosystem() {
                 className="flex flex-col items-center flex-1 min-w-[250px] max-w-[300px] group"
               >
                 {/* Extreme Proximity: Negative margin to stick text to symbol */}
-                <div className="mb-8 relative transition-transform duration-500 group-hover:scale-110 flex items-center justify-center">
+                <div className="mb-4 relative transition-transform duration-500 group-hover:scale-110 flex items-center justify-center">
                   <div 
                     style={{ 
                       maskImage: `url(${pillar.image})`, 
@@ -260,9 +260,11 @@ export default function ExperienceEcosystem() {
                       WebkitMaskSize: 'contain',
                       maskRepeat: 'no-repeat',
                       WebkitMaskRepeat: 'no-repeat',
-                      backgroundColor: pillar.bg.match(/\[(.*?)\]/)?.[1] || 'currentColor'
+                      backgroundColor: pillar.bg.match(/\[(.*?)\]/)?.[1] || 'currentColor',
+                      maskPosition: 'center',
+                      WebkitMaskPosition: 'center'
                     }}
-                    className="w-24 h-24"
+                    className="w-32 h-32"
                     role="img"
                     aria-label={pillar.title}
                   />
