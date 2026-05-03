@@ -12,17 +12,18 @@ export const r2 = {
   async upload(folder: string, fileName: string, file: File): Promise<void> {
     const mappedFolder = MAP_R2_PATH(folder.endsWith('/') ? folder : `${folder}/`).replace(/\/$/, "");
     // 1. Get presigned URL from Edge Function
-    console.log('Invoking r2-storage function...');
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    console.log(`Invoking r2-storage at ${supabaseUrl}/functions/v1/r2-storage`);
+    
     const { data, error: functionError } = await supabase.functions.invoke('r2-storage', {
-      body: JSON.stringify({ 
+      body: { 
         action: 'get-upload-url', 
         bucket: 'atmos',
         folder: mappedFolder, 
         fileName 
-      }),
+      },
       headers: {
-        'x-content-type': file.type,
-        'Content-Type': 'application/json'
+        'x-content-type': file.type
       }
     });
 
