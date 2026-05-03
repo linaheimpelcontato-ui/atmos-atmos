@@ -398,7 +398,7 @@ export default function MonteSeuRoteiro() {
           </div>
 
           {/* New Category Menu with Photos */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-20">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
             {TABS.map((tab) => {
               const isActive = activeTab === tab.id;
               const Icon = tab.icon;
@@ -457,7 +457,7 @@ export default function MonteSeuRoteiro() {
           </div>
 
           {/* Search and Filters Area */}
-          <div className="max-w-7xl mx-auto w-full mb-8 flex flex-col gap-4">
+          <div className="max-w-7xl mx-auto w-full mb-16 flex flex-col gap-4">
             
             {/* Search Bar */}
             <div className="relative w-full max-w-[320px]">
