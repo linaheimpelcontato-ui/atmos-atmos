@@ -456,26 +456,6 @@ export default function MonteSeuRoteiro() {
             })}
           </div>
 
-          {/* Selected Category Header */}
-          <div className="max-w-7xl mx-auto w-full mb-10">
-            <motion.div
-              key={activeTab + "-header"}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="flex items-center gap-6"
-            >
-              <div className="h-12 w-[1px] bg-[#1A261B]/10 hidden md:block" />
-              <div>
-                <span className="text-[#566952] uppercase tracking-[0.4em] text-[10px] font-bold opacity-60 mb-1 block">
-                  {language === "pt" ? "Explorando Categoria" : "Exploring Category"}
-                </span>
-                <h3 className="text-3xl md:text-5xl font-display text-[#1A261B] uppercase tracking-widest leading-none">
-                  {TABS.find(t => t.id === activeTab)?.label}
-                </h3>
-              </div>
-            </motion.div>
-          </div>
-
           {/* Search and Filters Area */}
           <div className="max-w-7xl mx-auto w-full mb-8 flex flex-col gap-4">
             
@@ -626,6 +606,26 @@ export default function MonteSeuRoteiro() {
                 </motion.div>
               </AnimatePresence>
             </div>
+          </div>
+
+          {/* Selected Category Header */}
+          <div className="max-w-7xl mx-auto w-full mb-10">
+            <motion.div
+              key={activeTab + "-header"}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center gap-6"
+            >
+              <div className="h-12 w-[1px] bg-[#1A261B]/10 hidden md:block" />
+              <div>
+                <span className="text-[#566952] uppercase tracking-[0.4em] text-[10px] font-bold opacity-60 mb-1 block">
+                  {language === "pt" ? "Explorando Categoria" : "Exploring Category"}
+                </span>
+                <h3 className="text-3xl md:text-5xl font-display text-[#1A261B] uppercase tracking-widest leading-none">
+                  {TABS.find(t => t.id === activeTab)?.label}
+                </h3>
+              </div>
+            </motion.div>
           </div>
 
           {/* Catalog Grids */}
