@@ -354,148 +354,92 @@ export default function ServiceDetailDialog({
             )}
 
             {/* Transfer Table */}
-            {service.transferTable && (
-              <div className="space-y-6">
-                <h3 className="text-xl font-display text-[#1A261B] border-l-2 border-[#C5A267] pl-4">
-                  {service.transferTable.name[language]}
-                </h3>
-                <div className="bg-white border border-[#1A261B]/10 rounded-[2px] overflow-hidden">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="bg-[#F8F9F8] border-b border-[#1A261B]/10">
-                        {service.transferTable.columns.map((col, i) => (
-                          <th key={i} className="text-left p-4 text-[10px] font-bold uppercase tracking-[0.2em] text-[#1A261B]/40">
-                            {col}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#1A261B]/5">
-                      {service.transferTable.rows.map((row, i) => (
-                        <tr key={i} className="hover:bg-[#F8F9F8]/50 transition-colors">
-                          <td className="p-4 text-sm font-medium text-[#2C3E2D]">{row.destination}</td>
-                          {row.values.map((val, j) => (
-                            <td key={j} className="p-4 text-sm font-bold text-[#C5A267]">{val}</td>
+
+              {variations.length > 0 && (
+                <div className="mb-12">
+                  <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#C5A267] mb-6">Variações</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="border-b border-[#1A261B]/10">
+                          {headers.map((h, i) => (
+                            <th key={i} className="py-4 text-[10px] font-bold uppercase tracking-wider text-[#1A261B]/40">{h}</th>
                           ))}
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {rows.map((row, i) => (
+                          <tr key={i} className="border-b border-[#1A261B]/5 hover:bg-[#F8F9F8] transition-colors">
+                            {row.map((val, j) => (
+                              <td key={j} className="p-4 text-sm font-bold text-[#C5A267]">{val}</td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            <div className="pt-8">
               <Button
                 onClick={toggleWishlist}
-                className="w-full md:w-auto rounded-full px-12 py-7 text-[11px] font-bold uppercase tracking-[0.3em] transition-all duration-500 shadow-2xl mt-8 flex items-center justify-center gap-4 transform hover:scale-105 border border-white/10 bg-[#1A261B] text-white hover:bg-black"
+                className="w-full md:w-auto rounded-full px-12 py-7 text-[11px] font-bold uppercase tracking-[0.3em] transition-all duration-500 shadow-2xl flex items-center justify-center gap-4 transform hover:scale-105 border border-white/10 bg-[#1A261B] text-white hover:bg-black"
               >
-                <Heart className={cn("w-4 h-4 transition-colors", (variations.length === 0 && inWishlist) ? "fill-rose-500 text-rose-500" : "text-white/40")} />
+                <Heart className={cn("h-4 w-4 transition-colors", (variations.length === 0 && inWishlist) ? "fill-rose-500 text-rose-500" : "text-white/40")} />
                 {variations.length > 0 
                   ? (language === "pt" ? "Adicionar à Lista" : "Add to List") 
                   : (inWishlist ? l.removeWishlist : l.addWishlist)}
               </Button>
             </div>
 
-            {/* Quick Info Grid moved here */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-10 bg-[#F8F9F8] p-8 md:p-10 rounded-[2px] border border-[#1A261B]/5 mt-12">
-              <div className="flex items-center gap-4">
-                <DollarSign className="w-5 h-5 text-[#C5A267]" />
-                <div className="flex flex-col">
-                  <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-[#1A261B]/40 mb-1">{l.price}</span>
-                  <span className="text-xs font-bold uppercase tracking-[0.1em] text-[#1A261B]">
-                    {displayPrice}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <Icon className="w-5 h-5 text-[#C5A267]" />
-                <div className="flex flex-col">
-                  <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-[#1A261B]/40 mb-1">Categoria</span>
-                  <span className="text-xs font-bold uppercase tracking-[0.1em] text-[#1A261B]">
-                    {categoryLabels[service.category][language as keyof typeof labels]}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column: Vertical Video & CTA info */}
-          <div className="lg:col-span-5 space-y-12">
-            <div className="aspect-[9/16] w-full max-w-[400px] mx-auto bg-[#F8F9F8] rounded-[2px] overflow-hidden relative group border border-[#1A261B]/5 shadow-sm">
-              <div className="absolute inset-0 flex items-center justify-center z-10">
-                <div className="text-center space-y-4">
-                  <div className="w-16 h-16 rounded-full border border-[#1A261B]/20 flex items-center justify-center mx-auto bg-white/80 backdrop-blur-sm group-hover:scale-110 transition-transform">
-                    <div className="w-0 h-0 border-t-[8px] border-t-transparent border-l-[12px] border-l-[#C5A267] border-b-[8px] border-b-transparent ml-1" />
+            {/* Right Column: Vertical Video */}
+            <div className="lg:col-span-5">
+              <div className="sticky top-24">
+                <div className="aspect-[9/16] bg-[#F8F9F8] rounded-[2px] overflow-hidden relative group border border-[#1A261B]/5 shadow-2xl">
+                  <div className="absolute inset-0 flex items-center justify-center z-10">
+                    <div className="text-center space-y-4">
+                      <div className="w-20 h-20 rounded-full border border-white/20 flex items-center justify-center mx-auto bg-white/10 backdrop-blur-md group-hover:scale-110 transition-transform">
+                        <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[15px] border-l-white border-b-[10px] border-b-transparent ml-1" />
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-white block drop-shadow-lg">Assista o vídeo</span>
+                    </div>
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#1A261B] block drop-shadow-sm">Assista o vídeo</span>
+                  <img 
+                    src={displayImages[3] || displayImages[0]} 
+                    className="w-full h-full object-cover grayscale-[0.2] transition-transform duration-1000 group-hover:scale-105" 
+                    alt="Video thumbnail" 
+                  />
                 </div>
               </div>
-              <OptimizedImage
-                src={displayImages[0]} 
-                className="w-full h-full object-cover grayscale-[0.2] transition-transform duration-700 group-hover:scale-105" 
-                alt="Video thumbnail" 
-                containerClassName="w-full h-full"
-              />
             </div>
-
-            <div className="bg-[#1A261B] text-white rounded-[2px] p-8 space-y-6 shadow-2xl">
-              <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-white/40 border-b border-white/10 pb-2 block">
-                {l.includes}
-              </span>
-              {service.tiers?.[0]?.includes?.[language]?.map((inc, idx) => (
-                <div key={idx} className="flex items-start gap-3">
-                    <Check className="w-4 h-4 text-[#C5A267] mt-1 shrink-0" />
-                    <span className="text-sm font-light text-white/80">{inc}</span>
-                </div>
-              ))}
-              <p className="text-[10px] text-white/30 uppercase tracking-[0.2em] pt-4">
-                Adicione este serviço à sua curadoria para que possamos integrá-lo à sua logística.
-              </p>
-            </div>
-          </div>
-
-        </section>
-
-        {/* Cosmos-Style Grid Gallery */}
-        <section className="max-w-[1400px] mx-auto px-6 mb-20">
-          <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#1A261B]/30 mb-8 px-2">Galeria de Fotos</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 auto-rows-[250px] md:auto-rows-[300px]">
-             <div className="col-span-2 row-span-2 relative overflow-hidden rounded-[2px] group">
-                <OptimizedImage
-                  src={displayImages[0]} 
-                  className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" 
-                  alt={service.title[language]}
-                  containerClassName="w-full h-full"
-                />
-             </div>
-             <div className="col-span-1 row-span-1 relative overflow-hidden rounded-[2px] group bg-[#F8F9F8]">
-                <img 
-                  src={displayImages[1] || displayImages[0]} 
-                  className="w-full h-full object-cover opacity-40 grayscale" 
-                  alt="Placeholder 1"
-                />
-             </div>
-             <div className="col-span-1 row-span-2 relative overflow-hidden rounded-[2px] group bg-[#F8F9F8]">
-                <img 
-                  src={displayImages[2] || displayImages[0]} 
-                  className="w-full h-full object-cover opacity-40 grayscale" 
-                  alt="Placeholder 2"
-                />
-             </div>
-             <div className="col-span-1 row-span-1 relative overflow-hidden rounded-[2px] group bg-[#F8F9F8]">
-                <img 
-                  src={displayImages[0]} 
-                  className="w-full h-full object-cover opacity-40 grayscale" 
-                  alt="Placeholder 3"
-                />
-             </div>
           </div>
         </section>
 
+        {/* Photos Gallery (Pinterest/Cosmos Masonry) */}
+        <section className="max-w-[1600px] mx-auto px-6 mb-32">
+          <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#1A261B]/30 mb-12 px-2">Galeria de Fotos</h2>
+          <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-6 space-y-6">
+            {displayImages.map((img, index) => (
+              <motion.div 
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.05 }}
+                className="break-inside-avoid relative overflow-hidden rounded-[2px] group cursor-pointer border border-[#1A261B]/5"
+              >
+                <img 
+                  src={img} 
+                  className="w-full h-auto object-cover transition-transform duration-1000 group-hover:scale-105" 
+                  alt={`${service.title[language]} gallery ${index + 1}`}
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-500" />
+              </motion.div>
+            ))}
+          </div>
+        </section>
       </main>
-
     </div>
   );
 }

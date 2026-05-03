@@ -262,79 +262,106 @@ export default function AccommodationDetailDialog({
                 "bg-[#1A261B] text-white hover:bg-black"
               )}
             >
-              <Heart className={cn("h-4 w-4 fill-current", inWishlist ? "text-rose-500" : "text-rose-400")} />
-              {inWishlist ? l.removeWishlist : l.addWishlist}
-            </Button>
 
-            {/* Quick Info Grid moved here */}
-            <div className="grid grid-cols-2 gap-y-8 gap-x-10 bg-[#F8F9F8] p-8 md:p-10 rounded-[2px] border border-[#1A261B]/5 mt-12">
-              <div className="flex items-center gap-4">
-                <DollarSign className="w-5 h-5 text-[#C5A267]" />
-                <div className="flex flex-col">
-                  <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-[#1A261B]/40 mb-1">{l.price}</span>
-                  <span className="text-xs font-bold uppercase tracking-[0.1em] text-[#1A261B]">
-                    {accommodation.priceRange}
-                  </span>
-                </div>
-              </div>
+              <Button
+                onClick={toggleWishlist}
+                className="w-full md:w-auto rounded-full px-12 py-7 text-[11px] font-bold uppercase tracking-[0.3em] transition-all duration-500 shadow-2xl flex items-center justify-center gap-4 transform hover:scale-105 border border-white/10 bg-[#1A261B] text-white hover:bg-black"
+              >
+                <Heart className={cn("h-4 w-4 fill-current", inWishlist ? "text-rose-500" : "text-rose-400")} />
+                {inWishlist ? l.removeWishlist : l.addWishlist}
+              </Button>
 
-              <div className="flex items-center gap-4">
-                <MapPin className="w-5 h-5 text-[#C5A267]" />
-                <div className="flex flex-col">
-                  <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-[#1A261B]/40 mb-1">{l.location}</span>
-                  <span className="text-xs font-bold uppercase tracking-[0.1em] text-[#1A261B]">
-                    {accRegionLabels[accommodation.region][language]}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <Home className="w-5 h-5 text-[#C5A267]" />
-                <div className="flex flex-col">
-                  <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-[#1A261B]/40 mb-1">{l.units}</span>
-                  <span className="text-xs font-bold uppercase tracking-[0.1em] text-[#1A261B]">
-                    {accommodation.units} {accommodation.units === 1 ? unitsLabels[language].one : unitsLabels[language].other}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <Users className="w-5 h-5 text-[#C5A267]" />
-                <div className="flex flex-col">
-                  <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-[#1A261B]/40 mb-1">{l.capacity}</span>
-                  <span className="text-xs font-bold uppercase tracking-[0.1em] text-[#1A261B]">
-                    {accommodation.totalCapacity} {l.guests}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right: Vertical Video */}
-          <div className="lg:col-span-5">
-            <div className="aspect-[9/16] w-full max-w-[400px] mx-auto bg-[#F8F9F8] rounded-[2px] overflow-hidden relative group border border-[#1A261B]/5">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center space-y-4">
-                  <div className="w-16 h-16 rounded-full border border-[#1A261B]/10 flex items-center justify-center mx-auto bg-white/50 backdrop-blur-sm group-hover:scale-110 transition-transform">
-                    <div className="w-0 h-0 border-t-[8px] border-t-transparent border-l-[12px] border-l-[#C5A267] border-b-[8px] border-b-transparent ml-1" />
+              {/* Quick Info Grid */}
+              <div className="grid grid-cols-2 gap-y-8 gap-x-10 bg-[#F8F9F8] p-8 md:p-10 rounded-[2px] border border-[#1A261B]/5 mt-12">
+                <div className="flex items-center gap-4">
+                  <DollarSign className="w-5 h-5 text-[#C5A267]" />
+                  <div className="flex flex-col">
+                    <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-[#1A261B]/40 mb-1">{l.price}</span>
+                    <span className="text-xs font-bold uppercase tracking-[0.1em] text-[#1A261B]">
+                      {accommodation.priceRange}
+                    </span>
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#1A261B]/40 block">Assista o vídeo</span>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <MapPin className="w-5 h-5 text-[#C5A267]" />
+                  <div className="flex flex-col">
+                    <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-[#1A261B]/40 mb-1">{l.location}</span>
+                    <span className="text-xs font-bold uppercase tracking-[0.1em] text-[#1A261B]">
+                      {accRegionLabels[accommodation.region][language]}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <Home className="w-5 h-5 text-[#C5A267]" />
+                  <div className="flex flex-col">
+                    <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-[#1A261B]/40 mb-1">{l.units}</span>
+                    <span className="text-xs font-bold uppercase tracking-[0.1em] text-[#1A261B]">
+                      {accommodation.units} {accommodation.units === 1 ? unitsLabels[language].one : unitsLabels[language].other}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <Users className="w-5 h-5 text-[#C5A267]" />
+                  <div className="flex flex-col">
+                    <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-[#1A261B]/40 mb-1">{l.capacity}</span>
+                    <span className="text-xs font-bold uppercase tracking-[0.1em] text-[#1A261B]">
+                      {accommodation.totalCapacity} {l.guests}
+                    </span>
+                  </div>
                 </div>
               </div>
-              <img 
-                src={images[0]} 
-                className="w-full h-full object-cover opacity-60 grayscale-[0.2]" 
-                alt="Video thumbnail" 
-              />
+            </div>
+
+            {/* Right Column: Vertical Video */}
+            <div className="lg:col-span-5">
+              <div className="sticky top-24">
+                <div className="aspect-[9/16] bg-[#F8F9F8] rounded-[2px] overflow-hidden relative group border border-[#1A261B]/5 shadow-2xl">
+                  <div className="absolute inset-0 flex items-center justify-center z-10">
+                    <div className="text-center space-y-4">
+                      <div className="w-20 h-20 rounded-full border border-white/20 flex items-center justify-center mx-auto bg-white/10 backdrop-blur-md group-hover:scale-110 transition-transform">
+                        <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[15px] border-l-white border-b-[10px] border-b-transparent ml-1" />
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-white block drop-shadow-lg">Assista o vídeo</span>
+                    </div>
+                  </div>
+                  <img 
+                    src={images[3] || images[0]} 
+                    className="w-full h-full object-cover grayscale-[0.2] transition-transform duration-1000 group-hover:scale-105" 
+                    alt="Video thumbnail" 
+                  />
+                </div>
+              </div>
             </div>
           </div>
-
         </section>
 
-        <GalleryGrid
-          images={images}
-          alt={accommodation.name}
-        />
+        {/* Photos Gallery (Pinterest/Cosmos Masonry) */}
+        <section className="max-w-[1600px] mx-auto px-6 mb-32">
+          <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#1A261B]/30 mb-12 px-2">{l.gallery}</h2>
+          <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-6 space-y-6">
+            {images.map((img, index) => (
+              <motion.div 
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.05 }}
+                className="break-inside-avoid relative overflow-hidden rounded-[2px] group cursor-pointer border border-[#1A261B]/5"
+              >
+                <img 
+                  src={img} 
+                  className="w-full h-auto object-cover transition-transform duration-1000 group-hover:scale-105" 
+                  alt={`${accommodation.name} gallery ${index + 1}`}
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-500" />
+              </motion.div>
+            ))}
+          </div>
+        </section>
       </main>
     </div>
   );
