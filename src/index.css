@@ -6,8 +6,18 @@
 
 
 @font-face {
+  font-family: 'MadInk';
+  src: url('/fonts/MadInk.woff2') format('woff2'),
+       url('/fonts/MadInk.woff') format('woff'),
+       url('/fonts/MadInk.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
   font-family: 'DeFonteReduced';
-  src: url('/fonts/DeFonteReduced.ttf') format('truetype');
+  src: url('/fonts/MadInk.woff2') format('woff2');
   font-weight: normal;
   font-style: normal;
   font-display: swap;

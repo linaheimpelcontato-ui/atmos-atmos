@@ -19,8 +19,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Poppins", "system-ui", "sans-serif"],
-        display: ["DeFonteReduced", "serif"],
+        sans: ["Outfit", "system-ui", "sans-serif"],
+        display: ["MadInk", "serif"],
         outfit: ["Outfit", "sans-serif"],
       },
 

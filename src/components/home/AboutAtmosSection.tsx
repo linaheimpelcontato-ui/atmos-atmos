@@ -56,7 +56,7 @@ export default function AboutAtmosSection() {
             className="space-y-4"
           >
             <h2 className="text-[#FAF9F6] text-5xl md:text-8xl font-display font-bold tracking-tight">
-              O QUE E A ATMOS?
+              O QUE É A ATMOS?
             </h2>
             <p className="text-[#FAF9F6]/90 text-2xl md:text-3xl font-sans font-medium tracking-tight">
               Curadoria de Experiências na Chapada dos Veadeiros.

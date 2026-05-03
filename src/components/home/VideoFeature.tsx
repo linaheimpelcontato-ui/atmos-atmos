@@ -17,14 +17,21 @@ export default function VideoFeature() {
   const opacity = useTransform(scrollYProgress, [0, 0.25], [0, 1]);
   const borderRadius = useTransform(scrollYProgress, [0.4, 0.7], ["3rem", "0rem"]);
 
-  const handlePlay = () => {
-    if (videoRef.current) {
+  const handlePlay = async () => {
+    if (!videoRef.current) return;
+
+    try {
       if (isPlaying) {
         videoRef.current.pause();
+        setIsPlaying(false);
       } else {
-        videoRef.current.play();
+        // Set state first for better UI responsiveness
+        setIsPlaying(true);
+        await videoRef.current.play();
       }
-      setIsPlaying(!isPlaying);
+    } catch (error) {
+      console.error("Video playback failed:", error);
+      setIsPlaying(false);
     }
   };
 

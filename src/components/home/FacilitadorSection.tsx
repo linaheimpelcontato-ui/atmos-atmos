@@ -21,10 +21,8 @@ export default function FacilitadorSection() {
                 B2B • Grupos e Imersões
               </span>
             </div>
-            <h2 className="text-[#E4DBCC] text-2xl md:text-4xl lg:text-[52px] font-display leading-[1.3] tracking-tight max-w-none">
-              Construa conosco projetos que <br />
-              fortalecem o território <span className="font-light italic text-[#A88B4C]">e elevam o padrão</span> <br />
-              <span className="font-light italic text-[#A88B4C]">das experiências dos seus clientes.</span>
+            <h2 className="text-[#E4DBCC] text-2xl md:text-4xl lg:text-[52px] font-display leading-[1.4] tracking-tight max-w-none">
+              Construa conosco projetos que fortalecem o território <span className="font-light italic text-[#A88B4C]">e elevam o padrão das experiências dos seus clientes.</span>
             </h2>
             <p className="text-[#E4DBCC]/60 text-lg md:text-xl font-sans font-light leading-relaxed max-w-4xl">
               Este espaço é para quem conduz grupos e busca um parceiro local para planejar, operar e elevar experiências na Chapada dos Veadeiros com curadoria e precisão.

@@ -1,5 +1,4 @@
-const BASE_URL = "https://zjavxhmxrbpidvssrbca.supabase.co";
-const STORAGE_BASE = `${BASE_URL}/storage/v1/object/public/assets`;
+const STORAGE_BASE = import.meta.env.VITE_R2_DOMAIN || "https://assets.atmos.tur.br";
 
 /**
  * Legacy path mapping for R2. Kept as an identity function to prevent breaking 
