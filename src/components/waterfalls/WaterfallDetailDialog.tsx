@@ -190,8 +190,62 @@ export default function WaterfallDetailDialog({
               </h1>
             </div>
 
-            {/* Quick Info Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-y-10 gap-x-12 bg-[#F8F9F8] p-8 md:p-10 rounded-[2px] border border-[#1A261B]/5">
+            </div>
+          </motion.div>
+        </section>
+
+        {/* Carousel Section */}
+        <section className="max-w-7xl mx-auto px-6 mb-20">
+          <Carousel className="w-full">
+            <CarouselContent>
+              {images.map((img, index) => (
+                <CarouselItem key={index} className="md:basis-2/3 lg:basis-1/2">
+                  <div className="aspect-[16/9] overflow-hidden rounded-[2px]">
+                    <img 
+                      src={img} 
+                      className="w-full h-full object-cover" 
+                      alt={`${waterfall.name[language]} ${index + 1}`} 
+                    />
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <div className="flex justify-end gap-2 mt-4">
+              <CarouselPrevious className="static translate-y-0" />
+              <CarouselNext className="static translate-y-0" />
+            </div>
+          </Carousel>
+        </section>
+
+        {/* Content Section: Description + Vertical Video */}
+        <section className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12 md:gap-20 mb-20">
+          
+          {/* Left: Description */}
+          <div className="lg:col-span-7 space-y-12">
+            <div className="space-y-6">
+              <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#1A261B]/30 border-b border-[#1A261B]/5 pb-4">
+                {l.about}
+              </h2>
+              <div className="prose prose-stone max-w-none">
+                <p className="text-lg md:text-xl text-[#2C3E2D]/80 font-light leading-relaxed">
+                  {waterfall.description[language]}
+                </p>
+              </div>
+            </div>
+
+            <Button
+              onClick={toggleWishlist}
+              className={cn(
+                "w-full md:w-auto rounded-full px-12 py-8 text-[11px] font-bold uppercase tracking-[0.3em] transition-all duration-500 shadow-2xl mt-8 flex items-center justify-center gap-4 transform hover:scale-105 border border-white/10",
+                "bg-[#1A261B] text-white hover:bg-black"
+              )}
+            >
+              <Heart className={cn("h-4 w-4 fill-current", inWishlist ? "text-rose-500" : "text-rose-400")} />
+              {inWishlist ? l.removeWishlist : l.addWishlist}
+            </Button>
+
+            {/* Quick Info Grid moved here */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-y-10 gap-x-12 bg-[#F8F9F8] p-8 md:p-10 rounded-[2px] border border-[#1A261B]/5 mt-12">
               <div className="flex items-center gap-4">
                 <Mountain className="w-5 h-5 text-[#C5A267]" />
                 <div className="flex flex-col">
@@ -252,58 +306,6 @@ export default function WaterfallDetailDialog({
                 </div>
               </div>
             </div>
-          </motion.div>
-        </section>
-
-        {/* Carousel Section */}
-        <section className="max-w-7xl mx-auto px-6 mb-20">
-          <Carousel className="w-full">
-            <CarouselContent>
-              {images.map((img, index) => (
-                <CarouselItem key={index} className="md:basis-2/3 lg:basis-1/2">
-                  <div className="aspect-[16/9] overflow-hidden rounded-[2px]">
-                    <img 
-                      src={img} 
-                      className="w-full h-full object-cover" 
-                      alt={`${waterfall.name[language]} ${index + 1}`} 
-                    />
-                  </div>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <div className="flex justify-end gap-2 mt-4">
-              <CarouselPrevious className="static translate-y-0" />
-              <CarouselNext className="static translate-y-0" />
-            </div>
-          </Carousel>
-        </section>
-
-        {/* Content Section: Description + Vertical Video */}
-        <section className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12 md:gap-20 mb-20">
-          
-          {/* Left: Description */}
-          <div className="lg:col-span-7 space-y-12">
-            <div className="space-y-6">
-              <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#1A261B]/30 border-b border-[#1A261B]/5 pb-4">
-                {l.about}
-              </h2>
-              <div className="prose prose-stone max-w-none">
-                <p className="text-lg md:text-xl text-[#2C3E2D]/80 font-light leading-relaxed">
-                  {waterfall.description[language]}
-                </p>
-              </div>
-            </div>
-
-            <Button
-              onClick={toggleWishlist}
-              className={cn(
-                "w-full md:w-auto rounded-full px-12 py-8 text-[11px] font-bold uppercase tracking-[0.3em] transition-all duration-500 shadow-2xl mt-8 flex items-center justify-center gap-4 transform hover:scale-105 border border-white/10",
-                "bg-[#1A261B] text-white hover:bg-black"
-              )}
-            >
-              <Heart className={cn("h-4 w-4 fill-current", inWishlist ? "text-rose-500" : "text-rose-400")} />
-              {inWishlist ? l.removeWishlist : l.addWishlist}
-            </Button>
           </div>
 
           {/* Right: Vertical Video */}

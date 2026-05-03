@@ -227,27 +227,6 @@ export default function ServiceDetailDialog({
               </p>
             </div>
 
-            {/* Quick Info Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-10 bg-[#F8F9F8] p-8 md:p-10 rounded-[2px] border border-[#1A261B]/5">
-              <div className="flex items-center gap-4">
-                <DollarSign className="w-5 h-5 text-[#C5A267]" />
-                <div className="flex flex-col">
-                  <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-[#1A261B]/40 mb-1">{l.price}</span>
-                  <span className="text-xs font-bold uppercase tracking-[0.1em] text-[#1A261B]">
-                    {displayPrice}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <Icon className="w-5 h-5 text-[#C5A267]" />
-                <div className="flex flex-col">
-                  <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-[#1A261B]/40 mb-1">Categoria</span>
-                  <span className="text-xs font-bold uppercase tracking-[0.1em] text-[#1A261B]">
-                    {categoryLabels[service.category][language as keyof typeof labels]}
-                  </span>
-                </div>
-              </div>
             </div>
           </motion.div>
         </section>
@@ -418,6 +397,29 @@ export default function ServiceDetailDialog({
                   ? (language === "pt" ? "Adicionar à Lista" : "Add to List") 
                   : (inWishlist ? l.removeWishlist : l.addWishlist)}
               </Button>
+            </div>
+
+            {/* Quick Info Grid moved here */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-10 bg-[#F8F9F8] p-8 md:p-10 rounded-[2px] border border-[#1A261B]/5 mt-12">
+              <div className="flex items-center gap-4">
+                <DollarSign className="w-5 h-5 text-[#C5A267]" />
+                <div className="flex flex-col">
+                  <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-[#1A261B]/40 mb-1">{l.price}</span>
+                  <span className="text-xs font-bold uppercase tracking-[0.1em] text-[#1A261B]">
+                    {displayPrice}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <Icon className="w-5 h-5 text-[#C5A267]" />
+                <div className="flex flex-col">
+                  <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-[#1A261B]/40 mb-1">Categoria</span>
+                  <span className="text-xs font-bold uppercase tracking-[0.1em] text-[#1A261B]">
+                    {categoryLabels[service.category][language as keyof typeof labels]}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 

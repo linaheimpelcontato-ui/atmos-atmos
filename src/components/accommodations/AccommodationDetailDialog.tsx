@@ -169,47 +169,6 @@ export default function AccommodationDetailDialog({
               </h1>
             </div>
 
-            {/* Quick Info Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-2 gap-y-8 gap-x-10 bg-[#F8F9F8] p-8 md:p-10 rounded-[2px] border border-[#1A261B]/5">
-              <div className="flex items-center gap-4">
-                <DollarSign className="w-5 h-5 text-[#C5A267]" />
-                <div className="flex flex-col">
-                  <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-[#1A261B]/40 mb-1">{l.price}</span>
-                  <span className="text-xs font-bold uppercase tracking-[0.1em] text-[#1A261B]">
-                    {accommodation.priceRange}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <MapPin className="w-5 h-5 text-[#C5A267]" />
-                <div className="flex flex-col">
-                  <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-[#1A261B]/40 mb-1">{l.location}</span>
-                  <span className="text-xs font-bold uppercase tracking-[0.1em] text-[#1A261B]">
-                    {accRegionLabels[accommodation.region][language]}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <Home className="w-5 h-5 text-[#C5A267]" />
-                <div className="flex flex-col">
-                  <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-[#1A261B]/40 mb-1">{l.units}</span>
-                  <span className="text-xs font-bold uppercase tracking-[0.1em] text-[#1A261B]">
-                    {accommodation.units} {accommodation.units === 1 ? unitsLabels[language].one : unitsLabels[language].other}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <Users className="w-5 h-5 text-[#C5A267]" />
-                <div className="flex flex-col">
-                  <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-[#1A261B]/40 mb-1">{l.capacity}</span>
-                  <span className="text-xs font-bold uppercase tracking-[0.1em] text-[#1A261B]">
-                    {accommodation.totalCapacity} {l.guests}
-                  </span>
-                </div>
-              </div>
             </div>
           </motion.div>
         </section>
@@ -308,6 +267,49 @@ export default function AccommodationDetailDialog({
               <Heart className={cn("h-4 w-4 fill-current", inWishlist ? "text-rose-500" : "text-rose-400")} />
               {inWishlist ? l.removeWishlist : l.addWishlist}
             </Button>
+
+            {/* Quick Info Grid moved here */}
+            <div className="grid grid-cols-2 gap-y-8 gap-x-10 bg-[#F8F9F8] p-8 md:p-10 rounded-[2px] border border-[#1A261B]/5 mt-12">
+              <div className="flex items-center gap-4">
+                <DollarSign className="w-5 h-5 text-[#C5A267]" />
+                <div className="flex flex-col">
+                  <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-[#1A261B]/40 mb-1">{l.price}</span>
+                  <span className="text-xs font-bold uppercase tracking-[0.1em] text-[#1A261B]">
+                    {accommodation.priceRange}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <MapPin className="w-5 h-5 text-[#C5A267]" />
+                <div className="flex flex-col">
+                  <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-[#1A261B]/40 mb-1">{l.location}</span>
+                  <span className="text-xs font-bold uppercase tracking-[0.1em] text-[#1A261B]">
+                    {accRegionLabels[accommodation.region][language]}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <Home className="w-5 h-5 text-[#C5A267]" />
+                <div className="flex flex-col">
+                  <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-[#1A261B]/40 mb-1">{l.units}</span>
+                  <span className="text-xs font-bold uppercase tracking-[0.1em] text-[#1A261B]">
+                    {accommodation.units} {accommodation.units === 1 ? unitsLabels[language].one : unitsLabels[language].other}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <Users className="w-5 h-5 text-[#C5A267]" />
+                <div className="flex flex-col">
+                  <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-[#1A261B]/40 mb-1">{l.capacity}</span>
+                  <span className="text-xs font-bold uppercase tracking-[0.1em] text-[#1A261B]">
+                    {accommodation.totalCapacity} {l.guests}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Right: Vertical Video */}
