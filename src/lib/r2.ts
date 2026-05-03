@@ -28,7 +28,8 @@ export const r2 = {
 
     if (functionError || !data?.url) {
       console.error('R2 Invoke Error:', functionError);
-      throw new Error(functionError?.message || 'Failed to get upload URL');
+      const errorMsg = functionError?.message || (typeof functionError === 'object' ? JSON.stringify(functionError) : 'Failed to get upload URL');
+      throw new Error(`[EdgeFunction Error] ${errorMsg}`);
     }
 
     // 2. Upload directly to R2
@@ -44,7 +45,7 @@ export const r2 = {
     if (!uploadResponse.ok) {
       const errorText = await uploadResponse.text();
       console.error('R2 Direct Upload Error:', errorText);
-      throw new Error('Failed to upload to Cloudflare R2');
+      throw new Error(`[R2 Direct Error] ${errorText || uploadResponse.statusText}`);
     }
   },
 
