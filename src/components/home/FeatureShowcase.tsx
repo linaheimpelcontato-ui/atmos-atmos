@@ -89,16 +89,17 @@ export default function FeatureShowcase() {
       "destaques-categorias/Experiencias-Destaque-1.jpeg",
       "destaques-categorias/Hospedagens-Destaque-1.jpeg",
       "destaques-categorias/Serviços-Destaque-1.jpg",
-      ...CURATION_CATEGORIES_DATA.CACHOEIRAS.map(p => p.img),
-      ...CURATION_CATEGORIES_DATA.EXPERIÊNCIAS.map(p => p.img),
-      "produtos/CACHOEIRAS/Dragão/Dragão-1.jpg",
-      "produtos/CACHOEIRAS/Dragão/Dragão-5.jpg",
-      "brand/logo-horizontal.svg",
       "home/about-bg.jpg",
       "home/hero-bg.jpg",
       "home/showcase-bg.jpg",
-      "destaques-categorias/Cachoeira-Destaque-1.jpg",
-      "destaques-categorias/Experiencias-Destaque-1.jpeg"
+      "brand/logo-horizontal.svg",
+      ...CURATION_CATEGORIES_DATA.CACHOEIRAS.map(p => p.img),
+      ...CURATION_CATEGORIES_DATA.EXPERIÊNCIAS.map(p => p.img),
+      // Adicionais para garantir transições perfeitas
+      "produtos/cachoeiras/bocaina-do-farias/bocaina-do-farias-1.jpg",
+      "produtos/cachoeiras/couros/couros-1.jpg",
+      "produtos/experiencias/voo-de-balao/voo-de-balao-1.jpg",
+      "produtos/experiencias/passeio-a-cavalo/passeio-a-cavalo-1.jpg"
     ];
 
     allImages.forEach(path => {
