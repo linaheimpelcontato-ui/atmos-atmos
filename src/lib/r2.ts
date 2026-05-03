@@ -13,39 +13,34 @@ export const r2 = {
     const mappedFolder = MAP_R2_PATH(folder.endsWith('/') ? folder : `${folder}/`).replace(/\/$/, "");
     // 1. Get presigned URL from Edge Function
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    console.log(`Invoking r2-storage at ${supabaseUrl}/functions/v1/r2-storage`);
+    const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    const functionUrl = `${supabaseUrl}/functions/v1/r2-storage`;
     
-    let result;
-    try {
-      result = await supabase.functions.invoke('r2-storage', {
-        body: { 
-          action: 'get-upload-url', 
-          bucket: 'atmos',
-          folder: mappedFolder, 
-          fileName 
-        },
-        headers: {
-          'x-content-type': file.type
-        }
-      });
-    } catch (networkErr: any) {
-      console.error('Network Error during Invoke:', networkErr);
-      throw new Error(`[Network Error] Não foi possível alcançar o servidor: ${networkErr.message || 'Erro de conexão'}`);
+    console.log(`Uploading: Calling ${functionUrl}`);
+    
+    const response = await fetch(functionUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${supabaseKey}`,
+        'Content-Type': 'application/json',
+        'x-content-type': file.type
+      },
+      body: JSON.stringify({ 
+        action: 'get-upload-url', 
+        bucket: 'atmos',
+        folder: mappedFolder, 
+        fileName 
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown server error' }));
+      throw new Error(`[Server Error] ${errorData.error || response.statusText}`);
     }
 
-    const { data, error: functionError } = result;
-
-    if (functionError || !data?.url) {
-      console.error('R2 Invoke Detailed Error:', functionError);
-      let errorMsg = 'Failed to connect to the storage server.';
-      
-      if (functionError instanceof Error) {
-        errorMsg = functionError.message;
-      } else if (typeof functionError === 'object') {
-        errorMsg = (functionError as any).message || JSON.stringify(functionError);
-      }
-      
-      throw new Error(`[EdgeFunction Error] ${errorMsg}`);
+    const data = await response.json();
+    if (!data?.url) {
+      throw new Error('Server returned no upload URL');
     }
 
     // 2. Upload directly to R2
