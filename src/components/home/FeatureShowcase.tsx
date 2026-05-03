@@ -60,7 +60,7 @@ const CURATION_CATEGORIES_DATA = {
   ],
   EXPERIÊNCIAS: [
     { t: "VOO DE BALÃO", d: "ALTO PARAÍSO", img: "produtos/experiencias/voo-de-balao/voo-de-balao-1.jpg" },
-    { t: "PASSEIO A CAVALO", d: "FAZENDA SÃO BENTO", img: "produtos/experiencias/passeio-a-cavalo/passeio-a-cavalo-1.jpg" }
+    { t: "PASSEIO A CAVALO", d: "FAZENDA SÃO BENTO", img: "produtos/experiencias/passeio-cavalo/passeio-cavalo-1.jpg" }
   ]
 };
 
@@ -74,10 +74,13 @@ export default function FeatureShowcase() {
     if (!path) return "";
     if (path.startsWith("http")) return path;
     const cleanPath = path.replace(/^\//, "");
-    // Force production assets domain for images starting with 'produtos/' or 'destaques-categorias/'
-    if (cleanPath.startsWith("produtos/") || cleanPath.startsWith("destaques-categorias/")) {
+    
+    // Check for any of the standard production folders
+    const productionFolders = ["produtos/", "destaques-categorias/", "experiencias/"];
+    if (productionFolders.some(folder => cleanPath.startsWith(folder))) {
       return `https://assets.atmos.tur.br/${encodeURI(cleanPath)}`;
     }
+    
     return storageUrl(cleanPath);
   };
 
