@@ -77,9 +77,7 @@ export default function FeatureShowcase() {
     const cleanPath = path.replace(/^\//, "");
     // Force production assets domain for images starting with 'produtos/' or 'destaques-categorias/'
     if (cleanPath.startsWith("produtos/") || cleanPath.startsWith("destaques-categorias/")) {
-      // Products paths in storage are lowercase
-      const finalPath = cleanPath.startsWith("produtos/") ? cleanPath.toLowerCase() : cleanPath;
-      return `https://assets.atmos.tur.br/${encodeURI(finalPath)}`;
+      return `https://assets.atmos.tur.br/${encodeURI(cleanPath)}`;
     }
     return storageUrl(cleanPath);
   };
