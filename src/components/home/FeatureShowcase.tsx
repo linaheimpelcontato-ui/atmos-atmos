@@ -83,33 +83,6 @@ export default function FeatureShowcase() {
     return storageUrl(cleanPath);
   };
 
-  // Smart fallback for images with unknown extensions
-  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    const img = e.currentTarget;
-    const currentSrc = img.src;
-    const extensions = [".jpg", ".jpeg", ".png", ".webp", ".avif"];
-    
-    // Check which extension is currently being used
-    const currentExtMatch = currentSrc.match(/\.(jpg|jpeg|png|webp|avif)$/i);
-    if (!currentExtMatch) return;
-    
-    const currentExt = currentExtMatch[0];
-    const currentIndex = extensions.indexOf(currentExt.toLowerCase());
-    
-    // Try the next extension in the list
-    if (currentIndex < extensions.length - 1) {
-      const nextExt = extensions[currentIndex + 1];
-      const newSrc = currentSrc.replace(currentExt, nextExt);
-      
-      // Prevent infinite loops if multiple extensions fail
-      if (!img.dataset.triedExtensions) img.dataset.triedExtensions = "";
-      if (!img.dataset.triedExtensions.includes(nextExt)) {
-        img.dataset.triedExtensions += nextExt;
-        img.src = newSrc;
-      }
-    }
-  };
-
   // Preload all critical emulator images in the background to prevent black screens/flickering
   useEffect(() => {
     const allImages = [
@@ -532,8 +505,7 @@ export default function FeatureShowcase() {
                                 <div className="aspect-[4/5] relative">
                                   <img 
                                     src={getProductionUrl(item.img)} 
-                                    className="w-full h-full object-cover" 
-                                    onError={handleImageError}
+                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
                                   />
                                   <div className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/60 backdrop-blur-md flex items-center justify-center">
                                     <Heart className="w-3.5 h-3.5 text-[#540202] fill-[#540202]" />
