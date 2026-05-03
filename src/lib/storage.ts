@@ -16,6 +16,11 @@ export function storageUrl(path: string): string {
   // Clean up leading slashes just in case
   const cleanPath = path.replace(/^\//, "");
   
+  // In development, prefer local assets if R2 domain is not set
+  if (import.meta.env.DEV && !import.meta.env.VITE_R2_DOMAIN) {
+    return `/assets/${cleanPath}`;
+  }
+  
   return `${STORAGE_BASE}/${cleanPath}`;
 }
 
