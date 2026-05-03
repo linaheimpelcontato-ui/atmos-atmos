@@ -470,41 +470,59 @@ export default function FeatureShowcase() {
                       </motion.div>
                     )}
 
-                    {/* SCREEN 3: PREFERENCIAS */}
+                    {/* SCREEN 3: PREFERENCIAS (WISHLIST) */}
                     {step === 2 && (
                       <motion.div
                         key="preferencias"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="absolute inset-0 bg-white p-4"
+                        className="absolute inset-0 bg-white flex flex-col overflow-hidden"
                       >
-                         <div className="mb-4">
-                           <span className="text-[7px] font-bold text-[#2C3E2D]/40 tracking-[0.3em] uppercase">Sua Seleção</span>
-                           <h5 className="text-sm font-display text-[#2C3E2D] uppercase mt-1">Favoritos Atmos</h5>
-                         </div>
-                         <div className="grid grid-cols-2 gap-3">
-                           {[
-                             "produtos/cachoeiras/bocaina-do-farias/bocaina-do-farias-1.jpg",
-                             "produtos/cachoeiras/couros/couros-1.jpg",
-                             "produtos/experiencias/voo-de-balao/voo-de-balao-1.jpg",
-                             "produtos/experiencias/passeio-a-cavalo/passeio-a-cavalo-1.jpg"
-                           ].map((img, i) => (
-                             <motion.div 
-                               key={i}
-                               initial={{ scale: 0.8, opacity: 0 }}
-                               animate={{ scale: 1, opacity: 1 }}
-                               transition={{ delay: i * 0.1 }}
-                               className="aspect-[4/5] rounded-2xl overflow-hidden relative shadow-lg group"
-                             >
-                               <img src={getProductionUrl(img)} className="w-full h-full object-cover" />
-                               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent p-3 flex flex-col justify-end">
-                                 <Heart className="w-4 h-4 text-white fill-white mb-2" />
-                                 <div className="h-1.5 w-12 bg-white/30 rounded" />
-                               </div>
-                             </motion.div>
-                           ))}
-                         </div>
+                        {/* Header Fixo do Mockup (Consistency) */}
+                        <div className="bg-white shrink-0 z-30 relative border-b border-black/5">
+                          <div className="p-3 pb-2 flex items-center justify-between">
+                            <img src={logoAtmos} className="h-4" alt="Atmos" />
+                            <div className="flex gap-2">
+                               <Heart className="w-4 h-4 text-[#2C3E2D]" />
+                               <div className="w-5 h-5 rounded-full bg-[#2C3E2D]/10 flex items-center justify-center text-[10px] text-[#2C3E2D] font-bold">U</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-4 pt-10 mt-2 bg-[#FAF9F6]">
+                          <div className="mb-6">
+                            <span className="text-[7px] font-bold text-[#A88B4C] tracking-[0.4em] uppercase block">Minha Seleção</span>
+                            <h5 className="text-lg font-display text-[#2C3E2D] uppercase tracking-widest leading-tight mt-1">Sua Lista de Desejo na Chapada</h5>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-4">
+                            {[
+                              ...CURATION_CATEGORIES_DATA.CACHOEIRAS,
+                              ...CURATION_CATEGORIES_DATA.EXPERIÊNCIAS
+                            ].map((item, i) => (
+                              <motion.div 
+                                key={i}
+                                initial={{ scale: 0.9, opacity: 0, y: 10 }}
+                                animate={{ scale: 1, opacity: 1, y: 0 }}
+                                transition={{ delay: i * 0.1 }}
+                                className="bg-white rounded-2xl overflow-hidden shadow-md border border-black/5 flex flex-col"
+                              >
+                                <div className="aspect-[4/5] relative">
+                                  <img src={getProductionUrl(item.img)} className="w-full h-full object-cover" />
+                                  <div className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/60 backdrop-blur-md flex items-center justify-center">
+                                    <Heart className="w-3.5 h-3.5 text-[#540202] fill-[#540202]" />
+                                  </div>
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                                  <div className="absolute bottom-3 left-3 right-3">
+                                    <h6 className="text-[9px] font-bold text-white uppercase tracking-wider line-clamp-1">{item.t}</h6>
+                                    <p className="text-[7px] text-white/70 uppercase tracking-widest mt-0.5">{item.d}</p>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            ))}
+                          </div>
+                        </div>
                       </motion.div>
                     )}
 
