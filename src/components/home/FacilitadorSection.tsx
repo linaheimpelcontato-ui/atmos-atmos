@@ -21,7 +21,7 @@ export default function FacilitadorSection() {
                 B2B • Grupos e Imersões
               </span>
             </div>
-            <h2 className="text-[#E4DBCC] text-2xl md:text-4xl lg:text-[52px] font-display leading-[1.4] tracking-tight max-w-none">
+            <h2 className="text-[#E4DBCC] text-2xl md:text-4xl lg:text-[52px] font-display leading-[1.6] tracking-tight max-w-none">
               Construa conosco projetos que fortalecem o território <span className="font-light italic text-[#A88B4C]">e elevam o padrão das experiências dos seus clientes.</span>
             </h2>
             <p className="text-[#E4DBCC]/60 text-lg md:text-xl font-sans font-light leading-relaxed max-w-4xl">

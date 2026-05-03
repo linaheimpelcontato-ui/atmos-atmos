@@ -80,11 +80,11 @@ const StatItem = ({ number, label, suffix = "" }: { number: number, label: strin
 export default function FounderShowcase() {
   const [imgIndex, setImgIndex] = useState(0);
 
-  // Auto-rotate Joao's photos - Speeded up to 1 second as requested
+  // Auto-rotate Joao's photos - Slower interval (2s) for better pacing
   useEffect(() => {
     const timer = setInterval(() => {
       setImgIndex((prev) => (prev + 1) % JOAO_IMAGES.length);
-    }, 1000); 
+    }, 2000); 
     return () => clearInterval(timer);
   }, []);
 
@@ -146,13 +146,13 @@ export default function FounderShowcase() {
             </motion.span>
 
             <motion.h2
-              className="text-[#2C3E2D] leading-[1.2] mb-10 tracking-tight"
+              className="text-[#2C3E2D] leading-[1.35] mb-10 tracking-tight"
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
             >
-              <span className="font-display text-4xl md:text-5xl block mb-2">Explore a Chapada</span>
+              <span className="font-display text-4xl md:text-5xl block mb-2 leading-[1.2]">Explore a Chapada</span>
               <span className="block font-sans font-light text-xl md:text-2xl opacity-90 tracking-normal hover:opacity-100 transition-opacity">pelos olhos de quem conhece.</span>
             </motion.h2>
 
