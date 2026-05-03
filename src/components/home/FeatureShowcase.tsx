@@ -323,21 +323,21 @@ export default function FeatureShowcase() {
                             </div>
                           </div>
 
-                          {/* 4 Category Cards (More Visible) */}
+                          {/* 4 Category Cards (2x2 Grid for Legibility) */}
                           <div className="px-4 pb-4">
-                            <div className="grid grid-cols-4 gap-2">
+                            <div className="grid grid-cols-2 gap-2">
                               {[
-                                { id: 'wf', label: 'CACH', img: 'destaques-categorias/Cachoeira-Destaque-1.jpg' },
-                                { id: 'exp', label: 'EXP', img: 'destaques-categorias/Experiencias-Destaque-1.jpeg' },
-                                { id: 'acc', label: 'HOSP', img: 'destaques-categorias/Hospedagens-Destaque-1.jpeg' },
-                                { id: 'srv', label: 'SERV', img: 'destaques-categorias/Serviços-Destaque-1.jpg' }
+                                { id: 'wf', label: 'Cachoeiras', img: 'destaques-categorias/Cachoeira-Destaque-1.jpg' },
+                                { id: 'exp', label: 'Experiências', img: 'destaques-categorias/Experiencias-Destaque-1.jpeg' },
+                                { id: 'acc', label: 'Hospedagens', img: 'destaques-categorias/Hospedagens-Destaque-1.jpeg' },
+                                { id: 'srv', label: 'Serviços', img: 'destaques-categorias/Serviços-Destaque-1.jpg' }
                               ].map((cat, i) => {
                                 const isCatActive = (subStep < 2 && i === 0) || (subStep >= 2 && i === 1);
                                 return (
-                                  <div key={cat.id} className={`relative h-16 rounded-xl overflow-hidden border-2 transition-all ${isCatActive ? 'border-[#2C3E2D] shadow-md scale-105' : 'border-transparent opacity-60'}`}>
+                                  <div key={cat.id} className={`relative h-12 rounded-xl overflow-hidden border-2 transition-all ${isCatActive ? 'border-[#2C3E2D] shadow-md' : 'border-transparent opacity-60'}`}>
                                     <img src={getProductionUrl(cat.img)} className="w-full h-full object-cover" />
                                     <div className={`absolute inset-0 flex items-center justify-center ${isCatActive ? 'bg-[#2C3E2D]/40' : 'bg-black/20'}`}>
-                                      <span className="text-[8px] text-white font-display tracking-widest font-bold">{cat.label}</span>
+                                      <span className="text-[9px] text-white font-display tracking-widest font-bold uppercase">{cat.label}</span>
                                     </div>
                                   </div>
                                 );
@@ -347,7 +347,7 @@ export default function FeatureShowcase() {
 
                           {/* Search Bar & Category Title (Compact) */}
                           <div className="px-4 pb-4 space-y-3">
-                            <div className="h-10 bg-[#FAF9F6] rounded-full border border-black/5 flex items-center px-4 gap-2 shadow-inner">
+                            <div className="h-9 bg-[#FAF9F6] rounded-full border border-black/5 flex items-center px-4 gap-2 shadow-inner">
                               <Search className="w-3 h-3 text-black/20" />
                               <span className="text-[8px] text-black/20 uppercase tracking-widest">Buscar...</span>
                             </div>
@@ -360,7 +360,7 @@ export default function FeatureShowcase() {
                           </div>
                         </div>
 
-                        {/* Product List Content with Auto-Scroll */}
+                        {/* Product List Content with Optimized Auto-Scroll */}
                         <div className="flex-1 relative overflow-hidden bg-[#FAF9F6]">
                           <AnimatePresence mode="wait">
                             {/* SUB-PHASE 0-1: WATERFALLS */}
@@ -373,8 +373,8 @@ export default function FeatureShowcase() {
                                 className="flex flex-col h-full"
                               >
                                 <motion.div 
-                                  animate={{ y: [0, -380] }}
-                                  transition={{ duration: 6, ease: "linear", repeat: Infinity, repeatType: "reverse" }}
+                                  animate={{ y: [0, -240] }}
+                                  transition={{ duration: 5, ease: "easeInOut", repeat: Infinity, repeatType: "reverse" }}
                                   className="p-4 space-y-4"
                                 >
                                   {CURATION_CATEGORIES_DATA.CACHOEIRAS.map((item, i) => (
@@ -411,8 +411,8 @@ export default function FeatureShowcase() {
                                 className="flex flex-col h-full"
                               >
                                 <motion.div 
-                                  animate={{ y: [0, -380] }}
-                                  transition={{ duration: 6, ease: "linear", repeat: Infinity, repeatType: "reverse" }}
+                                  animate={{ y: [0, -240] }}
+                                  transition={{ duration: 5, ease: "easeInOut", repeat: Infinity, repeatType: "reverse" }}
                                   className="p-4 space-y-4"
                                 >
                                   {CURATION_CATEGORIES_DATA.EXPERIÊNCIAS.map((item, i) => (
