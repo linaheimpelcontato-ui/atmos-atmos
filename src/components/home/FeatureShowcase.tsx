@@ -34,17 +34,8 @@ const JOURNEY_STEPS = [
     icon: Heart
   },
   {
-    id: 'detalhes',
-    num: '04',
-    label: 'DETALHES',
-    title: 'O Toque Final da Atmos',
-    description: 'Responda a perguntas rápidas para que nosso time consiga criar o seu roteiro personalizado.',
-    accentColor: '#2C3E2D',
-    icon: Calendar
-  },
-  {
     id: 'analise',
-    num: '05',
+    num: '04',
     label: 'ANÁLISE',
     title: 'Analisando seu Perfil',
     description: 'Nossa inteligência editorial cruza seus desejos com a logística perfeita da Chapada.',
@@ -53,7 +44,7 @@ const JOURNEY_STEPS = [
   },
   {
     id: 'roteiro',
-    num: '06',
+    num: '05',
     label: 'ROTEIRO',
     title: 'Seu Roteiro Atmos',
     description: 'O resultado final: uma jornada exclusiva, otimizada e pronta para ser vivida.',
@@ -112,7 +103,7 @@ export default function FeatureShowcase() {
   }, []);
 
   useEffect(() => {
-    const totalTime = 38000;
+    const totalTime = 30000;
     const startTime = Date.now();
     
     const interval = setInterval(() => {
@@ -125,7 +116,8 @@ export default function FeatureShowcase() {
       const stepElapsed = time % stepDuration;
       setProgress((stepElapsed / stepDuration) * 100);
 
-      if (currentStepIndex === 1) {
+      // Sub-steps for steps 1 (Curadoria) and 2 (Preferências)
+      if (currentStepIndex === 1 || currentStepIndex === 2) {
         setSubStep(Math.floor((stepElapsed / stepDuration) * 4));
       }
     }, 50);
@@ -449,132 +441,146 @@ export default function FeatureShowcase() {
 
                     {step === 2 && (
                       <motion.div
-                        key="preferencias"
+                        key="preferencias-container"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         className="absolute inset-0 bg-white flex flex-col overflow-hidden"
                       >
-                        <div className="bg-white shrink-0 z-30 relative border-b border-black/5">
-                          <div className="p-3 pb-2 flex items-center justify-between">
-                            <img src={logoAtmos} className="h-4" alt="Atmos" />
-                            <div className="flex gap-2">
-                               <Heart className="w-4 h-4 text-[#2C3E2D]" />
-                               <div className="w-5 h-5 rounded-full bg-[#2C3E2D]/10 flex items-center justify-center text-[10px] text-[#2C3E2D] font-bold">U</div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex-1 overflow-y-auto p-4 pt-8 mt-1 bg-[#FAF9F6] pb-20">
-                          <div className="mb-4">
-                            <span className="text-[7px] font-bold text-[#A88B4C] tracking-[0.4em] uppercase block">Minha Seleção</span>
-                            <h5 className="text-lg font-display text-[#2C3E2D] uppercase tracking-widest leading-tight mt-1">Sua Lista de Desejo na Chapada</h5>
-                          </div>
-                          
-                          <div className="grid grid-cols-2 gap-2">
-                            {[
-                              ...CURATION_CATEGORIES_DATA.CACHOEIRAS,
-                              ...CURATION_CATEGORIES_DATA.EXPERIÊNCIAS
-                            ].map((item, i) => (
-                              <motion.div 
-                                key={i}
-                                initial={{ scale: 0.9, opacity: 0, y: 10 }}
-                                animate={{ scale: 1, opacity: 1, y: 0 }}
-                                transition={{ delay: i * 0.1 }}
-                                className="bg-white rounded-2xl overflow-hidden shadow-md border border-black/5 flex flex-col"
-                              >
-                                <div className="relative w-full overflow-hidden" style={{ aspectRatio: '1/1' }}>
-                                  <img 
-                                    src={getProductionUrl(item.img)} 
-                                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-                                  />
-                                  <div className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/60 backdrop-blur-md flex items-center justify-center">
-                                    <Heart className="w-3.5 h-3.5 text-[#540202] fill-[#540202]" />
-                                  </div>
-                                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                                  <div className="absolute bottom-3 left-3 right-3">
-                                    <h6 className="text-[9px] font-bold text-white uppercase tracking-wider line-clamp-1">{item.t}</h6>
-                                    <p className="text-[7px] text-white/70 uppercase tracking-widest mt-0.5">{item.d}</p>
+                        <AnimatePresence mode="wait">
+                          {/* PHASE 1: WISHLIST GRID */}
+                          {subStep < 2 && (
+                            <motion.div
+                              key="wishlist-grid"
+                              initial={{ opacity: 0, x: 20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: -20 }}
+                              className="absolute inset-0 flex flex-col"
+                            >
+                              <div className="bg-white shrink-0 z-30 relative border-b border-black/5">
+                                <div className="p-3 pb-2 flex items-center justify-between">
+                                  <img src={logoAtmos} className="h-4" alt="Atmos" />
+                                  <div className="flex gap-2">
+                                     <Heart className="w-4 h-4 text-[#2C3E2D]" />
+                                     <div className="w-5 h-5 rounded-full bg-[#2C3E2D]/10 flex items-center justify-center text-[10px] text-[#2C3E2D] font-bold">U</div>
                                   </div>
                                 </div>
-                              </motion.div>
-                            ))}
-                          </div>
+                              </div>
 
-                          <div className="mt-6 mb-8">
-                            <motion.div
-                              animate={{ y: [0, -4, 0] }}
-                              transition={{ duration: 2, repeat: Infinity }}
-                            >
-                              <div className="w-full py-4 bg-[#2C3E2D] text-white rounded-full text-[9px] font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-2 shadow-xl">
-                                Prosseguir para roteiro
-                                <ChevronRight className="w-3 h-3" />
+                              <div className="flex-1 overflow-y-auto p-4 pt-8 mt-1 bg-[#FAF9F6] pb-24">
+                                <div className="mb-4">
+                                  <span className="text-[7px] font-bold text-[#A88B4C] tracking-[0.4em] uppercase block">Minha Seleção</span>
+                                  <h5 className="text-lg font-display text-[#2C3E2D] uppercase tracking-widest leading-tight mt-1">Sua Lista de Desejo na Chapada</h5>
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-2">
+                                  {[
+                                    ...CURATION_CATEGORIES_DATA.CACHOEIRAS,
+                                    ...CURATION_CATEGORIES_DATA.EXPERIÊNCIAS
+                                  ].map((item, i) => (
+                                    <motion.div 
+                                      key={i}
+                                      initial={{ scale: 0.9, opacity: 0, y: 10 }}
+                                      animate={{ scale: 1, opacity: 1, y: 0 }}
+                                      transition={{ delay: i * 0.1 }}
+                                      className="bg-white rounded-2xl overflow-hidden shadow-md border border-black/5 flex flex-col"
+                                    >
+                                      <div className="relative w-full overflow-hidden" style={{ aspectRatio: '1/1' }}>
+                                        <img 
+                                          src={getProductionUrl(item.img)} 
+                                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                                        />
+                                        <div className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/60 backdrop-blur-md flex items-center justify-center">
+                                          <Heart className="w-3.5 h-3.5 text-[#540202] fill-[#540202]" />
+                                        </div>
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                                        <div className="absolute bottom-3 left-3 right-3">
+                                          <h6 className="text-[9px] font-bold text-white uppercase tracking-wider line-clamp-1">{item.t}</h6>
+                                          <p className="text-[7px] text-white/70 uppercase tracking-widest mt-0.5">{item.d}</p>
+                                        </div>
+                                      </div>
+                                    </motion.div>
+                                  ))}
+                                </div>
+
+                                <div className="mt-6 mb-8">
+                                  <motion.div
+                                    animate={{ y: [0, -4, 0] }}
+                                    transition={{ duration: 2, repeat: Infinity }}
+                                  >
+                                    <div className="w-full py-4 bg-[#2C3E2D] text-white rounded-full text-[9px] font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-2 shadow-xl">
+                                      Prosseguir para roteiro
+                                      <ChevronRight className="w-3 h-3" />
+                                    </div>
+                                  </motion.div>
+                                </div>
                               </div>
                             </motion.div>
-                          </div>
-                        </div>
+                          )}
+
+                          {/* PHASE 2: FINAL DETAILS FORM */}
+                          {subStep >= 2 && (
+                            <motion.div
+                              key="formulario-sub"
+                              initial={{ opacity: 0, x: 20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: -20 }}
+                              className="absolute inset-0 bg-white flex flex-col p-6 pt-12"
+                            >
+                              <div className="text-center mb-8">
+                                <span className="text-[7px] font-bold text-[#A88B4C] tracking-[0.4em] uppercase block mb-2">Próximo Passo</span>
+                                <h5 className="text-xl font-display text-[#2C3E2D] uppercase tracking-widest leading-tight">O Toque Final da Atmos</h5>
+                                <p className="text-[9px] text-black/50 mt-4 leading-relaxed max-w-[200px] mx-auto">
+                                  Suas escolhas definem a alma da experiência. Agora, responda a perguntas rápidas.
+                                </p>
+                              </div>
+
+                              <div className="space-y-4 max-w-[240px] mx-auto w-full">
+                                {[
+                                  { label: "Qual seu destino?", value: "Chapada dos Veadeiros" },
+                                  { label: "Quando você vai?", value: "15 a 22 de Julho" },
+                                  { label: "Com quem você vai?", value: "Em Casal" }
+                                ].map((field, i) => (
+                                  <motion.div 
+                                    key={i}
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: (subStep - 2) * 0.5 + i * 0.4 }}
+                                    className="space-y-1.5"
+                                  >
+                                    <label className="text-[7px] font-bold text-black/30 uppercase tracking-widest ml-1">{field.label}</label>
+                                    <div className="h-10 bg-[#FAF9F6] border border-black/5 rounded-xl flex items-center px-4 overflow-hidden">
+                                      <motion.span 
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        transition={{ delay: (subStep - 2) * 0.5 + i * 0.4 + 0.3 }}
+                                        className="text-[10px] text-[#2C3E2D] font-medium"
+                                      >
+                                        {field.value}
+                                      </motion.span>
+                                    </div>
+                                  </motion.div>
+                                ))}
+                                
+                                <motion.div
+                                  initial={{ opacity: 0, y: 10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ delay: 2 }}
+                                  className="pt-4"
+                                >
+                                  <div className="w-full py-4 bg-[#2C3E2D] text-white rounded-full text-[9px] font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-2 opacity-50">
+                                    Gerando Roteiro...
+                                    <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                  </div>
+                                </motion.div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </motion.div>
                     )}
 
                     {step === 3 && (
-                      <motion.div
-                        key="formulario"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="absolute inset-0 bg-white flex flex-col p-6 pt-12"
-                      >
-                        <div className="text-center mb-8">
-                          <span className="text-[7px] font-bold text-[#A88B4C] tracking-[0.4em] uppercase block mb-2">Próximo Passo</span>
-                          <h5 className="text-xl font-display text-[#2C3E2D] uppercase tracking-widest leading-tight">O Toque Final da Atmos</h5>
-                          <p className="text-[9px] text-black/50 mt-4 leading-relaxed max-w-[200px] mx-auto">
-                            Suas escolhas definem a alma da experiência. Agora, responda a perguntas rápidas.
-                          </p>
-                        </div>
-
-                        <div className="space-y-4 max-w-[240px] mx-auto w-full">
-                          {[
-                            { label: "Qual seu destino?", value: "Chapada dos Veadeiros" },
-                            { label: "Quando você vai?", value: "15 a 22 de Julho" },
-                            { label: "Com quem você vai?", value: "Em Casal" }
-                          ].map((field, i) => (
-                            <motion.div 
-                              key={i}
-                              initial={{ opacity: 0, x: -10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: i * 0.5 + 0.5 }}
-                              className="space-y-1.5"
-                            >
-                              <label className="text-[7px] font-bold text-black/30 uppercase tracking-widest ml-1">{field.label}</label>
-                              <div className="h-10 bg-[#FAF9F6] border border-black/5 rounded-xl flex items-center px-4 overflow-hidden">
-                                <motion.span 
-                                  initial={{ opacity: 0 }}
-                                  animate={{ opacity: 1 }}
-                                  transition={{ delay: i * 0.5 + 1 }}
-                                  className="text-[10px] text-[#2C3E2D] font-medium"
-                                >
-                                  {field.value}
-                                </motion.span>
-                              </div>
-                            </motion.div>
-                          ))}
-                          
-                          <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 2.5 }}
-                            className="pt-4"
-                          >
-                            <div className="w-full py-4 bg-[#2C3E2D] text-white rounded-full text-[9px] font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-2 opacity-50">
-                              Gerando Roteiro...
-                              <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            </div>
-                          </motion.div>
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {step === 4 && (
                       <motion.div
                         key="analise"
                         initial={{ opacity: 0 }}
@@ -598,17 +604,16 @@ export default function FeatureShowcase() {
                             </div>
                           </motion.div>
                           
-                          <div className="bg-white/10 backdrop-blur-xl border border-white/20 p-5 rounded-[2rem] w-full">
-                            <h5 className="text-white text-[10px] font-bold tracking-[0.4em] uppercase mb-4">Roteiro Personalizado</h5>
-                            <p className="text-white/60 text-[8px] tracking-widest uppercase leading-relaxed">
-                              Desenhando sua atmosfera única...
-                            </p>
+                          <div className="space-y-2">
+                             <span className="text-[8px] font-bold text-white/60 tracking-[0.3em] uppercase">IA Editorial</span>
+                             <h4 className="text-xl font-display text-white uppercase tracking-widest leading-tight">Analisando seu Perfil</h4>
+                             <p className="text-[9px] text-white/50 max-w-[180px] mx-auto leading-relaxed">Cruzando suas preferências com a curadoria Atmos...</p>
                           </div>
                         </div>
                       </motion.div>
                     )}
 
-                    {step === 5 && (
+                    {step === 4 && (
                       <motion.div
                         key="roteiro"
                         initial={{ opacity: 0 }}
