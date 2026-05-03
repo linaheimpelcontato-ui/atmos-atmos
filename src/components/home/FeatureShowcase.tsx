@@ -380,7 +380,7 @@ export default function FeatureShowcase() {
                               >
                                 <motion.div 
                                   animate={{ 
-                                    y: p < 15 ? 0 : p > 40 ? -240 : -((p - 15) / 25) * 240 
+                                    y: progress < 15 ? 0 : progress > 40 ? -240 : -((progress - 15) / 25) * 240 
                                   }}
                                   transition={{ type: "spring", damping: 30, stiffness: 100 }}
                                   className="p-4 space-y-4"
@@ -424,7 +424,7 @@ export default function FeatureShowcase() {
                               >
                                 <motion.div 
                                   animate={{ 
-                                    y: (p - 50) < 15 ? 0 : (p - 50) > 40 ? -240 : -(((p - 50) - 15) / 25) * 240 
+                                    y: (progress - 50) < 15 ? 0 : (progress - 50) > 40 ? -240 : -(((progress - 50) - 15) / 25) * 240 
                                   }}
                                   transition={{ type: "spring", damping: 30, stiffness: 100 }}
                                   className="p-4 space-y-4"
