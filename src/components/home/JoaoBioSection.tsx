@@ -2,7 +2,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { storageUrl } from "@/lib/storage";
 import { motion } from "framer-motion";
 
-const joaoAccioly = storageUrl("home/joao-accioly.jpg");
+const joaoAccioly = storageUrl("home/Joao/joao-1.jpg");
 
 const StatItem = ({ value, label }: { value: string; label: string }) => (
   <div className="flex flex-col border-l border-border pl-5 py-2">
