@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { storageUrl, isImageMatch } from "@/lib/storage";
+import { storageUrl, isImageMatch, normalize } from "@/lib/storage";
 import { r2 } from "@/lib/r2";
 
 /**

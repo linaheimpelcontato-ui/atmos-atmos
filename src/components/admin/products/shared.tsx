@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { normalize } from "@/lib/storage";
 import { Check, X, ChevronsUpDown, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -205,7 +206,7 @@ export const typeFields: Record<string, FieldDef[]> = {
 export function getStorageInfo(product: Partial<Product> & { name: string; type: string; tempId?: string }): { folder: string; productFolder: string; prefix: string; rawName: string } | null {
   const vars = (product.variables || {}) as Record<string, unknown>;
   const rawName = (product.name as any)?.pt || product.name || "";
-  const prefix = (vars.storage_id as string) || rawName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-').replace(/[^\w-]/g, '') || product.id || product.tempId || "item";
+  const prefix = (vars.storage_id as string) || normalize(rawName) || product.id || product.tempId || "item";
   
   console.log(`Storage Info: prefix="${prefix}", rawName="${rawName}"`);
 
