@@ -2,15 +2,15 @@ import { motion, AnimatePresence, useInView } from "framer-motion";
 import { useEffect, useState, useRef } from "react";
 import { Car, Languages, Heart, Camera, Shield, Search, Leaf, Mountain, Users, Award } from "lucide-react";
 
-import { storageUrl } from "@/lib/storage";
+import { storageUrl, optimizedUrl, IMAGE_PRESETS } from "@/lib/storage";
 
-// Supabase Storage Public URLs for Joao's photos
+// Supabase Storage Public URLs for Joao's photos - Optimized for fast loading
 const JOAO_IMAGES = [
-  storageUrl("home/Joao/joao-1.jpg"),
-  storageUrl("home/Joao/joao-2.jpg"),
-  storageUrl("home/Joao/joao-4.jpg"),
-  storageUrl("home/Joao/joao-5.jpg"),
-  storageUrl("home/Joao/joao-6.jpg"),
+  optimizedUrl("home/Joao/joao-1.jpg", IMAGE_PRESETS.large),
+  optimizedUrl("home/Joao/joao-2.jpg", IMAGE_PRESETS.large),
+  optimizedUrl("home/Joao/joao-4.jpg", IMAGE_PRESETS.large),
+  optimizedUrl("home/Joao/joao-5.jpg", IMAGE_PRESETS.large),
+  optimizedUrl("home/Joao/joao-6.jpg", IMAGE_PRESETS.large),
 ];
 
 // Real Guide Images from public folder
@@ -80,11 +80,11 @@ const StatItem = ({ number, label, suffix = "" }: { number: number, label: strin
 export default function FounderShowcase() {
   const [imgIndex, setImgIndex] = useState(0);
 
-  // Auto-rotate Joao's photos
+  // Auto-rotate Joao's photos - Speeded up to 1 second as requested
   useEffect(() => {
     const timer = setInterval(() => {
       setImgIndex((prev) => (prev + 1) % JOAO_IMAGES.length);
-    }, 5000); // 5 seconds per photo for a calm, luxury feel
+    }, 1000); 
     return () => clearInterval(timer);
   }, []);
 
