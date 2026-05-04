@@ -636,7 +636,7 @@ export default function FeatureShowcase() {
                            
                            <div className="flex-1 p-5 pt-12 relative z-10">
                              <div className="mb-10">
-                               <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 p-1 mb-4 rotate-3 shadow-2xl">
+                               <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 p-1 mb-4 shadow-2xl">
                                  <img src={getProductionUrl("produtos/cachoeiras/bocaina-do-farias/bocaina-do-farias-1.jpg")} className="w-full h-full object-cover rounded-xl grayscale opacity-60" />
                                </div>
                                <span className="text-[7px] text-white/40 tracking-[0.4em] uppercase block leading-tight mb-1">Itinerário Atmos</span>
