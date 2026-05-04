@@ -280,7 +280,7 @@ export default function FeatureShowcase() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="absolute inset-0 bg-cover bg-center flex items-center justify-center p-6"
+                        className="absolute inset-0 pt-14 bg-cover bg-center flex items-center justify-center p-6"
                         style={{ backgroundImage: `url(${storageUrl("home/about-bg.jpg")})` }}
                       >
                         <div className="absolute inset-0 bg-black/20" />
@@ -304,7 +304,7 @@ export default function FeatureShowcase() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="absolute inset-0 bg-white flex flex-col overflow-hidden"
+                        className="absolute inset-0 pt-14 bg-white flex flex-col overflow-hidden"
                       >
                         <div className="bg-white shrink-0 z-30 relative border-b border-black/5">
                           <div className="p-3 pb-2 flex items-center justify-between">
@@ -454,7 +454,7 @@ export default function FeatureShowcase() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="absolute inset-0 bg-white flex flex-col overflow-hidden"
+                        className="absolute inset-0 pt-14 bg-white flex flex-col overflow-hidden"
                       >
                         <AnimatePresence mode="wait">
                           {/* PHASE 1: WISHLIST GRID */}
@@ -595,7 +595,7 @@ export default function FeatureShowcase() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="absolute inset-0 bg-cover bg-center"
+                        className="absolute inset-0 pt-14 bg-cover bg-center"
                         style={{ backgroundImage: `url(${getProductionUrl("produtos/cachoeiras/bocaina-do-farias/bocaina-do-farias-1.jpg")})` }}
                       >
                         <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
@@ -628,7 +628,7 @@ export default function FeatureShowcase() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="absolute inset-0 bg-[#FAF9F6] flex overflow-hidden"
+                        className="absolute inset-0 pt-14 bg-[#FAF9F6] flex overflow-hidden"
                       >
                         {/* Sidebar: Consultoria */}
                         <div className="w-[130px] bg-[#1B291C] h-full flex flex-col shrink-0 border-r border-white/5 relative overflow-hidden">
@@ -640,7 +640,6 @@ export default function FeatureShowcase() {
                                  <img src={getProductionUrl("produtos/cachoeiras/bocaina-do-farias/bocaina-do-farias-1.jpg")} className="w-full h-full object-cover rounded-xl grayscale opacity-60" />
                                </div>
                                <span className="text-[7px] text-white/40 tracking-[0.4em] uppercase block leading-tight mb-1">Itinerário Atmos</span>
-                               <span className="text-[10px] text-[#A88B4C] font-bold tracking-widest uppercase">#0842-2024</span>
                              </div>
 
                              <div className="space-y-8">
