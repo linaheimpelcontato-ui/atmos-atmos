@@ -103,7 +103,7 @@ export default function FeatureShowcase() {
   }, []);
 
   useEffect(() => {
-    const totalTime = 30000;
+    const totalTime = 50000;
     const startTime = Date.now();
     
     const interval = setInterval(() => {
