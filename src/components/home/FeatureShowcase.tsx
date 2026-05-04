@@ -102,13 +102,22 @@ export default function FeatureShowcase() {
     });
   }, []);
 
+  const [startTime, setStartTime] = useState(Date.now());
+  const totalTime = 50000;
+  const stepDuration = totalTime / JOURNEY_STEPS.length;
+
+  const resetTimer = (targetStep: number) => {
+    const newStartTime = Date.now() - (targetStep * stepDuration);
+    setStartTime(newStartTime);
+    setStep(targetStep);
+    setProgress(0);
+    setSubStep(0);
+  };
+
   useEffect(() => {
-    const totalTime = 50000;
-    const startTime = Date.now();
-    
     const interval = setInterval(() => {
-      const time = (Date.now() - startTime) % totalTime;
-      const stepDuration = totalTime / JOURNEY_STEPS.length;
+      const elapsed = Date.now() - startTime;
+      const time = elapsed % totalTime;
       
       const currentStepIndex = Math.floor(time / stepDuration);
       setStep(currentStepIndex);
@@ -123,7 +132,7 @@ export default function FeatureShowcase() {
     }, 50);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [startTime, stepDuration, totalTime]);
 
   const currentStep = JOURNEY_STEPS[step];
   const Icon = currentStep.icon;
@@ -158,7 +167,7 @@ export default function FeatureShowcase() {
                   repeat: Infinity,
                   ease: "easeInOut"
                 }}
-                onClick={() => { setStep((prev) => (prev + 1) % JOURNEY_STEPS.length); setProgress(0); }}
+                onClick={() => resetTimer((step + 1) % JOURNEY_STEPS.length)}
                 className="flex items-center gap-3 bg-[#2C3E2D] text-white px-6 py-3 rounded-xl mb-4 hover:bg-[#1B291C] transition-colors group"
               >
                 <span className="text-[9px] font-bold tracking-[0.3em] uppercase">Próxima Etapa</span>
@@ -176,7 +185,7 @@ export default function FeatureShowcase() {
                   return (
                     <button 
                       key={s.id}
-                      onClick={() => { setStep(i); setProgress(0); }}
+                      onClick={() => resetTimer(i)}
                       className="flex flex-col items-center group flex-1"
                     >
                       <motion.div 
