@@ -628,63 +628,124 @@ export default function FeatureShowcase() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="absolute inset-0 bg-[#F5F5F3] flex"
+                        className="absolute inset-0 bg-[#FAF9F6] flex overflow-hidden"
                       >
-                        <div className="w-1/3 bg-[#1B291C] h-full flex flex-col p-4 border-r border-white/5">
-                           <div className="flex-1">
-                             <div className="w-full aspect-[4/5] rounded-2xl bg-white/5 overflow-hidden mb-4 border border-white/10 relative">
-                               <img src={getProductionUrl("produtos/cachoeiras/couros/couros-1.jpg")} className="w-full h-full object-cover opacity-50" />
-                               <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
-                                  <span className="text-[6px] text-white/40 tracking-[0.3em] uppercase text-center mb-1">Itinerário Exclusivo</span>
-                                  <div className="h-[1px] w-8 bg-white/20 mb-4" />
+                        {/* Sidebar: Consultoria */}
+                        <div className="w-[110px] bg-[#1B291C] h-full flex flex-col shrink-0 border-r border-white/5 relative overflow-hidden">
+                           <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-white/5 to-transparent" />
+                           
+                           <div className="flex-1 p-4 pt-12 relative z-10">
+                             <div className="mb-8">
+                               <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 p-1 mb-3 rotate-3">
+                                 <img src={getProductionUrl("produtos/cachoeiras/bocaina-do-farias/bocaina-do-farias-1.jpg")} className="w-full h-full object-cover rounded-xl grayscale" />
                                </div>
+                               <span className="text-[6px] text-white/30 tracking-[0.4em] uppercase block leading-tight">Itinerário Atmos</span>
+                               <span className="text-[8px] text-[#A88B4C] font-bold tracking-widest uppercase">#0842</span>
                              </div>
-                             
-                             <div className="flex items-center gap-2 mb-6">
-                               <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
-                                 <Users className="w-3 h-3 text-white/50" />
+
+                             <div className="space-y-6">
+                               <div className="flex items-center gap-2">
+                                 <div className="w-6 h-6 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+                                   <Users className="w-2.5 h-2.5 text-white/40" />
+                                 </div>
+                                 <div>
+                                   <p className="text-[5px] text-white/80 font-bold uppercase tracking-wider">Lina & Família</p>
+                                   <p className="text-[4px] text-white/30 uppercase tracking-widest">Acompanhantes</p>
+                                 </div>
                                </div>
-                               <div>
-                                 <p className="text-[6px] text-white/80 font-bold uppercase tracking-wider">Consultoria Premium</p>
-                                 <p className="text-[5px] text-white/40 uppercase tracking-widest">Especialista Atmos</p>
+
+                               <div className="flex items-center gap-2">
+                                 <div className="w-6 h-6 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+                                   <Calendar className="w-2.5 h-2.5 text-white/40" />
+                                 </div>
+                                 <div>
+                                   <p className="text-[5px] text-white/80 font-bold uppercase tracking-wider">7 Dias</p>
+                                   <p className="text-[4px] text-white/30 uppercase tracking-widest">Duração</p>
+                                 </div>
                                </div>
                              </div>
                            </div>
 
-                           <div className="bg-white/5 p-3 rounded-xl border border-white/10">
-                              <p className="text-[5px] text-white/60 leading-relaxed italic">"Selecionamos os itens de sua preferência para criar um roteiro autêntico."</p>
+                           <div className="p-4 pb-8 relative z-10">
+                              <div className="bg-white/5 backdrop-blur-md p-3 rounded-xl border border-white/10 mb-4">
+                                <Sparkles className="w-3 h-3 text-[#A88B4C] mb-2" />
+                                <p className="text-[5px] text-white/60 leading-relaxed font-medium">
+                                  "Cada trilha foi pensada para conectar você com a alma da Chapada."
+                                </p>
+                              </div>
+                              <img src={logoAtmos} className="h-3 opacity-20 grayscale brightness-200" />
                            </div>
                         </div>
 
-                        {/* Main Content */}
-                        <div className="flex-1 flex flex-col overflow-hidden">
-                           <div className="h-32 relative shrink-0">
-                             <img src={getProductionUrl("destaques-categorias/Cachoeira-Destaque-1.jpg")} className="w-full h-full object-cover" />
-                             <div className="absolute inset-0 bg-gradient-to-t from-[#F5F5F3] via-transparent to-transparent" />
-                             <div className="absolute bottom-4 left-4">
-                               <span className="text-[6px] text-[#2C3E2D]/40 font-bold uppercase tracking-[0.4em]">Seu Roteiro</span>
-                               <h5 className="text-lg font-display text-[#2C3E2D] uppercase leading-tight">Chapada dos<br/>Veadeiros</h5>
-                             </div>
-                           </div>
-                           
-                           <div className="flex-1 p-4 space-y-3 overflow-hidden">
-                              {[1,2].map(i => (
+                        {/* Main Itinerary Content */}
+                        <div className="flex-1 flex flex-col relative overflow-hidden bg-[#FAF9F6]">
+                          {/* Header */}
+                          <div className="relative h-40 shrink-0 overflow-hidden">
+                            <motion.img 
+                              initial={{ scale: 1.1 }}
+                              animate={{ scale: 1 }}
+                              transition={{ duration: 10, repeat: Infinity, repeatType: "reverse" }}
+                              src={getProductionUrl("destaques-categorias/Cachoeira-Destaque-1.jpg")} 
+                              className="w-full h-full object-cover" 
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-[#FAF9F6]" />
+                            <div className="absolute inset-0 p-6 flex flex-col justify-end">
+                               <span className="text-[7px] font-bold text-white/60 tracking-[0.4em] uppercase mb-1">Seu Destino Atmos</span>
+                               <h4 className="text-2xl font-display text-white uppercase tracking-[0.1em] leading-none">Chapada dos Veadeiros</h4>
+                            </div>
+                          </div>
+
+                          {/* Days List */}
+                          <div className="flex-1 overflow-y-auto px-6 py-8 no-scrollbar relative">
+                            <div className="absolute left-9 top-8 bottom-8 w-[1px] bg-black/5" />
+                            
+                            <div className="space-y-8 relative">
+                              {[
+                                { day: "DIA 01", title: "Bocaina do Farias", desc: "A mística das águas cristalinas em meio ao cânion.", img: "produtos/cachoeiras/bocaina-do-farias/bocaina-do-farias-1.jpg" },
+                                { day: "DIA 02", title: "Cachoeira dos Couros", desc: "A grandiosidade das quedas e a energia do Rio Preto.", img: "produtos/cachoeiras/couros/couros-1.jpg" },
+                                { day: "DIA 03", title: "Voo de Balão", desc: "O amanhecer sobre o Cerrado em uma vista 360º.", img: "produtos/experiencias/voo-de-balao/voo-de-balao-1.jpg" },
+                                { day: "DIA 04", title: "Passeio a Cavalo", desc: "Conexão e tranquilidade pelas trilhas da Fazenda.", img: "produtos/experiencias/passeio-a-cavalo/passeio-a-cavalo-6.png" }
+                              ].map((item, i) => (
                                 <motion.div 
                                   key={i}
-                                  initial={{ x: 20, opacity: 0 }}
-                                  animate={{ x: 0, opacity: 1 }}
-                                  transition={{ delay: i * 0.2 }}
-                                  className="bg-white p-4 rounded-2xl border border-black/5 shadow-sm"
+                                  initial={{ opacity: 0, x: 20 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: i * 0.4 }}
+                                  className="flex gap-4 relative"
                                 >
-                                   <div className="flex items-center gap-3 mb-2">
-                                     <span className="text-[6px] font-bold text-[#A88B4C] tracking-widest uppercase">DIA 0{i}</span>
-                                     <div className="h-[1px] flex-1 bg-[#A88B4C]/20" />
-                                   </div>
-                                   <h6 className="text-[8px] font-bold text-[#2C3E2D] uppercase tracking-wider mb-1">Cachoeira dos Couros</h6>
-                                   <p className="text-[6px] text-black/40 leading-relaxed">Uma das trilhas mais místicas da Chapada.</p>
+                                  {/* Timeline Dot */}
+                                  <div className="w-6 shrink-0 flex flex-col items-center pt-1 relative z-10">
+                                    <div className="w-2 h-2 rounded-full bg-[#A88B4C] border-4 border-[#FAF9F6]" />
+                                  </div>
+
+                                  <div className="flex-1 bg-white rounded-2xl p-4 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border border-black/5 flex gap-4 items-center">
+                                    <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0">
+                                      <img src={getProductionUrl(item.img)} className="w-full h-full object-cover" />
+                                    </div>
+                                    <div>
+                                      <span className="text-[6px] font-bold text-[#A88B4C] tracking-[0.2em] uppercase">{item.day}</span>
+                                      <h6 className="text-[10px] font-bold text-[#2C3E2D] uppercase tracking-wider mt-0.5">{item.title}</h6>
+                                      <p className="text-[7px] text-black/40 mt-1 leading-tight line-clamp-1">{item.desc}</p>
+                                    </div>
+                                  </div>
                                 </motion.div>
                               ))}
-                           </div>
+
+                              <motion.div 
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 2.5 }}
+                                className="pt-4 text-center"
+                              >
+                                <button className="w-full py-3 bg-[#2C3E2D] text-white rounded-xl text-[8px] font-bold uppercase tracking-[0.2em] shadow-lg">
+                                  Baixar PDF Completo
+                                </button>
+                                <p className="text-[6px] text-black/30 mt-3 uppercase tracking-widest">
+                                  Acesso exclusivo via plataforma Atmos
+                                </p>
+                              </motion.div>
+                            </div>
+                          </div>
                         </div>
                       </motion.div>
                     )}
@@ -692,8 +753,9 @@ export default function FeatureShowcase() {
                 </div>
               </div>
 
-              {/* Decorative Circle Background */}
-              <div className="absolute -inset-20 rounded-full blur-[120px] opacity-10 bg-[#A88B4C] -z-10" />
+              {/* Decorative Background Elements */}
+              <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#2C3E2D]/5 rounded-full blur-3xl" />
+              <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-[#A88B4C]/5 rounded-full blur-3xl" />
             </div>
           </div>
 
