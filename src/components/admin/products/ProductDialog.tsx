@@ -266,7 +266,7 @@ export function ProductDialog({
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div className="space-y-2">
                           <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-admin-primary h-8 flex items-end pb-1 ml-1 leading-tight">
-                            {formVars.pricingType === "total" ? "Valor Total (Venda)" : "Valor por Pessoa (Venda)"}
+                            {formVars.pricingType === "total" ? "Valor Total (Venda)" : "Valor Venda (por pessoa)"}
                           </Label>
                           <div className="relative group">
                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-admin-primary/30 group-focus-within:text-admin-primary transition-colors">R$</span>

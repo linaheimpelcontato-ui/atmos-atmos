@@ -144,7 +144,7 @@ export interface ColumnInfo {
 
 export const ALL_COLUMNS: ColumnInfo[] = [
   { key: "name", label: "Produto", defaultVisible: true },
-  { key: "price", label: "Preço Unitário", defaultVisible: true },
+  { key: "price", label: "Valor Venda", defaultVisible: true },
   { key: "cost_price", label: "Preço Custo", defaultVisible: false },
   { key: "status", label: "Status", defaultVisible: true },
   { key: "type", label: "Tipo", defaultVisible: false },
