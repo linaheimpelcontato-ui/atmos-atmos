@@ -233,9 +233,9 @@ export function ProductDialog({
 
                   <div className="space-y-6">
                     <div className="bg-admin-primary/[0.03] p-8 rounded-[2rem] border border-admin-primary/10 space-y-8">
-                      <div className="flex flex-col sm:flex-row gap-6">
+                      <div className="flex flex-col sm:flex-row gap-6 items-end">
                         <div className="flex-1 space-y-2">
-                          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-admin-primary/50 ml-1">Lógica de Cobrança</Label>
+                          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-admin-primary/50 ml-1 h-8 flex items-end pb-1 leading-tight">Lógica de Cobrança</Label>
                           <Select 
                             value={formVars.pricingType || "por_pessoa"} 
                             onValueChange={(v) => setFormVars(p => ({ ...p, pricingType: v }))}
@@ -251,7 +251,7 @@ export function ProductDialog({
                         </div>
                         {formVars.pricingType === "total" && (
                           <div className="w-full sm:w-40 space-y-2 animate-in fade-in slide-in-from-right-4 duration-500">
-                            <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-admin-primary/50 ml-1">Limite de Pax</Label>
+                            <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-admin-primary/50 ml-1 h-8 flex items-end pb-1 leading-tight">Limite de Pax</Label>
                             <Input 
                               type="number"
                               value={formVars.limitPeople || ""} 
