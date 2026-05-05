@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Package, Plus, ImageIcon, Pencil } from "lucide-react";
+import { Package, Plus, ImageIcon, Pencil, Trash2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
@@ -11,6 +11,7 @@ import { AtmosCard } from "@/components/admin/shared/AtmosCard";
 import { ProductFilters } from "@/components/admin/products/ProductFilters";
 import { ProductDialog } from "@/components/admin/products/ProductDialog";
 import { CategoryDialog } from "@/components/admin/products/CategoryDialog";
+import { DeleteConfirmationDialog } from "@/components/admin/shared/DeleteConfirmationDialog";
 import ItineraryFormDialog from "@/components/admin/products/ItineraryFormDialog";
 import {
   ProductTable, InlinePrice, productTypeLabels, DEDICATED_TYPES, 
@@ -19,12 +20,17 @@ import {
 import { ProductTableRow } from "@/components/admin/products/ProductTableRow";
 import { useRowSelection } from "@/hooks/useRowSelection";
 
+import { exportProductsToExcel, importProductsFromExcel } from "@/lib/excelUtils";
+
 export default function AdminProducts() {
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("experience");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [itinDialogOpen, setItinDialogOpen] = useState(false);
   const [catDialogOpen, setCatDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   const { toast } = useToast();
@@ -77,6 +83,35 @@ export default function AdminProducts() {
     },
   });
 
+  const importMutation = useMutation({
+    mutationFn: async (data: Partial<Product>[]) => {
+      // Supabase upsert will update if ID exists, or insert if not
+      // Using any[] cast because name is required for inserts but optional for updates in TS definition
+      const { error } = await supabase.from("products").upsert(data as any[], { onConflict: 'id' });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-products"] });
+      toast({ title: "Produtos sincronizados com sucesso via Excel" });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Erro na importação", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const handleImport = async (file: File) => {
+    try {
+      const data = await importProductsFromExcel(file);
+      if (data.length > 0) {
+        importMutation.mutate(data);
+      } else {
+        toast({ title: "Planilha vazia", description: "Não encontramos produtos para importar.", variant: "default" });
+      }
+    } catch (err: any) {
+      toast({ title: "Erro no arquivo", description: err.message, variant: "destructive" });
+    }
+  };
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("products").delete().eq("id", id);
@@ -84,12 +119,30 @@ export default function AdminProducts() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-products"] });
+      setDeleteDialogOpen(false);
+      setItemToDelete(null);
       setDialogOpen(false);
       setEditingProduct(null);
       toast({ title: "Produto excluído" });
     },
     onError: (err: Error) => {
       toast({ title: "Erro ao excluir", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from("products").delete().in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-products"] });
+      selection.clear();
+      setBulkDeleteDialogOpen(false);
+      toast({ title: "Produtos excluídos com sucesso" });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Erro ao excluir produtos", description: err.message, variant: "destructive" });
     },
   });
 
@@ -164,17 +217,28 @@ export default function AdminProducts() {
         title="Gestão de Produtos"
         subtitle="Administre seu catálogo de experiências, cachoeiras e serviços"
         icon={Package}
-      >
-        <div className="flex items-center gap-3">
-          <Button
-            onClick={() => { setEditingProduct(null); setDialogOpen(true); }}
-            className="bg-admin-primary hover:bg-black text-white px-6 h-11 rounded-xl shadow-lg shadow-admin-primary/20 font-bold uppercase tracking-widest text-xs transition-all active:scale-95 flex gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            Novo Produto
-          </Button>
-        </div>
-      </PageHeader>
+        actions={
+          <div className="flex items-center gap-3">
+            {selection.selectedIds.size > 0 && (
+              <Button
+                variant="destructive"
+                onClick={() => setBulkDeleteDialogOpen(true)}
+                className="h-11 px-6 rounded-xl font-bold uppercase tracking-widest text-xs flex gap-2 animate-in slide-in-from-right duration-300 shadow-lg shadow-red-500/10"
+              >
+                <Trash2 className="h-4 w-4" />
+                Excluir ({selection.selectedIds.size})
+              </Button>
+            )}
+            <Button
+              onClick={() => { setEditingProduct(null); setDialogOpen(true); }}
+              className="bg-admin-primary hover:bg-black text-white px-6 h-11 rounded-xl shadow-lg shadow-admin-primary/20 font-bold uppercase tracking-widest text-xs transition-all active:scale-95 flex gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Novo Produto
+            </Button>
+          </div>
+        }
+      />
 
         <AtmosCard className="flex-1 flex flex-col shadow-sm border-admin-border/40">
           <ProductFilters
@@ -188,6 +252,8 @@ export default function AdminProducts() {
             onNewCategory={() => setCatDialogOpen(true)}
             onSync={() => syncMutation.mutate()}
             isSyncing={syncMutation.isPending}
+            onExport={() => exportProductsToExcel(products)}
+            onImport={handleImport}
           />
 
           <div className="flex-1 py-6">
@@ -212,6 +278,10 @@ export default function AdminProducts() {
                   }}
                   onUpdatePrice={(id, price) => updateMutation.mutate({ id, unit_price: price })}
                   onToggleActive={(id, active) => updateMutation.mutate({ id, is_active: active })}
+                  onDelete={(id) => {
+                    setItemToDelete(id);
+                    setDeleteDialogOpen(true);
+                  }}
                   getTypeLabel={getTypeLabel}
                 />
               )}
@@ -241,6 +311,25 @@ export default function AdminProducts() {
         }}
       />
 
+      <DeleteConfirmationDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={() => itemToDelete && deleteMutation.mutate(itemToDelete)}
+        isLoading={deleteMutation.isPending}
+        title="Excluir Produto"
+        description="Deseja realmente remover este produto do catálogo? Esta ação não pode ser revertida."
+      />
+
+      <DeleteConfirmationDialog
+        open={bulkDeleteDialogOpen}
+        onOpenChange={setBulkDeleteDialogOpen}
+        onConfirm={() => bulkDeleteMutation.mutate(Array.from(selection.selectedIds))}
+        isLoading={bulkDeleteMutation.isPending}
+        itemCount={selection.selectedIds.size}
+        title="Excluir Produtos"
+        description={`Você está prestes a excluir ${selection.selectedIds.size} produtos selecionados. Confirma esta ação?`}
+      />
+
       <ItineraryFormDialog
         open={itinDialogOpen}
         onOpenChange={(open) => { setItinDialogOpen(open); if (!open) setEditingProduct(null); }}
@@ -266,7 +355,10 @@ export default function AdminProducts() {
           setEditingProduct(null);
           toast({ title: editingProduct ? "Roteiro atualizado" : "Roteiro cadastrado" });
         }}
-        onDelete={(id) => deleteMutation.mutate(id)}
+        onDelete={(id) => {
+          setItemToDelete(id);
+          setDeleteDialogOpen(true);
+        }}
       />
     </div>
   );

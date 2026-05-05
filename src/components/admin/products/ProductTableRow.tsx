@@ -1,5 +1,5 @@
 import React from "react";
-import { ImageIcon, Pencil } from "lucide-react";
+import { ImageIcon, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { InlinePrice } from "./shared";
@@ -12,6 +12,7 @@ interface ProductTableRowProps {
   onClick: (product: Product) => void;
   onUpdatePrice: (id: string, price: number) => void;
   onToggleActive: (id: string, active: boolean) => void;
+  onDelete: (id: string) => void;
   getTypeLabel: (type: string) => string;
 }
 
@@ -22,6 +23,7 @@ export function ProductTableRow({
   onClick,
   onUpdatePrice,
   onToggleActive,
+  onDelete,
   getTypeLabel
 }: ProductTableRowProps) {
   return (
@@ -62,10 +64,12 @@ export function ProductTableRow({
         </div>
       </td>
       <td className="px-6 py-4">
-        <InlinePrice
-          value={p.unit_price}
-          onSave={(v) => onUpdatePrice(p.id, v)}
-        />
+        <div className="min-w-[100px]">
+          <InlinePrice
+            value={p.unit_price}
+            onSave={(v) => onUpdatePrice(p.id, v)}
+          />
+        </div>
       </td>
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
@@ -100,14 +104,25 @@ export function ProductTableRow({
           {p.is_active ? "Publicado" : "Rascunho"}
         </button>
       </td>
-      <td className="px-6 py-4 text-right">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-9 w-9 p-0 rounded-xl opacity-0 group-hover:opacity-100 hover:bg-admin-primary hover:text-white transition-all shadow-none"
-        >
-          <Pencil className="h-4 w-4" />
-        </Button>
+      <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-9 w-9 p-0 rounded-xl hover:bg-admin-primary hover:text-white transition-all"
+            onClick={() => onClick(p)}
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-9 w-9 p-0 rounded-xl hover:bg-red-500 hover:text-white transition-all"
+            onClick={() => onDelete(p.id)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
       </td>
     </tr>
   );
