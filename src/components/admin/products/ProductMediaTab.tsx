@@ -22,6 +22,7 @@ import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { toast } from "sonner";
 import { r2 } from "@/lib/r2";
 import type { Product } from "./shared";
+import { getStorageInfo } from "./shared";
 import { cn } from "@/lib/utils";
 import { 
   DndContext, 

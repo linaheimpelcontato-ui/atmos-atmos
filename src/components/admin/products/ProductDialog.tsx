@@ -79,7 +79,7 @@ export function ProductDialog({
         setFormCostPrice(editingProduct.cost_price.toString());
         setFormDescription(editingProduct.description || "");
         setFormIsActive(editingProduct.is_active);
-        setFormVariations(varsData.variations || []);
+        setFormVariations((varsData.variations as any[]) || []);
         setFormTempId("");
         setFormVars(varsData);
       } else {
