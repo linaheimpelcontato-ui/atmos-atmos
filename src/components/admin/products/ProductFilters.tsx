@@ -2,6 +2,8 @@ import { Search, Plus, FolderPlus, RefreshCw, Download, Upload } from "lucide-re
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useRef } from "react";
+import { ColumnSettings } from "./ColumnSettings";
+import { type ColumnKey } from "./shared";
 
 interface ProductFiltersProps {
   search: string;
@@ -16,6 +18,8 @@ interface ProductFiltersProps {
   isSyncing: boolean;
   onExport: () => void;
   onImport: (file: File) => void;
+  visibleColumns: ColumnKey[];
+  onVisibleColumnsChange: (cols: ColumnKey[]) => void;
 }
 
 export function ProductFilters({
@@ -31,6 +35,8 @@ export function ProductFilters({
   isSyncing,
   onExport,
   onImport,
+  visibleColumns,
+  onVisibleColumnsChange,
 }: ProductFiltersProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -99,9 +105,14 @@ export function ProductFilters({
         />
 
         <div className="flex items-center bg-white border border-admin-border/60 rounded-2xl overflow-hidden shadow-sm p-1">
+          <ColumnSettings 
+            visibleColumns={visibleColumns} 
+            onChange={onVisibleColumnsChange} 
+          />
+          <div className="w-px h-8 bg-admin-border/20 mx-1" />
           <Button 
             variant="ghost" 
-            className="h-11 px-4 hover:bg-admin-muted hover:text-admin-primary transition-all rounded-xl gap-2 text-[10px] font-bold uppercase tracking-widest border-r border-admin-border/10 rounded-r-none"
+            className="h-11 px-4 hover:bg-admin-muted hover:text-admin-primary transition-all rounded-xl gap-2 text-[10px] font-bold uppercase tracking-widest border-r border-admin-border/10 rounded-none"
             onClick={onExport}
             title="Exportar Excel"
           >

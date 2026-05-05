@@ -15,7 +15,9 @@ import { DeleteConfirmationDialog } from "@/components/admin/shared/DeleteConfir
 import ItineraryFormDialog from "@/components/admin/products/ItineraryFormDialog";
 import {
   ProductTable, InlinePrice, productTypeLabels, DEDICATED_TYPES, 
-  type Product, type UpdatePayload, type ColumnDef, useSmartFilters
+  type Product, type UpdatePayload, type ColumnDef, useSmartFilters,
+  ALL_COLUMNS, getVisibleColumns, saveVisibleColumns, type ColumnKey,
+  getProductRegion
 } from "@/components/admin/products/shared";
 import { ProductTableRow } from "@/components/admin/products/ProductTableRow";
 import { useRowSelection } from "@/hooks/useRowSelection";
@@ -25,6 +27,13 @@ import { exportProductsToExcel, importProductsFromExcel } from "@/lib/excelUtils
 export default function AdminProducts() {
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("experience");
+  const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>(getVisibleColumns());
+  
+  const handleVisibleColumnsChange = (cols: ColumnKey[]) => {
+    setVisibleColumns(cols);
+    saveVisibleColumns(cols);
+  };
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [itinDialogOpen, setItinDialogOpen] = useState(false);
   const [catDialogOpen, setCatDialogOpen] = useState(false);
@@ -171,25 +180,64 @@ export default function AdminProducts() {
   const filterState = useSmartFilters();
   const selection = useRowSelection();
 
-  // Re-apply type filter when tab changes
-  useEffect(() => {
-    // Note: the current useSmartFilters doesn't have a direct setFilter for arbitrary keys like 'type'
-    // but we can use setColumnFilter if 'type' is a column, or just handle it in useMemo
-  }, [activeTab]);
-
-  const columns: ColumnDef[] = [
-    { label: "Produto", sortKey: "name" },
-    { label: "Preço Base", sortKey: "unit_price" },
-    { label: "Catálogo", sortKey: "variables->variations" },
-    { label: "Status", sortKey: "is_active" },
-    { label: "" },
-  ];
+  const columns: ColumnDef[] = useMemo(() => {
+    return [
+      ...visibleColumns.map(key => {
+        const col = ALL_COLUMNS.find(c => c.key === key);
+        const sortKeys: Record<string, string> = {
+          name: "name",
+          price: "unit_price",
+          cost_price: "cost_price",
+          status: "is_active",
+          type: "type",
+          category: "category",
+          variations: "variables->variations",
+          region: "variables->region",
+          empresa: "variables->empresa",
+          responsavel: "variables->responsavel",
+          comissao: "variables->comissao",
+          difficulty: "variables->difficulty",
+          duration: "variables->duracao",
+          cnpj: "variables->fiscal_cnpj",
+          instagram: "variables->instagram",
+          site: "variables->site",
+          capacity: "variables->total_capacity",
+          rooms: "variables->total_rooms",
+          seasonality: "variables->sazonalidade",
+          distance_trail: "variables->distanceKm",
+          distance_car: "variables->distanceCarKm",
+          tax_rate: "variables->fiscal_tax_rate",
+        };
+        
+        return {
+          label: col?.label || key,
+          sortKey: sortKeys[key],
+          valueExtractor: (p: any) => {
+            const v = p.variables || {};
+            if (key === "region") return getProductRegion(p);
+            // Map table key to variable key if they differ
+            const varMap: Record<string, string> = {
+              duration: "duracao",
+              seasonality: "sazonalidade",
+              distance_trail: "distanceKm",
+              distance_car: "distanceCarKm",
+              capacity: "total_capacity",
+              rooms: "total_rooms",
+              notes: "operational_notes",
+              tax_rate: "fiscal_tax_rate",
+              cnpj: "fiscal_cnpj"
+            };
+            const vKey = varMap[key] || key;
+            return v[vKey] || p[vKey] || p[key];
+          }
+        };
+      }),
+      { label: "Ações" }
+    ];
+  }, [visibleColumns]);
 
   const filteredProducts = useMemo(() => {
-    // 1. Apply type tab filter
     let result = products.filter(p => p.type === activeTab);
-    
-    // 2. Apply search filter
     if (search) {
       const s = search.toLowerCase();
       result = result.filter(p => 
@@ -198,8 +246,6 @@ export default function AdminProducts() {
         (p.description && p.description.toLowerCase().includes(s))
       );
     }
-
-    // 3. Apply Smart Filters (Sort and Column filters)
     return filterState.applyFilters(result);
   }, [products, activeTab, search, filterState]);
 
@@ -209,7 +255,6 @@ export default function AdminProducts() {
       return acc;
     }, {} as Record<string, number>);
   }, [allTypes, products]);
-
 
   return (
     <div className="flex flex-col min-h-screen bg-admin-bg animate-in fade-in duration-500">
@@ -254,6 +299,8 @@ export default function AdminProducts() {
             isSyncing={syncMutation.isPending}
             onExport={() => exportProductsToExcel(products)}
             onImport={handleImport}
+            visibleColumns={visibleColumns}
+            onVisibleColumnsChange={handleVisibleColumnsChange}
           />
 
           <div className="flex-1 py-6">
@@ -270,6 +317,7 @@ export default function AdminProducts() {
                   key={p.id}
                   product={p}
                   selected={selection.isSelected(p.id)}
+                  visibleColumns={visibleColumns}
                   onToggle={selection.toggle}
                   onClick={(product) => {
                     setEditingProduct(product);

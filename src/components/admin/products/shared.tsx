@@ -127,6 +127,65 @@ export const serviceTypeLabels: Record<string, string> = {
 // Tipos que têm tabs dedicadas com componentes específicos
 export const DEDICATED_TYPES = ["waterfall", "experience", "service", "accommodation", "itinerary"];
 
+// ─── Column Definitions ─────────────────────────────────────────────
+
+export type ColumnKey = 
+  | "name" | "price" | "cost_price" | "status" | "type" | "category" 
+  | "variations" | "region" | "empresa" | "responsavel" | "telefone" 
+  | "difficulty" | "comissao" | "instagram" | "site" | "capacity" 
+  | "rooms" | "notes" | "duration" | "seasonality" | "distance_trail" 
+  | "distance_car" | "cnpj" | "tax_rate" | "seo_slug" | "seo_title" | "id";
+
+export interface ColumnInfo {
+  key: ColumnKey;
+  label: string;
+  defaultVisible?: boolean;
+}
+
+export const ALL_COLUMNS: ColumnInfo[] = [
+  { key: "name", label: "Produto", defaultVisible: true },
+  { key: "price", label: "Preço Unitário", defaultVisible: true },
+  { key: "cost_price", label: "Preço Custo", defaultVisible: false },
+  { key: "status", label: "Status", defaultVisible: true },
+  { key: "type", label: "Tipo", defaultVisible: false },
+  { key: "category", label: "Categoria", defaultVisible: false },
+  { key: "variations", label: "Opções", defaultVisible: true },
+  { key: "region", label: "Região", defaultVisible: false },
+  { key: "empresa", label: "Empresa", defaultVisible: false },
+  { key: "responsavel", label: "Contato", defaultVisible: false },
+  { key: "telefone", label: "Telefone", defaultVisible: false },
+  { key: "instagram", label: "Instagram", defaultVisible: false },
+  { key: "site", label: "Site", defaultVisible: false },
+  { key: "capacity", label: "Capacidade", defaultVisible: false },
+  { key: "rooms", label: "Quartos", defaultVisible: false },
+  { key: "notes", label: "Obs. Operacionais", defaultVisible: false },
+  { key: "difficulty", label: "Dificuldade", defaultVisible: false },
+  { key: "duration", label: "Duração", defaultVisible: false },
+  { key: "seasonality", label: "Sazonalidade", defaultVisible: false },
+  { key: "distance_trail", label: "Trilha (km)", defaultVisible: false },
+  { key: "distance_car", label: "Estrada (km)", defaultVisible: false },
+  { key: "comissao", label: "Comissão (%)", defaultVisible: false },
+  { key: "cnpj", label: "CNPJ", defaultVisible: false },
+  { key: "tax_rate", label: "Imposto (%)", defaultVisible: false },
+  { key: "seo_slug", label: "Slug SEO", defaultVisible: false },
+  { key: "seo_title", label: "Meta Title", defaultVisible: false },
+  { key: "id", label: "ID", defaultVisible: false },
+];
+
+const COLUMNS_STORAGE_KEY = "atmos-admin-product-columns";
+
+export function getVisibleColumns(): ColumnKey[] {
+  try {
+    const saved = localStorage.getItem(COLUMNS_STORAGE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch {}
+  return ALL_COLUMNS.filter(c => c.defaultVisible).map(c => c.key);
+}
+
+export function saveVisibleColumns(columns: ColumnKey[]) {
+  localStorage.setItem(COLUMNS_STORAGE_KEY, JSON.stringify(columns));
+}
+
 export function getProductRegion(product: Product): string {
   const vars = (product.variables || {}) as Record<string, unknown>;
   const vRegion = vars.region as string;
