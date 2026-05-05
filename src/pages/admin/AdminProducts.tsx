@@ -325,6 +325,8 @@ export default function AdminProducts() {
                     else setDialogOpen(true);
                   }}
                   onUpdatePrice={(id, price) => updateMutation.mutate({ id, unit_price: price })}
+                  onUpdateName={(id, name) => updateMutation.mutate({ id, name })}
+                  onUpdateVariables={(id, vars) => updateMutation.mutate({ id, variables: vars })}
                   onToggleActive={(id, active) => updateMutation.mutate({ id, is_active: active })}
                   onDelete={(id) => {
                     setItemToDelete(id);
