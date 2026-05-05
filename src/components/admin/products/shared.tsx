@@ -399,7 +399,7 @@ export function InlinePrice({ value, onSave }: { value: number; onSave: (v: numb
     return (
       <button
         className={`text-right font-semibold tabular-nums cursor-pointer px-2 py-1 rounded-md transition-colors hover:bg-admin-muted hover:text-admin-primary ${value === 0 ? "text-orange-500" : "text-foreground"}`}
-        onClick={() => { setDraft(value.toString()); setEditing(true); }}
+        onClick={(e) => { e.stopPropagation(); setDraft(value.toString()); setEditing(true); }}
       >
         {value === 0 ? (
           <span className="text-[10px] uppercase tracking-wider font-bold opacity-70">Definir</span>
@@ -411,7 +411,7 @@ export function InlinePrice({ value, onSave }: { value: number; onSave: (v: numb
   }
 
   return (
-    <div className="flex items-center gap-1.5 bg-white p-1 rounded-lg shadow-sm border border-admin-border animate-in fade-in zoom-in-95 duration-200">
+    <div className="flex items-center gap-1.5 bg-white p-1 rounded-lg shadow-sm border border-admin-border animate-in fade-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
       <Input
         type="number" step="0.01" min="0" value={draft}
         onChange={(e) => setDraft(e.target.value)}
@@ -461,7 +461,7 @@ export function InlineText({
     return (
       <button
         className={`cursor-pointer px-2 py-1 rounded-md transition-colors hover:bg-admin-muted hover:text-admin-primary text-left truncate ${!value ? "text-muted-foreground/50 italic" : "font-medium"} ${className}`}
-        onClick={() => { setDraft(value); setEditing(true); }}
+        onClick={(e) => { e.stopPropagation(); setDraft(value); setEditing(true); }}
       >
         {value || placeholder}
       </button>
@@ -469,7 +469,7 @@ export function InlineText({
   }
 
   return (
-    <div className="flex items-center gap-1.5 bg-white p-1 rounded-lg shadow-sm border border-admin-border animate-in fade-in zoom-in-95 duration-200">
+    <div className="flex items-center gap-1.5 bg-white p-1 rounded-lg shadow-sm border border-admin-border animate-in fade-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
       <Input
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
@@ -512,7 +512,7 @@ export function InlineNumber({
     return (
       <button
         className={`cursor-pointer px-2 py-1 rounded-md transition-colors hover:bg-admin-muted hover:text-admin-primary tabular-nums font-medium ${value === 0 ? "text-muted-foreground/50" : ""}`}
-        onClick={() => { setDraft(value.toString()); setEditing(true); }}
+        onClick={(e) => { e.stopPropagation(); setDraft(value.toString()); setEditing(true); }}
       >
         {value === 0 ? "-" : `${value}${suffix}`}
       </button>
@@ -520,7 +520,7 @@ export function InlineNumber({
   }
 
   return (
-    <div className="flex items-center gap-1.5 bg-white p-1 rounded-lg shadow-sm border border-admin-border animate-in fade-in zoom-in-95 duration-200">
+    <div className="flex items-center gap-1.5 bg-white p-1 rounded-lg shadow-sm border border-admin-border animate-in fade-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
       <Input
         type="number" step="0.1" min="0" value={draft}
         onChange={(e) => setDraft(e.target.value)}
@@ -555,16 +555,18 @@ export function InlineSelect({
   onSave: (v: string) => void;
 }) {
   return (
-    <Select value={value} onValueChange={onSave}>
-      <SelectTrigger className="h-8 text-xs w-auto min-w-[100px] bg-white border-admin-border rounded-lg hover:bg-admin-muted transition-colors">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent className="rounded-xl border-admin-border shadow-xl">
-        {Object.entries(options).map(([k, label]) => (
-          <SelectItem key={k} value={k} className="text-xs">{label}</SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <div onClick={(e) => e.stopPropagation()}>
+      <Select value={value} onValueChange={onSave}>
+        <SelectTrigger className="h-8 text-xs w-auto min-w-[100px] bg-white border-admin-border rounded-lg hover:bg-admin-muted transition-colors">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent className="rounded-xl border-admin-border shadow-xl">
+          {Object.entries(options).map(([k, label]) => (
+            <SelectItem key={k} value={k} className="text-xs">{label}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   );
 }
 
