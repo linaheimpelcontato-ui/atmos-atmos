@@ -27,11 +27,15 @@ import { exportProductsToExcel, importProductsFromExcel } from "@/lib/excelUtils
 export default function AdminProducts() {
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("experience");
-  const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>(getVisibleColumns());
+  const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>(getVisibleColumns(activeTab));
   
+  useEffect(() => {
+    setVisibleColumns(getVisibleColumns(activeTab));
+  }, [activeTab]);
+
   const handleVisibleColumnsChange = (cols: ColumnKey[]) => {
     setVisibleColumns(cols);
-    saveVisibleColumns(cols);
+    saveVisibleColumns(activeTab, cols);
   };
 
   const [dialogOpen, setDialogOpen] = useState(false);

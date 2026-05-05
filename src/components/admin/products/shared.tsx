@@ -196,18 +196,23 @@ export function getRelevantColumns(type: string): ColumnKey[] {
   return [...COMMON_COLUMNS, ...specific];
 }
 
-const COLUMNS_STORAGE_KEY = "atmos-admin-product-columns";
+const COLUMNS_STORAGE_PREFIX = "atmos-admin-product-columns-";
 
-export function getVisibleColumns(): ColumnKey[] {
-  try {
-    const saved = localStorage.getItem(COLUMNS_STORAGE_KEY);
-    if (saved) return JSON.parse(saved);
-  } catch {}
-  return ALL_COLUMNS.filter(c => c.defaultVisible).map(c => c.key);
+export function getVisibleColumns(type: string): ColumnKey[] {
+  const saved = localStorage.getItem(COLUMNS_STORAGE_PREFIX + type);
+  if (saved) {
+    try {
+      return JSON.parse(saved);
+    } catch (e) {
+      console.error("Error parsing columns from localStorage", e);
+    }
+  }
+  const relevant = getRelevantColumns(type);
+  return ALL_COLUMNS.filter(c => c.defaultVisible && relevant.includes(c.key)).map(c => c.key);
 }
 
-export function saveVisibleColumns(columns: ColumnKey[]) {
-  localStorage.setItem(COLUMNS_STORAGE_KEY, JSON.stringify(columns));
+export function saveVisibleColumns(type: string, columns: ColumnKey[]) {
+  localStorage.setItem(COLUMNS_STORAGE_PREFIX + type, JSON.stringify(columns));
 }
 
 export function getProductRegion(product: Product): string {
