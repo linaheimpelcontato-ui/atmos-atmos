@@ -377,6 +377,9 @@ export function ProductDialog({
                     const newFavs = favs.includes(file) ? favs.filter(f => f !== file) : [...favs.slice(-4), file];
                     setFormVars(p => ({ ...p, favorites: newFavs }));
                   }}
+                  onOrderChange={(newOrder) => {
+                    setFormVars(p => ({ ...p, gallery_order: newOrder }));
+                  }}
                 />
               </TabsContent>
 

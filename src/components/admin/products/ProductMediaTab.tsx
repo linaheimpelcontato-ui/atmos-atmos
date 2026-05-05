@@ -22,7 +22,6 @@ import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { toast } from "sonner";
 import { r2 } from "@/lib/r2";
 import type { Product } from "./shared";
-import { getStorageInfo } from "./shared";
 import { cn } from "@/lib/utils";
 import { 
   DndContext, 
@@ -45,6 +44,12 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { motion, AnimatePresence } from "framer-motion";
+
+interface ProductMediaTabProps {
+  product: Product;
+  onFavoriteToggle?: (fileName: string) => void;
+  onOrderChange?: (newOrder: string[]) => void;
+}
 
 /* ─── Storage path mapping ─────────────────────────────────────────── */
 
@@ -306,11 +311,9 @@ function SortableItem({
 
 export function ProductMediaTab({ 
   product,
-  onFavoriteToggle
-}: { 
-  product: Product;
-  onFavoriteToggle?: (fileName: string) => void;
-}) {
+  onFavoriteToggle,
+  onOrderChange
+}: ProductMediaTabProps) {
   const [media, setMedia] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -340,6 +343,7 @@ export function ProductMediaTab({
     setLoading(true);
     try {
       const data = await r2.list(info.folder);
+      const savedOrder = (product.variables as any)?.gallery_order as string[] || [];
       
       const matching = (data || [])
         .filter((f: any) => isImageMatch(f.Key, info.prefix, info.rawName))
@@ -348,6 +352,17 @@ export function ProductMediaTab({
           const nameA = a.toLowerCase();
           const nameB = b.toLowerCase();
           
+          // 1. If we have a saved order, respect it
+          if (savedOrder.length > 0) {
+            const idxA = savedOrder.indexOf(nameA.split('/').pop() || "");
+            const idxB = savedOrder.indexOf(nameB.split('/').pop() || "");
+            
+            if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+            if (idxA !== -1) return -1;
+            if (idxB !== -1) return 1;
+          }
+
+          // 2. Fallback to legacy sorting (Favorite first, then numerical)
           const isFavA = nameA.includes('_capa');
           const isFavB = nameB.includes('_capa');
           if (isFavA && !isFavB) return -1;
@@ -364,7 +379,7 @@ export function ProductMediaTab({
     } finally {
       setLoading(false);
     }
-  }, [info?.folder, info?.prefix, info?.rawName]);
+  }, [info?.folder, info?.prefix, info?.rawName, product.variables]);
 
   useEffect(() => {
     loadMedia();
@@ -414,7 +429,7 @@ export function ProductMediaTab({
     }
   };
 
-  const onDragEnd = async (event: DragEndEvent) => {
+  const onDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveId(null);
     if (!over || active.id === over.id || !info) return;
@@ -425,52 +440,11 @@ export function ProductMediaTab({
     const newMedia = arrayMove(media, oldIndex, newIndex);
     setMedia(newMedia);
 
-    setIsMoving(true);
-    try {
-      // Reordering is expensive in R2 because we have to rename files to keep numerical order.
-      // We'll do it in chunks to avoid timeouts.
-      const tempKeys: string[] = [];
-      const baseFolder = info.folder;
-
-      // 1. Copy to temp
-      for (let i = 0; i < newMedia.length; i++) {
-        const currentKey = newMedia[i];
-        const fileName = currentKey.split('/').pop() || "";
-        const tempKey = `${baseFolder}/.temp_${Date.now()}_${i}_${fileName}`;
-        await r2.copy(currentKey, tempKey);
-        tempKeys.push(tempKey);
-      }
-
-      // 2. Delete originals
-      for (const key of media) {
-        await r2.delete(baseFolder, key.replace(`${baseFolder}/`, ""));
-      }
-
-      // 3. Move from temp to final names
-      for (let i = 0; i < tempKeys.length; i++) {
-        const tempKey = tempKeys[i];
-        const originalKey = newMedia[i];
-        const ext = originalKey.split('.').pop();
-        const isFav = originalKey.includes('_capa');
-        const newName = `${info.prefix}-${i + 1}${isFav ? '_capa' : ''}.${ext}`;
-        
-        // Find subfolder if any
-        const parts = originalKey.replace(`${baseFolder}/`, "").split('/');
-        const subfolder = parts.length > 1 ? parts.slice(0, -1).join('/') + '/' : '';
-        const finalKey = `${baseFolder}/${subfolder}${newName}`;
-        
-        await r2.copy(tempKey, finalKey);
-        await r2.delete(baseFolder, tempKey.replace(`${baseFolder}/`, ""));
-      }
-      
-      toast.success("Ordem sincronizada");
-      await loadMedia();
-    } catch (err) {
-      console.error("Reorder error:", err);
-      toast.error("Erro ao sincronizar ordem. Tente novamente.");
-      await loadMedia();
-    } finally {
-      setIsMoving(false);
+    // Notify parent about the new order (only filenames)
+    if (onOrderChange) {
+      const filenamesOrder = newMedia.map(k => k.split('/').pop() || "");
+      onOrderChange(filenamesOrder);
+      toast.success("Ordem atualizada", { duration: 1500 });
     }
   };
 
