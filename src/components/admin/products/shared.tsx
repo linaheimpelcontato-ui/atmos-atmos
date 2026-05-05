@@ -143,6 +143,8 @@ export interface ColumnInfo {
   defaultVisible?: boolean;
 }
 
+
+
 export const ALL_COLUMNS: ColumnInfo[] = [
   { key: "name", label: "Produto", defaultVisible: true },
   { key: "price", label: "Valor Venda", defaultVisible: true },
@@ -174,6 +176,25 @@ export const ALL_COLUMNS: ColumnInfo[] = [
   { key: "limit_pax", label: "Limite Pax", defaultVisible: false },
   { key: "id", label: "ID", defaultVisible: false },
 ];
+
+export const COMMON_COLUMNS: ColumnKey[] = [
+  "name", "price", "cost_price", "status", "type", "category", 
+  "variations", "pricing_type", "limit_pax", "cnpj", "tax_rate", 
+  "seo_slug", "seo_title", "id"
+];
+
+export const TYPE_RELEVANT_COLUMNS: Record<string, ColumnKey[]> = {
+  waterfall: ["region", "difficulty", "distance_trail", "distance_car"],
+  experience: ["empresa", "responsavel", "telefone", "instagram", "comissao", "duration", "seasonality"],
+  service: ["empresa", "responsavel", "telefone", "comissao"],
+  accommodation: ["region", "responsavel", "telefone", "instagram", "site", "comissao", "capacity", "rooms", "notes"],
+  itinerary: [], // Common columns are enough for itineraries
+};
+
+export function getRelevantColumns(type: string): ColumnKey[] {
+  const specific = TYPE_RELEVANT_COLUMNS[type] || [];
+  return [...COMMON_COLUMNS, ...specific];
+}
 
 const COLUMNS_STORAGE_KEY = "atmos-admin-product-columns";
 

@@ -20,11 +20,12 @@ import { Settings2, GripVertical, Check } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ALL_COLUMNS, type ColumnKey } from "./shared";
+import { ALL_COLUMNS, getRelevantColumns, type ColumnKey } from "./shared";
 
 interface ColumnSettingsProps {
   visibleColumns: ColumnKey[];
   onChange: (columns: ColumnKey[]) => void;
+  activeTab: string;
 }
 
 function SortableColumnItem({ 
@@ -82,7 +83,7 @@ function SortableColumnItem({
   );
 }
 
-export function ColumnSettings({ visibleColumns, onChange }: ColumnSettingsProps) {
+export function ColumnSettings({ visibleColumns, onChange, activeTab }: ColumnSettingsProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -94,13 +95,14 @@ export function ColumnSettings({ visibleColumns, onChange }: ColumnSettingsProps
     })
   );
 
-  // We want to show all columns, but the visible ones first in their custom order
-  const allColumnKeys = ALL_COLUMNS.map(c => c.key);
+  // Filter available columns based on activeTab
+  const relevantColumnKeys = React.useMemo(() => getRelevantColumns(activeTab), [activeTab]);
+  const allColumnKeys = ALL_COLUMNS.map(c => c.key).filter(k => relevantColumnKeys.includes(k));
   
   // The current display order: visible columns first (in their order), then hidden ones
   const orderedKeys = React.useMemo(() => {
     const hidden = allColumnKeys.filter(k => !visibleColumns.includes(k));
-    return [...visibleColumns, ...hidden];
+    return [...visibleColumns.filter(k => allColumnKeys.includes(k)), ...hidden];
   }, [visibleColumns, allColumnKeys]);
 
   const handleDragEnd = (event: DragEndEvent) => {

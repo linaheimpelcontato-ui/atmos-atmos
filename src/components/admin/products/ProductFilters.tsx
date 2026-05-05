@@ -108,6 +108,7 @@ export function ProductFilters({
           <ColumnSettings 
             visibleColumns={visibleColumns} 
             onChange={onVisibleColumnsChange} 
+            activeTab={activeTab}
           />
           <div className="w-px h-8 bg-admin-border/20 mx-1" />
           <Button 
