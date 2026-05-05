@@ -427,13 +427,13 @@ export function InlinePrice({ value, onSave }: { value: number; onSave: (v: numb
   if (!editing) {
     return (
       <button
-        className={`text-right font-semibold tabular-nums cursor-pointer px-2 py-1 rounded-md transition-colors hover:bg-admin-muted hover:text-admin-primary ${value === 0 ? "text-orange-500" : "text-foreground"}`}
+        className={`text-right font-semibold tabular-nums cursor-pointer px-2 py-1 rounded-md transition-colors hover:bg-admin-muted hover:text-admin-primary whitespace-nowrap ${value === 0 ? "text-orange-500" : "text-foreground"}`}
         onClick={(e) => { e.stopPropagation(); setDraft(value.toString()); setEditing(true); }}
       >
         {value === 0 ? (
           <span className="text-[10px] uppercase tracking-wider font-bold opacity-70">Definir</span>
         ) : (
-          `R$ ${Number(value).toFixed(2)}`
+          `R$\u00A0${Number(value).toFixed(2)}`
         )}
       </button>
     );
@@ -540,7 +540,7 @@ export function InlineNumber({
   if (!editing) {
     return (
       <button
-        className={`cursor-pointer px-2 py-1 rounded-md transition-colors hover:bg-admin-muted hover:text-admin-primary tabular-nums font-medium ${value === 0 ? "text-muted-foreground/50" : ""}`}
+        className={`cursor-pointer px-2 py-1 rounded-md transition-colors hover:bg-admin-muted hover:text-admin-primary tabular-nums font-medium whitespace-nowrap ${value === 0 ? "text-muted-foreground/50" : ""}`}
         onClick={(e) => { e.stopPropagation(); setDraft(value.toString()); setEditing(true); }}
       >
         {value === 0 ? "-" : `${value}${suffix}`}
