@@ -134,7 +134,8 @@ export type ColumnKey =
   | "variations" | "region" | "empresa" | "responsavel" | "telefone" 
   | "difficulty" | "comissao" | "instagram" | "site" | "capacity" 
   | "rooms" | "notes" | "duration" | "seasonality" | "distance_trail" 
-  | "distance_car" | "cnpj" | "tax_rate" | "seo_slug" | "seo_title" | "id";
+  | "distance_car" | "cnpj" | "tax_rate" | "seo_slug" | "seo_title" | "id"
+  | "pricing_type" | "limit_pax";
 
 export interface ColumnInfo {
   key: ColumnKey;
@@ -169,6 +170,8 @@ export const ALL_COLUMNS: ColumnInfo[] = [
   { key: "tax_rate", label: "Imposto (%)", defaultVisible: false },
   { key: "seo_slug", label: "Slug SEO", defaultVisible: false },
   { key: "seo_title", label: "Meta Title", defaultVisible: false },
+  { key: "pricing_type", label: "Lógica Cobrança", defaultVisible: false },
+  { key: "limit_pax", label: "Limite Pax", defaultVisible: false },
   { key: "id", label: "ID", defaultVisible: false },
 ];
 

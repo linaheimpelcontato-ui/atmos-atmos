@@ -157,6 +157,16 @@ export function ProductTableRow({
         return <InlineText value={vars.seo_slug || ""} onSave={(v) => onUpdateVariables(p.id, { seo_slug: v })} className="truncate max-w-[100px]" />;
       case "seo_title":
         return <InlineText value={vars.seo_title || ""} onSave={(v) => onUpdateVariables(p.id, { seo_title: v })} className="truncate max-w-[120px]" />;
+      case "pricing_type":
+        return (
+          <InlineSelect 
+            value={vars.pricingType || "por_pessoa"} 
+            options={{ por_pessoa: "Por Pessoa", total: "Valor Total" }} 
+            onSave={(v) => onUpdateVariables(p.id, { pricingType: v })} 
+          />
+        );
+      case "limit_pax":
+        return <InlineNumber value={vars.limitPeople || 0} onSave={(v) => onUpdateVariables(p.id, { limitPeople: v })} />;
       case "id":
         return <span className="text-[10px] font-mono text-muted-foreground/40">{p.id.slice(0, 8)}</span>;
       default:

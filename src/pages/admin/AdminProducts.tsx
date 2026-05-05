@@ -207,6 +207,8 @@ export default function AdminProducts() {
           distance_trail: "variables->distanceKm",
           distance_car: "variables->distanceCarKm",
           tax_rate: "variables->fiscal_tax_rate",
+          pricing_type: "variables->pricingType",
+          limit_pax: "variables->limitPeople",
         };
         
         return {
@@ -225,7 +227,9 @@ export default function AdminProducts() {
               rooms: "total_rooms",
               notes: "operational_notes",
               tax_rate: "fiscal_tax_rate",
-              cnpj: "fiscal_cnpj"
+              cnpj: "fiscal_cnpj",
+              pricing_type: "pricingType",
+              limit_pax: "limitPeople"
             };
             const vKey = varMap[key] || key;
             return v[vKey] || p[vKey] || p[key];
