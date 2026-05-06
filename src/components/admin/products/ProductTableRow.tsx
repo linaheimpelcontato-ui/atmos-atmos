@@ -6,7 +6,7 @@ import {
   InlinePrice, InlineText, InlineNumber, InlineSelect,
   getProductRegion, regionLabels, difficultyLabels, seasonalityLabels 
 } from "./shared";
-import { type Product, type ColumnKey } from "./shared";
+import { type Product, type ColumnKey, type UpdatePayload } from "./shared";
 
 interface ProductTableRowProps {
   product: Product;
