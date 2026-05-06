@@ -67,6 +67,20 @@ const EXP_STORAGE_KEY: Record<string, string> = {
   "gota-sat-som": "Gota Sat Som",
   "mesa-lira": "Mesa Lira",
   "celestial-garden": "Celestial Garden",
+  // Waterfalls mapping
+  "almecegas-i-e-ii-sao-bento": "Almecegas",
+  "almecegas-i": "Almecegas",
+  "almecegas-ii": "Almecegas",
+  "alpes-goianos": "Alpes Goianos",
+  "anjos-e-arcanjos": "Anjos e Arcanjos",
+  "agua-fria": "Água fria",
+  "bocaina-do-farias": "Bocaina do Farias",
+  "bona-espero": "Bona espero",
+  "boqueirao": "Boqueirão",
+  "candaru": "Candaru",
+  "canjica-aguas-lindas": "Canjica e Águas lindas",
+  "caracol": "Caracol",
+  "catoa": "Catoá",
 };
 
 /* ───── i18n ───── */
@@ -167,7 +181,11 @@ const DIFFICULTY_CONFIG: Record<string, { pt: string; en: string; es: string; co
 function DayBanner({ children, bgImage }: { children: React.ReactNode; bgImage?: string }) {
   return (
     <div className="relative w-full px-6 md:px-12 py-20 md:py-32 overflow-hidden bg-[#1a1411]">
-      {bgImage ? (
+      <div 
+        className="absolute inset-0 z-0 opacity-40 mix-blend-overlay"
+        style={{ backgroundImage: `url(${leafTexture})`, backgroundSize: 'cover' }}
+      />
+      {bgImage && (
         <motion.div 
           initial={{ scale: 1.1, opacity: 0 }}
           animate={{ scale: 1, opacity: 0.4 }}
@@ -177,11 +195,6 @@ function DayBanner({ children, bgImage }: { children: React.ReactNode; bgImage?:
           <img src={bgImage} alt="" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/20 to-black/60" />
         </motion.div>
-      ) : (
-        <div 
-          className="absolute inset-0 z-0 opacity-10"
-          style={{ backgroundImage: `url(${leafTexture})` }}
-        />
       )}
       
       <div className="relative z-10">
@@ -648,7 +661,7 @@ export default function ProposalPublic() {
           const folder = typeMap[normType] || "produtos/SERVIÇOS";
           const key = (normType === "experience" || normType === "experiencia")
             ? (EXP_STORAGE_KEY[product.source_id] || product.source_id)
-            : product.source_id;
+            : (EXP_STORAGE_KEY[product.source_id] || product.source_id);
             
           const imgs = await fetchStorageImages(folder as any, key);
           urls.push(...imgs);
@@ -671,12 +684,12 @@ export default function ProposalPublic() {
         const sourceId = product?.source_id;
         if (!sourceId || seen.has(sourceId)) continue;
         seen.add(sourceId);
-        const imgs = await fetchStorageImages("hospedagens", sourceId);
+        const imgs = await fetchStorageImages("produtos/HOSPEDAGENS", sourceId);
         accImgs[sourceId] = imgs.length > 0
           ? imgs
           : Array.from({ length: 6 }, (_, i) => {
               const folderName = product?.name || sourceId;
-              return storageUrl(`hospedagens/${folderName}/${folderName}-${i + 1}.jpg`);
+              return storageUrl(`produtos/HOSPEDAGENS/${folderName}/${folderName}-${i + 1}.jpg`);
             });
       }
       setDynamicAccImages(accImgs);
@@ -771,7 +784,20 @@ export default function ProposalPublic() {
       if (byId) return byId;
     }
     if (item.item_name) {
-      return products.find(p => p.name === item.item_name);
+      const name = item.item_name.toLowerCase();
+      // Try exact match first
+      let found = products.find(p => p.name === item.item_name);
+      if (found) return found;
+      
+      // Try fuzzy match as a last resort
+      const fuzzy = products.find(p => 
+        p.name.toLowerCase().includes(name) || name.includes(p.name.toLowerCase())
+      );
+      if (fuzzy) return fuzzy;
+      
+      // Try matching the category to find a generic product if name is a variation
+      if (item.category.includes("Transfer")) return products.find(p => p.type === "transfer" || p.type === "service");
+      if (item.category.includes("Guia")) return products.find(p => p.type === "service" && p.name.includes("Guia"));
     }
     return undefined;
   };
@@ -794,7 +820,7 @@ export default function ProposalPublic() {
       if (seen.has(key)) continue;
       seen.add(key);
       const images = sourceId
-        ? (dynamicAccImages[sourceId] || Array.from({ length: 6 }, (_, i) => storageUrl(`hospedagens/${sourceId}-${i + 1}.jpg`)))
+        ? (dynamicAccImages[sourceId] || [])
         : [];
       accs.push({ name, sourceId: sourceId || "", images });
     }
@@ -1107,7 +1133,7 @@ export default function ProposalPublic() {
             className="relative"
           >
             {/* ══════ FULL-WIDTH DAY BANNER (parallax photo) ══════ */}
-            <DayBanner bgImage={gallery[0] || heroImageUrl}>
+            <DayBanner>
               <div className="relative z-10 max-w-7xl mx-auto flex flex-col md:flex-row md:items-end md:justify-between gap-6">
                 <div className="flex items-end gap-6 md:gap-10">
                   <span className="text-8xl md:text-[12rem] font-black leading-[0.7] flex-shrink-0 text-white/10 font-outfit">
