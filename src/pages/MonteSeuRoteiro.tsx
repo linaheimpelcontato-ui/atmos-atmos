@@ -397,9 +397,9 @@ export default function MonteSeuRoteiro() {
             </p>
           </div>
 
-          {/* Sticky Navigation & Filters Container */}
-            {/* Category Menu with Photos - Now static to save sticky space */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+          <div className="sticky top-[80px] md:top-[112px] z-40 bg-white/95 backdrop-blur-md py-4 -mx-6 px-6 border-b border-[#1A261B]/5 transition-all duration-300">
+            {/* Category Menu with Photos */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
               {TABS.map((tab) => {
                 const isActive = activeTab === tab.id;
                 return (
@@ -425,7 +425,7 @@ export default function MonteSeuRoteiro() {
                       
                       const catalogElement = document.getElementById("catalog-grid");
                       if (catalogElement) {
-                        const offset = 180; 
+                        const offset = 280; 
                         const bodyRect = document.body.getBoundingClientRect().top;
                         const elementRect = catalogElement.getBoundingClientRect().top;
                         const elementPosition = elementRect - bodyRect;
@@ -433,7 +433,7 @@ export default function MonteSeuRoteiro() {
                         window.scrollTo({ top: offsetPosition, behavior: "smooth" });
                       }
                     }}
-                    className={`group relative h-20 md:h-28 overflow-hidden transition-all duration-500 rounded-lg ${
+                    className={`group relative h-16 md:h-24 overflow-hidden transition-all duration-500 rounded-lg ${
                       isActive ? "ring-2 ring-[#1A261B] ring-offset-2" : "opacity-80 hover:opacity-100"
                     }`}
                   >
@@ -446,15 +446,12 @@ export default function MonteSeuRoteiro() {
                       isActive ? "bg-[#1A261B]/50" : "bg-black/40 group-hover:bg-black/20"
                     }`} />
                     <div className="relative h-full flex items-center justify-center text-white p-2">
-                      <h3 className="text-xs md:text-sm font-display uppercase tracking-[0.2em] font-medium text-center">{tab.label}</h3>
+                      <h3 className="text-[10px] md:text-xs font-display uppercase tracking-[0.2em] font-medium text-center">{tab.label}</h3>
                     </div>
                   </button>
                 );
               })}
             </div>
-
-            {/* Sticky Navigation & Filters Area - Compact & Focused */}
-            <div className="sticky top-[80px] md:top-[112px] z-40 bg-white/95 backdrop-blur-md py-4 -mx-6 px-6 border-b border-[#1A261B]/5 transition-all duration-300">
             <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
               
               {/* Search Bar */}
