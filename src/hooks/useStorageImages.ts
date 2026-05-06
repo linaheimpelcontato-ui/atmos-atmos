@@ -35,11 +35,19 @@ export async function fetchStorageImages(folder: string, prefix: string): Promis
 
   const fallbackFolders = [
     folder,
-    'produtos/experiências', // Correct spelling
+    `produtos/${folder}`,
+    'produtos/EXPERIENCIAS',
+    'produtos/CACHOEIRAS',
+    'produtos/HOSPEDAGENS',
+    'produtos/SERVIÇOS',
+    'EXPERIENCIAS',
+    'CACHOEIRAS',
+    'HOSPEDAGENS',
+    'SERVIÇOS',
+    'produtos/experiências',
     'produtos/cachoeiras',
     'produtos/hospedagens',
     'produtos/serviços',
-    'produtos/roteiros',
     'home'
   ];
 

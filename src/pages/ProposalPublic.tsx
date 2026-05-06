@@ -22,6 +22,7 @@ const logoAtmos = storageUrl("home/logo-atmos.png");
 const heroImage = storageUrl("proposta-visual-cliente/propostavisualbg.jpg");
 const dividerImage = storageUrl("home/divider-nature.jpg");
 const leafTexture = storageUrl("proposta-visual-cliente/leaf-texture - horizontal.jpg");
+const leafTextureAlt = storageUrl("assets/proposta-visual-cliente/leaf-texture - horizontal.jpg");
 
 
 /* ───── types ───── */
@@ -183,7 +184,7 @@ function DayBanner({ children, bgImage }: { children: React.ReactNode; bgImage?:
     <div className="relative w-full px-6 md:px-12 py-20 md:py-32 overflow-hidden bg-[#1a1411]">
       <div 
         className="absolute inset-0 z-0 opacity-40 mix-blend-overlay"
-        style={{ backgroundImage: `url(${leafTexture})`, backgroundSize: 'cover' }}
+        style={{ backgroundImage: `url(${leafTexture}), url(${leafTextureAlt})`, backgroundSize: 'cover' }}
       />
       {bgImage && (
         <motion.div 
@@ -648,17 +649,17 @@ export default function ProposalPublic() {
           
           const normType = product.type.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
           const typeMap: Record<string, string> = {
-            "waterfall": "produtos/CACHOEIRAS",
-            "experience": "produtos/EXPERIENCIAS",
-            "experiencia": "produtos/EXPERIENCIAS",
-            "accommodation": "produtos/HOSPEDAGENS",
-            "hospedagem": "produtos/HOSPEDAGENS",
-            "service": "produtos/SERVIÇOS",
-            "servico": "produtos/SERVIÇOS",
-            "transfer": "produtos/SERVIÇOS"
+            "waterfall": "CACHOEIRAS",
+            "experience": "EXPERIENCIAS",
+            "experiencia": "EXPERIENCIAS",
+            "accommodation": "HOSPEDAGENS",
+            "hospedagem": "HOSPEDAGENS",
+            "service": "SERVIÇOS",
+            "servico": "SERVIÇOS",
+            "transfer": "SERVIÇOS"
           };
           
-          const folder = typeMap[normType] || "produtos/SERVIÇOS";
+          const folder = typeMap[normType] || "SERVIÇOS";
           const key = (normType === "experience" || normType === "experiencia")
             ? (EXP_STORAGE_KEY[product.source_id] || product.source_id)
             : (EXP_STORAGE_KEY[product.source_id] || product.source_id);
@@ -684,12 +685,12 @@ export default function ProposalPublic() {
         const sourceId = product?.source_id;
         if (!sourceId || seen.has(sourceId)) continue;
         seen.add(sourceId);
-        const imgs = await fetchStorageImages("produtos/HOSPEDAGENS", sourceId);
+        const imgs = await fetchStorageImages("HOSPEDAGENS", sourceId);
         accImgs[sourceId] = imgs.length > 0
           ? imgs
           : Array.from({ length: 6 }, (_, i) => {
               const folderName = product?.name || sourceId;
-              return storageUrl(`produtos/HOSPEDAGENS/${folderName}/${folderName}-${i + 1}.jpg`);
+              return storageUrl(`HOSPEDAGENS/${folderName}/${folderName}-${i + 1}.jpg`);
             });
       }
       setDynamicAccImages(accImgs);
