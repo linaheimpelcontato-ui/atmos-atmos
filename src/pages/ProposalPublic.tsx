@@ -633,16 +633,20 @@ export default function ProposalPublic() {
           const product = findProductRef(item);
           if (!product?.source_id) continue;
           
+          const normType = product.type.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
           const typeMap: Record<string, string> = {
             "waterfall": "produtos/CACHOEIRAS",
             "experience": "produtos/EXPERIENCIAS",
+            "experiencia": "produtos/EXPERIENCIAS",
             "accommodation": "produtos/HOSPEDAGENS",
+            "hospedagem": "produtos/HOSPEDAGENS",
             "service": "produtos/SERVIÇOS",
+            "servico": "produtos/SERVIÇOS",
             "transfer": "produtos/SERVIÇOS"
           };
           
-          const folder = typeMap[product.type] || "produtos/SERVIÇOS";
-          const key = product.type === "experience" 
+          const folder = typeMap[normType] || "produtos/SERVIÇOS";
+          const key = (normType === "experience" || normType === "experiencia")
             ? (EXP_STORAGE_KEY[product.source_id] || product.source_id)
             : product.source_id;
             
@@ -737,15 +741,18 @@ export default function ProposalPublic() {
 
   const getDayWaterfallInfo = (dayNum: number) => {
     const dayItems2 = items.filter(i => i.day_number === dayNum);
-    const waterfallItem = dayItems2.find(i => i.category === "Cachoeira" || i.category === "Ingresso" || i.category === "Cachoeira / Ingresso");
-    if (!waterfallItem) return null;
-    const product = findProduct(waterfallItem);
+    // Find first item that is a waterfall or experience to pull technical info
+    const mainItem = dayItems2.find(i => 
+      ["Cachoeira", "Ingresso", "Cachoeira / Ingresso", "Experiência", "Experiencia"].includes(i.category)
+    );
+    if (!mainItem) return null;
+    const product = findProduct(mainItem);
     const vars = product?.variables || {};
     return {
       difficulty: vars.difficulty as string | undefined,
       distanceKm: vars.distanceKm as number | undefined,
       distanceCarKm: vars.distanceCarKm as number | undefined,
-      vehicleType: waterfallItem.vehicle_type || "carroTurista",
+      vehicleType: mainItem.vehicle_type || "carroTurista",
     };
   };
 
@@ -1179,7 +1186,13 @@ export default function ProposalPublic() {
                           <span className="inline-flex items-center gap-2 px-4 py-2 text-[10px] uppercase tracking-widest font-black"
                             style={{ background: "#556952", color: "#fff" }}>
                             <Truck className="w-3.5 h-3.5" />
-                            {wInfo.vehicleType === "4x4Atmos" ? "ATMOS 4×4" : (lang === "pt" ? "Carro próprio" : lang === "es" ? "Coche propio" : "Own car")}
+                            {(() => {
+                              const v = wInfo.vehicleType;
+                              if (v === "4x4Atmos") return "ATMOS 4×4";
+                              if (v === "vanParticular") return "Van Particular";
+                              if (v === "carroTurista") return (lang === "pt" ? "Carro próprio" : lang === "es" ? "Coche propio" : "Own car");
+                              return v || "ATMOS 4×4";
+                            })()}
                           </span>
                         </div>
                       )}
@@ -1239,7 +1252,15 @@ export default function ProposalPublic() {
                             <div className="flex-1 min-w-0">
                               <p className="text-[10px] uppercase tracking-[0.3em] font-black mb-1" style={{ color: "#c4a97d" }}>{catLabel}</p>
                               <span className="text-xl font-black font-outfit uppercase tracking-tight" style={{ color: "#2e2019" }}>
-                                {item.item_name || item.category}
+                                {(() => {
+                                  const prod = findProduct(item);
+                                  const baseName = prod?.name;
+                                  const varName = item.item_name || item.category;
+                                  if (baseName && varName && baseName !== varName) {
+                                    return `${baseName} — ${varName}`;
+                                  }
+                                  return varName;
+                                })()}
                                 {item.value === 0 && (
                                   <span className="ml-3 text-[10px] bg-[#c4a97d] text-white px-2 py-0.5 align-middle tracking-widest font-black">CORTESIA</span>
                                 )}
@@ -1322,39 +1343,39 @@ export default function ProposalPublic() {
       {/* ══════════════════════ ACCOMMODATION SECTION ══════════════════════ */}
       {accommodations.length > 0 && (
         <motion.section 
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-          className="py-24 md:py-32 px-6 bg-white border-b border-[#e4dbcc]"
+          transition={{ duration: 1 }}
+          className="bg-[#fcfaf7] py-24 md:py-32"
         >
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-20">
-              <p className="text-[12px] uppercase tracking-[0.5em] font-bold mb-4" style={{ color: "#c4a97d" }}>
-                {lang === "pt" ? "Estadia" : lang === "es" ? "Estadía" : "Stays"}
-              </p>
-              <h2 className="text-4xl md:text-7xl font-black font-outfit uppercase tracking-tighter leading-none" style={{ color: "#2e2019" }}>
-                {t.yourAccommodation}
-              </h2>
-            </div>
+          <div className="max-w-7xl mx-auto px-6 mb-16">
+            <p className="text-[12px] uppercase tracking-[0.5em] font-bold mb-4" style={{ color: "#c4a97d" }}>
+              {lang === "pt" ? "Sua Estadia" : lang === "es" ? "Tu Estadía" : "Your Stay"}
+            </p>
+            <h2 className="text-4xl md:text-7xl font-black font-outfit uppercase tracking-tighter leading-none" style={{ color: "#2e2019" }}>
+              {t.yourAccommodation}
+            </h2>
+          </div>
 
-            <div className={`grid gap-12 ${accommodations.length > 1 ? "md:grid-cols-2" : "max-w-4xl mx-auto"}`}>
-              {accommodations.map((acc) => (
-                <div key={acc.sourceId || acc.name} className="overflow-hidden border border-[#e4dbcc]" style={{ background: "#fff" }}>
-                  {acc.images.length > 0 && (
-                    <div className="aspect-[16/9] relative">
-                      <ImageCarousel images={acc.images} alt={acc.name} />
-                    </div>
-                  )}
-                  <div className="p-8">
-                    <p className="text-[10px] uppercase tracking-widest font-black mb-2" style={{ color: "#c4a97d" }}>
-                      {lang === "pt" ? "Hospedagem Selecionada" : lang === "es" ? "Hospedaje Seleccionado" : "Selected Stay"}
-                    </p>
-                    <h3 className="text-2xl md:text-3xl font-black font-outfit uppercase tracking-tight" style={{ color: "#2e2019" }}>{acc.name}</h3>
-                  </div>
+          <div className="flex flex-col gap-24">
+            {accommodations.map((acc, idx) => (
+              <div key={acc.sourceId || acc.name} className={`flex flex-col ${idx % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} gap-12 md:gap-20 items-center`}>
+                <div className="w-full md:w-[60%] h-[400px] md:h-[600px] overflow-hidden">
+                  <ImageCarousel images={acc.images} alt={acc.name} />
                 </div>
-              ))}
-            </div>
+                <div className="w-full md:w-[40%] px-6 md:px-12">
+                  <span className="text-[10px] uppercase tracking-widest font-black text-[#c4a97d] mb-4 block">Hospedagem Selecionada</span>
+                  <h3 className="text-3xl md:text-5xl font-black font-outfit uppercase tracking-tight mb-6" style={{ color: "#2e2019" }}>{acc.name}</h3>
+                  <div className="w-12 h-[2px] bg-[#c4a97d] mb-8" />
+                  <p className="text-lg leading-relaxed font-light italic" style={{ color: "#5c4a32" }}>
+                    {lang === "pt" 
+                      ? "Conforto e sofisticação em meio à natureza, cuidadosamente selecionado para sua experiência."
+                      : "Comfort and sophistication amidst nature, carefully selected for your experience."}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
         </motion.section>
       )}
