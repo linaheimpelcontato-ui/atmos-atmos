@@ -157,10 +157,10 @@ export default function FeatureShowcase() {
         
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-24 items-start">
           
-          <div className="lg:col-span-6 flex flex-col gap-8 lg:gap-12 py-2">
+          <div className="lg:col-span-6 flex flex-col gap-6 lg:gap-8 py-2">
             
             <div>
-              <h2 className="text-[#2C3E2D] font-display text-4xl sm:text-6xl lg:text-7xl xl:text-[5.5rem] leading-[0.9] tracking-tighter mb-8">
+              <h2 className="text-[#2C3E2D] font-display text-3xl sm:text-4xl lg:text-5xl xl:text-6xl leading-[1] tracking-tighter mb-6">
                 Como montar seu roteiro
               </h2>
               <p className="text-sm lg:text-base font-sans text-[#2C3E2D] opacity-60 uppercase tracking-[0.2em] font-semibold mb-8 max-w-md">
@@ -189,7 +189,7 @@ export default function FeatureShowcase() {
               </motion.button>
             </div>
 
-            <div className="relative mt-8 mb-16 lg:my-6 px-4">
+            <div className="relative mt-4 mb-8 lg:my-4 px-4">
               <div className="absolute top-5 left-0 right-0 h-[1px] bg-[#2C3E2D]/10" />
               <div className="flex justify-between relative">
                 {JOURNEY_STEPS.map((s, i) => {
@@ -230,7 +230,7 @@ export default function FeatureShowcase() {
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.4, ease: "easeOut" }}
                   style={{ backgroundColor: currentStep.accentColor }}
-                  className="p-6 lg:p-7 rounded-[2rem] shadow-xl relative overflow-hidden group"
+                  className="p-5 lg:p-6 rounded-[1.5rem] shadow-xl relative overflow-hidden group"
                 >
                   <span className="absolute -bottom-6 -left-6 text-[100px] font-display font-bold text-white/[0.03] leading-none select-none">
                     {currentStep.num}
@@ -275,7 +275,7 @@ export default function FeatureShowcase() {
           </div>
 
           <div className="lg:col-span-6 flex items-center justify-center relative min-h-[500px] lg:min-h-[600px]">
-            <div className="relative w-full max-w-[380px] aspect-[9/19.5] lg:aspect-auto lg:h-[clamp(500px,68vh,720px)] lg:max-h-[720px]">
+            <div className="relative w-full max-w-[360px] aspect-[9/19.5] lg:aspect-auto lg:h-[clamp(500px,75vh,750px)] lg:max-h-[750px]">
               <div className="absolute inset-0 bg-[#F5F5F3] rounded-[3.5rem] border-[12px] border-[#2C3E2D] shadow-[0_120px_240px_-40px_rgba(0,0,0,0.3)] overflow-hidden z-10">
                 
                 <div className="absolute top-0 inset-x-0 h-14 bg-white/90 backdrop-blur-md border-b border-[#2C3E2D]/5 px-8 flex items-center justify-between z-[60]">
