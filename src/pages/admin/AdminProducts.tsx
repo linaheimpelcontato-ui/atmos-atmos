@@ -82,12 +82,25 @@ export default function AdminProducts() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, variables, ...fields }: UpdatePayload) => {
-      const updateData: Record<string, unknown> = { ...fields };
+      let finalVariables = variables;
+      
       if (variables) {
-        const existingData = qc.getQueryData<Product[]>(["admin-products"]);
-        const existing = existingData?.find((p) => p.id === id);
-        updateData.variables = { ...(existing?.variables || {}), ...variables };
+        // Fetch the absolute latest variables from DB to avoid any race conditions
+        const { data: current, error: fetchError } = await supabase
+          .from("products")
+          .select("variables")
+          .eq("id", id)
+          .single();
+          
+        if (fetchError) throw fetchError;
+        finalVariables = { ...(current?.variables as any || {}), ...variables };
       }
+
+      const updateData: Record<string, unknown> = { 
+        ...fields,
+        ...(finalVariables ? { variables: finalVariables } : {})
+      };
+
       const { error } = await supabase.from("products").update(updateData).eq("id", id);
       if (error) throw error;
     },
@@ -240,7 +253,8 @@ export default function AdminProducts() {
               limit_pax: "limitPeople"
             };
             const vKey = varMap[key] || key;
-            return v[vKey] || p[vKey] || p[key];
+            const val = v[vKey] !== undefined ? v[vKey] : (p[vKey] !== undefined ? p[vKey] : p[key]);
+            return val;
           }
         };
       }),
