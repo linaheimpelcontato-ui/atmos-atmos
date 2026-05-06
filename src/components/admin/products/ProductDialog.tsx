@@ -129,7 +129,7 @@ export function ProductDialog({
     const payload = {
       name: formName,
       type: formType,
-      category: formType === "service" ? formRegion : (formCategory || null),
+      category: formCategory || null,
       segment: "b2c",
       unit_price: parseFloat(formPrice) || 0,
       cost_price: parseFloat(formCostPrice) || 0,
@@ -237,6 +237,49 @@ export function ProductDialog({
                         </div>
                       </div>
                     </div>
+
+                    {formType === "service" && (
+                      <div className="grid grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2">
+                        <div className="space-y-2">
+                          <Label className="text-sm font-bold text-admin-primary uppercase tracking-wider">Tipo de Serviço</Label>
+                          <Select value={formCategory} onValueChange={setFormCategory}>
+                            <SelectTrigger className="h-12 bg-white border-admin-border rounded-xl shadow-sm font-semibold">
+                              <SelectValue placeholder="Selecionar..." />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-xl border-admin-border shadow-2xl">
+                              {Object.entries(serviceCategoryOptions).map(([k, l]) => (
+                                <SelectItem key={k} value={k} className="text-sm font-medium">{l}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-sm font-bold text-admin-primary uppercase tracking-wider">Região</Label>
+                          <Select value={formRegion} onValueChange={setFormRegion}>
+                            <SelectTrigger className="h-12 bg-white border-admin-border rounded-xl shadow-sm font-semibold">
+                              <SelectValue placeholder="Selecionar..." />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-xl border-admin-border shadow-2xl">
+                              {Object.entries(regionLabels).map(([k, l]) => (
+                                <SelectItem key={k} value={k} className="text-sm font-medium">{l}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    )}
+
+                    {formType !== "service" && (
+                      <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                        <Label className="text-sm font-bold text-admin-primary uppercase tracking-wider">Categoria</Label>
+                        <Input 
+                          value={formCategory} 
+                          onChange={(e) => setFormCategory(e.target.value)}
+                          className="h-12 bg-white border-admin-border focus:border-admin-primary rounded-xl shadow-sm transition-all"
+                          placeholder="Ex: Experiência, Hospedagem..."
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-6">

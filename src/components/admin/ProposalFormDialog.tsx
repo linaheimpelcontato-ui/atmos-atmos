@@ -1279,7 +1279,7 @@ export default function ProposalFormDialog({
   // NF base = what paying clients actually pay before tax
   const nfBase = numPaying > 0
     ? (accVariants.length > 0
-      ? (basePerPerson * numPaying) + accTotals.atmosRevenue - (pricePerPersonPreTax * numCourtesies)
+      ? (basePerPerson * numPaying) + accTotals.atmosRevenue
       : pricePerPersonPreTax * numPaying)
     : 0;
 
