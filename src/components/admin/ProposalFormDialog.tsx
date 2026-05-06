@@ -979,10 +979,9 @@ export default function ProposalFormDialog({
               // Also detect manual inline: if current value doesn't match what catalog would give for prevNumPeople
               const expectedPrevValue = prevNumPeople > 0 ? Math.round((baseP / prevNumPeople) * 100) / 100 : 0;
               const isManualInline = prevNumPeople > 0 && Math.abs((cell.value || 0) - expectedPrevValue) > 0.01;
-              const isManual = isManualByRef || isManualInline;
-              if (!isManual) {
-                updated.value = Math.round((baseP / numPeople) * 100) / 100;
-              }
+              // For total items, we enforce the sync unless it was VERY clearly a manual override
+              // But as per user request for "100% sync", we will force it if it's a total item
+              updated.value = Math.round((baseP / numPeople) * 100) / 100;
               const currentCostTotal = (cell.cost || 0) * (cell.qty || 1);
               updated.cost = currentCostTotal > 0 ? Math.round((currentCostTotal / numPeople) * 100) / 100 : Math.round((baseC / numPeople) * 100) / 100;
             }
@@ -1039,7 +1038,7 @@ export default function ProposalFormDialog({
       }
     }
     setPrevNumPeople(numPeople);
-  }, [numPeople]);
+  }, [numPeople, catalogItems]);
 
   // When numCourtesies changes, recalculate "valor total" items
   useEffect(() => {
@@ -1115,8 +1114,12 @@ export default function ProposalFormDialog({
                   }
                 }
 
-                if (!isManual) {
-                  updated.value = Math.round((basePrice / updated.qty) * 100) / 100;
+                // For total items, we enforce the sync to ensure the total remains constant
+                updated.value = Math.round((basePrice / updated.qty) * 100) / 100;
+                
+                // If the user changed the qty of a total-priced item, they are essentially changing the group size
+                if (isUserEdit && 'qty' in patch && updated.qty !== numPeople) {
+                  setTimeout(() => setNumPeople(updated.qty), 0);
                 }
                 const currentCostTotal = (cell.cost || 0) * (cell.qty || 1);
                 updated.cost = currentCostTotal > 0 ? Math.round((currentCostTotal / updated.qty) * 100) / 100 : Math.round((baseCost / updated.qty) * 100) / 100;
