@@ -1276,11 +1276,36 @@ export default function ProposalFormDialog({
   // Base per person WITHOUT accommodation (for variant calculation)
   const basePerPerson = numPeople > 0 ? (afterDiscount + atmosRevenue) / numPeople : 0;
 
+  // Detect which items are "Total Value" vs "Per Person"
+  const itemTypeAnalysis = useMemo(() => {
+    let totalValueSum = 0;
+    let perPersonSum = 0;
+
+    grid.forEach(cell => {
+      if (cell.category === "Hospedagem") return;
+      
+      const product = catalogItems.find(p => p.id === cell.catalog_item_id);
+      // Determine if total value: check variables OR category defaults
+      const isTotalValue = product?.variables?.pricingType === "total" || 
+                         (cell.category === "Transfer" && !product); 
+      
+      if (isTotalValue) {
+        totalValueSum += cell.value * cell.qty;
+      } else {
+        perPersonSum += cell.value * cell.qty;
+      }
+    });
+
+    return { totalValueSum, perPersonSum };
+  }, [grid, catalogItems]);
+
   // NF base = what paying clients actually pay before tax
+  // We apply the discount proportionally and then only waive the PerPerson part for courtesies
+  const discountRatio = subtotal > 0 ? afterDiscount / subtotal : 1;
   const nfBase = numPaying > 0
-    ? (accVariants.length > 0
-      ? (basePerPerson * numPaying) + accTotals.atmosRevenue
-      : pricePerPersonPreTax * numPaying)
+    ? ( (itemTypeAnalysis.perPersonSum * discountRatio + atmosRevenue) * (numPaying / numPeople) )
+      + (itemTypeAnalysis.totalValueSum * discountRatio)
+      + accTotals.atmosRevenue
     : 0;
 
   // Tax "por dentro": incide sobre o faturamento total (padrão NF Brasil)
@@ -1543,19 +1568,28 @@ export default function ProposalFormDialog({
   });
 
   const catalogForCategory = (cat: string) => {
+    const filterByServiceType = (type: string) => {
+      return catalogItems.filter((c: any) => {
+        if (c.type !== "service") return false;
+        // Check main category OR variables.service_type for resilience
+        const serviceType = c.variables?.service_type || c.category;
+        return serviceType?.toLowerCase() === type.toLowerCase();
+      });
+    };
+
     switch (cat) {
       case "Cachoeira / Ingresso":
         return catalogItems.filter((c: any) => c.type === "waterfall");
       case "Lanche Trilha":
-        return catalogItems.filter((c: any) => c.type === "service" && c.category === "lanche");
+        return filterByServiceType("lanche");
       case "Transfer":
-        return catalogItems.filter((c: any) => c.type === "service" && c.category === "transfer");
+        return filterByServiceType("transfer");
       case "Hospedagem":
         return catalogItems.filter((c: any) => c.type === "accommodation");
       case "Experiência":
         return catalogItems.filter((c: any) => c.type === "experience");
       case "Gastronomia":
-        return catalogItems.filter((c: any) => c.type === "service" && c.category === "gastronomia");
+        return filterByServiceType("gastronomia");
       default:
         return [];
     }
