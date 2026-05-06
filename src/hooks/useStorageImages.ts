@@ -39,15 +39,17 @@ export async function fetchStorageImages(folder: string, prefix: string): Promis
     'produtos/EXPERIENCIAS',
     'produtos/CACHOEIRAS',
     'produtos/HOSPEDAGENS',
+    'produtos/SERVICOS',
     'produtos/SERVIÇOS',
+    'produtos/servicos',
+    'produtos/serviços',
     'EXPERIENCIAS',
     'CACHOEIRAS',
     'HOSPEDAGENS',
+    'SERVICOS',
     'SERVIÇOS',
-    'produtos/experiências',
-    'produtos/cachoeiras',
-    'produtos/hospedagens',
-    'produtos/serviços',
+    'servicos',
+    'serviços',
     'home'
   ];
 

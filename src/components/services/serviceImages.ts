@@ -26,8 +26,8 @@ export const serviceImages: Record<ServiceCategory, string[]> = {
 };
 
 export function useServiceImages(id: string, category: ServiceCategory, name?: string) {
-  const query = useStorageImages("produtos/serviços", name || "");
-  const idQuery = useStorageImages("produtos/serviços", id);
+  const query = useStorageImages("produtos/servicos", name || "");
+  const idQuery = useStorageImages("produtos/servicos", id);
 
   const allImages = [...(query.data || []), ...(idQuery.data || [])];
   const uniqueImages = Array.from(new Set(allImages));

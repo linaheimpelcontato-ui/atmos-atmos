@@ -86,6 +86,13 @@ const EXP_STORAGE_KEY: Record<string, string> = {
   "canjica-aguas-lindas": "Canjica e Águas lindas",
   "caracol": "Caracol",
   "catoa": "Catoá",
+  // Services & Transfers mappings
+  "diaria-captacao-drone": "Drone",
+  "diaria-captacao-edicao-drone": "Drone",
+  "lanche-trilha": "Lanche",
+  "transfer-compartilhado": "Transfer",
+  "transfer-particular": "Transfer",
+  "van-particular": "Transfer",
 };
 
 /* ───── i18n ───── */
@@ -702,12 +709,12 @@ export default function ProposalPublic() {
             "experiencia": "EXPERIENCIAS",
             "accommodation": "HOSPEDAGENS",
             "hospedagem": "HOSPEDAGENS",
-            "service": "SERVIÇOS",
-            "servico": "SERVIÇOS",
-            "transfer": "SERVIÇOS"
+            "service": "SERVICOS",
+            "servico": "SERVICOS",
+            "transfer": "SERVICOS"
           };
           
-          const folder = typeMap[normType] || "SERVIÇOS";
+          const folder = typeMap[normType] || "SERVICOS";
           const key = (normType === "experience" || normType === "experiencia")
             ? (EXP_STORAGE_KEY[product.source_id] || product.source_id)
             : (EXP_STORAGE_KEY[product.source_id] || product.source_id);
