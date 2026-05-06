@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { storageUrl } from "@/lib/storage";
 import { fetchStorageImages } from "@/hooks/useStorageImages";
@@ -152,14 +153,26 @@ const DIFFICULTY_CONFIG: Record<string, { pt: string; en: string; es: string; co
   dificil: { pt: "Difícil", en: "Hard", es: "Difícil", color: "#991b1b", bg: "#fee2e2" },
 };
 
-/* ───── DayBanner (overlay-only, background comes from parent) ───── */
-function DayBanner({ children }: { children: React.ReactNode }) {
+/* ───── DayBanner (with dynamic background) ───── */
+function DayBanner({ children, bgImage }: { children: React.ReactNode; bgImage?: string }) {
   return (
-    <div className="relative w-full px-6 md:px-12 py-16 md:py-20 overflow-hidden bg-[#1a1411]">
-      <div 
-        className="absolute inset-0 z-0 opacity-10"
-        style={{ backgroundImage: `url(${leafTexture})` }}
-      />
+    <div className="relative w-full px-6 md:px-12 py-20 md:py-32 overflow-hidden bg-[#1a1411]">
+      {bgImage ? (
+        <motion.div 
+          initial={{ scale: 1.1, opacity: 0 }}
+          animate={{ scale: 1, opacity: 0.4 }}
+          transition={{ duration: 1.5 }}
+          className="absolute inset-0 z-0"
+        >
+          <img src={bgImage} alt="" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/20 to-black/60" />
+        </motion.div>
+      ) : (
+        <div 
+          className="absolute inset-0 z-0 opacity-10"
+          style={{ backgroundImage: `url(${leafTexture})` }}
+        />
+      )}
       
       <div className="relative z-10">
         {children}
@@ -257,6 +270,7 @@ export default function ProposalPublic() {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [dynamicDayGalleries, setDynamicDayGalleries] = useState<Record<number, string[]>>({});
   const [dynamicAccImages, setDynamicAccImages] = useState<Record<string, string[]>>({});
+  const [heroImageUrl, setHeroImageUrl] = useState<string>(heroImage);
   const [approving, setApproving] = useState(false);
   const [clicksignKey, setClicksignKey] = useState<string | null>(null);
   const [loadingContract, setLoadingContract] = useState(false);
@@ -586,23 +600,54 @@ export default function ProposalPublic() {
     (async () => {
       const dayGalleries: Record<number, string[]> = {};
       for (const dayNum of dayNums) {
-        const dayItems2 = items.filter(i => i.day_number === dayNum);
+        // Sort items to prioritize waterfall/experience for the first image
+        const dayItems2 = items
+          .filter(i => i.day_number === dayNum)
+          .sort((a, b) => {
+            const priority: Record<string, number> = { 
+              "waterfall": 0, 
+              "experience": 1, 
+              "accommodation": 2, 
+              "service": 3, 
+              "transfer": 4 
+            };
+            const prodA = findProductRef(a);
+            const prodB = findProductRef(b);
+            const prioA = prodA ? (priority[prodA.type] ?? 10) : 10;
+            const prioB = prodB ? (priority[prodB.type] ?? 10) : 10;
+            return prioA - prioB;
+          });
+
         const urls: string[] = [];
         for (const item of dayItems2) {
           const product = findProductRef(item);
           if (!product?.source_id) continue;
-          if (product.type === "waterfall") {
-            const imgs = await fetchStorageImages("cachoeiras", product.source_id);
-            urls.push(...imgs);
-          } else if (product.type === "experience") {
-            const key = EXP_STORAGE_KEY[product.source_id] || product.source_id;
-            const imgs = await fetchStorageImages("experiencias", key);
-            urls.push(...imgs);
-          }
+          
+          const typeMap: Record<string, string> = {
+            "waterfall": "cachoeiras",
+            "experience": "experiencias",
+            "accommodation": "hospedagens",
+            "service": "servicos",
+            "transfer": "servicos"
+          };
+          
+          const folder = typeMap[product.type] || "servicos";
+          const key = product.type === "experience" 
+            ? (EXP_STORAGE_KEY[product.source_id] || product.source_id)
+            : product.source_id;
+            
+          const imgs = await fetchStorageImages(folder as any, key);
+          urls.push(...imgs);
         }
         dayGalleries[dayNum] = urls;
       }
       setDynamicDayGalleries(dayGalleries);
+
+      // Set first day's first image as hero if available
+      const firstDay = days[0];
+      if (firstDay && dayGalleries[firstDay]?.length > 0) {
+        setHeroImageUrl(dayGalleries[firstDay][0]);
+      }
 
       const accImgs: Record<string, string[]> = {};
       const seen = new Set<string>();
@@ -745,7 +790,13 @@ export default function ProposalPublic() {
   const renderItems = editMode ? editItemOrder : items;
 
   return (
-    <div className="min-h-screen" style={{ background: "#fcfaf7", fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 1 }}
+      className="min-h-screen" 
+      style={{ background: "#fcfaf7", fontFamily: "'Inter', system-ui, sans-serif" }}
+    >
 
       {/* ══════════════════════ STICKY HEADER — client only ══════════════════════ */}
       {proposal.published_at && !isAdmin && (
@@ -915,11 +966,14 @@ export default function ProposalPublic() {
 
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section className="relative h-screen min-h-[650px] overflow-hidden bg-[#2e2019]">
-        <img 
-          src={heroImage} 
+        <motion.img 
+          key={heroImageUrl}
+          initial={{ scale: 1.1, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 2, ease: "easeOut" }}
+          src={heroImageUrl} 
           alt="Hero" 
-          className="absolute inset-0 w-full h-full object-cover scale-105 transition-opacity duration-1000 opacity-0" 
-          onLoad={(e) => (e.currentTarget.style.opacity = "1")}
+          className="absolute inset-0 w-full h-full object-cover" 
           fetchPriority="high" 
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#2e2019] via-[#2e2019]/40 to-transparent" />
@@ -965,7 +1019,13 @@ export default function ProposalPublic() {
       </section>
 
       {/* ══════════════════════ BRAND INTRO ══════════════════════ */}
-      <section className="py-32 md:py-48 px-6 bg-white border-y border-[#e4dbcc]">
+      <motion.section 
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 1.2 }}
+        className="py-32 md:py-48 px-6 bg-white border-y border-[#e4dbcc]"
+      >
         <div className="max-w-4xl mx-auto text-center">
           <img src={logoAtmos} alt="ATMOS" className="h-20 mx-auto mb-12 opacity-80" />
           <h2 className="text-3xl md:text-6xl font-black leading-none mb-10 font-outfit uppercase tracking-tighter" style={{ color: "#2e2019" }}>
@@ -1021,9 +1081,16 @@ export default function ProposalPublic() {
         const wInfo = getDayWaterfallInfo(dayNum);
 
         return (
-          <section key={dayNum} className="relative">
+          <motion.section 
+            key={dayNum} 
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="relative"
+          >
             {/* ══════ FULL-WIDTH DAY BANNER (parallax photo) ══════ */}
-            <DayBanner>
+            <DayBanner bgImage={gallery[0]}>
               <div className="relative z-10 max-w-7xl mx-auto flex flex-col md:flex-row md:items-end md:justify-between gap-6">
                 <div className="flex items-end gap-6 md:gap-10">
                   <span className="text-8xl md:text-[12rem] font-black leading-[0.7] flex-shrink-0 text-white/10 font-outfit">
@@ -1229,7 +1296,13 @@ export default function ProposalPublic() {
 
       {/* ══════════════════════ ACCOMMODATION SECTION ══════════════════════ */}
       {accommodations.length > 0 && (
-        <section className="py-24 md:py-32 px-6 bg-white border-b border-[#e4dbcc]">
+        <motion.section 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="py-24 md:py-32 px-6 bg-white border-b border-[#e4dbcc]"
+        >
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-20">
               <p className="text-[12px] uppercase tracking-[0.5em] font-bold mb-4" style={{ color: "#c4a97d" }}>
@@ -1263,7 +1336,14 @@ export default function ProposalPublic() {
 
 
       {/* ══════════════════════ UNIFIED INVESTMENT ══════════════════════ */}
-      <section className="py-24 md:py-32 px-6" style={{ background: "#2e2019" }}>
+      <motion.section 
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 1 }}
+        className="py-24 md:py-32 px-6" 
+        style={{ background: "#2e2019" }}
+      >
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-20">
             <p className="text-[12px] uppercase tracking-[0.5em] font-bold mb-4" style={{ color: "#c4a97d" }}>
@@ -1334,30 +1414,32 @@ export default function ProposalPublic() {
                     </button>
 
                     {isExpanded && (
-                      <div className="pb-8 pl-16 pr-10 space-y-3 animate-fade-in">
+                      <div className="pb-10 pl-16 pr-10 space-y-4 animate-fade-in">
                         {dayItemsSorted
                           .filter(i => i.item_name || i.value > 0)
                           .map((item, idx) => (
-                            <div key={idx} className="flex justify-between items-center text-sm border-b border-white/[0.03] pb-2">
+                            <div key={idx} className="flex justify-between items-end text-sm border-b border-white/[0.05] pb-3 group/item">
                               <div className="flex flex-col">
-                                <span className="text-white/60 font-medium uppercase tracking-wider text-[11px]">{item.item_name || item.category}</span>
-                                <span className="text-[9px] text-[#c4a97d] uppercase tracking-widest font-black">
+                                <span className="text-white/80 font-medium uppercase tracking-tight text-base font-outfit group-hover/item:text-[#c4a97d] transition-colors">
+                                  {item.item_name || item.category}
+                                </span>
+                                <span className="text-[10px] text-[#c4a97d]/60 uppercase tracking-[0.2em] font-black mt-1">
                                   {CATEGORY_LABELS[item.category]?.[lang] || item.category}
                                 </span>
                               </div>
-                              <span className="text-white/40 tabular-nums">
+                              <span className="text-white/40 tabular-nums font-light">
                                 {item.value > 0 ? fmt(item.value) : <span className="text-[#c4a97d] font-black tracking-widest text-[10px]">CORTESIA</span>}
                               </span>
                             </div>
                           ))}
                         {/* ATMOS SERVICE proportional daily */}
                         {atmosPPD > 0 && (
-                          <div className="flex justify-between items-center text-sm border-b border-white/[0.03] pb-2">
+                          <div className="flex justify-between items-end text-sm border-b border-white/[0.05] pb-3 group/item">
                             <div className="flex flex-col">
-                              <span className="text-white/60 font-medium uppercase tracking-wider text-[11px]">{t.atmosService}</span>
-                              <span className="text-[9px] text-[#c4a97d] uppercase tracking-widest font-black">Curadoria & Logística</span>
+                              <span className="text-white/80 font-medium uppercase tracking-tight text-base font-outfit group-hover/item:text-[#c4a97d] transition-colors">{t.atmosService}</span>
+                              <span className="text-[10px] text-[#c4a97d]/60 uppercase tracking-[0.2em] font-black mt-1">Curadoria & Logística</span>
                             </div>
-                            <span className="text-white/40 tabular-nums">{fmt(atmosPPD)}</span>
+                            <span className="text-white/40 tabular-nums font-light">{fmt(atmosPPD)}</span>
                           </div>
                         )}
                       </div>
@@ -1555,6 +1637,6 @@ export default function ProposalPublic() {
         proposalId={proposal.id}
         lang={lang}
       />
-    </div>
+    </motion.div>
   );
 }
