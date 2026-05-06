@@ -60,7 +60,7 @@ function NumericCell({ value, onCommit, inputMode = "decimal", className, ...pro
 function SearchableCatalogCombobox({ value, onSelect, options, placeholder, className, size = "sm" }: {
   value: string | null;
   onSelect: (v: string) => void;
-  options: { id: string; label: string }[];
+  options: { id: string; label: string; price?: number | string }[];
   placeholder: string;
   className?: string;
   size?: "sm" | "xs";
@@ -85,8 +85,17 @@ function SearchableCatalogCombobox({ value, onSelect, options, placeholder, clas
             <CommandGroup>
               {options.map(o => (
                 <CommandItem key={o.id} value={`${o.label} ${o.id}`} onSelect={() => { onSelect(o.id); setOpen(false); }} className="text-xs">
-                  {value === o.id && <Check className="mr-1.5 h-3 w-3 shrink-0" />}
-                  <span className={value !== o.id ? "pl-[18px]" : ""}>{o.label}</span>
+                  <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center">
+                      {value === o.id && <Check className="mr-1.5 h-3 w-3 shrink-0" />}
+                      <span className={value !== o.id ? "pl-[18px]" : ""}>{o.label}</span>
+                    </div>
+                    {o.price !== undefined && (
+                      <span className="text-[10px] text-muted-foreground ml-2">
+                        R$ {typeof o.price === 'number' ? o.price.toFixed(0) : o.price}
+                      </span>
+                    )}
+                  </div>
                 </CommandItem>
               ))}
             </CommandGroup>
@@ -246,11 +255,14 @@ const paxKey = (n: number): "1" | "2" | "3plus" => (n >= 3 ? "3plus" : String(n)
 
 const getGuidePrice = (gwp: GuidePriceRow, vehicleType: string, qty: number): number => {
   const pk = paxKey(qty);
-  if (vehicleType === "4x4Atmos") {
+  // Van explicitly uses carroTurista pricing because guide is not using their 4x4
+  const is4x4 = vehicleType === "4x4Atmos";
+  if (is4x4) {
     if (pk === "1") return Number(gwp.price_4x4_1);
     if (pk === "2") return Number(gwp.price_4x4_2);
     return Number(gwp.price_4x4_3plus);
   }
+  // Handles both "carroTurista" and "van"
   if (pk === "1") return Number(gwp.price_car_1);
   if (pk === "2") return Number(gwp.price_car_2);
   return Number(gwp.price_car_3plus);
@@ -261,6 +273,7 @@ const getGuideSalePrice = (product: any, vehicleType: string, qty: number): numb
   const guidePrices = product?.variables?.guidePrices;
   if (!guidePrices) return 0;
   const pk = paxKey(qty);
+  // Van explicitly uses carroTurista pricing because guide is not using their 4x4
   const vtKey = vehicleType === "4x4Atmos" ? "4x4Atmos" : "carroTurista";
   const tier = guidePrices[vtKey];
   if (!tier) return 0;
@@ -480,7 +493,7 @@ export default function ProposalFormDialog({
   const { data: catalogItems = [] } = useQuery<any[]>({
     queryKey: ["products-catalog"],
     queryFn: async () => {
-      const { data } = await db.from("products").select("*").eq("is_active", true).order("name");
+      const { data } = await db.from("products").select("*").order("name");
       return data || [];
     },
   });
@@ -1309,19 +1322,12 @@ export default function ProposalFormDialog({
 
       // Add Cachoeira/Ingressos — always
       newGrid.push({
-        day_number: d,
+        ...newDayItem(d, "Cachoeira/Ingressos", idx++, numPeople),
         day_label: day.title.pt,
-        category: "Cachoeira/Ingressos",
         item_name: waterfallProduct?.name || day.title.pt,
         value: day.entranceFee,
         cost: day.entranceFee,
-        comissao: 0,
-        value_text: "",
-        description: "",
         catalog_item_id: waterfallProduct?.id || null,
-        variation_id: null,
-        item_index: idx++,
-        qty: numPeople,
       });
 
       // Add Guia ATMOS — always (pre-fill sale price if waterfall known)
@@ -1855,6 +1861,7 @@ export default function ProposalFormDialog({
                     <SelectContent>
                       <SelectItem value="carroTurista">Carro Turista</SelectItem>
                       <SelectItem value="4x4Atmos">4×4 ATMOS</SelectItem>
+                      <SelectItem value="van">Van</SelectItem>
                     </SelectContent>
                   </Select>
                   <VehicleReplicatePopover 
@@ -1936,7 +1943,7 @@ export default function ProposalFormDialog({
                                           const waterfallProduct = waterfallId ? catalogItems.find((c: any) => c.id === waterfallId) : null;
                                           const vt = dayVehicleType[dayNum] || "carroTurista";
                                           const salePrice = getGuideSalePrice(waterfallProduct, vt, cell.qty) || Number(g.daily_rate);
-                                          return { id: g.id, label: `${g.name} — R$ ${salePrice.toFixed(0)}` };
+                                          return { id: g.id, label: `${g.name}${!g.is_active ? " (Rascunho)" : ""}`, price: salePrice.toFixed(0) };
                                         })
                                       ]}
                                       onSelect={(v) => v === "custom"
@@ -1951,7 +1958,11 @@ export default function ProposalFormDialog({
                                     placeholder="Selecionar do catálogo"
                                     options={[
                                       { id: "custom", label: "Livre" },
-                                      ...catCatalog.map((c: any) => ({ id: c.id, label: `${c.name} — R$ ${Number(c.unit_price).toFixed(0)}` }))
+                                      ...catCatalog.map((c: any) => ({ 
+                                        id: c.id, 
+                                        label: `${c.name}${!c.is_active ? " (Rascunho)" : ""}`, 
+                                        price: Number(c.unit_price) 
+                                      }))
                                     ]}
                                     onSelect={(v) => v === "custom"
                                       ? updateCell(dayNum, cat, cell.item_index, { catalog_item_id: null })
@@ -2116,6 +2127,7 @@ export default function ProposalFormDialog({
                     <SelectContent>
                       <SelectItem value="carroTurista">Carro Turista</SelectItem>
                       <SelectItem value="4x4Atmos">4×4 ATMOS</SelectItem>
+                      <SelectItem value="van">Van</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -2149,7 +2161,7 @@ export default function ProposalFormDialog({
                                     const waterfallProduct = wId ? catalogItems.find((c: any) => c.id === wId) : null;
                                     const vt = dayVehicleType[dayNum] || "carroTurista";
                                     const salePrice = getGuideSalePrice(waterfallProduct, vt, cell.qty) || Number(g.daily_rate);
-                                    return { id: g.id, label: `${g.name} — R$${salePrice.toFixed(0)}` };
+                                    return { id: g.id, label: `${g.name}${!g.is_active ? " (Rascunho)" : ""}`, price: salePrice.toFixed(0) };
                                   })
                                 ]}
                                 onSelect={(v) => v === "custom"
@@ -2165,7 +2177,11 @@ export default function ProposalFormDialog({
                               placeholder="Catálogo"
                               options={[
                                 { id: "custom", label: "Livre" },
-                                ...catCatalog.map((c: any) => ({ id: c.id, label: `${c.name} — R$${Number(c.unit_price).toFixed(0)}` }))
+                                ...catCatalog.map((c: any) => ({ 
+                                  id: c.id, 
+                                  label: `${c.name}${!c.is_active ? " (Rascunho)" : ""}`, 
+                                  price: Number(c.unit_price) 
+                                }))
                               ]}
                               onSelect={(v) => v === "custom"
                                 ? updateCell(dayNum, cat, cell.item_index, { catalog_item_id: null })
