@@ -152,15 +152,15 @@ export default function FeatureShowcase() {
   const Icon = currentStep.icon;
 
   return (
-    <section id="feature-showcase" className="min-h-screen bg-white relative overflow-hidden pt-32 lg:pt-48 pb-24 scroll-mt-32 lg:scroll-mt-44">
+    <section id="feature-showcase" className="min-h-screen bg-white flex items-center relative overflow-hidden py-24 lg:py-32 scroll-mt-32 lg:scroll-mt-44">
       <div className="max-w-7xl mx-auto px-6 w-full relative z-20 h-full">
         
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-24 items-start">
           
-          <div className="lg:col-span-5 flex flex-col gap-12 lg:gap-16 py-2">
+          <div className="lg:col-span-6 flex flex-col gap-8 lg:gap-12 py-2">
             
             <div>
-              <h2 className="text-[#2C3E2D] font-display text-4xl sm:text-5xl lg:text-7xl xl:text-8xl leading-[0.95] tracking-tighter mb-8">
+              <h2 className="text-[#2C3E2D] font-display text-4xl sm:text-6xl lg:text-7xl xl:text-[5.5rem] leading-[0.9] tracking-tighter mb-8">
                 Como montar seu roteiro
               </h2>
               <p className="text-sm lg:text-base font-sans text-[#2C3E2D] opacity-60 uppercase tracking-[0.2em] font-semibold mb-8 max-w-md">
@@ -274,8 +274,8 @@ export default function FeatureShowcase() {
             </div>
           </div>
 
-          <div className="lg:col-span-7 flex items-start justify-center relative min-h-[500px] lg:min-h-[600px]">
-            <div className="relative w-full max-w-[420px] aspect-[9/19.5] lg:aspect-auto lg:h-[clamp(500px,65vh,750px)] lg:max-h-[750px]">
+          <div className="lg:col-span-6 flex items-center justify-center relative min-h-[500px] lg:min-h-[600px]">
+            <div className="relative w-full max-w-[380px] aspect-[9/19.5] lg:aspect-auto lg:h-[clamp(500px,68vh,720px)] lg:max-h-[720px]">
               <div className="absolute inset-0 bg-[#F5F5F3] rounded-[3.5rem] border-[12px] border-[#2C3E2D] shadow-[0_120px_240px_-40px_rgba(0,0,0,0.3)] overflow-hidden z-10">
                 
                 <div className="absolute top-0 inset-x-0 h-14 bg-white/90 backdrop-blur-md border-b border-[#2C3E2D]/5 px-8 flex items-center justify-between z-[60]">
