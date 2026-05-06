@@ -2196,6 +2196,12 @@ export default function ProposalFormDialog({
                               value={cell.value || ""}
                               onChange={(e) => updateCell(dayNum, cat, cell.item_index, { value: parseFloat(e.target.value) || 0 }, true)}
                             />
+                            <ReplicatePopover 
+                              cell={cell} 
+                              numDays={numDays} 
+                              dayNum={dayNum}
+                              onReplicate={(targetDays) => applyItemToDays(cell, targetDays)}
+                            />
                             {cellItems.length > 1 && (
                               <button type="button" className="text-destructive shrink-0" onClick={() => removeCellItem(dayNum, cat, cell.item_index)}>
                                 <Trash2 className="h-3 w-3" />
