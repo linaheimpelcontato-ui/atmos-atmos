@@ -445,8 +445,15 @@ export function InlinePrice({ value, onSave }: { value: number; onSave: (v: numb
         type="number" step="0.01" min="0" value={draft}
         onChange={(e) => setDraft(e.target.value)}
         className="w-24 h-8 text-sm border-none focus-visible:ring-0 px-1 font-semibold" autoFocus
+        onFocus={(e) => e.target.select()}
+        onBlur={() => { onSave(parseFloat(draft) || 0); setEditing(false); }}
         onKeyDown={(e) => {
-          if (e.key === "Enter") { onSave(parseFloat(draft) || 0); setEditing(false); }
+          if (e.key === "Enter") { 
+            e.preventDefault();
+            e.stopPropagation();
+            onSave(parseFloat(draft) || 0); 
+            setEditing(false); 
+          }
           if (e.key === "Escape") setEditing(false);
         }}
       />
@@ -504,8 +511,15 @@ export function InlineText({
         onChange={(e) => setDraft(e.target.value)}
         className={`h-8 text-sm border-none focus-visible:ring-0 px-1 font-medium ${inputClassName}`}
         autoFocus
+        onFocus={(e) => e.target.select()}
+        onBlur={() => { onSave(draft); setEditing(false); }}
         onKeyDown={(e) => {
-          if (e.key === "Enter") { onSave(draft); setEditing(false); }
+          if (e.key === "Enter") { 
+            e.preventDefault();
+            e.stopPropagation();
+            onSave(draft); 
+            setEditing(false); 
+          }
           if (e.key === "Escape") setEditing(false);
         }}
       />
@@ -555,8 +569,15 @@ export function InlineNumber({
         onChange={(e) => setDraft(e.target.value)}
         className={`h-8 text-sm border-none focus-visible:ring-0 px-1 font-medium ${inputClassName}`}
         autoFocus
+        onFocus={(e) => e.target.select()}
+        onBlur={() => { onSave(parseFloat(draft) || 0); setEditing(false); }}
         onKeyDown={(e) => {
-          if (e.key === "Enter") { onSave(parseFloat(draft) || 0); setEditing(false); }
+          if (e.key === "Enter") { 
+            e.preventDefault();
+            e.stopPropagation();
+            onSave(parseFloat(draft) || 0); 
+            setEditing(false); 
+          }
           if (e.key === "Escape") setEditing(false);
         }}
       />

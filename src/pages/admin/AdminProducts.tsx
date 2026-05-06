@@ -84,7 +84,8 @@ export default function AdminProducts() {
     mutationFn: async ({ id, variables, ...fields }: UpdatePayload) => {
       const updateData: Record<string, unknown> = { ...fields };
       if (variables) {
-        const existing = products.find((p) => p.id === id);
+        const existingData = qc.getQueryData<Product[]>(["admin-products"]);
+        const existing = existingData?.find((p) => p.id === id);
         updateData.variables = { ...(existing?.variables || {}), ...variables };
       }
       const { error } = await supabase.from("products").update(updateData).eq("id", id);
@@ -94,6 +95,9 @@ export default function AdminProducts() {
       qc.invalidateQueries({ queryKey: ["admin-products"] });
       toast({ title: "Produto atualizado" });
     },
+    onError: (err: Error) => {
+      toast({ title: "Erro ao atualizar", description: err.message, variant: "destructive" });
+    }
   });
 
   const importMutation = useMutation({
