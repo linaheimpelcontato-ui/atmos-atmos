@@ -84,7 +84,7 @@ function SearchableCatalogCombobox({ value, onSelect, options, placeholder, clas
             <CommandEmpty className="py-3 text-xs text-center">Nenhum resultado</CommandEmpty>
             <CommandGroup>
               {options.map(o => (
-                <CommandItem key={o.id} value={o.label} onSelect={() => { onSelect(o.id); setOpen(false); }} className="text-xs">
+                <CommandItem key={o.id} value={`${o.label} ${o.id}`} onSelect={() => { onSelect(o.id); setOpen(false); }} className="text-xs">
                   {value === o.id && <Check className="mr-1.5 h-3 w-3 shrink-0" />}
                   <span className={value !== o.id ? "pl-[18px]" : ""}>{o.label}</span>
                 </CommandItem>
@@ -273,6 +273,106 @@ const newDayItem = (dayNum: number, cat: string, itemIdx: number, numPeople: num
   catalog_item_id: null, variation_id: null, item_index: itemIdx, qty: numPeople,
   _uid: Math.random().toString(36).substr(2, 9),
 });
+
+// ─── Sortable Item Component ──────────────────────────────────────
+const SortableItem = ({ id, children }: { id: string; children: React.ReactNode }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+  return (
+    <div ref={setNodeRef} style={style} className="relative">
+      <div className="flex items-center gap-1">
+        <button type="button" {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing shrink-0 p-1 text-muted-foreground hover:text-foreground touch-none">
+          <GripVertical className="h-4 w-4" />
+        </button>
+        <div className="flex-1">{children}</div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Multi-select Replicate Popover ───────────────────────────────
+const ReplicatePopover = ({ cell, numDays, dayNum, onReplicate }: { 
+  cell: DayItem; 
+  numDays: number; 
+  dayNum: number;
+  onReplicate: (targetDays: number[]) => void;
+}) => {
+  const [selected, setSelected] = useState<number[]>([]);
+  const otherDays = Array.from({ length: numDays }, (_, i) => i + 1).filter((d) => d !== dayNum);
+  const allSelected = otherDays.length > 0 && otherDays.every((d) => selected.includes(d));
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-primary">
+          <Copy className="h-3 w-3" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-3 space-y-3" align="end">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold">Replicar item para:</span>
+            <Button type="button" variant="link" className="h-auto p-0 text-[10px]" onClick={() => setSelected(allSelected ? [] : otherDays)}>
+              {allSelected ? "Limpar" : "Todos"}
+            </Button>
+          </div>
+          <div className="grid grid-cols-4 gap-1">
+            {otherDays.map((d) => (
+              <Button key={d} type="button" variant={selected.includes(d) ? "default" : "outline"} size="sm" className="h-7 text-[10px]" onClick={() => setSelected((prev) => prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d])}>
+                D{d}
+              </Button>
+            ))}
+          </div>
+        </div>
+        {selected.length > 0 && (
+          <Button type="button" size="sm" className="w-full text-xs" onClick={() => { onReplicate(selected); setSelected([]); }}>
+            Aplicar ({selected.length})
+          </Button>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+};
+
+const VehicleReplicatePopover = ({ 
+  dayNum, 
+  vehicleType, 
+  numDays, 
+  onApply 
+}: { 
+  dayNum: number; 
+  vehicleType: string; 
+  numDays: number;
+  onApply: (targetDays: number[]) => void;
+}) => {
+  const [selected, setSelected] = useState<number[]>([]);
+  const otherDays = Array.from({ length: numDays }, (_, i) => i + 1).filter((d) => d !== dayNum);
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-primary">
+          <Route className="h-3 w-3" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-3 space-y-3" align="end">
+        <div className="space-y-2">
+          <span className="text-xs font-semibold">Aplicar este transporte para:</span>
+          <div className="grid grid-cols-4 gap-1">
+            {otherDays.map((d) => (
+              <Button key={d} type="button" variant={selected.includes(d) ? "default" : "outline"} size="sm" className="h-7 text-[10px]" onClick={() => setSelected((prev) => prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d])}>
+                D{d}
+              </Button>
+            ))}
+          </div>
+        </div>
+        {selected.length > 0 && (
+          <Button type="button" size="sm" className="w-full text-xs" onClick={() => { onApply(selected); setSelected([]); }}>
+            Aplicar ({selected.length})
+          </Button>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+};
 
 export default function ProposalFormDialog({
   open,
@@ -1674,92 +1774,6 @@ export default function ProposalFormDialog({
     useSensor(KeyboardSensor)
   );
 
-  // ─── Sortable Item Component ──────────────────────────────────────
-  const SortableItem = ({ id, children }: { id: string; children: React.ReactNode }) => {
-    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
-    const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
-    return (
-      <div ref={setNodeRef} style={style} className="relative">
-        <div className="flex items-center gap-1">
-          <button type="button" {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing shrink-0 p-1 text-muted-foreground hover:text-foreground touch-none">
-            <GripVertical className="h-4 w-4" />
-          </button>
-          <div className="flex-1">{children}</div>
-        </div>
-      </div>
-    );
-  };
-
-  // ─── Multi-select Replicate Popover ───────────────────────────────
-  const ReplicatePopover = ({ cell, numDays, dayNum }: { cell: DayItem; numDays: number; dayNum: number }) => {
-    const [selected, setSelected] = useState<number[]>([]);
-    const otherDays = Array.from({ length: numDays }, (_, i) => i + 1).filter((d) => d !== dayNum);
-    const allSelected = otherDays.length > 0 && otherDays.every((d) => selected.includes(d));
-    return (
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button type="button" size="icon" variant="ghost" className="h-6 w-6" title="Aplicar a outros dias">
-            <Copy className="h-3 w-3" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent align="end" className="w-48 p-3 space-y-2">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <Checkbox checked={allSelected} onCheckedChange={() => setSelected(allSelected ? [] : [...otherDays])} />
-            <span className="text-xs font-medium">Todos os dias</span>
-          </label>
-          <div className="border-t border-border pt-1 space-y-1">
-            {otherDays.map((d) => (
-              <label key={d} className="flex items-center gap-2 cursor-pointer">
-                <Checkbox checked={selected.includes(d)} onCheckedChange={() => setSelected((s) => s.includes(d) ? s.filter((x) => x !== d) : [...s, d])} />
-                <span className="text-xs">Dia {d}</span>
-              </label>
-            ))}
-          </div>
-          {selected.length > 0 && (
-            <Button type="button" size="sm" className="w-full text-xs" onClick={() => { applyItemToDays(cell, selected); setSelected([]); }}>
-              Aplicar ({selected.length})
-            </Button>
-          )}
-        </PopoverContent>
-      </Popover>
-    );
-  };
-
-  // ─── Vehicle Replicate Popover ────────────────────────────────────
-  const VehicleReplicatePopover = ({ dayNum, vehicleType }: { dayNum: number; vehicleType: string }) => {
-    const [selected, setSelected] = useState<number[]>([]);
-    const otherDays = Array.from({ length: numDays }, (_, i) => i + 1).filter((d) => d !== dayNum);
-    const allSelected = otherDays.length > 0 && otherDays.every((d) => selected.includes(d));
-    return (
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button type="button" size="icon" variant="ghost" className="h-7 w-7" title="Replicar veículo para outros dias" onClick={(e) => e.stopPropagation()}>
-            <Copy className="h-3 w-3" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent align="end" className="w-48 p-3 space-y-2" onClick={(e) => e.stopPropagation()}>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <Checkbox checked={allSelected} onCheckedChange={() => setSelected(allSelected ? [] : [...otherDays])} />
-            <span className="text-xs font-medium">Todos os dias</span>
-          </label>
-          <div className="border-t border-border pt-1 space-y-1">
-            {otherDays.map((d) => (
-              <label key={d} className="flex items-center gap-2 cursor-pointer">
-                <Checkbox checked={selected.includes(d)} onCheckedChange={() => setSelected((s) => s.includes(d) ? s.filter((x) => x !== d) : [...s, d])} />
-                <span className="text-xs">Dia {d}</span>
-              </label>
-            ))}
-          </div>
-          {selected.length > 0 && (
-            <Button type="button" size="sm" className="w-full text-xs" onClick={() => { selected.forEach((d) => handleVehicleTypeChange(d, vehicleType)); setSelected([]); }}>
-              Aplicar ({selected.length})
-            </Button>
-          )}
-        </PopoverContent>
-      </Popover>
-    );
-  };
-
   // ─── Day Card View ────────────────────────────────────────────────
   const renderDayCard = (dayNum: number) => {
     const isOpen = openDays[dayNum] ?? true;
@@ -1843,7 +1857,12 @@ export default function ProposalFormDialog({
                       <SelectItem value="4x4Atmos">4×4 ATMOS</SelectItem>
                     </SelectContent>
                   </Select>
-                  <VehicleReplicatePopover dayNum={dayNum} vehicleType={dayVehicleType[dayNum] || "carroTurista"} />
+                  <VehicleReplicatePopover 
+                    dayNum={dayNum} 
+                    vehicleType={dayVehicleType[dayNum] || "carroTurista"} 
+                    numDays={numDays}
+                    onApply={(targetDays) => targetDays.forEach(d => handleVehicleTypeChange(d, dayVehicleType[dayNum] || "carroTurista"))}
+                  />
                 </div>
                 <div className="text-right">
                   <Badge variant="outline" className="tabular-nums text-xs">
@@ -2004,7 +2023,12 @@ export default function ProposalFormDialog({
 
                                 {/* Action buttons */}
                                 <div className="flex flex-col gap-0.5 shrink-0">
-                                  <ReplicatePopover cell={cell} numDays={numDays} dayNum={dayNum} />
+                                  <ReplicatePopover 
+                                    cell={cell} 
+                                    numDays={numDays} 
+                                    dayNum={dayNum}
+                                    onReplicate={(targetDays) => applyItemToDays(cell, targetDays)}
+                                  />
                                   <Button
                                     type="button"
                                     size="icon"
