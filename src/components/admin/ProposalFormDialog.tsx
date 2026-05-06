@@ -193,7 +193,7 @@ type GuidePriceRow = {
   price_4x4_3plus: number;
 };
 
-const DEFAULT_CATEGORIES = ["Cachoeira / Ingresso", "Diária Guia ATMOS", "Experiência", "Transfer", "Lanche Trilha", "Gastronomia"];
+const DEFAULT_CATEGORIES = ["Cachoeira/Ingressos", "Experiências", "Hospedagens", "Serviços", "Guia ATMOS"];
 
 const statusOptions = [
   { value: "draft", label: "Rascunho" },
@@ -219,21 +219,25 @@ const paymentStatusOptions = [
 ];
 
 const CATEGORY_COLORS: Record<string, string> = {
-  "Cachoeira / Ingresso": "bg-blue-600",
-  "Diária Guia ATMOS": "bg-yellow-500",
-  Hospedagem: "bg-emerald-600",
-  "Lanche Trilha": "bg-orange-500",
-  Transfer: "bg-violet-600",
-  "Gastronomia": "bg-rose-600",
-  "Experiência": "bg-teal-500",
+  "Cachoeira/Ingressos": "bg-blue-600",
+  "Experiências": "bg-teal-500",
+  "Hospedagens": "bg-purple-600",
+  "Serviços": "bg-rose-500",
+  "Guia ATMOS": "bg-amber-500",
 };
 
 const LEGACY_CATEGORY_MAP: Record<string, string> = {
-  "Ingresso": "Cachoeira / Ingresso",
-  "Cachoeira": "Cachoeira / Ingresso",
-  "Guia": "Diária Guia ATMOS",
-  "Refeição": "Gastronomia",
-  "Hospedagem": "Hospedagem",  // keep legacy items working
+  "Ingresso": "Cachoeira/Ingressos",
+  "Cachoeira": "Cachoeira/Ingressos",
+  "Cachoeira/Ingressos": "Cachoeira/Ingressos",
+  "Guia": "Guia ATMOS",
+  "Guia ATMOS": "Guia ATMOS",
+  "Refeição": "Serviços",
+  "Gastronomia": "Serviços",
+  "Lanche Trilha": "Serviços",
+  "Transfer": "Serviços",
+  "Experiência": "Experiências",
+  "Hospedagem": "Hospedagens",
 };
 
 const paxKey = (n: number): "1" | "2" | "3plus" => (n >= 3 ? "3plus" : String(n) as "1" | "2");
@@ -475,10 +479,10 @@ export default function ProposalFormDialog({
 
     // 3. Catalog fallback (only useful for brand-new items with no cost yet)
     if (cell.catalog_item_id) {
-      if (cell.category === "Diária Guia ATMOS") {
+      if (cell.category === "Guia ATMOS") {
         const waterfallId = (() => {
           const cachoeiraItems = grid.filter(
-            (c) => c.day_number === cell.day_number && c.category === "Cachoeira / Ingresso" && c.catalog_item_id
+            (c) => c.day_number === cell.day_number && c.category === "Cachoeira/Ingressos" && c.catalog_item_id
           );
           return cachoeiraItems.length > 0 ? cachoeiraItems[0].catalog_item_id : null;
         })();
@@ -534,7 +538,7 @@ export default function ProposalFormDialog({
   const getWaterfallForDay = useCallback(
     (dayNum: number): string | null => {
       const cachoeiraItems = grid.filter(
-        (c) => c.day_number === dayNum && c.category === "Cachoeira / Ingresso" && c.catalog_item_id
+        (c) => c.day_number === dayNum && c.category === "Cachoeira/Ingressos" && c.catalog_item_id
       );
       return cachoeiraItems.length > 0 ? cachoeiraItems[0].catalog_item_id : null;
     },
@@ -660,7 +664,7 @@ export default function ProposalFormDialog({
               if (Math.abs(savedValue - expectedValue) > 0.01) {
                 manualKeys.add(`${item.day_number}_${item.item_index}`);
               }
-            } else if (item.category === "Diária Guia ATMOS") {
+            } else if (item.category === "Guia ATMOS") {
               // Guide items: mark as manual if value differs from catalog default
               const catalogValue = Number(prod.unit_price) || 0;
               if (Math.abs(savedValue - catalogValue) > 0.01) {
@@ -818,7 +822,7 @@ export default function ProposalFormDialog({
     setGrid((g) =>
       g.map((cell) => {
         // Always update qty to match numPeople, except guide items (they have vehicle-based logic)
-        const skipQtySync = cell.category === "Diária Guia ATMOS";
+        const skipQtySync = cell.category === "Guia ATMOS";
         const updated = skipQtySync ? { ...cell } : { ...cell, qty: numPeople };
         if (cell.catalog_item_id) {
           const prod = catalogItems.find((c: any) => c.id === cell.catalog_item_id);
@@ -845,7 +849,7 @@ export default function ProposalFormDialog({
           }
         }
         // Recalculate guide prices based on new group size
-        if (cell.category === "Diária Guia ATMOS" && cell.catalog_item_id) {
+        if (cell.category === "Guia ATMOS" && cell.catalog_item_id) {
           const cellKey = `${cell.day_number}_${cell.item_index}`;
           const isManualByRef = manualValueKeysRef.current.has(cellKey);
           // Inline detection for guides: if value differs from what guide sale price would have been for prev group
@@ -1062,7 +1066,7 @@ export default function ProposalFormDialog({
     const currentItem = grid.find((c) => c.day_number === dayNum && c.category === cat && c.item_index === itemIdx);
     const itemQty = currentItem?.qty || numPeople;
 
-    if (cat === "Diária Guia ATMOS") {
+    if (cat === "Guia ATMOS") {
       const guide = guides.find((g: any) => g.id === catalogId);
       if (!guide) return;
       const waterfallId = getWaterfallForDay(dayNum);
@@ -1080,20 +1084,20 @@ export default function ProposalFormDialog({
       return;
     }
 
-    if (cat === "Cachoeira / Ingresso") {
+    if (cat === "Cachoeira/Ingressos") {
       const item = catalogItems.find((c: any) => c.id === catalogId);
       if (!item) return;
       updateCell(dayNum, cat, itemIdx, { catalog_item_id: catalogId, item_name: item.name, value: Number(item.unit_price), cost: Number(item.unit_price) });
       // Recalculate guide prices for this day
-      const guiaItems = grid.filter((c) => c.day_number === dayNum && c.category === "Diária Guia ATMOS");
+      const guiaItems = grid.filter((c) => c.day_number === dayNum && c.category === "Guia ATMOS");
       guiaItems.forEach((gi) => {
         const salePrice = getGuideSalePrice(item, vt, gi.qty) || gi.value;
         if (gi.catalog_item_id) {
           const gwp = gwpMap.get(`${gi.catalog_item_id}__${catalogId}`);
           const guideCost = gwp ? getGuidePrice(gwp, vt, gi.qty) : gi.cost;
-          updateCell(dayNum, "Diária Guia ATMOS", gi.item_index, { value: salePrice, cost: guideCost });
+          updateCell(dayNum, "Guia ATMOS", gi.item_index, { value: salePrice, cost: guideCost });
         } else {
-          updateCell(dayNum, "Diária Guia ATMOS", gi.item_index, { value: salePrice });
+          updateCell(dayNum, "Guia ATMOS", gi.item_index, { value: salePrice });
         }
       });
       return;
@@ -1148,7 +1152,7 @@ export default function ProposalFormDialog({
       const waterfallProduct = catalogItems.find((c: any) => c.id === waterfallId);
       setGrid((g) =>
         g.map((cell) => {
-          if (cell.day_number === dayNum && cell.category === "Diária Guia ATMOS" && cell.catalog_item_id) {
+          if (cell.day_number === dayNum && cell.category === "Guia ATMOS" && cell.catalog_item_id) {
             const salePrice = getGuideSalePrice(waterfallProduct, vt, cell.qty) || cell.value;
             const gwp = gwpMap.get(`${cell.catalog_item_id}__${waterfallId}`);
             const guideCost = gwp ? getGuidePrice(gwp, vt, cell.qty) : cell.cost;
@@ -1199,11 +1203,11 @@ export default function ProposalFormDialog({
 
       let idx = 0;
 
-      // Add Cachoeira / Ingresso — always
+      // Add Cachoeira/Ingressos — always
       newGrid.push({
         day_number: d,
         day_label: day.title.pt,
-        category: "Cachoeira / Ingresso",
+        category: "Cachoeira/Ingressos",
         item_name: waterfallProduct?.name || day.title.pt,
         value: day.entranceFee,
         cost: day.entranceFee,
@@ -1216,18 +1220,18 @@ export default function ProposalFormDialog({
         qty: numPeople,
       });
 
-      // Add Diária Guia ATMOS — always (pre-fill sale price if waterfall known)
+      // Add Guia ATMOS — always (pre-fill sale price if waterfall known)
       if (waterfallProduct) {
         const vt = dayVehicleType[d] || "carroTurista";
         const guideSalePrice = getGuideSalePrice(waterfallProduct, vt, numPeople);
         newGrid.push({
-          ...newDayItem(d, "Diária Guia ATMOS", idx++, numPeople),
+          ...newDayItem(d, "Guia ATMOS", idx++, numPeople),
           day_label: day.title.pt,
           value: guideSalePrice,
         });
       } else {
         newGrid.push({
-          ...newDayItem(d, "Diária Guia ATMOS", idx++, numPeople),
+          ...newDayItem(d, "Guia ATMOS", idx++, numPeople),
           day_label: day.title.pt,
         });
       }
@@ -1282,7 +1286,7 @@ export default function ProposalFormDialog({
     let perPersonSum = 0;
 
     grid.forEach(cell => {
-      if (cell.category === "Hospedagem") return;
+      if (cell.category === "Hospedagens") return;
       
       const product = catalogItems.find(p => p.id === cell.catalog_item_id);
       // Determine if total value: check variables OR category defaults
@@ -1331,7 +1335,7 @@ export default function ProposalFormDialog({
 
     for (const cell of grid) {
       // Skip "Hospedagem" items — they are accounted for via accTotals
-      if (cell.category === "Hospedagem") continue;
+      if (cell.category === "Hospedagens") continue;
       const effCost = getEffectiveCost(cell);
       const rev = cell.value * cell.qty;
       const cost = effCost * cell.qty;
@@ -1365,7 +1369,7 @@ export default function ProposalFormDialog({
       // Generate slug from title
       const slugify = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
       const baseSlug = slugify(title);
-      const mainGuideId = grid.find(c => c.category === "Diária Guia ATMOS" && c.catalog_item_id)?.catalog_item_id || null;
+      const mainGuideId = grid.find(c => c.category === "Guia ATMOS" && c.catalog_item_id)?.catalog_item_id || null;
 
       const payload: Record<string, unknown> = {
         title, status, segment,
@@ -1568,29 +1572,16 @@ export default function ProposalFormDialog({
   });
 
   const catalogForCategory = (cat: string) => {
-    const filterByServiceType = (type: string) => {
-      return catalogItems.filter((c: any) => {
-        if (c.type !== "service") return false;
-        // Check main category OR variables.service_type for resilience
-        const serviceType = c.variables?.service_type || c.category;
-        return serviceType?.toLowerCase() === type.toLowerCase();
-      });
-    };
-
     switch (cat) {
-      case "Cachoeira / Ingresso":
+      case "Cachoeira/Ingressos":
         return catalogItems.filter((c: any) => c.type === "waterfall");
-      case "Lanche Trilha":
-        return filterByServiceType("lanche");
-      case "Transfer":
-        return filterByServiceType("transfer");
-      case "Hospedagem":
-        return catalogItems.filter((c: any) => c.type === "accommodation");
-      case "Experiência":
+      case "Experiências":
         return catalogItems.filter((c: any) => c.type === "experience");
-      case "Gastronomia":
-        return filterByServiceType("gastronomia");
-      default:
+      case "Hospedagens":
+        return catalogItems.filter((c: any) => c.type === "accommodation");
+      case "Serviços":
+        return catalogItems.filter((c: any) => c.type === "service");
+      case "Guia ATMOS":
         return [];
     }
   };
@@ -1603,7 +1594,7 @@ export default function ProposalFormDialog({
       const { data } = await db
         .from("proposal_day_items")
         .select("day_number, catalog_item_id, proposal_id, proposals!inner(start_date, id)")
-        .eq("category", "Diária Guia ATMOS")
+        .eq("category", "Guia ATMOS")
         .not("catalog_item_id", "is", null);
       return data || [];
     },
@@ -1818,7 +1809,7 @@ export default function ProposalFormDialog({
                   </div>
                 )}
                 {(() => {
-                  const hasGuide = grid.some(c => c.day_number === dayNum && c.category === "Diária Guia ATMOS" && c.catalog_item_id);
+                  const hasGuide = grid.some(c => c.day_number === dayNum && c.category === "Guia ATMOS" && c.catalog_item_id);
                   const hasAnyItem = grid.some(c => c.day_number === dayNum && (c.catalog_item_id || c.item_name));
                   if (hasAnyItem && !hasGuide) {
                     return (
@@ -1879,7 +1870,7 @@ export default function ProposalFormDialog({
                   {blocks.map((block, blockIdx) => {
                     const cat = block.category;
                     const cellItems = block.items;
-                    const isGuia = cat === "Diária Guia ATMOS";
+                    const isGuia = cat === "Guia ATMOS";
                     const catCatalog = isGuia ? [] : catalogForCategory(cat);
                     const dayGuides = isGuia ? guidesForDay(dayNum) : [];
                     const catColor = CATEGORY_COLORS[cat] || "bg-muted-foreground";
@@ -2103,7 +2094,7 @@ export default function ProposalFormDialog({
               </td>
               {categories.map((cat) => {
                 const cellItems = getCellItems(dayNum, cat);
-                const isGuia = cat === "Diária Guia ATMOS";
+                const isGuia = cat === "Guia ATMOS";
                 const catCatalog = isGuia ? [] : catalogForCategory(cat);
                 const dayGuides = isGuia ? guidesForDay(dayNum) : [];
                 const hasWaterfall = !!getWaterfallForDay(dayNum);
@@ -2388,14 +2379,14 @@ export default function ProposalFormDialog({
                 // Dynamic cost grouping by category (mirrors budget section)
                 // Exclude "Hospedagem" — it has its own dedicated section (accTotals)
                 const costsByCategory: Record<string, number> = {};
-                grid.filter(c => c.category !== "Hospedagem").forEach(c => {
+                grid.filter(c => c.category !== "Hospedagens").forEach(c => {
                   const cost = getEffectiveCost(c) * c.qty;
                   if (cost > 0) {
                     costsByCategory[c.category] = (costsByCategory[c.category] || 0) + cost;
                   }
                 });
-                const itemsWithZeroCost = grid.filter(c => c.category !== "Hospedagem" && getEffectiveCost(c) === 0 && c.value > 0);
-                const itemsWithCostNoSale = grid.filter(c => c.category !== "Hospedagem" && getEffectiveCost(c) > 0 && c.value === 0);
+                const itemsWithZeroCost = grid.filter(c => c.category !== "Hospedagens" && getEffectiveCost(c) === 0 && c.value > 0);
+                const itemsWithCostNoSale = grid.filter(c => c.category !== "Hospedagens" && getEffectiveCost(c) > 0 && c.value === 0);
                 return (
                   <>
                     {categories.filter(cat => (costsByCategory[cat] || 0) > 0).map(cat => (
@@ -3173,7 +3164,7 @@ export default function ProposalFormDialog({
         onOpenChange={setCostCheckOpen}
         catalogCostResolver={(item) => {
           // For guides: look up guide_waterfall_prices
-          if (item.category === "Diária Guia ATMOS" && item.catalog_item_id) {
+          if (item.category === "Guia ATMOS" && item.catalog_item_id) {
             const waterfallId = getWaterfallForDay(item.day_number);
             if (waterfallId) {
               const gwp = gwpMap.get(`${item.catalog_item_id}__${waterfallId}`);
@@ -3233,8 +3224,8 @@ export default function ProposalFormDialog({
                 {/* Wishlist items grouped by type */}
                 {wishlistData.items && Array.isArray(wishlistData.items) && wishlistData.items.length > 0 && (() => {
                   const typeLabel: Record<string, string> = {
-                    itinerary: "Roteiro", waterfall: "Cachoeira", experience: "Experiência",
-                    accommodation: "Hospedagem", service: "Serviço",
+                    itinerary: "Roteiro", waterfall: "Cachoeira", experience: "Experiências",
+                    accommodation: "Hospedagem", service: "Serviços",
                   };
                   const items = wishlistData.items as { name: string; type: string; details?: string }[];
                   const groups: Record<string, { name: string; details?: string }[]> = {};
