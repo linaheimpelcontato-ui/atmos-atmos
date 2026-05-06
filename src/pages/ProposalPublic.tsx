@@ -50,15 +50,22 @@ type Product = { id: string; source_id: string | null; type: string; name: strin
 
 /* ───── experience source_id → storage key overrides ───── */
 const EXP_STORAGE_KEY: Record<string, string> = {
-  "astro-turismo": "astro",
-  "aula-forro": "forro",
-  "massagem-bem-estar": "massagem",
-  "noturna-imersiva": "noturna",
-  "voo-balao": "balao",
-  "voo-paramotor": "paramotor",
-  "yoga-meditacao": "yoga",
-  "passeio-cavalo": "cavalo",
-  "feira-produtores": "feira",
+  "astro-turismo": "Astro Turismo",
+  "aula-forro": "Aula de Forró",
+  "massagem-bem-estar": "Massagem e Bem Estar",
+  "noturna-imersiva": "Experiencia Noturna Imersiva",
+  "voo-balao": "Voo de Balao",
+  "voo-paramotor": "Voo de Paramotor",
+  "yoga-meditacao": "Yoga e Meditacao",
+  "passeio-cavalo": "Passeio a Cavalo",
+  "feira-produtores": "Feira Dos Produtores Locais",
+  "canionismo": "Canionismo",
+  "rafting": "Rafting",
+  "rapel": "Rapel",
+  "tirolesa": "Tirolesa Fazenda Sao Bento",
+  "danca-fogo": "Dança com Fogo",
+  "gota-sat-som": "Gota Sat Som",
+  "mesa-lira": "Mesa Lira",
 };
 
 /* ───── i18n ───── */
@@ -1090,7 +1097,7 @@ export default function ProposalPublic() {
             className="relative"
           >
             {/* ══════ FULL-WIDTH DAY BANNER (parallax photo) ══════ */}
-            <DayBanner bgImage={gallery[0]}>
+            <DayBanner bgImage={gallery[0] || heroImageUrl}>
               <div className="relative z-10 max-w-7xl mx-auto flex flex-col md:flex-row md:items-end md:justify-between gap-6">
                 <div className="flex items-end gap-6 md:gap-10">
                   <span className="text-8xl md:text-[12rem] font-black leading-[0.7] flex-shrink-0 text-white/10 font-outfit">
