@@ -1710,6 +1710,10 @@ export default function ProposalPublic() {
         proposalId={proposal.id}
         lang={lang}
       />
+      {/* ══════════════════════ VERSION MARKER ══════════════════════ */}
+      <div className="py-4 text-center text-[8px] text-gray-500 opacity-20">
+        v2.6.0 - Immersive UI & Asset Sync Live
+      </div>
     </motion.div>
   );
 }
