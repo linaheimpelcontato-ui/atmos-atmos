@@ -20,9 +20,9 @@ import ProposalFeedbackDialog from "@/components/proposal/ProposalFeedbackDialog
 /* dnd-kit reordering */
 const logoAtmos = storageUrl("home/logo-atmos.png");
 const heroImage = storageUrl("proposta-visual-cliente/propostavisualbg.jpg");
-const dividerImage = storageUrl("home/divider-nature.jpg");
+const dividerImage = storageUrl("home/nature-divider.jpg");
 const leafTexture = storageUrl("proposta-visual-cliente/leaf-texture - horizontal.jpg");
-const leafTextureAlt = storageUrl("assets/proposta-visual-cliente/leaf-texture - horizontal.jpg");
+const leafTextureAlt = storageUrl("proposta-visual-cliente/leaf-texture.jpg");
 
 
 /* ───── types ───── */
@@ -37,6 +37,10 @@ type Proposal = {
   atmos_service?: { price_per_person_day: number; description: string; internal_costs?: any[]; num_courtesies?: number } | null;
   payment_terms?: { installments: { label: string; percent: number; due_rule: string }[] } | null;
   contract_url?: string | null;
+  proposal_accommodations?: any[];
+  proposal_costs?: any[];
+  proposal_days?: any[];
+  proposal_day_items?: any[];
 };
 type DayItem = {
   id?: string;
@@ -181,20 +185,27 @@ const DIFFICULTY_CONFIG: Record<string, { pt: string; en: string; es: string; co
 /* ───── DayBanner (with dynamic background) ───── */
 function DayBanner({ children, bgImage }: { children: React.ReactNode; bgImage?: string }) {
   return (
-    <div className="relative w-full px-6 md:px-12 py-20 md:py-32 overflow-hidden bg-[#1a1411]">
+    <div className="relative w-full px-6 md:px-12 py-20 md:py-32 overflow-hidden bg-[#2e2019]">
+      {/* Base layer: the leaf pattern pattern */}
       <div 
-        className="absolute inset-0 z-0 opacity-40 mix-blend-overlay"
-        style={{ backgroundImage: `url(${leafTexture}), url(${leafTextureAlt})`, backgroundSize: 'cover' }}
+        className={`absolute inset-0 z-0 transition-opacity duration-1000 ${bgImage ? 'opacity-20 mix-blend-overlay' : 'opacity-100'}`}
+        style={{ 
+          backgroundImage: `url("${leafTexture}"), url("${leafTextureAlt}")`, 
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}
       />
+      
+      {/* Overlay layer: destination photo if available */}
       {bgImage && (
         <motion.div 
           initial={{ scale: 1.1, opacity: 0 }}
-          animate={{ scale: 1, opacity: 0.4 }}
+          animate={{ scale: 1, opacity: 0.6 }}
           transition={{ duration: 1.5 }}
           className="absolute inset-0 z-0"
         >
-          <img src={bgImage} alt="" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/20 to-black/60" />
+          <img src={bgImage} alt="" className="w-full h-full object-cover grayscale-[20%]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#2e2019]/60 via-transparent to-[#2e2019]/80" />
         </motion.div>
       )}
       
@@ -276,6 +287,7 @@ export default function ProposalPublic() {
   const [items, setItems] = useState<DayItem[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [dayObservations, setDayObservations] = useState<Record<number, string>>({});
+  const [dayDescriptions, setDayDescriptions] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -318,48 +330,74 @@ export default function ProposalPublic() {
   useEffect(() => {
     if (!token) return;
     (async () => {
-      let prop: any = null;
-      let err: any = null;
-      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(token);
-      if (!isUUID) {
-        const res = await supabase
-          .from("proposals")
-          .select("*, prospects(name, email), sellers(name, phone)")
-          .eq("slug", token).single();
-        prop = res.data;
-        err = res.error;
-      }
-      if (!prop) {
-        const res = await supabase
-          .from("proposals")
-          .select("*, prospects(name, email), sellers(name, phone)")
-          .eq("share_token", token).single();
-        prop = res.data;
-        err = res.error;
-      }
-      if (err || !prop) { setError(true); setLoading(false); return; }
-      setProposal(prop);
-      proposalIdRef.current = prop.id;
-      const { data: dayItems } = await supabase
-        .from("proposal_day_items").select("*")
-        .eq("proposal_id", prop.id).order("day_number, item_index");
-      setItems(dayItems || []);
+      // 1. Try fetching by slug (standard)
+      const { data: prop, error: propError } = await supabase
+        .from("proposals")
+        .select(`
+          *,
+          prospects (*),
+          sellers (*),
+          proposal_days (*),
+          proposal_day_items (*),
+          proposal_accommodations (*),
+          proposal_costs (*)
+        `)
+        .eq("slug", token)
+        .single();
 
-      const { data: dayDescs } = await supabase
-        .from("proposal_days").select("day_number, description, observation")
-        .eq("proposal_id", prop.id);
-      if (dayDescs) {
-        const obsMap: Record<number, string> = {};
-        dayDescs.forEach((d: any) => { obsMap[d.day_number] = d.observation || ""; });
-        setDayObservations(obsMap);
+      let finalProp = prop;
+      
+      // 2. Fallback to share_token if slug failed or not found
+      if (propError || !prop) {
+        const { data: propShare, error: shareError } = await supabase
+          .from("proposals")
+          .select(`
+            *,
+            prospects (*),
+            sellers (*),
+            proposal_days (*),
+            proposal_day_items (*),
+            proposal_accommodations (*),
+            proposal_costs (*)
+          `)
+          .eq("share_token", token)
+          .single();
+        
+        if (propShare) {
+          finalProp = propShare;
+        } else {
+          setLoading(false);
+          setError(true);
+          return;
+        }
       }
+
+      // 3. Populate state with finalProp
+      setProposal(finalProp);
+      proposalIdRef.current = finalProp.id;
+      
+      const sortedItems = (finalProp.proposal_day_items || [])
+        .sort((a: any, b: any) => {
+          if (a.day_number !== b.day_number) return a.day_number - b.day_number;
+          return (a.item_index || 0) - (b.item_index || 0);
+        });
+      setItems(sortedItems);
+
+      const obsMap: Record<number, string> = {};
+      const descMap: Record<number, string> = {};
+      (finalProp.proposal_days || []).forEach((d: any) => {
+        obsMap[d.day_number] = d.observation || "";
+        descMap[d.day_number] = d.description || "";
+      });
+      setDayObservations(obsMap);
+      setDayDescriptions(descMap);
 
       const { data: prods } = await supabase
         .from("products")
-        .select("id, source_id, type, name, variables")
-        .in("type", ["waterfall", "experience", "accommodation"]);
+        .select("id, source_id, type, name, variables");
       setProducts(prods || []);
-      trackProposalView(prop.id);
+      
+      trackProposalView(finalProp.id);
       setLoading(false);
     })();
   }, [token]);
@@ -689,6 +727,8 @@ export default function ProposalPublic() {
 
       const accImgs: Record<string, string[]> = {};
       const seen = new Set<string>();
+      
+      // Collect from items
       for (const item of items) {
         if (item.category !== "Hospedagem") continue;
         const product = findProductRef(item);
@@ -703,9 +743,27 @@ export default function ProposalPublic() {
               return storageUrl(`HOSPEDAGENS/${folderName}/${folderName}-${i + 1}.jpg`);
             });
       }
+
+      // Collect from proposal_accommodations
+      if (proposal?.proposal_accommodations) {
+        for (const acc of proposal.proposal_accommodations) {
+          const product = products.find(p => p.id === acc.product_id);
+          const sourceId = product?.source_id;
+          if (!sourceId || seen.has(sourceId)) continue;
+          seen.add(sourceId);
+          const imgs = await fetchStorageImages("HOSPEDAGENS", sourceId);
+          accImgs[sourceId] = imgs.length > 0
+            ? imgs
+            : Array.from({ length: 6 }, (_, i) => {
+                const folderName = product?.name || sourceId;
+                return storageUrl(`HOSPEDAGENS/${folderName}/${folderName}-${i + 1}.jpg`);
+              });
+        }
+      }
+
       setDynamicAccImages(accImgs);
     })();
-  }, [items, products, findProductRef]);
+  }, [items, products, findProductRef, proposal?.proposal_accommodations]);
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: "#fcfaf7" }}>
@@ -767,7 +825,7 @@ export default function ProposalPublic() {
     const dayItems2 = items.filter(i => i.day_number === dayNum);
     // Find first item that is a waterfall or experience to pull technical info
     const mainItem = dayItems2.find(i => 
-      ["Cachoeira", "Ingresso", "Cachoeira / Ingresso", "Experiência", "Experiencia"].includes(i.category)
+      ["Cachoeira", "Ingresso", "Cachoeira / Ingresso", "Cachoeira/Ingressos", "Experiência", "Experiencia"].includes(i.category)
     );
     if (!mainItem) return null;
     const product = findProduct(mainItem);
@@ -822,6 +880,23 @@ export default function ProposalPublic() {
   const getAccommodations = (): { name: string; sourceId: string; images: string[] }[] => {
     const seen = new Set<string>();
     const accs: { name: string; sourceId: string; images: string[] }[] = [];
+    
+    // First, add from dedicated proposal_accommodations
+    if (proposal?.proposal_accommodations) {
+      for (const acc of proposal.proposal_accommodations) {
+        if (acc.is_selected === false) continue;
+        const product = products.find(p => p.id === acc.product_id);
+        const sourceId = product?.source_id;
+        const name = product?.name || "Hospedagem";
+        const key = sourceId || name;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const images = sourceId ? (dynamicAccImages[sourceId] || []) : [];
+        accs.push({ name, sourceId: sourceId || "", images });
+      }
+    }
+
+    // Then, add from items if not already added
     for (const item of items) {
       if (item.category !== "Hospedagem") continue;
       const product = findProduct(item);
@@ -1259,6 +1334,13 @@ export default function ProposalPublic() {
                 <div className="flex-1 min-w-0">
                   <ScrollArea type="always" className="proposal-itinerary-scroll md:h-[600px]">
                     <div className="md:pr-10">
+                    {dayDescriptions[dayNum] && (
+                      <div className="mb-12">
+                        <p className="text-xl md:text-2xl font-light leading-relaxed text-[#5c4a32] italic border-l-4 border-[#c4a97d] pl-8 py-2">
+                          {dayDescriptions[dayNum]}
+                        </p>
+                      </div>
+                    )}
                     {(() => {
                       const visibleItems = dayItemsSorted.filter(i => {
                         const cat = i.category.toLowerCase();
@@ -1293,9 +1375,18 @@ export default function ProposalPublic() {
                                   const prod = findProduct(item);
                                   const baseName = prod?.name;
                                   const varName = item.item_name || item.category;
+                                  const catLower = item.category.toLowerCase();
+                                  const isMainType = catLower.includes("cachoeira") || catLower.includes("experiencia") || catLower.includes("experiência");
+                                  
                                   if (baseName && varName && baseName !== varName) {
-                                    return `${baseName} — ${varName}`;
+                                    return (
+                                      <span className="flex flex-col">
+                                        <span className="block text-sm font-bold opacity-60 mb-0.5" style={{ color: "#8d7b63" }}>{baseName}</span>
+                                        <span className="leading-tight">{varName}</span>
+                                      </span>
+                                    );
                                   }
+                                  if (baseName && isMainType) return baseName;
                                   return varName;
                                 })()}
                                 {item.value === 0 && (
@@ -1384,7 +1475,7 @@ export default function ProposalPublic() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 1 }}
-          className="bg-[#fcfaf7] py-24 md:py-32"
+          className="bg-[#fcfaf7] py-24 md:py-32 overflow-hidden"
         >
           <div className="max-w-7xl mx-auto px-6 mb-16">
             <p className="text-[12px] uppercase tracking-[0.5em] font-bold mb-4" style={{ color: "#c4a97d" }}>
@@ -1395,24 +1486,36 @@ export default function ProposalPublic() {
             </h2>
           </div>
 
-          <div className="flex flex-col gap-24">
-            {accommodations.map((acc, idx) => (
-              <div key={acc.sourceId || acc.name} className={`flex flex-col ${idx % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} gap-12 md:gap-20 items-center`}>
-                <div className="w-full md:w-[60%] h-[400px] md:h-[600px] overflow-hidden">
-                  <ImageCarousel images={acc.images} alt={acc.name} />
-                </div>
-                <div className="w-full md:w-[40%] px-6 md:px-12">
-                  <span className="text-[10px] uppercase tracking-widest font-black text-[#c4a97d] mb-4 block">Hospedagem Selecionada</span>
-                  <h3 className="text-3xl md:text-5xl font-black font-outfit uppercase tracking-tight mb-6" style={{ color: "#2e2019" }}>{acc.name}</h3>
-                  <div className="w-12 h-[2px] bg-[#c4a97d] mb-8" />
-                  <p className="text-lg leading-relaxed font-light italic" style={{ color: "#5c4a32" }}>
-                    {lang === "pt" 
-                      ? "Conforto e sofisticação em meio à natureza, cuidadosamente selecionado para sua experiência."
-                      : "Comfort and sophistication amidst nature, carefully selected for your experience."}
-                  </p>
-                </div>
+          <div className="relative">
+            <ScrollArea orientation="horizontal" className="w-full pb-12">
+              <div className="flex gap-8 px-6 md:px-24">
+                {accommodations.map((acc, idx) => (
+                  <div key={acc.sourceId || acc.name} className="flex-shrink-0 w-[85vw] md:w-[800px] group">
+                    <div className="relative aspect-[16/10] md:aspect-[16/9] overflow-hidden rounded-2xl shadow-2xl mb-8">
+                      <ImageCarousel images={acc.images} alt={acc.name} />
+                      <div className="absolute top-6 left-6 z-20">
+                        <span className="px-4 py-2 bg-white/90 backdrop-blur-md text-[10px] font-black uppercase tracking-widest text-[#2e2019]">
+                          Opção {idx + 1}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="max-w-2xl">
+                      <h3 className="text-3xl md:text-5xl font-black font-outfit uppercase tracking-tight mb-6" style={{ color: "#2e2019" }}>
+                        {acc.name}
+                      </h3>
+                      <div className="w-12 h-[2px] bg-[#c4a97d] mb-8 group-hover:w-24 transition-all duration-500" />
+                      <p className="text-lg leading-relaxed font-light italic max-w-xl" style={{ color: "#5c4a32" }}>
+                        {lang === "pt" 
+                          ? "Um refúgio de paz e sofisticação, escolhido a dedo para que seu descanso seja tão extraordinário quanto suas aventuras na Chapada."
+                          : "A haven of peace and sophistication, handpicked to ensure your rest is as extraordinary as your adventures in Chapada."}
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </ScrollArea>
+            
+            {/* Custom scroll indicators or fade effects could be added here */}
           </div>
         </motion.section>
       )}

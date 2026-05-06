@@ -16,7 +16,7 @@ export default function HeroVideo({ tagline, title }: HeroVideoProps) {
   const { user } = useAuth();
 
   return (
-    <section className="relative h-screen min-h-[700px] w-full overflow-hidden bg-black">
+    <section className="relative min-h-[calc(100vh-80px)] lg:min-h-[calc(100vh-120px)] w-full overflow-hidden bg-black">
       {/* Background Video Loop */}
       <div className="absolute inset-0 z-0">
         <video

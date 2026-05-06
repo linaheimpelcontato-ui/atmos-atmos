@@ -152,15 +152,15 @@ export default function FeatureShowcase() {
   const Icon = currentStep.icon;
 
   return (
-    <section className="min-h-screen lg:h-screen lg:min-h-[850px] bg-white flex items-center relative overflow-hidden py-12 lg:py-20">
+    <section id="feature-showcase" className="min-h-screen bg-white relative overflow-hidden pt-32 lg:pt-48 pb-24 scroll-mt-32 lg:scroll-mt-44">
       <div className="max-w-7xl mx-auto px-6 w-full relative z-20 h-full">
         
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-24 items-start">
           
-          <div className="lg:col-span-5 flex flex-col gap-8 lg:gap-0 lg:justify-between lg:h-[75vh] lg:max-h-[680px] py-2 overflow-y-auto no-scrollbar">
+          <div className="lg:col-span-5 flex flex-col gap-12 lg:gap-16 py-2">
             
             <div>
-              <h2 className="text-3xl sm:text-4xl lg:text-6xl font-display text-[#2C3E2D] mb-4 tracking-tight leading-[0.85] pt-1">
+              <h2 className="text-[#2C3E2D] font-display text-4xl sm:text-5xl lg:text-7xl xl:text-8xl leading-[0.95] tracking-tighter mb-8">
                 Como montar seu roteiro
               </h2>
               <p className="text-sm lg:text-base font-sans text-[#2C3E2D] opacity-60 uppercase tracking-[0.2em] font-semibold mb-8 max-w-md">
@@ -274,8 +274,8 @@ export default function FeatureShowcase() {
             </div>
           </div>
 
-          <div className="lg:col-span-7 flex items-start justify-center relative min-h-[500px] lg:h-[75vh] lg:max-h-[680px]">
-            <div className="relative w-full max-w-[420px] h-full">
+          <div className="lg:col-span-7 flex items-start justify-center relative min-h-[500px] lg:min-h-[600px]">
+            <div className="relative w-full max-w-[420px] aspect-[9/19.5] lg:aspect-auto lg:h-[clamp(500px,65vh,750px)] lg:max-h-[750px]">
               <div className="absolute inset-0 bg-[#F5F5F3] rounded-[3.5rem] border-[12px] border-[#2C3E2D] shadow-[0_120px_240px_-40px_rgba(0,0,0,0.3)] overflow-hidden z-10">
                 
                 <div className="absolute top-0 inset-x-0 h-14 bg-white/90 backdrop-blur-md border-b border-[#2C3E2D]/5 px-8 flex items-center justify-between z-[60]">
@@ -554,7 +554,7 @@ export default function FeatureShowcase() {
                                   >
                                     <span className="text-[7px] font-bold text-[#A88B4C] tracking-[0.4em] uppercase">Personalização</span>
                                   </motion.div>
-                                  <h5 className="text-lg font-display text-[#2C3E2D] uppercase tracking-[0.2em] leading-tight mb-2">Seu Briefing de Viagem</h5>
+                                  <h5 className="text-[clamp(1.2rem,5vw,1.5rem)] font-display text-[#2C3E2D] uppercase tracking-[0.2em] leading-tight mb-2">Seu Briefing de Viagem</h5>
                                   <p className="text-[8px] text-[#2C3E2D]/60 leading-relaxed max-w-[240px] mx-auto font-medium italic">
                                     "Nossa equipe utiliza estas respostas para desenhar cada detalhe da sua logística e experiência na Chapada."
                                   </p>

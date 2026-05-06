@@ -6,10 +6,11 @@ export interface Profile {
   id: string;
   full_name: string | null;
   phone: string | null;
-  birth_date: string | null;
-  city: string | null;
+  birth_date?: string | null;
+  city?: string | null;
   language: string;
   created_at: string;
+  updated_at?: string;
 }
 
 interface AuthContextType {
@@ -40,7 +41,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .single();
     
     if (!error && data) {
-      setProfile(data as Profile);
+      setProfile(data as unknown as Profile);
     }
   }, []);
 

@@ -17,7 +17,7 @@ export default function HeroMain({
   const { user } = useAuth();
 
   return (
-    <section className="relative h-[100vh] w-full flex flex-col items-center justify-center bg-black px-6 overflow-hidden">
+    <section className="relative min-h-[calc(100vh-80px)] lg:min-h-[calc(100vh-120px)] w-full flex flex-col items-center justify-center bg-black px-6 overflow-hidden">
       {/* EXCLUSIVE VIVID VIDEO BACKGROUND */}
       <div className="absolute inset-0 z-0">
         <video

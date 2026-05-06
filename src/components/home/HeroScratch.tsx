@@ -80,7 +80,7 @@ export default function HeroScratch({
   const { user } = useAuth();
 
   return (
-    <section className="relative h-[100vh] w-full flex flex-col items-center justify-center bg-transparent px-6 border-t border-black/5">
+    <section className="relative min-h-[calc(100vh-80px)] lg:min-h-[calc(100vh-120px)] w-full flex flex-col items-center justify-center bg-transparent px-6 border-t border-black/5">
       {/* Three concentrical rotating rings - Masked at the bottom for seamless fade */}
       <div 
         className="absolute inset-0 flex items-center justify-center overflow-visible"

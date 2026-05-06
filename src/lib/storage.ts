@@ -38,6 +38,7 @@ interface OptimizedOptions {
 export const IMAGE_PRESETS = {
   thumbnail: { width: 400, quality: 70, format: "webp" as const },
   card: { width: 800, quality: 75, format: "webp" as const },
+  large: { width: 1024, quality: 75, format: "webp" as const },
   hero: { width: 1920, quality: 80, format: "webp" as const },
   gallery: { width: 1200, quality: 75, format: "webp" as const },
 };

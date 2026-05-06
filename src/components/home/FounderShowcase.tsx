@@ -67,7 +67,7 @@ const StatItem = ({ number, label, suffix = "" }: { number: number, label: strin
 
   return (
     <div ref={ref} className="flex flex-col items-center text-center w-full">
-      <div className="text-4xl md:text-5xl font-sans font-bold text-[#2C3E2D] mb-2 tracking-tighter">
+      <div className="text-3xl md:text-5xl font-sans font-bold text-[#2C3E2D] mb-2 tracking-tighter">
         +{count.toLocaleString()}{suffix}
       </div>
       <div className="text-[#2C3E2D]/60 text-[10px] md:text-xs uppercase tracking-[0.2em] font-medium leading-relaxed">
@@ -173,16 +173,16 @@ export default function FounderShowcase() {
 
             {/* Big Numbers Grid - Perfectly Balanced */}
             <motion.div
-              className="grid grid-cols-3 gap-4 border-t border-[#2C3E2D]/10 pt-16 w-full"
+              className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-4 border-t border-[#2C3E2D]/10 pt-16 w-full"
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
               transition={{ delay: 0.5 }}
             >
-              <div className="flex justify-center border-r border-[#2C3E2D]/5">
+              <div className="flex justify-center border-b md:border-b-0 md:border-r border-[#2C3E2D]/5 pb-8 md:pb-0">
                 <StatItem number={10} label="Anos na Chapada" />
               </div>
-              <div className="flex justify-center border-r border-[#2C3E2D]/5">
+              <div className="flex justify-center border-b md:border-b-0 md:border-r border-[#2C3E2D]/5 pb-8 md:pb-0">
                 <StatItem number={1000} label="Grupos Guiados" />
               </div>
               <div className="flex justify-center">

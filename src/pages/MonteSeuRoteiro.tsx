@@ -398,8 +398,7 @@ export default function MonteSeuRoteiro() {
           </div>
 
           {/* Sticky Navigation & Filters Container */}
-          <div className="sticky top-[80px] md:top-[112px] z-40 bg-white/95 backdrop-blur-md pt-4 pb-6 -mx-6 px-6 border-b border-[#1A261B]/5 transition-all duration-300">
-            {/* Category Menu with Photos */}
+            {/* Category Menu with Photos - Now static to save sticky space */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
               {TABS.map((tab) => {
                 const isActive = activeTab === tab.id;
@@ -409,14 +408,12 @@ export default function MonteSeuRoteiro() {
                     onClick={() => {
                       setActiveTab(tab.id);
                       setSearchQuery("");
-                      // ... (rest of reset logic)
                       setAccRegionFilter([]);
                       setAccTypeFilter([]);
                       setAccPriceFilter([0, 5000]);
                       setAccUnitsFilter([0, 50]);
                       setAccCapacityFilter([0, 50]);
                       setAccAmenityFilter([]);
-                      
                       setWfRegionFilter([]);
                       setWfDifficultyFilter([]);
                       setWfSeasonalityFilter([]);
@@ -426,37 +423,28 @@ export default function MonteSeuRoteiro() {
                       setExpPriceFilter([0, 2000]);
                       setSrvCategoryFilter([]);
                       
-                      // Smooth scroll back to start of products when switching tab
                       const catalogElement = document.getElementById("catalog-grid");
                       if (catalogElement) {
-                        const offset = 280; // Approximate height of sticky header
+                        const offset = 180; 
                         const bodyRect = document.body.getBoundingClientRect().top;
                         const elementRect = catalogElement.getBoundingClientRect().top;
                         const elementPosition = elementRect - bodyRect;
                         const offsetPosition = elementPosition - offset;
-
-                        window.scrollTo({
-                          top: offsetPosition,
-                          behavior: "smooth"
-                        });
+                        window.scrollTo({ top: offsetPosition, behavior: "smooth" });
                       }
                     }}
                     className={`group relative h-20 md:h-28 overflow-hidden transition-all duration-500 rounded-lg ${
                       isActive ? "ring-2 ring-[#1A261B] ring-offset-2" : "opacity-80 hover:opacity-100"
                     }`}
                   >
-                    {/* Background Image */}
                     <img
                       src={tab.image}
                       alt={tab.label}
                       className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                     />
-                    {/* Overlay */}
                     <div className={`absolute inset-0 transition-colors duration-500 ${
                       isActive ? "bg-[#1A261B]/50" : "bg-black/40 group-hover:bg-black/20"
                     }`} />
-                    
-                    {/* Content */}
                     <div className="relative h-full flex items-center justify-center text-white p-2">
                       <h3 className="text-xs md:text-sm font-display uppercase tracking-[0.2em] font-medium text-center">{tab.label}</h3>
                     </div>
@@ -465,7 +453,8 @@ export default function MonteSeuRoteiro() {
               })}
             </div>
 
-            {/* Search and Filters Area */}
+            {/* Sticky Navigation & Filters Area - Compact & Focused */}
+            <div className="sticky top-[80px] md:top-[112px] z-40 bg-white/95 backdrop-blur-md py-4 -mx-6 px-6 border-b border-[#1A261B]/5 transition-all duration-300">
             <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
               
               {/* Search Bar */}
