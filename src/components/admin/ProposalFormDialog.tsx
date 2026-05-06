@@ -157,6 +157,7 @@ type DayItem = {
   catalog_item_id: string | null;
   variation_id: string | null;
   item_index: number;
+  _uid: string; // stable key for React
   vehicle_type?: string;
   qty: number;
   supplier_id?: string | null;
@@ -229,7 +230,8 @@ const CATEGORY_COLORS: Record<string, string> = {
 const LEGACY_CATEGORY_MAP: Record<string, string> = {
   "Ingresso": "Cachoeira/Ingressos",
   "Cachoeira": "Cachoeira/Ingressos",
-  "Cachoeira/Ingressos": "Cachoeira/Ingressos",
+  "Cachoeira / Ingressos": "Cachoeira/Ingressos",
+  "Cachoeira / Ingresso": "Cachoeira/Ingressos",
   "Guia": "Guia ATMOS",
   "Guia ATMOS": "Guia ATMOS",
   "Refeição": "Serviços",
@@ -269,6 +271,7 @@ const newDayItem = (dayNum: number, cat: string, itemIdx: number, numPeople: num
   day_number: dayNum, day_label: `Dia ${dayNum}`, category: cat,
   item_name: "", value: 0, cost: 0, comissao: 0, value_text: "", description: "",
   catalog_item_id: null, variation_id: null, item_index: itemIdx, qty: numPeople,
+  _uid: Math.random().toString(36).substr(2, 9),
 });
 
 export default function ProposalFormDialog({
@@ -633,6 +636,7 @@ export default function ProposalFormDialog({
           catalog_item_id: d.catalog_item_id,
           variation_id: d.variation_id || null,
           item_index: d.item_index || 0,
+          _uid: d.id || Math.random().toString(36).substr(2, 9),
           vehicle_type: d.vehicle_type || undefined,
           qty: d.quantity || 1,
           supplier_id: d.supplier_id || null,
@@ -1778,14 +1782,14 @@ export default function ProposalFormDialog({
     const handleDragEnd = (event: DragEndEvent) => {
       const { active, over } = event;
       if (!over || active.id === over.id) return;
-      const oldIndex = dayItems.findIndex((it) => `${dayNum}-${it.item_index}` === active.id);
-      const newIndex = dayItems.findIndex((it) => `${dayNum}-${it.item_index}` === over.id);
+      const oldIndex = dayItems.findIndex((it) => it._uid === active.id);
+      const newIndex = dayItems.findIndex((it) => it._uid === over.id);
       if (oldIndex !== -1 && newIndex !== -1) {
         reorderItems(dayNum, oldIndex, newIndex);
       }
     };
 
-    const sortableIds = dayItems.map((it) => `${dayNum}-${it.item_index}`);
+    const sortableIds = dayItems.map((it) => it._uid);
 
     return (
       <Collapsible
@@ -1897,7 +1901,7 @@ export default function ProposalFormDialog({
                         )}
 
                         {cellItems.map((cell) => (
-                          <SortableItem key={cell.item_index} id={`${dayNum}-${cell.item_index}`}>
+                          <SortableItem key={cell._uid} id={cell._uid}>
                             <div className="space-y-1">
                               <div className="flex items-center gap-1">
                                 <div className="grid grid-cols-[1fr_1fr_60px_100px] gap-2 items-center flex-1">
