@@ -109,7 +109,20 @@ export default function ProposalCostChecklist({ proposalId, grid, open, onOpenCh
       const isTotal = isTotalCostResolver ? isTotalCostResolver(item) : false;
       
       const proposalCostTotal = isTotal ? (item.cost * (item.qty || 1)) : item.cost;
-      const defaultActualCost = isTotal ? (item.cost * (item.qty || 1)) : item.cost;
+      
+      let actual = 0;
+      if (existing) {
+        actual = Number(existing.actual_cost);
+        // Heuristic: if it's a total item and the saved cost is exactly the unit cost, 
+        // and qty > 1, it was likely saved wrong (per person) before the fix.
+        if (isTotal && item.qty > 1 && Math.abs(actual - item.cost) < 0.01 && Math.abs(actual - proposalCostTotal) > 1) {
+          actual = proposalCostTotal;
+        } else if (actual === 0 && proposalCostTotal > 0) {
+          actual = proposalCostTotal;
+        }
+      } else {
+        actual = proposalCostTotal > 0 ? proposalCostTotal : catalogCost;
+      }
       
       return {
         id: existing?.id,
@@ -117,9 +130,7 @@ export default function ProposalCostChecklist({ proposalId, grid, open, onOpenCh
         item_index: item.item_index,
         catalog_cost: catalogCost,
         proposal_cost: proposalCostTotal,
-        actual_cost: existing
-          ? (Number(existing.actual_cost) === 0 && proposalCostTotal > 0 ? proposalCostTotal : Number(existing.actual_cost))
-          : (proposalCostTotal > 0 ? proposalCostTotal : catalogCost),
+        actual_cost: actual,
         is_verified: existing?.is_verified ?? false,
         notes: existing?.notes ?? "",
       };
@@ -222,6 +233,25 @@ export default function ProposalCostChecklist({ proposalId, grid, open, onOpenCh
             <Badge variant="outline" className="ml-auto text-xs">
               {verified}/{total} validados
             </Badge>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 text-muted-foreground hover:text-primary"
+              title="Recalcular com base nos valores sugeridos"
+              onClick={() => {
+                const resetRows = rows.map(r => {
+                  const item = costItems.find(i => i.day_number === r.day_number && i.item_index === r.item_index);
+                  if (!item) return r;
+                  const isTotal = isTotalCostResolver ? isTotalCostResolver(item) : false;
+                  const targetCost = isTotal ? (item.cost * (item.qty || 1)) : item.cost;
+                  return { ...r, actual_cost: targetCost };
+                });
+                setRows(resetRows);
+                toast({ title: "Valores recalculados", description: "Todos os custos foram resetados para os valores sugeridos da proposta." });
+              }}
+            >
+              <Save className="h-4 w-4 rotate-180" />
+            </Button>
           </SheetTitle>
         </SheetHeader>
 

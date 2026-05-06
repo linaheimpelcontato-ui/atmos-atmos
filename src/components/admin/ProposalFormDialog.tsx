@@ -949,50 +949,35 @@ export default function ProposalFormDialog({
     let limitWarning = false;
     setGrid((g) =>
       g.map((cell) => {
-        // Always update qty to match numPeople, except guide items (they have vehicle-based logic)
         const skipQtySync = cell.category === "Guia ATMOS";
         const updated = skipQtySync ? { ...cell } : { ...cell, qty: numPeople };
+
         if (cell.catalog_item_id) {
-          const prod = catalogItems.find((c: any) => c.id === cell.catalog_item_id);
-          if (prod) {
-            const vars = (prod.variables || {}) as Record<string, unknown>;
-            const isTransferOrDrone = (prod.category === "transfer" || prod.category === "drone");
-            const pricingType = (vars.pricingType as string) || (isTransferOrDrone ? "total" : "");
-            if (pricingType === "total" && numPeople > 0) {
+          if (isTotalCostResolver(cell) && numPeople > 0) {
+            // Check limits
+            const product = catalogItems.find((c: any) => c.id === cell.catalog_item_id);
+            if (product) {
+              const vars = (product.variables || {}) as Record<string, unknown>;
               const limite = Number(vars.limitPeople) || Number(vars.limitePessoas) || Number(vars.maxPessoas) || 0;
               if (limite > 0 && numPeople > limite) limitWarning = true;
-              updated.qty = numPeople;
-              const cellKey = `${cell.day_number}_${cell.item_index}`;
-              const isManualByRef = manualValueKeysRef.current.has(cellKey);
-              let baseP = Number(prod.unit_price);
-              let baseC = Number(prod.cost_price) || baseP;
-
-              if (cell.variation_id) {
-                const variations = (prod.variables?.variations || []) as any[];
-                const v = variations.find(x => x.id === cell.variation_id);
-                if (v) {
-                  baseP = Number(v.unit_price);
-                  baseC = Number(v.cost_price) || baseP;
-                }
-              }
-
-              // Also detect manual inline: if current value doesn't match what catalog would give for prevNumPeople
-              const expectedPrevValue = prevNumPeople > 0 ? Math.round((baseP / prevNumPeople) * 100) / 100 : 0;
-              const isManualInline = prevNumPeople > 0 && Math.abs((cell.value || 0) - expectedPrevValue) > 0.01;
-              // For total items, we enforce the sync unless it was VERY clearly a manual override
-              // But as per user request for "100% sync", we will force it if it's a total item
-              updated.value = Math.round((baseP / numPeople) * 100) / 100;
-              const currentCostTotal = (cell.cost || 0) * (cell.qty || 1);
-              updated.cost = currentCostTotal > 0 ? Math.round((currentCostTotal / numPeople) * 100) / 100 : Math.round((baseC / numPeople) * 100) / 100;
             }
+
+            updated.qty = numPeople;
+            // Force 100% sync for total items
+            const totalSale = catalogSalePriceResolver(cell) || 0;
+            const totalCost = catalogCostResolver(cell) || 0;
+            
+            updated.value = Math.round((totalSale / numPeople) * 100) / 100;
+            updated.cost = Math.round((totalCost / numPeople) * 100) / 100;
           }
         }
+
         // Recalculate guide prices based on new group size
         if (cell.category === "Guia ATMOS" && cell.catalog_item_id) {
           const cellKey = `${cell.day_number}_${cell.item_index}`;
           const isManualByRef = manualValueKeysRef.current.has(cellKey);
-          // Inline detection for guides: if value differs from what guide sale price would have been for prev group
           const waterfallId = getWaterfallForDay(cell.day_number);
+          
           let isManualInline = false;
           if (waterfallId && prevNumPeople > 0) {
             const waterfallProductPrev = catalogItems.find((c: any) => c.id === waterfallId);
@@ -1002,10 +987,12 @@ export default function ProposalFormDialog({
               isManualInline = true;
             }
           }
+
           const isManualGuide = isManualByRef || isManualInline;
           if (waterfallId) {
             const waterfallProduct = catalogItems.find((c: any) => c.id === waterfallId);
             const vt = dayVehicleType[cell.day_number] || "carroTurista";
+            
             if (!isManualGuide) {
               const salePrice = getGuideSalePrice(waterfallProduct, vt, numPeople);
               if (salePrice > 0) updated.value = salePrice;
@@ -1092,38 +1079,18 @@ export default function ProposalFormDialog({
       g.map((cell) => {
         if (cell.day_number !== dayNum || cell.category !== cat || cell.item_index !== itemIdx) return cell;
         const updated = { ...cell, ...patch };
+
         // When user manually changes qty on a "total" priced item, recalculate value & cost per new qty
-        if (isUserEdit && 'qty' in patch && cell.catalog_item_id) {
-          const prod = catalogItems.find((c: any) => c.id === cell.catalog_item_id);
-          if (prod) {
-              const vars = (prod.variables || {}) as Record<string, any>;
-              const isTransferOrDrone = (prod.category === "transfer" || prod.category === "drone");
-              const pricingType = (vars.pricingType as string) || (isTransferOrDrone ? "total" : "");
-              if (pricingType === "total" && updated.qty > 0) {
-                const cellKey = `${dayNum}_${itemIdx}`;
-                const isManual = manualValueKeysRef.current.has(cellKey);
-                
-                let basePrice = Number(prod.unit_price);
-                let baseCost = Number(prod.cost_price) || basePrice;
+        if (isUserEdit && 'qty' in patch && cell.catalog_item_id && isTotalCostResolver(cell)) {
+          const totalSale = catalogSalePriceResolver(cell) || 0;
+          const totalCost = catalogCostResolver(cell) || 0;
+          
+          updated.value = Math.round((totalSale / updated.qty) * 100) / 100;
+          updated.cost = Math.round((totalCost / updated.qty) * 100) / 100;
 
-                if (cell.variation_id) {
-                  const v = (vars.variations || []).find((vx: any) => vx.id === cell.variation_id);
-                  if (v) {
-                    basePrice = Number(v.unit_price);
-                    baseCost = Number(v.cost_price);
-                  }
-                }
-
-                // For total items, we enforce the sync to ensure the total remains constant
-                updated.value = Math.round((basePrice / updated.qty) * 100) / 100;
-                
-                // If the user changed the qty of a total-priced item, they are essentially changing the group size
-                if (isUserEdit && 'qty' in patch && updated.qty !== numPeople) {
-                  setTimeout(() => setNumPeople(updated.qty), 0);
-                }
-                const currentCostTotal = (cell.cost || 0) * (cell.qty || 1);
-                updated.cost = currentCostTotal > 0 ? Math.round((currentCostTotal / updated.qty) * 100) / 100 : Math.round((baseCost / updated.qty) * 100) / 100;
-            }
+          // If the user changed the qty of a total-priced item, they are essentially changing the group size
+          if (updated.qty !== numPeople) {
+            setTimeout(() => setNumPeople(updated.qty), 0);
           }
         }
         return updated;
@@ -1447,6 +1414,55 @@ export default function ProposalFormDialog({
 
   // Base per person WITHOUT accommodation (for variant calculation)
   const basePerPerson = numPeople > 0 ? (afterDiscount + atmosRevenue) / numPeople : 0;
+
+  const catalogCostResolver = useCallback((item: DayItem) => {
+    // If it's a guide/GWP product
+    if (item.category === "Serviços") {
+      const waterfallId = getWaterfallForDay(item.day_number);
+      if (waterfallId) {
+        const gwp = gwpMap.get(`${item.catalog_item_id}__${waterfallId}`);
+        if (gwp) {
+          const vt = dayVehicleType[item.day_number] || "carroTurista";
+          return getGuidePrice(gwp, vt, item.qty);
+        }
+      }
+      return item.cost;
+    }
+    // For other items: look up cost_price from products table
+    if (item.catalog_item_id) {
+      const product = catalogItems.find((c: any) => c.id === item.catalog_item_id);
+      if (product) {
+        let cost = Number(product.cost_price) || 0;
+        return cost > 0 ? cost : item.cost;
+      }
+    }
+    return item.cost;
+  }, [catalogItems, dayVehicleType, gwpMap, getWaterfallForDay, getGuidePrice]);
+
+  const isTotalCostResolver = useCallback((item: DayItem) => {
+    if (!item.catalog_item_id) return false;
+    const product = catalogItems.find((c: any) => c.id === item.catalog_item_id);
+    if (!product) return false;
+    const vars = (product.variables || {}) as Record<string, unknown>;
+    const isTransferOrDrone = product.category === "transfer" || product.category === "drone";
+    const pricingType = (vars.pricingType as string) || (isTransferOrDrone ? "total" : "");
+    return pricingType === "total";
+  }, [catalogItems]);
+
+  const catalogSalePriceResolver = useCallback((item: DayItem) => {
+    if (!item.catalog_item_id) return Number(item.value || 0) * (item.qty || 1);
+    const product = catalogItems.find((c: any) => c.id === item.catalog_item_id);
+    if (!product) return Number(item.value || 0) * (item.qty || 1);
+    const vars = (product.variables || {}) as Record<string, unknown>;
+    const isTransferOrDrone = product.category === "transfer" || product.category === "drone";
+    const pricingType = (vars.pricingType as string) || (isTransferOrDrone ? "total" : "");
+    if (pricingType === "total") {
+      // Find variation price if it exists
+      const variation = (vars.variations as any[])?.find(v => v.id === (item as any).variation_id);
+      return variation ? (Number(variation.unit_price) || 0) : (Number(product.unit_price) || 0);
+    }
+    return Number(item.value || 0) * (item.qty || 1);
+  }, [catalogItems]);
 
   // Detect which items are "Total Value" vs "Per Person"
   const itemTypeAnalysis = useMemo(() => {
@@ -3294,44 +3310,9 @@ export default function ProposalFormDialog({
         grid={grid}
         open={costCheckOpen}
         onOpenChange={setCostCheckOpen}
-        catalogCostResolver={(item) => {
-          // For guides: look up guide_waterfall_prices
-          if (item.category === "Guia ATMOS" && item.catalog_item_id) {
-            const waterfallId = getWaterfallForDay(item.day_number);
-            if (waterfallId) {
-              const gwp = gwpMap.get(`${item.catalog_item_id}__${waterfallId}`);
-              if (gwp) {
-                const vt = dayVehicleType[item.day_number] || "carroTurista";
-                return getGuidePrice(gwp, vt, item.qty);
-              }
-            }
-            return item.cost;
-          }
-          // For other items: look up cost_price from products table
-          if (item.catalog_item_id) {
-            const product = catalogItems.find((c: any) => c.id === item.catalog_item_id);
-            if (product) {
-              let cost = Number(product.cost_price) || 0;
-              return cost > 0 ? cost : item.cost;
-            }
-          }
-          return item.cost;
-        }}
-        isTotalCostResolver={(item) => {
-          if (!item.catalog_item_id) return false;
-          const product = catalogItems.find((c: any) => c.id === item.catalog_item_id);
-          if (!product) return false;
-          const vars = (product.variables || {}) as Record<string, unknown>;
-          const isTransferOrDrone = product.category === "transfer" || product.category === "drone";
-          const pricingType = (vars.pricingType as string) || (isTransferOrDrone ? "total" : "");
-          return pricingType === "total";
-        }}
-        catalogSalePriceResolver={(item) => {
-          if (!item.catalog_item_id) return Number(item.value || 0) * (item.qty || 1);
-          const product = catalogItems.find((c: any) => c.id === item.catalog_item_id);
-          if (!product) return Number(item.value || 0) * (item.qty || 1);
-          return Number(product.unit_price) || 0;
-        }}
+        catalogCostResolver={catalogCostResolver}
+        isTotalCostResolver={isTotalCostResolver}
+        catalogSalePriceResolver={catalogSalePriceResolver}
       />
       {/* Wishlist Sheet */}
       <Sheet open={wishlistSheetOpen} onOpenChange={setWishlistSheetOpen}>
