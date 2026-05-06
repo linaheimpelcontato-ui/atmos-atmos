@@ -912,9 +912,20 @@ export default function ProposalFormDialog({
         if (pricingType !== "total") return cell;
 
         const nextQty = numPeople;
-        const costBase = Number(prod.cost_price) || Number(prod.unit_price);
-        const nextCost = Math.round((costBase / numPeople) * 100) / 100;
-        const nextValue = Math.round((Number(prod.unit_price) / numPeople) * 100) / 100;
+        let baseP = Number(prod.unit_price);
+        let baseC = Number(prod.cost_price) || baseP;
+        
+        if (cell.variation_id) {
+          const variations = (prod.variables?.variations || []) as any[];
+          const v = variations.find(x => x.id === cell.variation_id);
+          if (v) {
+            baseP = Number(v.unit_price);
+            baseC = Number(v.cost_price) || baseP;
+          }
+        }
+
+        const nextCost = Math.round((baseC / numPeople) * 100) / 100;
+        const nextValue = Math.round((baseP / numPeople) * 100) / 100;
         if (
           cell.qty === nextQty &&
           Math.abs((cell.value || 0) - nextValue) < 0.005 &&
@@ -948,20 +959,32 @@ export default function ProposalFormDialog({
             const isTransferOrDrone = (prod.category === "transfer" || prod.category === "drone");
             const pricingType = (vars.pricingType as string) || (isTransferOrDrone ? "total" : "");
             if (pricingType === "total" && numPeople > 0) {
-              const limite = Number(vars.limitePessoas) || Number(vars.maxPessoas) || 0;
+              const limite = Number(vars.limitPeople) || Number(vars.limitePessoas) || Number(vars.maxPessoas) || 0;
               if (limite > 0 && numPeople > limite) limitWarning = true;
               updated.qty = numPeople;
               const cellKey = `${cell.day_number}_${cell.item_index}`;
               const isManualByRef = manualValueKeysRef.current.has(cellKey);
+              let baseP = Number(prod.unit_price);
+              let baseC = Number(prod.cost_price) || baseP;
+
+              if (cell.variation_id) {
+                const variations = (prod.variables?.variations || []) as any[];
+                const v = variations.find(x => x.id === cell.variation_id);
+                if (v) {
+                  baseP = Number(v.unit_price);
+                  baseC = Number(v.cost_price) || baseP;
+                }
+              }
+
               // Also detect manual inline: if current value doesn't match what catalog would give for prevNumPeople
-              const expectedPrevValue = prevNumPeople > 0 ? Math.round((Number(prod.unit_price) / prevNumPeople) * 100) / 100 : 0;
+              const expectedPrevValue = prevNumPeople > 0 ? Math.round((baseP / prevNumPeople) * 100) / 100 : 0;
               const isManualInline = prevNumPeople > 0 && Math.abs((cell.value || 0) - expectedPrevValue) > 0.01;
               const isManual = isManualByRef || isManualInline;
               if (!isManual) {
-                updated.value = Math.round((Number(prod.unit_price) / numPeople) * 100) / 100;
+                updated.value = Math.round((baseP / numPeople) * 100) / 100;
               }
               const currentCostTotal = (cell.cost || 0) * (cell.qty || 1);
-              updated.cost = currentCostTotal > 0 ? Math.round((currentCostTotal / numPeople) * 100) / 100 : Math.round(((Number(prod.cost_price) || Number(prod.unit_price)) / numPeople) * 100) / 100;
+              updated.cost = currentCostTotal > 0 ? Math.round((currentCostTotal / numPeople) * 100) / 100 : Math.round((baseC / numPeople) * 100) / 100;
             }
           }
         }
@@ -1044,7 +1067,7 @@ export default function ProposalFormDialog({
           }
         }
 
-        const limite = Number(vars.limitePessoas) || Number(vars.maxPessoas) || 0;
+        const limite = Number(vars.limitPeople) || Number(vars.limitePessoas) || Number(vars.maxPessoas) || 0;
         if (limite > 0 && numPeople > limite) limitWarning = true;
         
         return { 
@@ -1169,11 +1192,27 @@ export default function ProposalFormDialog({
     const v = variations.find(x => x.id === vId);
     if (!v) return;
 
+    const vars = (product.variables || {}) as Record<string, unknown>;
+    const isTransferOrDrone = (product.category === "transfer" || product.category === "drone");
+    const pricingType = (vars.pricingType as string) || (isTransferOrDrone ? "total" : "");
+    
+    const unitPrice = Number(v.unit_price);
+    const costPrice = Number(v.cost_price) || 0;
+    
+    const saleValue = pricingType === "total" && numPeople > 0
+      ? Math.round((unitPrice / numPeople) * 100) / 100
+      : unitPrice;
+    
+    const costValue = pricingType === "total" && numPeople > 0
+      ? Math.round((costPrice / numPeople) * 100) / 100
+      : costPrice;
+
+    const cleanName = v.name.split(" - R$")[0];
     updateCell(dayNum, cat, itemIdx, {
       variation_id: vId,
-      item_name: v.name,
-      value: Number(v.unit_price),
-      cost: Number(v.cost_price),
+      item_name: cleanName,
+      value: saleValue,
+      cost: costValue,
       supplier_id: v.supplier_id || product.supplier_id
     });
   };
@@ -1226,12 +1265,28 @@ export default function ProposalFormDialog({
       const variations = (item.variables?.variations || []) as any[];
       if (variations.length > 0) {
         const v = variations[0];
+        const vars = (item.variables || {}) as Record<string, unknown>;
+        const isTransferOrDrone = (item.category === "transfer" || item.category === "drone");
+        const pricingType = (vars.pricingType as string) || (isTransferOrDrone ? "total" : "");
+        
+        const unitPrice = Number(v.unit_price);
+        const costPrice = Number(v.cost_price) || 0;
+        
+        const saleValue = pricingType === "total" && numPeople > 0
+          ? Math.round((unitPrice / numPeople) * 100) / 100
+          : unitPrice;
+        
+        const costValue = pricingType === "total" && numPeople > 0
+          ? Math.round((costPrice / numPeople) * 100) / 100
+          : costPrice;
+
+        const cleanName = v.name.split(" - R$")[0];
         updateCell(dayNum, cat, itemIdx, {
           catalog_item_id: catalogId,
           variation_id: v.id,
-          item_name: v.name,
-          value: Number(v.unit_price),
-          cost: Number(v.cost_price),
+          item_name: cleanName,
+          value: saleValue,
+          cost: costValue,
           comissao: Number(item.variables?.comissao) || 0,
           supplier_id: v.supplier_id || item.supplier_id
         });
@@ -1239,7 +1294,7 @@ export default function ProposalFormDialog({
       }
 
       const vars = (item.variables || {}) as Record<string, unknown>;
-      const limite = Number(vars.limitePessoas) || Number(vars.maxPessoas) || 0;
+      const limite = Number(vars.limitPeople) || Number(vars.limitePessoas) || Number(vars.maxPessoas) || 0;
       if (limite > 0 && numPeople > limite) {
         toast({ title: "Ação bloqueada", description: `Número de pessoas no grupo (${numPeople}) excede o limite permitido (${limite}).`, variant: "destructive" });
         return;
@@ -1399,14 +1454,14 @@ export default function ProposalFormDialog({
       if (cell.category === "Hospedagens") return;
       
       const product = catalogItems.find(p => p.id === cell.catalog_item_id);
-      // Determine if total value: check variables OR category defaults
-      const isTotalValue = product?.variables?.pricingType === "total" || 
-                         (cell.category === "Transfer" && !product); 
+      const vars = (product?.variables || {}) as Record<string, unknown>;
+      const isTransferOrDrone = product?.category === "transfer" || product?.category === "drone";
+      const isTotalValue = vars.pricingType === "total" || (isTransferOrDrone && !vars.pricingType);
       
       if (isTotalValue) {
-        totalValueSum += cell.value * cell.qty;
+        totalValueSum += (cell.value || 0) * (cell.qty || 1);
       } else {
-        perPersonSum += cell.value * cell.qty;
+        perPersonSum += (cell.value || 0) * (cell.qty || 1);
       }
     });
 
@@ -2017,19 +2072,31 @@ export default function ProposalFormDialog({
                                   }}
                                 />
 
-                                <NumericCell
-                                  className="h-8 text-sm text-right tabular-nums"
-                                  placeholder="R$ 0"
-                                  value={cell.value || ""}
-                                  onCommit={(raw) => {
-                                    const effCost = getEffectiveCost(cell);
-                                    if (raw < effCost && effCost > 0) {
-                                      toast({ title: "Valor de venda menor que custo real", variant: "destructive" });
-                                    }
-                                    const v = effCost > 0 ? Math.max(raw, effCost) : raw;
-                                    updateCell(dayNum, cat, cell.item_index, { value: v }, true);
-                                  }}
-                                />
+                                <div className="space-y-0.5">
+                                  <NumericCell
+                                    className="h-8 text-sm text-right tabular-nums"
+                                    placeholder="R$ 0"
+                                    value={cell.value || ""}
+                                    onCommit={(raw) => {
+                                      const effCost = getEffectiveCost(cell);
+                                      if (raw < effCost && effCost > 0) {
+                                        toast({ title: "Valor de venda menor que custo real", variant: "destructive" });
+                                      }
+                                      const v = effCost > 0 ? Math.max(raw, effCost) : raw;
+                                      updateCell(dayNum, cat, cell.item_index, { value: v }, true);
+                                    }}
+                                  />
+                                  {cell.catalog_item_id && (
+                                    <div className="text-[9px] text-muted-foreground text-right leading-none pr-1">
+                                      {(() => {
+                                        const p = catalogItems.find(x => x.id === cell.catalog_item_id);
+                                        const v = (p?.variables || {}) as any;
+                                        const isT = v.pricingType === "total" || p?.category === "transfer" || p?.category === "drone";
+                                        return isT ? "Total grupo" : "Por pessoa";
+                                      })()}
+                                    </div>
+                                  )}
+                                </div>
                                 </div>
 
                                 {/* Action buttons */}
@@ -2204,14 +2271,26 @@ export default function ProposalFormDialog({
                               value={cell.qty}
                               onChange={(e) => updateCell(dayNum, cat, cell.item_index, { qty: Math.max(parseInt(e.target.value) || 1, 1) }, true)}
                             />
-                            <Input
-                              className="h-7 text-xs w-20 tabular-nums"
-                              type="number"
-                              step="0.01"
-                              placeholder="R$"
-                              value={cell.value || ""}
-                              onChange={(e) => updateCell(dayNum, cat, cell.item_index, { value: parseFloat(e.target.value) || 0 }, true)}
-                            />
+                             <div className="space-y-0.5">
+                               <Input
+                                 className="h-7 text-xs w-20 tabular-nums"
+                                 type="number"
+                                 step="0.01"
+                                 placeholder="R$"
+                                 value={cell.value || ""}
+                                 onChange={(e) => updateCell(dayNum, cat, cell.item_index, { value: parseFloat(e.target.value) || 0 }, true)}
+                               />
+                               {cell.catalog_item_id && (
+                                 <div className="text-[8px] text-muted-foreground text-right leading-none pr-0.5">
+                                   {(() => {
+                                     const p = catalogItems.find(x => x.id === cell.catalog_item_id);
+                                     const v = (p?.variables || {}) as any;
+                                     const isT = v.pricingType === "total" || p?.category === "transfer" || p?.category === "drone";
+                                     return isT ? "Total" : "Pessoa";
+                                   })()}
+                                 </div>
+                               )}
+                             </div>
                             <ReplicatePopover 
                               cell={cell} 
                               numDays={numDays} 
