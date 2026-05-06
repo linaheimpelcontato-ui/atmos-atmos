@@ -15,7 +15,7 @@ import {
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import ProposalFeedbackDialog from "@/components/proposal/ProposalFeedbackDialog";
 /* dnd-kit reordering */
 const logoAtmos = storageUrl("home/logo-atmos.png");
@@ -380,7 +380,7 @@ export default function ProposalPublic() {
       }
 
       // 3. Populate state with finalProp
-      setProposal(finalProp);
+      setProposal(finalProp as any);
       proposalIdRef.current = finalProp.id;
       
       const sortedItems = (finalProp.proposal_day_items || [])
@@ -1494,7 +1494,7 @@ export default function ProposalPublic() {
           </div>
 
           <div className="relative">
-            <ScrollArea orientation="horizontal" className="w-full pb-12">
+            <ScrollArea className="w-full pb-12">
               <div className="flex gap-8 px-6 md:px-24">
                 {accommodations.map((acc, idx) => (
                   <div key={acc.sourceId || acc.name} className="flex-shrink-0 w-[85vw] md:w-[800px] group">
@@ -1520,6 +1520,7 @@ export default function ProposalPublic() {
                   </div>
                 ))}
               </div>
+              <ScrollBar orientation="horizontal" />
             </ScrollArea>
             
             {/* Custom scroll indicators or fade effects could be added here */}
