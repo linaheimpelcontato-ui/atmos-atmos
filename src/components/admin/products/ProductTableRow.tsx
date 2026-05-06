@@ -14,8 +14,7 @@ interface ProductTableRowProps {
   visibleColumns: ColumnKey[];
   onToggle: (id: string) => void;
   onClick: (product: Product) => void;
-  onUpdatePrice: (id: string, price: number) => void;
-  onUpdateName: (id: string, name: string) => void;
+  onUpdateField: (id: string, field: keyof UpdatePayload, value: any) => void;
   onUpdateVariables: (id: string, vars: Record<string, any>) => void;
   onToggleActive: (id: string, active: boolean) => void;
   onDelete: (id: string) => void;
@@ -28,8 +27,7 @@ export function ProductTableRow({
   visibleColumns,
   onToggle,
   onClick,
-  onUpdatePrice,
-  onUpdateName,
+  onUpdateField,
   onUpdateVariables,
   onToggleActive,
   onDelete,
@@ -52,7 +50,7 @@ export function ProductTableRow({
             <div className="flex flex-col min-w-0 flex-1">
               <InlineText 
                 value={p.name} 
-                onSave={(v) => onUpdateName(p.id, v)} 
+                onSave={(v) => onUpdateField(p.id, "name", v)} 
                 className="font-bold text-admin-primary group-hover:text-black transition-colors leading-none mb-1 text-sm p-0 hover:bg-transparent"
                 inputClassName="w-full"
               />
@@ -71,17 +69,21 @@ export function ProductTableRow({
       case "price":
         return (
           <div className="min-w-[100px]">
-            <InlinePrice value={p.unit_price} onSave={(v) => onUpdatePrice(p.id, v)} />
+            <InlinePrice value={p.unit_price} onSave={(v) => onUpdateField(p.id, "unit_price", v)} />
           </div>
         );
       case "cost_price":
-        return <InlinePrice value={p.cost_price || 0} onSave={(v) => onUpdatePrice(p.id, v)} />;
+        return (
+          <div className="min-w-[100px]">
+            <InlinePrice value={p.cost_price || 0} onSave={(v) => onUpdateField(p.id, "cost_price", v)} />
+          </div>
+        );
       case "status":
         return (
           <div className="flex items-center gap-2 min-w-[80px]">
             <div className={`h-1.5 w-1.5 rounded-full ${p.is_active ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-red-400"}`} />
             <button
-              onClick={(e) => { e.stopPropagation(); onToggleActive(p.id, !p.is_active); }}
+              onClick={(e) => { e.stopPropagation(); onUpdateField(p.id, "is_active", !p.is_active); }}
               className={`text-[10px] font-black uppercase tracking-widest transition-all hover:scale-105 ${p.is_active ? "text-green-600" : "text-red-400"}`}
             >
               {p.is_active ? "Ativo" : "Inativo"}
@@ -91,7 +93,7 @@ export function ProductTableRow({
       case "type":
         return <span className="text-xs font-medium text-muted-foreground">{getTypeLabel(p.type)}</span>;
       case "category":
-        return <InlineText value={p.category || ""} onSave={(v) => onUpdateVariables(p.id, { category: v })} placeholder="Geral" />;
+        return <InlineText value={p.category || ""} onSave={(v) => onUpdateField(p.id, "category", v)} placeholder="Geral" />;
       case "variations":
         const count = (p.variables as any)?.variations?.length || 0;
         return (

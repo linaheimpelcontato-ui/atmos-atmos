@@ -110,6 +110,8 @@ export default function AdminProducts() {
         updated_at: new Date().toISOString() // Force timestamp update
       };
 
+      console.log("Saving product update:", { id, updateData });
+
       const { data, error } = await supabase
         .from("products")
         .update(updateData)
@@ -367,8 +369,7 @@ export default function AdminProducts() {
                     if (product.type === "itinerary") setItinDialogOpen(true);
                     else setDialogOpen(true);
                   }}
-                  onUpdatePrice={(id, price) => updateMutation.mutate({ id, unit_price: price })}
-                  onUpdateName={(id, name) => updateMutation.mutate({ id, name })}
+                  onUpdateField={(id, field, value) => updateMutation.mutate({ id, [field]: value })}
                   onUpdateVariables={(id, vars) => updateMutation.mutate({ id, variables: vars })}
                   onToggleActive={(id, active) => updateMutation.mutate({ id, is_active: active })}
                   onDelete={(id) => {

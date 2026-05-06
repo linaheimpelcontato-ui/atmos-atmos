@@ -423,18 +423,29 @@ export function getDialogFields(type: string, category?: string): FieldDef[] {
 export function InlinePrice({ value, onSave }: { value: number; onSave: (v: number) => void }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value.toString());
+  const hasSaved = useRef(false);
+
+  useEffect(() => {
+    if (!editing) hasSaved.current = false;
+  }, [editing]);
+
+  const handleSave = () => {
+    if (hasSaved.current) return;
+    const val = parseFloat(draft);
+    if (!isNaN(val)) {
+      hasSaved.current = true;
+      onSave(val);
+    }
+    setEditing(false);
+  };
 
   if (!editing) {
     return (
       <button
-        className={`text-right font-semibold tabular-nums cursor-pointer px-2 py-1 rounded-md transition-colors hover:bg-admin-muted hover:text-admin-primary whitespace-nowrap ${value === 0 ? "text-orange-500" : "text-foreground"}`}
+        className="text-right font-semibold tabular-nums cursor-pointer px-2 py-1 rounded-md transition-colors hover:bg-admin-muted hover:text-admin-primary whitespace-nowrap text-foreground"
         onClick={(e) => { e.stopPropagation(); setDraft(value.toString()); setEditing(true); }}
       >
-        {value === 0 ? (
-          <span className="text-[10px] uppercase tracking-wider font-bold opacity-70">Definir</span>
-        ) : (
-          `R$\u00A0${Number(value).toFixed(2)}`
-        )}
+        {`R$\u00A0${Number(value).toFixed(2)}`}
       </button>
     );
   }
@@ -446,26 +457,25 @@ export function InlinePrice({ value, onSave }: { value: number; onSave: (v: numb
         onChange={(e) => setDraft(e.target.value)}
         className="w-24 h-8 text-sm border-none focus-visible:ring-0 px-1 font-semibold" autoFocus
         onFocus={(e) => e.target.select()}
-        onBlur={() => { onSave(parseFloat(draft) || 0); setEditing(false); }}
+        onBlur={handleSave}
         onKeyDown={(e) => {
           if (e.key === "Enter") { 
             e.preventDefault();
             e.stopPropagation();
-            onSave(parseFloat(draft) || 0); 
-            setEditing(false); 
+            handleSave(); 
           }
           if (e.key === "Escape") setEditing(false);
         }}
       />
       <div className="flex items-center gap-0.5">
         <button 
-          onClick={() => { onSave(parseFloat(draft) || 0); setEditing(false); }}
+          onMouseDown={(e) => { e.preventDefault(); handleSave(); }}
           className="p-1 rounded-md hover:bg-green-50 text-green-600 transition-colors"
         >
           <Check className="h-4 w-4" />
         </button>
         <button 
-          onClick={() => setEditing(false)}
+          onMouseDown={(e) => { e.preventDefault(); setEditing(false); }}
           className="p-1 rounded-md hover:bg-red-50 text-red-400 transition-colors"
         >
           <X className="h-4 w-4" />
@@ -492,6 +502,18 @@ export function InlineText({
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
+  const hasSaved = useRef(false);
+
+  useEffect(() => {
+    if (!editing) hasSaved.current = false;
+  }, [editing]);
+
+  const handleSave = () => {
+    if (hasSaved.current) return;
+    hasSaved.current = true;
+    onSave(draft);
+    setEditing(false);
+  };
 
   if (!editing) {
     return (
@@ -512,22 +534,21 @@ export function InlineText({
         className={`h-8 text-sm border-none focus-visible:ring-0 px-1 font-medium ${inputClassName}`}
         autoFocus
         onFocus={(e) => e.target.select()}
-        onBlur={() => { onSave(draft); setEditing(false); }}
+        onBlur={handleSave}
         onKeyDown={(e) => {
           if (e.key === "Enter") { 
             e.preventDefault();
             e.stopPropagation();
-            onSave(draft); 
-            setEditing(false); 
+            handleSave(); 
           }
           if (e.key === "Escape") setEditing(false);
         }}
       />
       <div className="flex items-center gap-0.5">
-        <button onClick={() => { onSave(draft); setEditing(false); }} className="p-1 rounded-md hover:bg-green-50 text-green-600">
+        <button onMouseDown={(e) => { e.preventDefault(); handleSave(); }} className="p-1 rounded-md hover:bg-green-50 text-green-600">
           <Check className="h-4 w-4" />
         </button>
-        <button onClick={() => setEditing(false)} className="p-1 rounded-md hover:bg-red-50 text-red-400">
+        <button onMouseDown={(e) => { e.preventDefault(); setEditing(false); }} className="p-1 rounded-md hover:bg-red-50 text-red-400">
           <X className="h-4 w-4" />
         </button>
       </div>
@@ -550,6 +571,21 @@ export function InlineNumber({
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value.toString());
+  const hasSaved = useRef(false);
+
+  useEffect(() => {
+    if (!editing) hasSaved.current = false;
+  }, [editing]);
+
+  const handleSave = () => {
+    if (hasSaved.current) return;
+    const val = parseFloat(draft);
+    if (!isNaN(val)) {
+      hasSaved.current = true;
+      onSave(val);
+    }
+    setEditing(false);
+  };
 
   if (!editing) {
     return (
@@ -570,22 +606,21 @@ export function InlineNumber({
         className={`h-8 text-sm border-none focus-visible:ring-0 px-1 font-medium ${inputClassName}`}
         autoFocus
         onFocus={(e) => e.target.select()}
-        onBlur={() => { onSave(parseFloat(draft) || 0); setEditing(false); }}
+        onBlur={handleSave}
         onKeyDown={(e) => {
           if (e.key === "Enter") { 
             e.preventDefault();
             e.stopPropagation();
-            onSave(parseFloat(draft) || 0); 
-            setEditing(false); 
+            handleSave(); 
           }
           if (e.key === "Escape") setEditing(false);
         }}
       />
       <div className="flex items-center gap-0.5">
-        <button onClick={() => { onSave(parseFloat(draft) || 0); setEditing(false); }} className="p-1 rounded-md hover:bg-green-50 text-green-600">
+        <button onMouseDown={(e) => { e.preventDefault(); handleSave(); }} className="p-1 rounded-md hover:bg-green-50 text-green-600">
           <Check className="h-4 w-4" />
         </button>
-        <button onClick={() => setEditing(false)} className="p-1 rounded-md hover:bg-red-50 text-red-400">
+        <button onMouseDown={(e) => { e.preventDefault(); setEditing(false); }} className="p-1 rounded-md hover:bg-red-50 text-red-400">
           <X className="h-4 w-4" />
         </button>
       </div>
@@ -681,7 +716,7 @@ export function ProductTable({
                     data={products}
                     valueExtractor={c.valueExtractor}
                     labelMap={c.labelMap}
-                    className="px-6 py-5"
+                    className="px-6 py-5 whitespace-nowrap text-left"
                   />
                 ) : (
                   <th 
