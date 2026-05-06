@@ -14,6 +14,7 @@ import {
 } from "./shared";
 import { ProductMediaTab } from "./ProductMediaTab";
 import { ProductVariationsTab } from "./ProductVariationsTab";
+import RoomModalitiesEditor, { normalizeRoomConfigs, type RoomConfig } from "./RoomModalitiesEditor";
 
 interface ProductDialogProps {
   open: boolean;
@@ -55,6 +56,7 @@ export function ProductDialog({
   const [formSubcategory, setFormSubcategory] = useState("");
   const [formVars, setFormVars] = useState<Record<string, any>>({});
   const [formVariations, setFormVariations] = useState<any[]>([]);
+  const [formRoomModalities, setFormRoomModalities] = useState<RoomConfig[]>([]);
   const [formTempId, setFormTempId] = useState<string>("");
 
   useEffect(() => {
@@ -82,6 +84,7 @@ export function ProductDialog({
         setFormVariations((varsData.variations as any[]) || []);
         setFormTempId("");
         setFormVars(varsData);
+        setFormRoomModalities(normalizeRoomConfigs(varsData.room_modalities));
       } else {
         setFormName("");
         setFormSubtitle("");
@@ -96,6 +99,7 @@ export function ProductDialog({
         setFormSubcategory("");
         setFormVars({});
         setFormVariations([]);
+        setFormRoomModalities([]);
         setFormTempId(crypto.randomUUID());
       }
     }
@@ -139,6 +143,7 @@ export function ProductDialog({
         subtitle: formSubtitle,
         service_type: formType === "service" ? formCategory : undefined,
         variations: formVariations,
+        room_modalities: formType === "accommodation" ? formRoomModalities : undefined,
         storage_id: formTempId || formVars.storage_id,
       }
     };
@@ -178,6 +183,9 @@ export function ProductDialog({
                     {t === "geral" ? "Geral" : t === "variations" ? "Variações" : t === "images" ? "Galeria" : t === "details" ? "Logística" : "Fiscal & SEO"}
                   </TabsTrigger>
                 ))}
+                {formType === "accommodation" && (
+                    <TabsTrigger value="modalities" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-admin-primary rounded-none h-14 px-1 text-sm font-semibold transition-all uppercase tracking-widest text-muted-foreground/60 data-[state=active]:text-admin-primary">Modalidades</TabsTrigger>
+                )}
               </TabsList>
             </div>
 
@@ -368,6 +376,26 @@ export function ProductDialog({
                   favorites={formVars.favorites || []}
                 />
               </TabsContent>
+
+              {formType === "accommodation" && (
+                <TabsContent value="modalities" className="mt-0 animate-in fade-in slide-in-from-bottom-2 h-full overflow-y-auto max-h-[60vh] pr-2 custom-scrollbar">
+                  <div className="space-y-6 pb-8">
+                    <div className="flex items-center gap-3 p-4 bg-admin-primary/5 rounded-2xl border border-admin-primary/10">
+                      <div className="h-10 w-10 rounded-xl bg-admin-primary/10 flex items-center justify-center">
+                        <Info className="h-5 w-5 text-admin-primary" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-admin-primary">Gestão de Unidades</h4>
+                        <p className="text-xs text-muted-foreground font-medium">Cadastre suítes, bangalôs e suas modalidades de ocupação.</p>
+                      </div>
+                    </div>
+                    <RoomModalitiesEditor 
+                      configs={formRoomModalities} 
+                      onChange={setFormRoomModalities} 
+                    />
+                  </div>
+                </TabsContent>
+              )}
 
               <TabsContent value="images" className="mt-0 animate-in fade-in slide-in-from-bottom-2">
                 <ProductMediaTab 
