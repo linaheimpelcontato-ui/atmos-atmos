@@ -1046,7 +1046,7 @@ export default function ProposalPublic() {
             {t.brandText2}
           </p>
         </div>
-      </section>
+      </motion.section>
 
 
       {/* ══════════════════════ DIVIDER ══════════════════════ */}
@@ -1296,7 +1296,7 @@ export default function ProposalPublic() {
               </div>
             </div>
             </div>
-          </section>
+          </motion.section>
         );
       })}
       </div>
@@ -1338,7 +1338,7 @@ export default function ProposalPublic() {
               ))}
             </div>
           </div>
-        </section>
+        </motion.section>
       )}
 
 
@@ -1547,7 +1547,7 @@ export default function ProposalPublic() {
             )}
           </div>
         </div>
-      </section>
+      </motion.section>
 
 
       {/* ══════════════════════ CONTRACT (always visible) ══════════════════════ */}
