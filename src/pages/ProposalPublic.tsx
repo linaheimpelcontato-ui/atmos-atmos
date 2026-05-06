@@ -612,7 +612,17 @@ export default function ProposalPublic() {
       if (byId) return byId;
     }
     if (item.item_name) {
-      return products.find(p => p.name === item.item_name);
+      const name = item.item_name.toLowerCase();
+      let found = products.find(p => p.name === item.item_name);
+      if (found) return found;
+      
+      const fuzzy = products.find(p => 
+        p.name.toLowerCase().includes(name) || name.includes(p.name.toLowerCase())
+      );
+      if (fuzzy) return fuzzy;
+      
+      if (item.category.includes("Transfer")) return products.find(p => p.type === "transfer" || p.type === "service");
+      if (item.category.includes("Guia")) return products.find(p => p.type === "service" && p.name.includes("Guia"));
     }
     return undefined;
   }, [products]);

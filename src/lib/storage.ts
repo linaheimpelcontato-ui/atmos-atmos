@@ -8,7 +8,6 @@ export const MAP_R2_PATH = (path: string): string => {
   return path;
 };
 
-/** Returns the public URL for a storage asset directly from Supabase */
 export function storageUrl(path: string): string {
   // If the path is already a full URL, return it as is
   if (path.startsWith("http")) return path;
@@ -16,12 +15,15 @@ export function storageUrl(path: string): string {
   // Clean up leading slashes just in case
   const cleanPath = path.replace(/^\//, "");
   
+  // Encode the path to handle spaces and special characters
+  const encodedPath = cleanPath.split('/').map(segment => encodeURIComponent(segment)).join('/');
+  
   // In development, prefer local assets if R2 domain is not set
   if (import.meta.env.DEV && !import.meta.env.VITE_R2_DOMAIN) {
-    return `/assets/${cleanPath}`;
+    return `/assets/${encodedPath}`;
   }
   
-  return `${STORAGE_BASE}/${cleanPath}`;
+  return `${STORAGE_BASE}/${encodedPath}`;
 }
 
 interface OptimizedOptions {
