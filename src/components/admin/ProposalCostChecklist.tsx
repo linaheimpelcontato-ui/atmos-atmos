@@ -106,21 +106,26 @@ export default function ProposalCostChecklist({ proposalId, grid, open, onOpenCh
     const merged = costItems.map(item => {
       const existing = savedChecks.find(c => c.day_number === item.day_number && c.item_index === item.item_index);
       const catalogCost = catalogCostResolver ? catalogCostResolver(item) : item.cost;
+      const isTotal = isTotalCostResolver ? isTotalCostResolver(item) : false;
+      
+      const proposalCostTotal = isTotal ? (item.cost * (item.qty || 1)) : item.cost;
+      const defaultActualCost = isTotal ? (item.cost * (item.qty || 1)) : item.cost;
+      
       return {
         id: existing?.id,
         day_number: item.day_number,
         item_index: item.item_index,
         catalog_cost: catalogCost,
-        proposal_cost: item.cost,
-                        actual_cost: existing
-                          ? (Number(existing.actual_cost) === 0 && item.cost > 0 ? item.cost : Number(existing.actual_cost))
-                          : (item.cost > 0 ? item.cost : catalogCost),
+        proposal_cost: proposalCostTotal,
+        actual_cost: existing
+          ? (Number(existing.actual_cost) === 0 && proposalCostTotal > 0 ? proposalCostTotal : Number(existing.actual_cost))
+          : (proposalCostTotal > 0 ? proposalCostTotal : catalogCost),
         is_verified: existing?.is_verified ?? false,
         notes: existing?.notes ?? "",
       };
     });
     setRows(merged);
-  }, [open, savedChecks, costItemsKey]);
+  }, [open, savedChecks, costItemsKey, isTotalCostResolver]);
 
   // Reset filters when closing
   useEffect(() => {
