@@ -389,11 +389,23 @@ export default function ProposalCostChecklist({ proposalId, grid, open, onOpenCh
                         })()}
                       </div>
                       <div>
-                        <span className="text-muted-foreground block mb-0.5">Custo cadastro</span>
-                        <span className="tabular-nums">R$ {r.catalog_cost.toFixed(2)}</span>
+                        {(() => {
+                          const isTotal = isTotalCostResolver ? isTotalCostResolver(item) : false;
+                          const regCost = isTotal ? (r.catalog_cost * (item.qty || 1)) : r.catalog_cost;
+                          return (
+                            <>
+                              <span className="text-muted-foreground block mb-0.5">
+                                {isTotal ? "Custo cadastro" : "Custo cadastro /pessoa"}
+                              </span>
+                              <span className="tabular-nums">R$ {regCost.toFixed(2)}</span>
+                            </>
+                          );
+                        })()}
                       </div>
                       <div>
-                        <span className="text-muted-foreground block mb-0.5">Custo real</span>
+                        <span className="text-muted-foreground block mb-0.5">
+                          {isTotalCostResolver ? (isTotalCostResolver(item) ? "Custo real total" : "Custo real /pessoa") : "Custo real"}
+                        </span>
                         <Input
                           type="number"
                           step="0.01"
