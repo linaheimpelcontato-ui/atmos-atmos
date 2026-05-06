@@ -19,9 +19,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import ProposalFeedbackDialog from "@/components/proposal/ProposalFeedbackDialog";
 /* dnd-kit reordering */
 const logoAtmos = storageUrl("home/logo-atmos.png");
-const heroImage = storageUrl("roteiros/hero-roteiros.jpg");
-const dividerImage = storageUrl("roteiros/hero-roteiros.jpg");
-const leafTexture = storageUrl("home/leaf-texture - horizontal.jpg");
+const heroImage = storageUrl("proposta-visual-cliente/propostavisualbg.jpg");
+const dividerImage = storageUrl("home/divider-nature.jpg");
+const leafTexture = storageUrl("proposta-visual-cliente/leaf-texture - horizontal.jpg");
 
 
 /* ───── types ───── */
@@ -66,6 +66,7 @@ const EXP_STORAGE_KEY: Record<string, string> = {
   "danca-fogo": "Dança com Fogo",
   "gota-sat-som": "Gota Sat Som",
   "mesa-lira": "Mesa Lira",
+  "celestial-garden": "Celestial Garden",
 };
 
 /* ───── i18n ───── */
@@ -158,6 +159,8 @@ const DIFFICULTY_CONFIG: Record<string, { pt: string; en: string; es: string; co
   facil: { pt: "Fácil", en: "Easy", es: "Fácil", color: "#166534", bg: "#dcfce7" },
   moderado: { pt: "Moderado", en: "Moderate", es: "Moderado", color: "#92400e", bg: "#fef3c7" },
   dificil: { pt: "Difícil", en: "Hard", es: "Difícil", color: "#991b1b", bg: "#fee2e2" },
+  muito_facil: { pt: "Muito Fácil", en: "Very Easy", es: "Muy Fácil", color: "#166534", bg: "#dcfce7" },
+  moderado_dificil: { pt: "Moderado/Difícil", en: "Moderate/Hard", es: "Moderado/Difícil", color: "#991b1b", bg: "#fee2e2" },
 };
 
 /* ───── DayBanner (with dynamic background) ───── */
@@ -631,14 +634,14 @@ export default function ProposalPublic() {
           if (!product?.source_id) continue;
           
           const typeMap: Record<string, string> = {
-            "waterfall": "cachoeiras",
-            "experience": "experiencias",
-            "accommodation": "hospedagens",
-            "service": "servicos",
-            "transfer": "servicos"
+            "waterfall": "produtos/CACHOEIRAS",
+            "experience": "produtos/EXPERIENCIAS",
+            "accommodation": "produtos/HOSPEDAGENS",
+            "service": "produtos/SERVIÇOS",
+            "transfer": "produtos/SERVIÇOS"
           };
           
-          const folder = typeMap[product.type] || "servicos";
+          const folder = typeMap[product.type] || "produtos/SERVIÇOS";
           const key = product.type === "experience" 
             ? (EXP_STORAGE_KEY[product.source_id] || product.source_id)
             : product.source_id;
@@ -1123,10 +1126,17 @@ export default function ProposalPublic() {
                 {/* ── Badges: difficulty, distances, vehicle ── */}
                 {(() => {
                   const guideNames = dayItemsSorted
-                    .filter(i => i.category === "Diária Guia ATMOS" && i.item_name)
+                    .filter(i => {
+                      const cat = i.category.toLowerCase();
+                      const name = (i.item_name || "").toLowerCase();
+                      return (cat.includes("guia") || cat.includes("monitor") || name.includes("drone")) && i.item_name;
+                    })
                     .map(i => i.item_name!);
                   const snackItems = dayItemsSorted
-                    .filter(i => (i.category === "Lanche" || i.category === "Lanche Trilha") && i.item_name);
+                    .filter(i => {
+                      const cat = i.category.toLowerCase();
+                      return cat.includes("lanche") && i.item_name;
+                    });
                   const showBadges = wInfo || guideNames.length > 0 || snackItems.length > 0;
                   return showBadges ? (
                   <div className="flex flex-col gap-2 items-end justify-end">
@@ -1200,7 +1210,15 @@ export default function ProposalPublic() {
                   <ScrollArea type="always" className="proposal-itinerary-scroll md:h-[600px]">
                     <div className="md:pr-10">
                     {(() => {
-                      const visibleItems = dayItemsSorted.filter(i => (i.item_name || i.value > 0) && i.category !== "Diária Guia ATMOS" && i.category !== "Lanche" && i.category !== "Lanche Trilha");
+                      const visibleItems = dayItemsSorted.filter(i => {
+                        const cat = i.category.toLowerCase();
+                        const name = (i.item_name || "").toLowerCase();
+                        return (i.item_name || i.value > 0) && 
+                               !cat.includes("guia") && 
+                               !cat.includes("monitor") &&
+                               !cat.includes("lanche") &&
+                               !name.includes("drone");
+                      });
                       const itemContent = visibleItems.map((item, localIdx) => {
                         const Icon = CATEGORY_ICONS[item.category] || MapPin;
                         const catLabel = CATEGORY_LABELS[item.category]?.[lang] || item.category;
@@ -1285,9 +1303,9 @@ export default function ProposalPublic() {
 
                 {/* RIGHT — sticky vertical carousel */}
                 {gallery.length > 0 && (
-                  <div className="w-full md:w-[45%] flex-shrink-0">
+                  <div className="w-full md:w-[55%] flex-shrink-0">
                     <div className="md:sticky md:top-28 self-start">
-                      <div className="aspect-[3/4] overflow-hidden shadow-2xl">
+                      <div className="aspect-square md:aspect-auto md:h-[700px] overflow-hidden shadow-2xl rounded-2xl">
                         <ImageCarousel images={gallery} alt={dayLabel} />
                       </div>
                     </div>
