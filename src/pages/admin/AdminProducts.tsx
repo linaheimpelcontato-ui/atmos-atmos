@@ -85,7 +85,7 @@ export default function AdminProducts() {
       let finalVariables = variables;
       
       if (variables) {
-        // Fetch the absolute latest variables from DB to avoid any race conditions
+        // Fetch the absolute latest variables from DB
         const { data: current, error: fetchError } = await supabase
           .from("products")
           .select("variables")
@@ -93,22 +93,39 @@ export default function AdminProducts() {
           .single();
           
         if (fetchError) throw fetchError;
-        finalVariables = { ...(current?.variables as any || {}), ...variables };
+        
+        let existingVars = {};
+        if (current?.variables) {
+          existingVars = typeof current.variables === 'string' 
+            ? JSON.parse(current.variables) 
+            : current.variables;
+        }
+        
+        finalVariables = { ...existingVars, ...variables };
       }
 
       const updateData: Record<string, unknown> = { 
         ...fields,
-        ...(finalVariables ? { variables: finalVariables } : {})
+        ...(finalVariables ? { variables: finalVariables } : {}),
+        updated_at: new Date().toISOString() // Force timestamp update
       };
 
-      const { error } = await supabase.from("products").update(updateData).eq("id", id);
+      const { data, error } = await supabase
+        .from("products")
+        .update(updateData)
+        .eq("id", id)
+        .select()
+        .single();
+        
       if (error) throw error;
+      if (!data) throw new Error("Falha ao verificar atualização do produto");
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-products"] });
       toast({ title: "Produto atualizado" });
     },
     onError: (err: Error) => {
+      console.error("Update error:", err);
       toast({ title: "Erro ao atualizar", description: err.message, variant: "destructive" });
     }
   });
