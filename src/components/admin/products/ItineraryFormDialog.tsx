@@ -39,6 +39,7 @@ type ItineraryVars = {
   pricing?: Pricing;
   discount?: number;
   discountFixed?: number;
+  subcategory?: string;
   // Standard fields
   pricingType?: "total" | "per_person";
   limitPeople?: number;
@@ -321,10 +322,12 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                               ))}
                             </SelectContent>
                           </Select>
+                          <p className="text-[10px] text-muted-foreground/60 italic leading-tight">Define o destino e pasta de fotos.</p>
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-sm font-semibold">Subcategoria</Label>
-                          <Input value={subcategory} onChange={(e) => setSubcategory(e.target.value)} className="h-10 bg-background" placeholder="Ex: Clássico" />
+                          <Label className="text-sm font-semibold">Tipo / Subcategoria</Label>
+                          <Input value={subcategory} onChange={(e) => setSubcategory(e.target.value)} className="h-10 bg-background" placeholder="Ex: Clássico, Expedição..." />
+                          <p className="text-[10px] text-muted-foreground/60 italic leading-tight">Ex: "Clássico", "Expedição".</p>
                         </div>
                       </div>
                       
@@ -474,7 +477,17 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                   <div className="space-y-6">
                     <div className="flex items-center gap-2 pb-2 border-b"><Search className="h-4 w-4 text-primary" /><h4 className="text-sm font-bold uppercase tracking-wider">Marketing & SEO</h4></div>
                     <div className="space-y-4">
-                      <div className="space-y-1.5"><Label className="text-xs font-medium">SEO Slug</Label><Input value={seoSlug} onChange={(e) => setSeoSlug(e.target.value)} className="h-10 bg-muted/10" /></div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold text-amber-600 uppercase tracking-wider">URL (Slug SEO)</Label>
+                        <Input 
+                          value={seoSlug} 
+                          onChange={(e) => setSeoSlug(e.target.value)} 
+                          className="h-10 bg-muted/10 font-mono text-xs border-amber-100" 
+                        />
+                        <p className="text-[9px] font-medium text-amber-600/80 italic leading-tight">
+                          ⚠️ Cuidado: Alterar o slug muda a URL pública e pode quebrar links.
+                        </p>
+                      </div>
                       <div className="space-y-1.5"><Label className="text-xs font-medium">Meta Title</Label><Input value={seoTitle} onChange={(e) => setSeoTitle(e.target.value)} className="h-10 bg-muted/10" /></div>
                       <div className="space-y-1.5"><Label className="text-xs font-medium">Meta Description</Label><Textarea value={seoDescription} onChange={(e) => setSeoDescription(e.target.value)} rows={3} className="bg-muted/10 text-xs" /></div>
                     </div>

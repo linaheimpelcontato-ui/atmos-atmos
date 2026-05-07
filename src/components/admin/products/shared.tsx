@@ -249,6 +249,8 @@ export type FieldDef = {
   label: string;
   type: "text" | "number" | "percent" | "select";
   options?: Record<string, string>;
+  helpText?: string;
+  warning?: boolean;
 };
 
 export const typeFields: Record<string, FieldDef[]> = {
@@ -359,7 +361,13 @@ export const FISCAL_FIELDS: FieldDef[] = [
 ];
 
 export const SEO_FIELDS: FieldDef[] = [
-  { key: "seo_slug", label: "URL (Slug)", type: "text" },
+  { 
+    key: "seo_slug", 
+    label: "URL (Slug SEO)", 
+    type: "text", 
+    helpText: "⚠️ Cuidado: Alterar o slug muda a URL pública e pode quebrar links externos.",
+    warning: true 
+  },
   { key: "seo_title", label: "Meta Title", type: "text" },
   { key: "seo_description", label: "Meta Description", type: "text" },
   { key: "seo_keywords", label: "Palavras-Chave", type: "text" },

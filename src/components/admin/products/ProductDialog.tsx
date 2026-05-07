@@ -271,13 +271,21 @@ export function ProductDialog({
 
                     {formType !== "service" && (
                       <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-                        <Label className="text-sm font-bold text-admin-primary uppercase tracking-wider">Categoria</Label>
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm font-bold text-admin-primary uppercase tracking-wider">ID da Região (Pasta de Fotos)</Label>
+                          <div className="flex items-center gap-2 px-2 py-0.5 bg-amber-50 rounded-md border border-amber-100">
+                            <span className="text-[9px] font-black text-amber-700 uppercase tracking-widest">Uso Interno</span>
+                          </div>
+                        </div>
                         <Input 
                           value={formCategory} 
                           onChange={(e) => setFormCategory(e.target.value)}
-                          className="h-12 bg-white border-admin-border focus:border-admin-primary rounded-xl shadow-sm transition-all"
-                          placeholder="Ex: Experiência, Hospedagem..."
+                          className="h-12 bg-white border-admin-border focus:border-admin-primary rounded-xl shadow-sm transition-all font-mono text-xs"
+                          placeholder="Ex: alto-paraiso"
                         />
+                        <p className="text-[10px] font-medium text-muted-foreground/60 leading-relaxed italic">
+                          ⚠️ Cuidado: Este campo define a pasta de fotos. Use apenas letras minúsculas e hifens.
+                        </p>
                       </div>
                     )}
                   </div>
@@ -457,32 +465,48 @@ export function ProductDialog({
               <TabsContent value="details" className="mt-0 space-y-8 animate-in fade-in slide-in-from-bottom-2">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-2">
-                      <Label className="text-sm font-bold text-admin-primary uppercase tracking-wider">Subcategoria</Label>
+                      <Label className="text-sm font-bold text-admin-primary uppercase tracking-wider">Tipo / Subcategoria</Label>
                       <Input 
                         value={formSubcategory} 
                         onChange={(e) => setFormSubcategory(e.target.value)} 
-                        className="h-12 bg-white border-admin-border focus:border-admin-primary rounded-xl shadow-sm transition-all" 
-                        placeholder="Ex: Passeio de Lancha" 
+                        className="h-12 bg-white border-admin-border focus:border-admin-primary rounded-xl shadow-sm transition-all font-medium" 
+                        placeholder="Ex: Passeio de Lancha, Trilha, Rapel..." 
                       />
+                      <p className="text-[10px] font-medium text-muted-foreground/60 leading-relaxed italic">
+                        O tipo do produto que aparece nos detalhes (Ex: "Cachoeira", "Experiência de Bem-estar").
+                      </p>
                     </div>
                     {currentFields.map((f) => (
                       <div key={f.key} className="space-y-2">
-                        <Label className="text-sm font-bold text-admin-primary uppercase tracking-wider">{f.label}</Label>
+                        <Label className={`text-sm font-bold uppercase tracking-wider ${f.warning ? "text-amber-600" : "text-admin-primary"}`}>
+                          {f.label}
+                        </Label>
                         {f.type === "select" ? (
-                          <Select value={formVars[f.key] || ""} onValueChange={(v) => setFormVars(p => ({ ...p, [f.key]: v }))}>
-                            <SelectTrigger className="h-12 bg-white border-admin-border focus:ring-2 focus:ring-admin-primary/10 rounded-xl shadow-sm"><SelectValue /></SelectTrigger>
-                            <SelectContent className="rounded-xl border-admin-border shadow-2xl">
-                              {Object.entries(f.options || {}).map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <Input 
-                            type={f.type === "number" || f.type === "percent" ? "number" : "text"}
-                            value={formVars[f.key] || ""}
-                            onChange={(e) => setFormVars(p => ({ ...p, [f.key]: e.target.value }))}
-                            className="h-12 bg-white border-admin-border focus:border-admin-primary rounded-xl shadow-sm transition-all"
-                          />
-                        )}
+                          <Select 
+                            value={(formVars[f.key] as string) || ""} 
+                            onValueChange={(v) => setFormVars(p => ({ ...p, [f.key]: v }))}
+                          >
+                            <SelectTrigger className="h-12 bg-white border-admin-border rounded-xl">
+                              <SelectValue placeholder="Selecionar..." />
+                            </SelectTrigger>
+                             <SelectContent>
+                               {Object.entries(f.options || {}).map(([val, label]) => (
+                                 <SelectItem key={val} value={val}>{label as string}</SelectItem>
+                               ))}
+                             </SelectContent>
+                           </Select>
+                         ) : (
+                           <Input 
+                             value={(formVars[f.key] as string) || ""} 
+                             onChange={(e) => setFormVars(p => ({ ...p, [f.key]: e.target.value }))}
+                             className={`h-12 bg-white border-admin-border focus:border-admin-primary rounded-xl shadow-sm transition-all ${f.warning ? "font-mono text-xs" : ""}`}
+                           />
+                         )}
+                         {f.helpText && (
+                           <p className={`text-[10px] font-medium leading-relaxed italic ${f.warning ? "text-amber-600/80" : "text-muted-foreground/60"}`}>
+                             {f.helpText as string}
+                           </p>
+                         )}
                       </div>
                     ))}
                   </div>
