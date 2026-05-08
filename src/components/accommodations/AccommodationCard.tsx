@@ -17,7 +17,7 @@ export default function AccommodationCard({ accommodation, onClick }: Accommodat
   const { addItem, removeItem, isInWishlist } = useWishlist();
 
   const inWishlist = isInWishlist(accommodation.id);
-  const { images: cardImages } = useAccImages(accommodation.id, accommodation.name);
+  const { images: cardImages } = useAccImages(accommodation.storageId || accommodation.id, accommodation.name);
   
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovering, setIsHovering] = useState(false);

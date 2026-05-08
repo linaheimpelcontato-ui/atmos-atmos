@@ -17,7 +17,7 @@ export default function WaterfallCard({ waterfall, onClick }: WaterfallCardProps
   const { addItem, removeItem, isInWishlist } = useWishlist();
 
   const inWishlist = isInWishlist(waterfall.id);
-  const { images: cardImages } = useWaterfallImages(waterfall.id, waterfall.name.pt);
+  const { images: cardImages } = useWaterfallImages(waterfall.storageId || waterfall.id, waterfall.name.pt);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovering, setIsHovering] = useState(false);

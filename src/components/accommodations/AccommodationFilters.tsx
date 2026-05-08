@@ -26,6 +26,7 @@ interface AccommodationFiltersProps {
   selectedRegions: AccRegion[];
   searchQuery: string;
   priceMax: number;
+  maxPrice?: number;
   selectedAmenities: Amenity[];
   unitsMin: number;
   capacityMin: number;
@@ -46,6 +47,7 @@ export default function AccommodationFilters({
   selectedRegions,
   searchQuery,
   priceMax,
+  maxPrice,
   selectedAmenities,
   unitsMin,
   capacityMin,
@@ -57,6 +59,7 @@ export default function AccommodationFilters({
   onCapacityMinChange,
   resultCount,
 }: AccommodationFiltersProps) {
+  const currentMax = maxPrice || GLOBAL_MAX;
   const { language } = useLanguage();
   const l = filterLabels[language];
 
@@ -92,7 +95,7 @@ export default function AccommodationFilters({
         </div>
         <Slider
           min={GLOBAL_MIN}
-          max={GLOBAL_MAX}
+          max={currentMax}
           step={50}
           value={[priceMax]}
           onValueChange={([v]) => onPriceMaxChange(v)}
@@ -101,7 +104,7 @@ export default function AccommodationFilters({
         />
         <div className="flex justify-between text-xs text-muted-foreground mt-1">
           <span>R$ {GLOBAL_MIN}</span>
-          <span>R$ {GLOBAL_MAX.toLocaleString("pt-BR")}</span>
+          <span>R$ {currentMax.toLocaleString("pt-BR")}</span>
         </div>
       </div>
 

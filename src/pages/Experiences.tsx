@@ -62,8 +62,6 @@ const Experiences = () => {
       const dbVars = (dbProduct.variables || {}) as any;
       const staticEntry = staticIdx > -1 ? merged[staticIdx] : null;
       
-      // Always prefer static descriptions (they are rich and multilingual).
-      // Only fall back to DB description if there's no static match.
       const descPt = staticEntry?.description.pt || dbProduct.description || "";
       const descEn = staticEntry?.description.en || dbProduct.description || "";
       const descEs = staticEntry?.description.es || dbProduct.description || "";
@@ -83,6 +81,7 @@ const Experiences = () => {
           es: descEs,
         },
         imageKey: dbVars.imageKey || staticEntry?.imageKey || dbProduct.source_id || dbProduct.id,
+        storageId: dbProduct.category || undefined,
       };
 
       if (staticIdx > -1) {
@@ -94,6 +93,22 @@ const Experiences = () => {
     
     return merged;
   }, [dbProducts]);
+
+  const maxPriceInData = useMemo(() => {
+    let max = getExperiencePriceRange()[1];
+    experiences.forEach(e => {
+      const match = e.priceRange.match(/R\$\s?(\d+)/);
+      if (match) {
+        const p = parseInt(match[1]);
+        if (p > max) max = p;
+      }
+    });
+    return max;
+  }, [experiences]);
+
+  useEffect(() => {
+    setPriceMax(maxPriceInData);
+  }, [maxPriceInData]);
 
   const filtered = useMemo(
     () => filterExperiences(selectedCategories, searchQuery, priceMax, experiences),
@@ -136,6 +151,7 @@ const Experiences = () => {
                   <ExperienceFilters
                     selectedCategories={selectedCategories}
                     priceMax={priceMax}
+                    maxAvailablePrice={maxPriceInData}
                     searchQuery={searchQuery}
                     onCategoriesChange={setSelectedCategories}
                     onPriceMaxChange={setPriceMax}

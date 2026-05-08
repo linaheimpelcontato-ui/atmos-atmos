@@ -88,12 +88,16 @@ export function isImageMatch(fullKey: string, prefix: string, rawName?: string):
   const normRaw = rawName ? normalize(rawName) : normPrefix;
   const normFullKey = normalize(fullKey);
 
-  // 1. Check if filename matches
-  if (normFile.includes(normPrefix) || normPrefix.includes(normFile)) return true;
-  if (normFile.includes(normRaw) || normRaw.includes(normFile)) return true;
+  // 1. Check if filename matches exactly (ignoring trailing numbers)
+  // Example: "registro-com-drone-1" matching "registro-com-drone"
+  if (normFile === normPrefix || normFile === normRaw) return true;
+  
+  // 2. Check if filename starts with prefix followed by a dash (for numbered files)
+  if (normFile.startsWith(normPrefix + "-") || normFile.startsWith(normRaw + "-")) return true;
 
-  // 2. Check if the product identifier is anywhere in the full path (folder name)
-  if (normFullKey.includes(normPrefix) || normFullKey.includes(normRaw)) return true;
+  // 3. Fallback check for the full key (only if we are sure it's the right folder)
+  // This is riskier but helps if the file was named differently
+  if (normFullKey.endsWith(`/${normPrefix}/${fileName}`) || normFullKey.endsWith(`/${normRaw}/${fileName}`)) return true;
 
   return false;
 }

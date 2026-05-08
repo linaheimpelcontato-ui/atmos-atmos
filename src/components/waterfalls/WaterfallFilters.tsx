@@ -61,6 +61,8 @@ interface WaterfallFiltersProps {
   searchQuery: string;
   trailMax: number;
   carMax: number;
+  maxTrail?: number;
+  maxCar?: number;
   onRegionsChange: (r: Region[]) => void;
   onDifficultiesChange: (d: Difficulty[]) => void;
   onSeasonalitiesChange: (s: Seasonality[]) => void;
@@ -77,6 +79,8 @@ export default function WaterfallFilters({
   searchQuery,
   trailMax,
   carMax,
+  maxTrail,
+  maxCar,
   onRegionsChange,
   onDifficultiesChange,
   onSeasonalitiesChange,
@@ -85,6 +89,8 @@ export default function WaterfallFilters({
   onCarMaxChange,
   resultCount,
 }: WaterfallFiltersProps) {
+  const currentTrailMax = maxTrail || TRAIL_DISTANCE_MAX;
+  const currentCarMax = maxCar || CAR_DISTANCE_MAX;
   const { language } = useLanguage();
   const l = filterLabels[language];
 
@@ -146,13 +152,13 @@ export default function WaterfallFilters({
             <span className="text-sm font-semibold text-foreground">{l.trail}</span>
           </div>
           <span className="text-xs text-muted-foreground">
-            {trailMax < TRAIL_DISTANCE_MAX ? `≤ ${trailMax}${l.kmLabel}` : `${TRAIL_DISTANCE_MAX}${l.kmLabel}`}
+            {trailMax < currentTrailMax ? `≤ ${trailMax}${l.kmLabel}` : `${currentTrailMax}${l.kmLabel}`}
           </span>
         </div>
         <div className="px-1">
           <Slider
             min={0}
-            max={TRAIL_DISTANCE_MAX}
+            max={currentTrailMax}
             step={1}
             value={[trailMax]}
             onValueChange={([v]) => onTrailMaxChange(v)}
@@ -169,14 +175,14 @@ export default function WaterfallFilters({
             <span className="text-sm font-semibold text-foreground">{l.car}</span>
           </div>
           <span className="text-xs text-muted-foreground">
-            {carMax < CAR_DISTANCE_MAX ? `≤ ${carMax}${l.kmLabel}` : `${CAR_DISTANCE_MAX}${l.kmLabel}`}
+            {carMax < currentCarMax ? `≤ ${carMax}${l.kmLabel}` : `${currentCarMax}${l.kmLabel}`}
           </span>
         </div>
         <p className="text-[11px] text-muted-foreground mb-2.5 ml-6">{l.carLegend}</p>
         <div className="px-1">
           <Slider
             min={0}
-            max={CAR_DISTANCE_MAX}
+            max={currentCarMax}
             step={10}
             value={[carMax]}
             onValueChange={([v]) => onCarMaxChange(v)}

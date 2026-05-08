@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Plus, Pencil, ImageIcon, Info } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Plus, Pencil, ImageIcon, Info, Check, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,7 @@ interface ProductDialogProps {
   isSaving: boolean;
   allTypes: string[];
   getTypeLabel: (t: string) => string;
+  allProducts: Product[];
 }
 
 const serviceCategoryOptions: Record<string, string> = {
@@ -42,6 +43,7 @@ export function ProductDialog({
   isSaving,
   allTypes,
   getTypeLabel,
+  allProducts,
 }: ProductDialogProps) {
   const [formName, setFormName] = useState("");
   const [formSubtitle, setFormSubtitle] = useState("");
@@ -58,6 +60,19 @@ export function ProductDialog({
   const [formVariations, setFormVariations] = useState<any[]>([]);
   const [formRoomModalities, setFormRoomModalities] = useState<RoomConfig[]>([]);
   const [formTempId, setFormTempId] = useState<string>("");
+
+  const [isAddingNewSubcategory, setIsAddingNewSubcategory] = useState(false);
+  const [newSubcategory, setNewSubcategory] = useState("");
+
+  const subcategories = useMemo(() => {
+    const subs = new Set<string>();
+    allProducts.forEach(p => {
+      const vars = (p.variables || {}) as any;
+      const s = vars.subcategory;
+      if (s) subs.add(s);
+    });
+    return Array.from(subs).sort();
+  }, [allProducts]);
 
   useEffect(() => {
     if (open) {
@@ -216,7 +231,7 @@ export function ProductDialog({
 
                     <div className="grid grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <Label className="text-sm font-bold text-admin-primary uppercase tracking-wider">Tipo</Label>
+                        <Label className="text-sm font-bold text-admin-primary uppercase tracking-wider">Categoria</Label>
                         <Select value={formType} onValueChange={(v) => { setFormType(v); setFormVars({}); setFormCategory(""); }}>
                           <SelectTrigger className="h-12 bg-white border-admin-border rounded-xl shadow-sm font-semibold"><SelectValue /></SelectTrigger>
                           <SelectContent className="rounded-xl border-admin-border shadow-2xl">
@@ -238,10 +253,80 @@ export function ProductDialog({
                       </div>
                     </div>
 
+                    <div className="space-y-2">
+                      <Label className="text-sm font-bold text-admin-primary uppercase tracking-wider">Subcategoria</Label>
+                      {isAddingNewSubcategory ? (
+                        <div className="flex gap-2 animate-in fade-in slide-in-from-left-2">
+                          <Input 
+                            value={newSubcategory}
+                            onChange={(e) => setNewSubcategory(e.target.value)}
+                            className="h-12 bg-white border-admin-border focus:border-admin-primary rounded-xl flex-1"
+                            placeholder="Nova subcategoria..."
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                if (newSubcategory.trim()) {
+                                  setFormSubcategory(newSubcategory.trim());
+                                  setIsAddingNewSubcategory(false);
+                                }
+                              }
+                              if (e.key === 'Escape') setIsAddingNewSubcategory(false);
+                            }}
+                          />
+                          <Button 
+                            variant="outline" 
+                            size="icon"
+                            onClick={() => {
+                              if (newSubcategory.trim()) {
+                                setFormSubcategory(newSubcategory.trim());
+                                setIsAddingNewSubcategory(false);
+                              }
+                            }}
+                            className="h-12 w-12 rounded-xl text-green-600 border-admin-border"
+                          >
+                            <Check className="h-5 w-5" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => setIsAddingNewSubcategory(false)}
+                            className="h-12 w-12 rounded-xl text-muted-foreground"
+                          >
+                            <X className="h-5 w-5" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <Select 
+                          value={formSubcategory} 
+                          onValueChange={(v) => {
+                            if (v === "NEW") {
+                              setIsAddingNewSubcategory(true);
+                              setNewSubcategory("");
+                            } else {
+                              setFormSubcategory(v);
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="h-12 bg-white border-admin-border rounded-xl shadow-sm font-medium">
+                            <SelectValue placeholder="Selecionar subcategoria..." />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-xl border-admin-border shadow-2xl">
+                            <div className="max-h-[300px] overflow-y-auto">
+                              {subcategories.map(s => (
+                                <SelectItem key={s} value={s} className="text-sm font-medium">{s}</SelectItem>
+                              ))}
+                              {subcategories.length > 0 && <div className="h-px bg-admin-border/50 my-2" />}
+                              <SelectItem value="NEW" className="font-bold text-admin-primary">+ Criar Nova...</SelectItem>
+                            </div>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
+
                     {formType === "service" && (
                       <div className="grid grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2">
                         <div className="space-y-2">
-                          <Label className="text-sm font-bold text-admin-primary uppercase tracking-wider">Tipo de Serviço</Label>
+                          <Label className="text-sm font-bold text-admin-primary uppercase tracking-wider">Subcategoria</Label>
                           <Select value={formCategory} onValueChange={setFormCategory}>
                             <SelectTrigger className="h-12 bg-white border-admin-border rounded-xl shadow-sm font-semibold">
                               <SelectValue placeholder="Selecionar..." />
@@ -269,23 +354,27 @@ export function ProductDialog({
                       </div>
                     )}
 
-                    {formType !== "service" && (
-                      <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-                        <div className="flex items-center justify-between">
-                          <Label className="text-sm font-bold text-admin-primary uppercase tracking-wider">ID da Região (Pasta de Fotos)</Label>
-                          <div className="flex items-center gap-2 px-2 py-0.5 bg-amber-50 rounded-md border border-amber-100">
-                            <span className="text-[9px] font-black text-amber-700 uppercase tracking-widest">Uso Interno</span>
+                    {formType === "waterfall" && (
+                      <div className="space-y-6 animate-in fade-in slide-in-from-top-2">
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-sm font-bold text-admin-primary uppercase tracking-wider">Pasta / Ref. Interna (Storage ID)</Label>
+                            <div className="flex items-center gap-2 px-2 py-0.5 bg-amber-50 rounded-md border border-amber-100">
+                              <span className="text-[9px] font-black text-amber-700 uppercase tracking-widest">Crucial</span>
+                            </div>
                           </div>
+                          <Input 
+                            value={formCategory} 
+                            onChange={(e) => setFormCategory(e.target.value)}
+                            className="h-12 bg-white border-admin-border focus:border-admin-primary rounded-xl shadow-sm transition-all font-mono text-xs"
+                            placeholder="Ex: alto-paraiso"
+                          />
+                          <p className="text-[10px] font-medium text-muted-foreground/60 leading-relaxed italic">
+                            ⚠️ Crítico: Define a subpasta de fotos. Use apenas minúsculas e hifens.
+                          </p>
                         </div>
-                        <Input 
-                          value={formCategory} 
-                          onChange={(e) => setFormCategory(e.target.value)}
-                          className="h-12 bg-white border-admin-border focus:border-admin-primary rounded-xl shadow-sm transition-all font-mono text-xs"
-                          placeholder="Ex: alto-paraiso"
-                        />
-                        <p className="text-[10px] font-medium text-muted-foreground/60 leading-relaxed italic">
-                          ⚠️ Cuidado: Este campo define a pasta de fotos. Use apenas letras minúsculas e hifens.
-                        </p>
+
+                        {/* Waterfall specific fields are now in the 'Details' tab for better organization */}
                       </div>
                     )}
                   </div>
@@ -464,18 +553,6 @@ export function ProductDialog({
 
               <TabsContent value="details" className="mt-0 space-y-8 animate-in fade-in slide-in-from-bottom-2">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-bold text-admin-primary uppercase tracking-wider">Tipo / Subcategoria</Label>
-                      <Input 
-                        value={formSubcategory} 
-                        onChange={(e) => setFormSubcategory(e.target.value)} 
-                        className="h-12 bg-white border-admin-border focus:border-admin-primary rounded-xl shadow-sm transition-all font-medium" 
-                        placeholder="Ex: Passeio de Lancha, Trilha, Rapel..." 
-                      />
-                      <p className="text-[10px] font-medium text-muted-foreground/60 leading-relaxed italic">
-                        O tipo do produto que aparece nos detalhes (Ex: "Cachoeira", "Experiência de Bem-estar").
-                      </p>
-                    </div>
                     {currentFields.map((f) => (
                       <div key={f.key} className="space-y-2">
                         <Label className={`text-sm font-bold uppercase tracking-wider ${f.warning ? "text-amber-600" : "text-admin-primary"}`}>
@@ -483,7 +560,7 @@ export function ProductDialog({
                         </Label>
                         {f.type === "select" ? (
                           <Select 
-                            value={(formVars[f.key] as string) || ""} 
+                            value={formVars[f.key] !== undefined ? String(formVars[f.key]) : ""} 
                             onValueChange={(v) => setFormVars(p => ({ ...p, [f.key]: v }))}
                           >
                             <SelectTrigger className="h-12 bg-white border-admin-border rounded-xl">

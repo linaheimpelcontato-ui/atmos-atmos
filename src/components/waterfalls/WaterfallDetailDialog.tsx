@@ -57,6 +57,7 @@ const labels = {
     back: "Voltar",
     about: "Sobre a cachoeira",
     location: "Localização",
+    requires4x4: "Necessário 4x4",
   },
   en: {
     trail: "Trail",
@@ -74,6 +75,7 @@ const labels = {
     back: "Back",
     about: "About the waterfall",
     location: "Location",
+    requires4x4: "4x4 Required",
   },
   es: {
     trail: "Sendero",
@@ -91,6 +93,7 @@ const labels = {
     back: "Volver",
     about: "Sobre la cascada",
     location: "Ubicación",
+    requires4x4: "Necesario 4x4",
   },
 };
 
@@ -107,7 +110,7 @@ export default function WaterfallDetailDialog({
 }: WaterfallDetailDialogProps) {
   const { language } = useLanguage();
   const { addItem, removeItem, isInWishlist } = useWishlist();
-  const { images } = useWaterfallImages(waterfall?.id || "", waterfall?.name.pt || "");
+  const { images } = useWaterfallImages(waterfall?.storageId || waterfall?.id || "", waterfall?.name.pt || "");
 
   useEffect(() => {
     if (open) {
@@ -289,6 +292,18 @@ export default function WaterfallDetailDialog({
                     </span>
                   </div>
                 </div>
+
+                {waterfall.requires4x4 && (
+                  <div className="flex items-center gap-4 animate-in fade-in slide-in-from-left-2">
+                    <Car className="w-5 h-5 text-[#C5A267] fill-[#C5A267]/20" />
+                    <div className="flex flex-col">
+                      <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-[#1A261B]/40 mb-1">Tração</span>
+                      <span className="text-xs font-bold uppercase tracking-[0.1em] text-[#1A261B]">
+                        {l.requires4x4}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

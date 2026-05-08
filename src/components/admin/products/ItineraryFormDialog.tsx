@@ -25,6 +25,8 @@ type Day = {
   dayNumber: number;
   items: DayItem[];
   guidePricing?: Pricing;
+  attractions: string;
+  description: string;
 };
 
 import { regionLabels } from "./shared";
@@ -79,7 +81,7 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
 
   const [name, setName] = useState("");
   const [isActive, setIsActive] = useState(true);
-  const [days, setDays] = useState<Day[]>([{ dayNumber: 1, items: [] }]);
+  const [days, setDays] = useState<Day[]>([{ dayNumber: 1, items: [], attractions: "", description: "" }]);
   const [equipFees, setEquipFees] = useState("");
   const [equipItems, setEquipItems] = useState("");
   const [entranceFees, setEntranceFees] = useState("");
@@ -132,11 +134,18 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
     const rawDays = (vars.days || []) as any[];
     const extra = (vars.extraCosts || {}) as { equipmentFees?: number; equipmentItems?: string | Record<string, string>; entranceFees?: number };
 
-    const convertedDays: Day[] = rawDays.map((d: any, i: number) => ({
-      dayNumber: i + 1,
-      items: d.items || [],
-      guidePricing: d.guidePricing
-    }));
+    const convertedDays: Day[] = rawDays.map((d: any, i: number) => {
+      const attrObj = typeof d.attractions === 'object' ? d.attractions : { pt: d.attractions || "" };
+      const descObj = typeof d.description === 'object' ? d.description : { pt: d.description || "" };
+
+      return {
+        dayNumber: i + 1,
+        items: d.items || [],
+        guidePricing: d.guidePricing,
+        attractions: Array.isArray(attrObj.pt) ? attrObj.pt.join(", ") : (attrObj.pt || ""),
+        description: descObj.pt || "",
+      };
+    });
 
     const initialDayPricing: Record<number, Pricing> = {};
     convertedDays.forEach((d, idx) => {
@@ -153,7 +162,7 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
 
     setName(product?.name || "");
     setIsActive(product?.is_active ?? true);
-    setDays(convertedDays.length > 0 ? convertedDays : [{ dayNumber: 1, items: [] }]);
+    setDays(convertedDays.length > 0 ? convertedDays : [{ dayNumber: 1, items: [], attractions: "", description: "" }]);
     setEquipFees(extra.equipmentFees?.toString() || "");
     setEquipItems(typeof extra.equipmentItems === "string" ? extra.equipmentItems : "");
     setEntranceFees(calculateEntranceFees(convertedDays).toString() || extra.entranceFees?.toString() || "");
@@ -175,10 +184,10 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
     setDescription(product?.description || "");
   }, [open, product, allProducts]);
 
-  const addDay = () => setDays([...days, { dayNumber: days.length + 1, items: [] }]);
+  const addDay = () => setDays([...days, { dayNumber: days.length + 1, items: [], attractions: "", description: "" }]);
   const removeDay = (idx: number) => {
     const updated = days.filter((_, i) => i !== idx).map((d, i) => ({ ...d, dayNumber: i + 1 }));
-    setDays(updated.length > 0 ? updated : [{ dayNumber: 1, items: [] }]);
+    setDays(updated.length > 0 ? updated : [{ dayNumber: 1, items: [], attractions: "", description: "" }]);
   };
 
   const addItem = (dayIdx: number, prod: Product) => {
@@ -246,7 +255,13 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
       variables: {
         duration: days.length,
         subcategory,
-        days: days.map((d, i) => ({ dayNumber: i + 1, items: d.items, guidePricing: dayPricing[i] || {} })),
+        days: days.map((d, i) => ({ 
+          dayNumber: i + 1, 
+          items: d.items, 
+          guidePricing: dayPricing[i] || {},
+          attractions: { pt: d.attractions.split(/[,\n]/).map(s => s.trim()).filter(Boolean) },
+          description: { pt: d.description }
+        })),
         extraCosts: {
           equipmentFees: parseFloat(equipFees) || 0,
           equipmentItems: equipItems,
@@ -325,7 +340,7 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                           <p className="text-[10px] text-muted-foreground/60 italic leading-tight">Define o destino e pasta de fotos.</p>
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-sm font-semibold">Tipo / Subcategoria</Label>
+                          <Label className="text-sm font-semibold">Subcategoria</Label>
                           <Input value={subcategory} onChange={(e) => setSubcategory(e.target.value)} className="h-10 bg-background" placeholder="Ex: Clássico, Expedição..." />
                           <p className="text-[10px] text-muted-foreground/60 italic leading-tight">Ex: "Clássico", "Expedição".</p>
                         </div>
@@ -397,8 +412,45 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                             <h4 className="font-bold flex items-center gap-2"><span className="flex items-center justify-center w-6 h-6 bg-primary text-primary-foreground rounded-full text-xs">{dIdx + 1}</span> Dia {dIdx + 1}</h4>
                             <Button type="button" variant="ghost" size="sm" onClick={() => removeDay(dIdx)} className="h-8 text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button>
                           </div>
-                          <div className="space-y-3">
-                            <div className="relative"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" /><Input placeholder="Adicionar atividade..." className="pl-9 h-9 bg-muted/10 border-none" value={itemSearch[day.dayNumber] || ""} onChange={(e) => setItemSearch({ ...itemSearch, [day.dayNumber]: e.target.value })} /></div>
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="space-y-1.5">
+                                <Label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Título do Dia / Atrações</Label>
+                                <Input 
+                                  placeholder="Ex: Almécegas I e II + São Bento" 
+                                  className="h-10 bg-muted/5 border-border/50 focus:border-primary/50 transition-all" 
+                                  value={day.attractions || ""} 
+                                  onChange={(e) => {
+                                    const newDays = [...days];
+                                    newDays[dIdx].attractions = e.target.value;
+                                    setDays(newDays);
+                                  }} 
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <Label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Descrição Curta</Label>
+                                <Input 
+                                  placeholder="Ex: Um dia de contemplação e banhos relaxantes..." 
+                                  className="h-10 bg-muted/5 border-border/50 focus:border-primary/50 transition-all" 
+                                  value={day.description || ""} 
+                                  onChange={(e) => {
+                                    const newDays = [...days];
+                                    newDays[dIdx].description = e.target.value;
+                                    setDays(newDays);
+                                  }} 
+                                />
+                              </div>
+                            </div>
+
+                            <div className="relative">
+                              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                              <Input 
+                                placeholder="Vincular produtos (Atrações, Experiências...)" 
+                                className="pl-9 h-10 bg-primary/5 border-none font-medium" 
+                                value={itemSearch[day.dayNumber] || ""} 
+                                onChange={(e) => setItemSearch({ ...itemSearch, [day.dayNumber]: e.target.value })} 
+                              />
+                            </div>
                             {itemSearch[day.dayNumber] && (
                               <div className="border rounded-md overflow-hidden max-h-48 overflow-y-auto bg-background shadow-lg z-10">
                                 {allProducts.filter(p => typeFilter.includes(p.type)).filter(p => p.name.toLowerCase().includes(itemSearch[day.dayNumber].toLowerCase())).map(p => (

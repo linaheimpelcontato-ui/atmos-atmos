@@ -80,12 +80,14 @@ const Waterfalls = () => {
         distanceKm: Number(dbVars.distanceKm || (staticIdx > -1 ? merged[staticIdx].distanceKm : 0)),
         distanceCarKm: Number(dbVars.distanceCarKm || (staticIdx > -1 ? merged[staticIdx].distanceCarKm : 0)),
         requiresGuide: dbVars.requiresGuide === "true" || dbVars.requiresGuide === true || (staticIdx > -1 ? merged[staticIdx].requiresGuide : false),
+        requires4x4: dbVars.requires4x4 === "true" || dbVars.requires4x4 === true || (staticIdx > -1 ? merged[staticIdx].requires4x4 : false),
         description: {
           pt: dbProduct.description || (staticIdx > -1 ? merged[staticIdx].description.pt : ""),
           en: (staticIdx > -1 ? merged[staticIdx].description.en : dbProduct.description || ""),
           es: (staticIdx > -1 ? merged[staticIdx].description.es : dbProduct.description || ""),
         },
         imageIndex: staticIdx > -1 ? merged[staticIdx].imageIndex : 1,
+        storageId: dbProduct.category || (staticIdx > -1 ? merged[staticIdx].id : dbProduct.id),
       };
 
       if (staticIdx > -1) {
@@ -98,9 +100,43 @@ const Waterfalls = () => {
     return merged;
   }, [dbProducts]);
 
+  const maxDistances = useMemo(() => {
+    let tMax = TRAIL_DISTANCE_MAX;
+    let cMax = CAR_DISTANCE_MAX;
+    waterfalls.forEach(w => {
+      if (w.distanceKm > tMax) tMax = Math.ceil(w.distanceKm);
+      if (w.distanceCarKm > cMax) cMax = Math.ceil(w.distanceCarKm);
+    });
+    return { tMax, cMax };
+  }, [waterfalls]);
+
+  const [hasSetDefaults, setHasSetDefaults] = useState(false);
+  if (!hasSetDefaults && (maxDistances.tMax > TRAIL_DISTANCE_MAX || maxDistances.cMax > CAR_DISTANCE_MAX)) {
+    setTrailMax(maxDistances.tMax);
+    setCarMax(maxDistances.cMax);
+    setHasSetDefaults(true);
+  }
+
   const filtered = useMemo(
-    () => filterWaterfalls(selectedRegions, selectedDifficulties, selectedSeasonalities, searchQuery, trailMax, carMax, waterfalls),
-    [selectedRegions, selectedDifficulties, selectedSeasonalities, searchQuery, trailMax, carMax, waterfalls]
+    () =>
+      filterWaterfalls(
+        selectedRegions,
+        selectedDifficulties,
+        selectedSeasonalities,
+        searchQuery,
+        trailMax,
+        carMax,
+        waterfalls
+      ),
+    [
+      selectedRegions,
+      selectedDifficulties,
+      selectedSeasonalities,
+      searchQuery,
+      trailMax,
+      carMax,
+      waterfalls,
+    ]
   );
 
   return (
@@ -138,20 +174,22 @@ const Waterfalls = () => {
               <div className="px-4 py-3 lg:bg-card/90 lg:backdrop-blur-sm lg:rounded-2xl lg:p-5 lg:shadow-sm lg:border lg:border-border">
                 <CollapsibleFilters>
                   <WaterfallFilters
-                    selectedRegions={selectedRegions}
-                    selectedDifficulties={selectedDifficulties}
-                    selectedSeasonalities={selectedSeasonalities}
-                    searchQuery={searchQuery}
-                    trailMax={trailMax}
-                    carMax={carMax}
-                    onRegionsChange={setSelectedRegions}
-                    onDifficultiesChange={setSelectedDifficulties}
-                    onSeasonalitiesChange={setSelectedSeasonalities}
-                    onSearchChange={setSearchQuery}
-                    onTrailMaxChange={setTrailMax}
-                    onCarMaxChange={setCarMax}
-                    resultCount={filtered.length}
-                  />
+                  selectedRegions={selectedRegions}
+                  selectedDifficulties={selectedDifficulties}
+                  selectedSeasonalities={selectedSeasonalities}
+                  searchQuery={searchQuery}
+                  trailMax={trailMax}
+                  carMax={carMax}
+                  maxTrail={maxDistances.tMax}
+                  maxCar={maxDistances.cMax}
+                  onRegionsChange={setSelectedRegions}
+                  onDifficultiesChange={setSelectedDifficulties}
+                  onSeasonalitiesChange={setSelectedSeasonalities}
+                  onSearchChange={setSearchQuery}
+                  onTrailMaxChange={setTrailMax}
+                  onCarMaxChange={setCarMax}
+                  resultCount={filtered.length}
+                />
                 </CollapsibleFilters>
               </div>
             </aside>

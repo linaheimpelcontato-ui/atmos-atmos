@@ -15,11 +15,13 @@ export default function ServiceCard({ service, onClick }: ServiceCardProps) {
   const { language } = useLanguage();
   const { addItem, removeItem, isInWishlist } = useWishlist();
 
-  const inWishlist = isInWishlist(service.id);
-  const { images: cardImages } = useServiceImages(service.id, service.category);
-  const imageSrc = cardImages[0];
-
   const variations = (service.variations || (service as any).variables?.variations || []) as any[];
+  const dbImage = variations?.[0]?.media?.[0];
+
+  const inWishlist = isInWishlist(service.id);
+  const { images: cardImages } = useServiceImages(service.id, service.category, service.storageId);
+  const imageSrc = dbImage || cardImages[0];
+
   const minPrice = variations.length > 0 
     ? Math.min(...variations.map(v => parseFloat(v.unit_price) || 0))
     : null;

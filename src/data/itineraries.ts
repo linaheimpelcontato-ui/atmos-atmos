@@ -16,6 +16,8 @@ export interface ItineraryDay {
   voluntaryFee?: boolean;
   /** Trail distance in km (display string, e.g. "7" or "1,5") */
   trailDistanceKm: string;
+  /** Optional associated products for dynamic itineraries */
+  items?: any[];
 }
 
 export interface ItineraryPricing {

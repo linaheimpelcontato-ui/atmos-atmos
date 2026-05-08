@@ -41,6 +41,7 @@ export interface Service {
   items?: ServiceItem[];
   transferTable?: TransferTable;
   variations?: any[];
+  storageId?: string;
   type?: string;
   variables?: any;
   name?: string;

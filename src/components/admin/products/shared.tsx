@@ -130,7 +130,7 @@ export const DEDICATED_TYPES = ["waterfall", "experience", "service", "accommoda
 // ─── Column Definitions ─────────────────────────────────────────────
 
 export type ColumnKey = 
-  | "name" | "price" | "cost_price" | "status" | "type" | "category" 
+  | "name" | "price" | "cost_price" | "status" | "type" | "category" | "subcategory"
   | "variations" | "region" | "empresa" | "responsavel" | "telefone" 
   | "difficulty" | "comissao" | "instagram" | "site" | "capacity" 
   | "rooms" | "notes" | "duration" | "seasonality" | "distance_trail" 
@@ -151,7 +151,8 @@ export const ALL_COLUMNS: ColumnInfo[] = [
   { key: "cost_price", label: "Preço Custo", defaultVisible: false },
   { key: "status", label: "Status", defaultVisible: true },
   { key: "type", label: "Tipo", defaultVisible: false },
-  { key: "category", label: "Categoria", defaultVisible: false },
+  { key: "subcategory", label: "Subcategoria", defaultVisible: true },
+  { key: "category", label: "Pasta / Ref. Interna", defaultVisible: false },
   { key: "variations", label: "Opções", defaultVisible: true },
   { key: "region", label: "Região", defaultVisible: false },
   { key: "empresa", label: "Empresa", defaultVisible: false },
@@ -228,7 +229,7 @@ export function getProductSubcategory(product: Product): string {
   if (vars.subcategory) return vars.subcategory as string;
   // Fallback for legacy categories that are actually subcategories
   if (product.category && !regionLabels[product.category] && !serviceTypeLabels[product.category] && product.category !== "accommodation") {
-    return categoryLabels[product.category] || product.category;
+    return product.category;
   }
   return "";
 }
@@ -259,6 +260,7 @@ export const typeFields: Record<string, FieldDef[]> = {
     { key: "priceTier", label: "Nível Preço", type: "select", options: { economico: "Econômico", intermediario: "Intermediário", elevado: "Elevado" } },
     { key: "difficulty", label: "Dificuldade", type: "select", options: difficultyLabels },
     { key: "requiresGuide", label: "Guia Obrigatório", type: "select", options: { true: "Sim", false: "Não" } },
+    { key: "requires4x4", label: "Necessário 4x4", type: "select", options: { true: "Sim", false: "Não" } },
     { key: "distanceKm", label: "Trilha (km)", type: "number" },
     { key: "distanceCarKm", label: "Carro (km)", type: "number" },
   ],

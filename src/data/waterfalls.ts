@@ -13,8 +13,10 @@ export interface Waterfall {
   distanceKm: number;
   distanceCarKm: number;
   requiresGuide: boolean;
+  requires4x4?: boolean;
   description: Record<Language, string>;
   imageIndex: number; // 1-6 for placeholder images
+  storageId?: string;
 }
 
 export const regionLabels: Record<Region, Record<Language, string>> = {

@@ -74,7 +74,7 @@ export function ProductFilters({
           className="h-10 px-4 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-admin-primary hover:bg-admin-muted rounded-xl gap-2 shrink-0 border border-transparent hover:border-admin-border/40"
         >
           <FolderPlus className="h-4 w-4" />
-          Nova Categoria
+          Gerenciar Categorias
         </Button>
       </div>
 
@@ -83,7 +83,7 @@ export function ProductFilters({
         <div className="relative flex-1 group w-full">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-admin-primary transition-colors" />
           <Input 
-            placeholder="Pesquisar catálogo por nome, categoria ou descrição..." 
+            placeholder="Pesquisar catálogo por nome, subcategoria ou pasta..." 
             className="pl-11 h-13 bg-white border-admin-border/60 rounded-2xl focus:ring-4 focus:ring-admin-primary/5 transition-all text-sm font-medium shadow-sm"
             value={search} 
             onChange={(e) => onSearchChange(e.target.value)} 

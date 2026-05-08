@@ -112,7 +112,7 @@ export default function ServiceDetailDialog({
     variations.find(v => v.id === selectedVarIds[selectedVarIds.length - 1]) || (variations.length > 0 ? variations[0] : null)
   , [variations, selectedVarIds]);
 
-  const { images: allProductImages } = useServiceImages(service?.id || "", service?.category || "especial");
+  const { images: allProductImages } = useServiceImages(service?.id || "", service?.category || "especial", service?.storageId);
 
   const displayImages = useMemo(() => {
     if (selectedVar && selectedVar.media && selectedVar.media.length > 0) {

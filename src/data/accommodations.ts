@@ -29,6 +29,7 @@ export interface Accommodation {
   email?: string;
   bookingUrl?: string;
   longDescription?: Record<Language, string>;
+  storageId?: string;
 }
 
 /** Generate a set of image indices for carousel from the primary imageIndex */

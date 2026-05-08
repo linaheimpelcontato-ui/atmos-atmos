@@ -23,7 +23,7 @@ import GalleryGrid from "@/components/shared/GalleryGrid";
 const labels = {
   pt: {
     price: "Investimento",
-    category: "Perfil",
+    category: "Subcategoria",
     addWishlist: "Adicionar na Wishlist",
     removeWishlist: "Remover da Wishlist",
     added: "Experiência adicionada na wishlist!",
@@ -34,7 +34,7 @@ const labels = {
   },
   en: {
     price: "Investment",
-    category: "Profile",
+    category: "Subcategoria",
     addWishlist: "Add to Wishlist",
     removeWishlist: "Remove from Wishlist",
     added: "Experience added to wishlist!",
@@ -45,7 +45,7 @@ const labels = {
   },
   es: {
     price: "Inversión",
-    category: "Perfil",
+    category: "Subcategoria",
     addWishlist: "Agregar a la Wishlist",
     removeWishlist: "Quitar de la Wishlist",
     added: "¡Experiencia agregada a la wishlist!",
@@ -69,7 +69,7 @@ export default function ExperienceDetailDialog({
 }: ExperienceDetailDialogProps) {
   const { language } = useLanguage();
   const { addItem, removeItem, isInWishlist } = useWishlist();
-  const { images } = useExperienceGallery(experience?.imageKey || "", experience?.name.pt, experience?.id);
+  const { images } = useExperienceGallery(experience?.storageId || experience?.imageKey || "", experience?.name.pt, experience?.id);
 
   useEffect(() => {
     if (open) {

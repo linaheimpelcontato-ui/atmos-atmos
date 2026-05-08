@@ -1135,6 +1135,92 @@ export default function ProposalFormDialog({
     });
   };
 
+  const handleImportWishlistItem = (item: any) => {
+    const catalogMatch = catalogItems.find(p => 
+      p.name.toLowerCase().trim() === item.name.toLowerCase().trim()
+    );
+
+    if (catalogMatch) {
+      // Special handling for accommodations
+      if (item.type === "accommodation" || catalogMatch.type === "accommodation") {
+        const vars = (catalogMatch.variables || {}) as Record<string, any>;
+        const roomConfigs = normalizeRoomConfigs(vars.room_modalities);
+        const commPct = Number(vars.comissao) || 0;
+
+        const newAcc: ProposalAccommodation = {
+          product_id: catalogMatch.id,
+          product_name: catalogMatch.name,
+          checkin_date: startDate || "",
+          checkout_date: "",
+          num_nights: 1,
+          unit_configs: [],
+          notes: `Importado da Wishlist: ${item.details || ""}`,
+          is_selected: true,
+          payment_type: "hospedagem",
+          _catalog_configs: roomConfigs,
+          _commission_percent: commPct,
+        };
+
+        setProposalAccommodations(prev => [...prev, newAcc]);
+        toast({
+          title: "Hospedagem Importada",
+          description: `${item.name} foi adicionada à seção de Hospedagens.`,
+        });
+        return;
+      }
+
+      const typeMap: Record<string, string> = {
+        waterfall: "Cachoeira/Ingressos",
+        experience: "Experiências",
+        service: "Serviços",
+      };
+      const cat = typeMap[item.type] || "Serviços";
+      
+      const dayNum = 1;
+      setGrid(prev => {
+        const dayItems = prev.filter(c => c.day_number === dayNum);
+        const maxIdx = dayItems.length > 0 ? Math.max(...dayItems.map(e => e.item_index)) : -1;
+        const newItem = newDayItem(dayNum, cat, maxIdx + 1, numPeople);
+        
+        newItem.catalog_item_id = catalogMatch.id;
+        newItem.item_name = catalogMatch.name;
+        
+        // Smart Variation Matching
+        let matchedVariation = null;
+        if (item.details) {
+          const variations = (catalogMatch.variables?.variations || []) as any[];
+          matchedVariation = variations.find(v => 
+            item.details.toLowerCase().includes(v.name.toLowerCase()) ||
+            v.name.toLowerCase().includes(item.details.toLowerCase())
+          );
+        }
+
+        if (matchedVariation) {
+          newItem.variation_id = matchedVariation.id;
+          newItem.value = Number(matchedVariation.unit_price) || 0;
+          newItem.cost = Number(matchedVariation.cost_price) || 0;
+          newItem.item_name = `${catalogMatch.name} (${matchedVariation.name})`;
+        } else {
+          newItem.value = Number(catalogMatch.unit_price) || 0;
+          newItem.cost = Number(catalogMatch.cost_price) || 0;
+        }
+        
+        return [...prev, newItem];
+      });
+      
+      toast({
+        title: "Item Importado",
+        description: `${item.name} foi adicionado ao Dia 1.`,
+      });
+    } else {
+      toast({
+        title: "Produto não encontrado",
+        description: `Não encontramos "${item.name}" no catálogo para importação automática.`,
+        variant: "destructive"
+      });
+    }
+  };
+
   const applyItemToDays = (cell: DayItem, targetDays: number[]) => {
     setGrid((g) => {
       let updated = [...g];
@@ -3341,11 +3427,11 @@ export default function ProposalFormDialog({
                     accommodation: "Hospedagem", service: "Serviços",
                   };
                   const items = wishlistData.items as { name: string; type: string; details?: string }[];
-                  const groups: Record<string, { name: string; details?: string }[]> = {};
+                  const groups: Record<string, typeof items> = {};
                   items.forEach(item => {
                     const label = typeLabel[item.type] || item.type;
                     if (!groups[label]) groups[label] = [];
-                    groups[label].push({ name: item.name, details: item.details });
+                    groups[label].push(item);
                   });
                   return (
                     <div>
@@ -3359,9 +3445,19 @@ export default function ProposalFormDialog({
                             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">{type}</p>
                             <div className="space-y-1">
                               {gItems.map((item, i) => (
-                                <div key={i} className="text-sm bg-muted rounded px-3 py-1.5">
-                                  {item.name}
-                                  {item.details && <span className="text-muted-foreground"> — {item.details}</span>}
+                                <div key={i} className="flex items-center justify-between gap-2 text-sm bg-muted rounded px-3 py-1.5 group/wishitem">
+                                  <div className="truncate flex-1">
+                                    {item.name}
+                                    {item.details && <span className="text-muted-foreground"> — {item.details}</span>}
+                                  </div>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="h-6 px-2 text-[10px] bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors"
+                                    onClick={() => handleImportWishlistItem(item)}
+                                  >
+                                    Importar
+                                  </Button>
                                 </div>
                               ))}
                             </div>

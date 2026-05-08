@@ -324,8 +324,8 @@ export default function ItineraryDetail() {
               <div className="grid grid-cols-1 gap-12 md:gap-32">
                 {itinerary.days.map((day, idx) => {
                   const diff = difficultyConfig[day.difficulty as keyof typeof difficultyConfig] || difficultyConfig.moderado;
-                  const resolvedTitle = day.title?.[language] || (day.items?.[0]?.product_name ? `Dia ${idx + 1} — ${day.items[0].product_name}` : `Dia ${idx + 1}`);
-                  const activityName = day.items?.[0]?.product_name || day.title?.[language] || "";
+                  const resolvedTitle = day.title?.[language] || ((day as any).items?.[0]?.product_name ? `Dia ${idx + 1} — ${(day as any).items[0].product_name}` : `Dia ${idx + 1}`);
+                  const activityName = (day as any).items?.[0]?.product_name || day.title?.[language] || "";
                   
                   return (
                     <motion.div
@@ -371,17 +371,27 @@ export default function ItineraryDetail() {
                           {resolvedTitle}
                         </h3>
                         <p className="text-[#1A261B]/60 text-lg font-light leading-relaxed">
-                          {day.description?.[language] || ""}
+                          {typeof day.description === 'string' ? day.description : day.description?.[language] || ""}
                         </p>
                         <div className="space-y-4 pt-4">
                           <p className="text-[10px] uppercase font-bold tracking-widest text-[#C5A267]">Atrações do dia</p>
                           <div className="flex flex-wrap gap-3">
-                            {(day.attractions?.[language] || (day.items ? day.items.map((it: any) => it.product_name) : [])).map((attr: string, i: number) => (
-                              <div key={i} className="flex items-center gap-2 bg-white border border-[#1A261B]/5 px-4 py-2.5 rounded-xl text-sm font-medium text-[#1A261B]/80 shadow-sm">
-                                <MapPin className="h-4 w-4 text-[#C5A267]" />
-                                {attr}
-                              </div>
-                            ))}
+                            {(() => {
+                              const rawAttrs = (day.attractions as any)?.[language] || day.attractions || [];
+                              const attrs = Array.isArray(rawAttrs) 
+                                ? rawAttrs 
+                                : (typeof rawAttrs === 'string' ? rawAttrs.split(/[,\n]/).map((s: string) => s.trim()).filter(Boolean) : []);
+                              
+                              const items = (day as any).items ? (day as any).items.map((it: any) => it.product_name) : [];
+                              const allAttrs = attrs.length > 0 ? attrs : items;
+                              
+                              return allAttrs.map((attr: string, i: number) => (
+                                <div key={i} className="flex items-center gap-2 bg-white border border-[#1A261B]/5 px-4 py-2.5 rounded-xl text-sm font-medium text-[#1A261B]/80 shadow-sm">
+                                  <MapPin className="h-4 w-4 text-[#C5A267]" />
+                                  {attr}
+                                </div>
+                              ));
+                            })()}
                           </div>
                         </div>
                       </div>

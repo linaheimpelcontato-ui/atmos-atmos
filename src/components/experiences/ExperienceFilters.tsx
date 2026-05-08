@@ -19,14 +19,15 @@ const categoryIcons: Record<ExperienceCategory, typeof Compass> = {
 };
 
 const filterLabels = {
-  pt: { all: "Todas", category: "Categoria", search: "Buscar por nome...", price: "Preço até" },
-  en: { all: "All", category: "Category", search: "Search by name...", price: "Price up to" },
-  es: { all: "Todas", category: "Categoría", search: "Buscar por nombre...", price: "Precio hasta" },
+  pt: { all: "Todas", category: "Subcategoria", search: "Buscar por nome...", price: "Preço até" },
+  en: { all: "All", category: "Subcategory", search: "Search by name...", price: "Price up to" },
+  es: { all: "Todas", category: "Subcategoría", search: "Buscar por nombre...", price: "Precio hasta" },
 };
 
 interface ExperienceFiltersProps {
   selectedCategories: ExperienceCategory[];
   priceMax: number;
+  maxAvailablePrice?: number;
   searchQuery: string;
   onCategoriesChange: (c: ExperienceCategory[]) => void;
   onPriceMaxChange: (v: number) => void;
@@ -34,17 +35,19 @@ interface ExperienceFiltersProps {
   resultCount: number;
 }
 
-const [GLOBAL_MIN, GLOBAL_MAX] = getExperiencePriceRange();
+const [GLOBAL_MIN, FALLBACK_MAX] = getExperiencePriceRange();
 
 export default function ExperienceFilters({
   selectedCategories,
   priceMax,
+  maxAvailablePrice,
   searchQuery,
   onCategoriesChange,
   onPriceMaxChange,
   onSearchChange,
   resultCount,
 }: ExperienceFiltersProps) {
+  const currentMax = maxAvailablePrice || FALLBACK_MAX;
   const { language } = useLanguage();
   const l = filterLabels[language];
 
@@ -79,7 +82,7 @@ export default function ExperienceFilters({
         </div>
         <Slider
           min={GLOBAL_MIN}
-          max={GLOBAL_MAX}
+          max={currentMax}
           step={50}
           value={[priceMax]}
           onValueChange={([v]) => onPriceMaxChange(v)}
@@ -88,7 +91,7 @@ export default function ExperienceFilters({
         />
         <div className="flex justify-between text-xs text-muted-foreground mt-1">
           <span>R$ {GLOBAL_MIN}</span>
-          <span>R$ {GLOBAL_MAX.toLocaleString("pt-BR")}</span>
+          <span>R$ {currentMax.toLocaleString("pt-BR")}</span>
         </div>
       </div>
 

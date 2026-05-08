@@ -19,7 +19,7 @@ export default function ExperienceCard({ experience, onClick }: ExperienceCardPr
 
   const inWishlist = isInWishlist(experience.id);
   // 1. Storage query for dynamic images (UUID or specific key)
-  const { images: storageImages } = useExperienceGallery(experience.imageKey, experience.name.pt, experience.id);
+  const { images: storageImages } = useExperienceGallery(experience.storageId || experience.imageKey, experience.name.pt, experience.id);
   
   // 2. Static fallback for predefined items if storage is empty
   const staticFallback = getCardImage(experience.id, experience.imageKey);

@@ -37,20 +37,23 @@ export async function fetchStorageImages(folder: string, prefix: string): Promis
     folder,
     `produtos/${folder}`,
     'produtos/EXPERIENCIAS',
+    'produtos/experiencias',
     'produtos/CACHOEIRAS',
+    'produtos/cachoeiras',
     'produtos/HOSPEDAGENS',
+    'produtos/hospedagens',
     'produtos/SERVICOS',
-    'produtos/SERVIÇOS',
     'produtos/servicos',
     'produtos/serviços',
     'EXPERIENCIAS',
+    'experiencias',
     'CACHOEIRAS',
+    'cachoeiras',
     'HOSPEDAGENS',
+    'hospedagens',
     'SERVICOS',
-    'SERVIÇOS',
     'servicos',
     'serviços',
-    'home'
   ];
 
   const allFolders = Array.from(new Set([...priorityFolders, ...fallbackFolders]));

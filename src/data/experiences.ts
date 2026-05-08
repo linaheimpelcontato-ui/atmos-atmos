@@ -9,6 +9,7 @@ export interface Experience {
   priceRange: string;
   description: Record<Language, string>;
   imageKey: string;
+  storageId?: string;
 }
 
 export const categoryLabels: Record<ExperienceCategory, Record<Language, string>> = {

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
   InlinePrice, InlineText, InlineNumber, InlineSelect,
-  getProductRegion, regionLabels, difficultyLabels, seasonalityLabels 
+  getProductRegion, getProductSubcategory, regionLabels, difficultyLabels, seasonalityLabels 
 } from "./shared";
 import { type Product, type ColumnKey, type UpdatePayload } from "./shared";
 
@@ -60,7 +60,7 @@ export function ProductTableRow({
                 </span>
                 <span className="h-0.5 w-0.5 rounded-full bg-admin-border" />
                 <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider opacity-60 truncate">
-                  {p.category || "Geral"}
+                  {getProductSubcategory(p) || "Sem subcategoria"}
                 </span>
               </div>
             </div>

@@ -230,6 +230,7 @@ export default function AdminProducts() {
           cost_price: "cost_price",
           status: "is_active",
           type: "type",
+          subcategory: "variables->subcategory",
           category: "category",
           variations: "variables->variations",
           region: "variables->region",
@@ -285,11 +286,13 @@ export default function AdminProducts() {
     let result = products.filter(p => p.type === activeTab);
     if (search) {
       const s = search.toLowerCase();
-      result = result.filter(p => 
-        p.name.toLowerCase().includes(s) || 
-        (p.category && p.category.toLowerCase().includes(s)) ||
-        (p.description && p.description.toLowerCase().includes(s))
-      );
+      result = result.filter(p => {
+        const vars = (p.variables || {}) as any;
+        return p.name.toLowerCase().includes(s) || 
+               (p.category && p.category.toLowerCase().includes(s)) ||
+               (vars.subcategory && String(vars.subcategory).toLowerCase().includes(s)) ||
+               (p.description && p.description.toLowerCase().includes(s));
+      });
     }
     return filterState.applyFilters(result);
   }, [products, activeTab, search, filterState]);
@@ -394,6 +397,7 @@ export default function AdminProducts() {
         isSaving={saveMutation.isPending}
         allTypes={allTypes}
         getTypeLabel={getTypeLabel}
+        allProducts={products}
       />
 
       <CategoryDialog

@@ -97,7 +97,8 @@ const Accommodations = () => {
           pt: dbVars.longDescription_pt || (staticIdx > -1 ? merged[staticIdx].longDescription?.pt || "" : ""),
           en: dbVars.longDescription_en || (staticIdx > -1 ? merged[staticIdx].longDescription?.en || "" : ""),
           es: dbVars.longDescription_es || (staticIdx > -1 ? merged[staticIdx].longDescription?.es || "" : ""),
-        }
+        },
+        storageId: dbProduct.category || undefined,
       };
 
       if (staticIdx > -1) {
@@ -110,9 +111,44 @@ const Accommodations = () => {
     return merged;
   }, [dbProducts]);
 
+  const maxPriceInData = useMemo(() => {
+    let max = GLOBAL_MAX;
+    accommodations.forEach(a => {
+      const matches = a.priceRange.match(/\d+/g);
+      if (matches) {
+        matches.forEach(m => {
+          const p = parseInt(m);
+          if (p > max) max = p;
+        });
+      }
+    });
+    return max;
+  }, [accommodations]);
+
+  useEffect(() => {
+    setPriceMax(maxPriceInData);
+  }, [maxPriceInData]);
+
   const filtered = useMemo(
-    () => filterAccommodations(selectedRegions, [], searchQuery, priceMax, selectedAmenities, unitsMin, capacityMin, accommodations),
-    [selectedRegions, searchQuery, priceMax, selectedAmenities, unitsMin, capacityMin, accommodations]
+    () =>
+      filterAccommodations(
+        selectedRegions,
+        searchQuery,
+        priceMax,
+        selectedAmenities,
+        unitsMin,
+        capacityMin,
+        accommodations
+      ),
+    [
+      selectedRegions,
+      searchQuery,
+      priceMax,
+      selectedAmenities,
+      unitsMin,
+      capacityMin,
+      accommodations,
+    ]
   );
 
   return (
@@ -150,6 +186,7 @@ const Accommodations = () => {
                     selectedRegions={selectedRegions}
                     searchQuery={searchQuery}
                     priceMax={priceMax}
+                    maxPrice={maxPriceInData}
                     selectedAmenities={selectedAmenities}
                     unitsMin={unitsMin}
                     capacityMin={capacityMin}

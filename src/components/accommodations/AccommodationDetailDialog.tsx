@@ -86,7 +86,7 @@ export default function AccommodationDetailDialog({
 }: AccommodationDetailDialogProps) {
   const { language } = useLanguage();
   const { addItem, removeItem, isInWishlist } = useWishlist();
-  const { images } = useAccImages(accommodation?.id || "", accommodation?.name || "");
+  const { images } = useAccImages(accommodation?.storageId || accommodation?.id || "", accommodation?.name || "");
 
   useEffect(() => {
     if (open) {
