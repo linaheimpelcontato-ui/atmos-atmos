@@ -4,20 +4,20 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { optimizedUrl } from "@/lib/storage";
 
 const complements = [
-  { 
-    key: "experiences", 
-    path: "/experiencias", 
-    image: optimizedUrl("home/cat-experiences.jpg", { width: 640, quality: 75 }) 
+  {
+    key: "experiences",
+    path: "/experiencias",
+    image: optimizedUrl("home/cat-experiences.jpg", { width: 640, quality: 75 })
   },
-  { 
-    key: "accommodations", 
-    path: "/hospedagens", 
-    image: optimizedUrl("home/cat-accommodations.jpg", { width: 640, quality: 75 }) 
+  {
+    key: "accommodations",
+    path: "/hospedagens",
+    image: optimizedUrl("home/cat-accommodations.jpg", { width: 640, quality: 75 })
   },
-  { 
-    key: "services", 
-    path: "/servicos", 
-    image: optimizedUrl("home/cat-services.jpg", { width: 640, quality: 75 }) 
+  {
+    key: "services",
+    path: "/servicos",
+    image: optimizedUrl("home/cat-services.jpg", { width: 640, quality: 75 })
   }
 ];
 
@@ -77,12 +77,12 @@ export default function ComplementSection() {
                     src={cat.image}
                     alt={t(`categories.${cat.key}`)}
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-                    loading="lazy" 
+                    loading="lazy"
                   />
-                
+
                   {/* Premium overlays */}
                   <div className="absolute inset-0 bg-gradient-to-t from-[#1A261B]/90 via-[#1A261B]/20 to-transparent transition-opacity duration-500 group-hover:opacity-100" />
-                  
+
                   <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
                     <h3 className="text-2xl font-display mb-2">
                       {t(`categories.${cat.key}`)}

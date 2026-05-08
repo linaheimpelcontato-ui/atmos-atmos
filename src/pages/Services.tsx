@@ -46,46 +46,44 @@ const Services = () => {
   const { data: dbProducts = [] } = useProducts("service");
 
   const services = useMemo(() => {
-    const merged = [...staticServices];
-    
-    dbProducts.forEach(dbProduct => {
-      const staticIdx = merged.findIndex(s => s.id === dbProduct.source_id);
+    // If no products in DB, fallback to static list
+    if (!dbProducts || dbProducts.length === 0) {
+      return staticServices;
+    }
+
+    // Use DB products as the base list
+    return dbProducts.map(dbProduct => {
+      const staticEntry = staticServices.find(s => s.id === dbProduct.source_id);
       const dbVars = (dbProduct.variables || {}) as any;
       
       const mapped: Service = {
         id: dbProduct.source_id || dbProduct.id,
-        category: (dbVars.service_type || (staticIdx > -1 ? merged[staticIdx].category : "especial")) as any,
+        category: (dbVars.service_type || (staticEntry ? staticEntry.category : "especial")) as any,
         title: {
           pt: dbProduct.name,
-          en: (staticIdx > -1 ? merged[staticIdx].title.en : dbProduct.name),
-          es: (staticIdx > -1 ? merged[staticIdx].title.es : dbProduct.name),
+          en: (staticEntry ? staticEntry.title.en : dbProduct.name),
+          es: (staticEntry ? staticEntry.title.es : dbProduct.name),
         },
         subtitle: {
-          pt: dbVars.subcategory || (staticIdx > -1 ? merged[staticIdx].subtitle.pt : ""),
-          en: (staticIdx > -1 ? merged[staticIdx].subtitle.en : (dbVars.subcategory || "")),
-          es: (staticIdx > -1 ? merged[staticIdx].subtitle.es : (dbVars.subcategory || "")),
+          pt: dbVars.subcategory || (staticEntry ? staticEntry.subtitle.pt : ""),
+          en: (staticEntry ? staticEntry.subtitle.en : (dbVars.subcategory || "")),
+          es: (staticEntry ? staticEntry.subtitle.es : (dbVars.subcategory || "")),
         },
         description: {
           pt: dbProduct.description || "",
-          en: (staticIdx > -1 ? merged[staticIdx].description.en : dbProduct.description || ""),
-          es: (staticIdx > -1 ? merged[staticIdx].description.es : dbProduct.description || ""),
+          en: (staticEntry ? staticEntry.description.en : dbProduct.description || ""),
+          es: (staticEntry ? staticEntry.description.es : dbProduct.description || ""),
         },
-        price: dbProduct.unit_price ? `R$ ${dbProduct.unit_price}` : (staticIdx > -1 ? merged[staticIdx].price : undefined),
-        imageKey: staticIdx > -1 ? merged[staticIdx].imageKey : (dbVars.imageKey || dbProduct.source_id || dbProduct.id),
-        storageId: dbVars.storage_id || (staticIdx > -1 ? merged[staticIdx].id : dbProduct.id),
-        tiers: dbVars.tiers || (staticIdx > -1 ? merged[staticIdx].tiers : undefined),
-        items: dbVars.items || (staticIdx > -1 ? merged[staticIdx].items : undefined),
-        transferTable: dbVars.transferTable || (staticIdx > -1 ? merged[staticIdx].transferTable : undefined),
+        price: dbProduct.unit_price ? `R$ ${dbProduct.unit_price}` : (staticEntry ? staticEntry.price : undefined),
+        imageKey: staticEntry ? staticEntry.imageKey : (dbVars.imageKey || dbProduct.source_id || dbProduct.id),
+        storageId: dbVars.storage_id || (staticEntry ? staticEntry.id : dbProduct.id),
+        tiers: dbVars.tiers || (staticEntry ? staticEntry.tiers : undefined),
+        items: dbVars.items || (staticEntry ? staticEntry.items : undefined),
+        transferTable: dbVars.transferTable || (staticEntry ? staticEntry.transferTable : undefined),
       };
 
-      if (staticIdx > -1) {
-        merged[staticIdx] = mapped;
-      } else {
-        merged.push(mapped);
-      }
+      return mapped;
     });
-    
-    return merged;
   }, [dbProducts]);
 
   return (

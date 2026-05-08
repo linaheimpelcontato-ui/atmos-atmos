@@ -52,17 +52,20 @@ const Experiences = () => {
   const { data: dbProducts = [] } = useProducts("experience");
 
   const experiences = useMemo(() => {
-    const merged = [...staticExperiences];
-    
-    dbProducts.forEach(dbProduct => {
-      const staticIdx = merged.findIndex(s => 
+    // If no products in DB, fallback to static list
+    if (!dbProducts || dbProducts.length === 0) {
+      return staticExperiences;
+    }
+
+    // Use DB products as the base list
+    return dbProducts.map(dbProduct => {
+      const staticEntry = staticExperiences.find(s => 
         s.id === dbProduct.source_id || 
         s.name.pt.toLowerCase() === dbProduct.name.toLowerCase()
       );
       const dbVars = (dbProduct.variables || {}) as any;
-      const staticEntry = staticIdx > -1 ? merged[staticIdx] : null;
       
-      const descPt = staticEntry?.description.pt || dbProduct.description || "";
+      const descPt = dbProduct.description || staticEntry?.description.pt || "";
       const descEn = staticEntry?.description.en || dbProduct.description || "";
       const descEs = staticEntry?.description.es || dbProduct.description || "";
 
@@ -81,17 +84,11 @@ const Experiences = () => {
           es: descEs,
         },
         imageKey: dbVars.imageKey || staticEntry?.imageKey || dbProduct.source_id || dbProduct.id,
-        storageId: dbProduct.category || undefined,
+        storageId: dbProduct.category || (staticEntry?.id) || dbProduct.id,
       };
 
-      if (staticIdx > -1) {
-        merged[staticIdx] = mapped;
-      } else {
-        merged.push(mapped);
-      }
+      return mapped;
     });
-    
-    return merged;
   }, [dbProducts]);
 
   const maxPriceInData = useMemo(() => {

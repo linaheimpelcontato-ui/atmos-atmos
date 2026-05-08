@@ -58,10 +58,14 @@ const Waterfalls = () => {
   const { data: dbProducts = [] } = useProducts("waterfall");
 
   const waterfalls = useMemo(() => {
-    const merged = [...staticWaterfalls];
-    
-    dbProducts.forEach(dbProduct => {
-      const staticIdx = merged.findIndex(s => 
+    // If no products in DB, fallback to static list
+    if (!dbProducts || dbProducts.length === 0) {
+      return staticWaterfalls;
+    }
+
+    // Use DB products as the base list
+    return dbProducts.map(dbProduct => {
+      const staticEntry = staticWaterfalls.find(s => 
         s.id === dbProduct.source_id || 
         s.name.pt.toLowerCase() === dbProduct.name.toLowerCase()
       );
@@ -71,33 +75,27 @@ const Waterfalls = () => {
         id: dbProduct.id,
         name: {
           pt: dbProduct.name,
-          en: (staticIdx > -1 ? merged[staticIdx].name.en : dbProduct.name),
-          es: (staticIdx > -1 ? merged[staticIdx].name.es : dbProduct.name),
+          en: (staticEntry ? staticEntry.name.en : dbProduct.name),
+          es: (staticEntry ? staticEntry.name.es : dbProduct.name),
         },
-        region: (dbProduct.segment || (staticIdx > -1 ? merged[staticIdx].region : "alto-paraiso")) as Region,
-        difficulty: (dbVars.difficulty || (staticIdx > -1 ? merged[staticIdx].difficulty : "facil")) as Difficulty,
-        seasonality: (dbVars.seasonality || (staticIdx > -1 ? merged[staticIdx].seasonality : "anual")) as Seasonality,
-        distanceKm: Number(dbVars.distanceKm || (staticIdx > -1 ? merged[staticIdx].distanceKm : 0)),
-        distanceCarKm: Number(dbVars.distanceCarKm || (staticIdx > -1 ? merged[staticIdx].distanceCarKm : 0)),
-        requiresGuide: dbVars.requiresGuide === "true" || dbVars.requiresGuide === true || (staticIdx > -1 ? merged[staticIdx].requiresGuide : false),
-        requires4x4: dbVars.requires4x4 === "true" || dbVars.requires4x4 === true || (staticIdx > -1 ? merged[staticIdx].requires4x4 : false),
+        region: (dbProduct.segment || (staticEntry ? staticEntry.region : "alto-paraiso")) as Region,
+        difficulty: (dbVars.difficulty || (staticEntry ? staticEntry.difficulty : "facil")) as Difficulty,
+        seasonality: (dbVars.seasonality || (staticEntry ? staticEntry.seasonality : "anual")) as Seasonality,
+        distanceKm: Number(dbVars.distanceKm || (staticEntry ? staticEntry.distanceKm : 0)),
+        distanceCarKm: Number(dbVars.distanceCarKm || (staticEntry ? staticEntry.distanceCarKm : 0)),
+        requiresGuide: dbVars.requiresGuide === "true" || dbVars.requiresGuide === true || (staticEntry ? staticEntry.requiresGuide : false),
+        requires4x4: dbVars.requires4x4 === "true" || dbVars.requires4x4 === true || (staticEntry ? staticEntry.requires4x4 : false),
         description: {
-          pt: dbProduct.description || (staticIdx > -1 ? merged[staticIdx].description.pt : ""),
-          en: (staticIdx > -1 ? merged[staticIdx].description.en : dbProduct.description || ""),
-          es: (staticIdx > -1 ? merged[staticIdx].description.es : dbProduct.description || ""),
+          pt: dbProduct.description || (staticEntry ? staticEntry.description.pt : ""),
+          en: (staticEntry ? staticEntry.description.en : dbProduct.description || ""),
+          es: (staticEntry ? staticEntry.description.es : dbProduct.description || ""),
         },
-        imageIndex: staticIdx > -1 ? merged[staticIdx].imageIndex : 1,
-        storageId: dbProduct.category || (staticIdx > -1 ? merged[staticIdx].id : dbProduct.id),
+        imageIndex: staticEntry ? staticEntry.imageIndex : 1,
+        storageId: dbProduct.category || (staticEntry ? staticEntry.id : dbProduct.id),
       };
 
-      if (staticIdx > -1) {
-        merged[staticIdx] = mapped;
-      } else {
-        merged.push(mapped);
-      }
+      return mapped;
     });
-    
-    return merged;
   }, [dbProducts]);
 
   const maxDistances = useMemo(() => {

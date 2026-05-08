@@ -63,10 +63,14 @@ const Accommodations = () => {
   const { data: dbProducts = [] } = useProducts("accommodation");
 
   const accommodations = useMemo(() => {
-    const merged = [...staticAccommodations];
-    
-    dbProducts.forEach(dbProduct => {
-      const staticIdx = merged.findIndex(s => 
+    // If no products in DB, fallback to static list
+    if (!dbProducts || dbProducts.length === 0) {
+      return staticAccommodations;
+    }
+
+    // Use DB products as the base list
+    return dbProducts.map(dbProduct => {
+      const staticEntry = staticAccommodations.find(s => 
         s.id === dbProduct.source_id || 
         s.name.toLowerCase() === dbProduct.name.toLowerCase()
       );
@@ -75,40 +79,34 @@ const Accommodations = () => {
       const mapped: Accommodation = {
         id: dbProduct.id,
         name: dbProduct.name,
-        region: (dbVars.region || dbProduct.category || (staticIdx > -1 ? merged[staticIdx].region : "alto-paraiso")) as AccRegion,
-        type: (dbVars.type || dbVars.accommodation_type || (staticIdx > -1 ? merged[staticIdx].type : "pousada")) as AccType,
-        priceRange: dbVars.priceRange || (staticIdx > -1 ? merged[staticIdx].priceRange : "R$ 0 – R$ 0"),
-        capacity: dbVars.capacity || (staticIdx > -1 ? merged[staticIdx].capacity : "2"),
-        units: Number(dbVars.units || (staticIdx > -1 ? merged[staticIdx].units : 1)),
-        totalCapacity: Number(dbVars.totalCapacity || (staticIdx > -1 ? merged[staticIdx].totalCapacity : 2)),
-        instagram: dbVars.instagram || (staticIdx > -1 ? merged[staticIdx].instagram : undefined),
-        amenities: (dbVars.amenities || (staticIdx > -1 ? merged[staticIdx].amenities : [])) as Amenity[],
+        region: (dbVars.region || dbProduct.category || (staticEntry ? staticEntry.region : "alto-paraiso")) as AccRegion,
+        type: (dbVars.type || dbVars.accommodation_type || (staticEntry ? staticEntry.type : "pousada")) as AccType,
+        priceRange: dbVars.priceRange || (staticEntry ? staticEntry.priceRange : "R$ 0 – R$ 0"),
+        capacity: dbVars.capacity || (staticEntry ? staticEntry.capacity : "2"),
+        units: Number(dbVars.units || (staticEntry ? staticEntry.units : 1)),
+        totalCapacity: Number(dbVars.totalCapacity || (staticEntry ? staticEntry.totalCapacity : 2)),
+        instagram: dbVars.instagram || (staticEntry ? staticEntry.instagram : undefined),
+        amenities: (dbVars.amenities || (staticEntry ? staticEntry.amenities : [])) as Amenity[],
         description: {
-          pt: dbProduct.description || (staticIdx > -1 ? merged[staticIdx].description?.pt || "" : ""),
-          en: (staticIdx > -1 ? merged[staticIdx].description?.en || "" : dbProduct.description || ""),
-          es: (staticIdx > -1 ? merged[staticIdx].description?.es || "" : dbProduct.description || ""),
+          pt: dbProduct.description || (staticEntry ? staticEntry.description?.pt || "" : ""),
+          en: (staticEntry ? staticEntry.description?.en || "" : dbProduct.description || ""),
+          es: (staticEntry ? staticEntry.description?.es || "" : dbProduct.description || ""),
         },
-        imageIndex: staticIdx > -1 ? merged[staticIdx].imageIndex : 1,
-        website: dbVars.website || (staticIdx > -1 ? merged[staticIdx].website : undefined),
-        phone: dbVars.phone || (staticIdx > -1 ? merged[staticIdx].phone : undefined),
-        email: dbVars.email || (staticIdx > -1 ? merged[staticIdx].email : undefined),
-        bookingUrl: dbVars.bookingUrl || (staticIdx > -1 ? merged[staticIdx].bookingUrl : undefined),
+        imageIndex: staticEntry ? staticEntry.imageIndex : 1,
+        website: dbVars.website || (staticEntry ? staticEntry.website : undefined),
+        phone: dbVars.phone || (staticEntry ? staticEntry.phone : undefined),
+        email: dbVars.email || (staticEntry ? staticEntry.email : undefined),
+        bookingUrl: dbVars.bookingUrl || (staticEntry ? staticEntry.bookingUrl : undefined),
         longDescription: {
-          pt: dbVars.longDescription_pt || (staticIdx > -1 ? merged[staticIdx].longDescription?.pt || "" : ""),
-          en: dbVars.longDescription_en || (staticIdx > -1 ? merged[staticIdx].longDescription?.en || "" : ""),
-          es: dbVars.longDescription_es || (staticIdx > -1 ? merged[staticIdx].longDescription?.es || "" : ""),
+          pt: dbVars.longDescription_pt || (staticEntry ? staticEntry.longDescription?.pt || "" : ""),
+          en: dbVars.longDescription_en || (staticEntry ? staticEntry.longDescription?.en || "" : ""),
+          es: dbVars.longDescription_es || (staticEntry ? staticEntry.longDescription?.es || "" : ""),
         },
-        storageId: dbProduct.category || undefined,
+        storageId: dbProduct.category || (staticEntry?.id) || dbProduct.id,
       };
 
-      if (staticIdx > -1) {
-        merged[staticIdx] = mapped;
-      } else {
-        merged.push(mapped);
-      }
+      return mapped;
     });
-    
-    return merged;
   }, [dbProducts]);
 
   const maxPriceInData = useMemo(() => {
