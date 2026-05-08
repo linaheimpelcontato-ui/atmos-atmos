@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import PageSEO from "@/components/seo/PageSEO";
 import Layout from "@/components/layout/Layout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useWishlist } from "@/contexts/WishlistContext";
-import { storageUrl } from "@/lib/storage";
+import { storageUrl, normalize } from "@/lib/storage";
 import { useProducts } from "@/hooks/useProducts";
 
 // Icons
@@ -40,10 +40,10 @@ const heroBg = storageUrl("home/cat-waterfalls.jpg");
 
 
 const TABS = [
-  { id: 'waterfalls', label: 'Cachoeiras', icon: Droplets, image: storageUrl("destaques-categorias/Cachoeira-Destaque-1.jpg"), description: "Quedas d'água secretas" },
-  { id: 'experiences', label: 'Experiências', icon: Sparkles, image: storageUrl("destaques-categorias/Experiencias-Destaque-1.jpeg"), description: "Momentos imersivos" },
+  { id: 'cachoeiras', label: 'Cachoeiras', icon: Droplets, image: storageUrl("destaques-categorias/Cachoeira-Destaque-1.jpg"), description: "Quedas d'água secretas" },
+  { id: 'experiencias', label: 'Experiências', icon: Sparkles, image: storageUrl("destaques-categorias/Experiencias-Destaque-1.jpeg"), description: "Momentos imersivos" },
   { id: 'hospedagens', label: 'Hospedagens', icon: Home, image: storageUrl("destaques-categorias/Hospedagens-Destaque-1.jpeg"), description: "Refúgios extraordinários" },
-  { id: 'services', label: 'Serviços', icon: Wrench, image: storageUrl("destaques-categorias/Serviços-Destaque-1.jpg"), description: "Comodidade total" },
+  { id: 'servicos', label: 'Serviços', icon: Wrench, image: storageUrl("destaques-categorias/Serviços-Destaque-1.jpg"), description: "Comodidade total" },
 ];
 
 // Shared MultiSelect Component
@@ -145,33 +145,36 @@ const FilterSlider = ({ value, onChange, min, max, step, label, unit }: { value:
 );
 
 export default function MonteSeuRoteiro() {
-  const { language } = useLanguage();
+  const { language = "pt", t } = useLanguage();
   const { count } = useWishlist();
+  const { category } = useParams();
   const navigate = useNavigate();
-  
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
-
-  const [activeTab, setActiveTab] = useState(TABS[0].id);
+  const [activeTab, setActiveTab] = useState(category || TABS[0].id);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Sync tab with URL
+  useEffect(() => {
+    if (category && category !== activeTab) {
+      setActiveTab(category);
+    }
+  }, [category]);
 
   // Filters State
   const [accRegionFilter, setAccRegionFilter] = useState<string[]>([]);
   const [accTypeFilter, setAccTypeFilter] = useState<string[]>([]);
-  const [accPriceFilter, setAccPriceFilter] = useState([0, 5000]);
-  const [accUnitsFilter, setAccUnitsFilter] = useState([0, 50]);
-  const [accCapacityFilter, setAccCapacityFilter] = useState([0, 50]);
+  const [accPriceFilter, setAccPriceFilter] = useState([0, 20000]);
+  const [accUnitsFilter, setAccUnitsFilter] = useState([0, 100]);
+  const [accCapacityFilter, setAccCapacityFilter] = useState([0, 100]);
   const [accAmenityFilter, setAccAmenityFilter] = useState<string[]>([]);
   
   const [wfRegionFilter, setWfRegionFilter] = useState<string[]>([]);
   const [wfDifficultyFilter, setWfDifficultyFilter] = useState<string[]>([]);
   const [wfSeasonalityFilter, setWfSeasonalityFilter] = useState<string[]>([]);
-  const [wfTrailFilter, setWfTrailFilter] = useState([0, 20]);
-  const [wfCarDistanceFilter, setWfCarDistanceFilter] = useState([0, 200]);
+  const [wfTrailFilter, setWfTrailFilter] = useState([0, 50]);
+  const [wfCarDistanceFilter, setWfCarDistanceFilter] = useState([0, 500]);
   
   const [expCategoryFilter, setExpCategoryFilter] = useState<string[]>([]);
-  const [expPriceFilter, setExpPriceFilter] = useState([0, 2000]);
+  const [expPriceFilter, setExpPriceFilter] = useState([0, 5000]);
 
   const [srvCategoryFilter, setSrvCategoryFilter] = useState<string[]>([]);
 
@@ -182,129 +185,140 @@ export default function MonteSeuRoteiro() {
   const { data: dbServices = [] } = useProducts("service");
 
   const waterfalls = useMemo(() => {
-    const merged = [...staticWaterfalls];
-    dbWaterfalls.forEach(db => {
-      const idx = merged.findIndex(i => i.id === db.source_id);
+    if (!dbWaterfalls || dbWaterfalls.length === 0) return staticWaterfalls;
+
+    return dbWaterfalls.map(db => {
+      const staticEntry = staticWaterfalls.find(s => s.id === db.source_id || s.name.pt.toLowerCase() === db.name.toLowerCase());
       const vars = (db.variables || {}) as any;
-      const mapped: Waterfall = {
-        id: db.source_id || db.id,
-        name: { pt: db.name, en: db.name, es: db.name },
-        region: (db as any).region || (idx > -1 ? merged[idx].region : "alto-paraiso"),
-        distanceKm: vars.distanceKm || (idx > -1 ? merged[idx].distanceKm : 0),
-        distanceCarKm: vars.distanceCarKm || (idx > -1 ? merged[idx].distanceCarKm : 0),
-        difficulty: vars.difficulty || (idx > -1 ? merged[idx].difficulty : "facil"),
-        seasonality: vars.seasonality || (idx > -1 ? merged[idx].seasonality : "anual"),
-        requiresGuide: vars.requiresGuide || (idx > -1 ? merged[idx].requiresGuide : false),
-        description: { pt: db.description || "", en: db.description || "", es: db.description || "" },
-        imageIndex: vars.imageIndex || (idx > -1 ? merged[idx].imageIndex : 1),
-      };
-      if (idx > -1) merged[idx] = mapped; else merged.push(mapped);
+      
+      return {
+        id: db.id,
+        name: { 
+          pt: db.name, 
+          en: staticEntry?.name.en || db.name, 
+          es: staticEntry?.name.es || db.name 
+        },
+        region: (db.segment || staticEntry?.region || "alto-paraiso") as any,
+        distanceKm: Number(vars.distanceKm || staticEntry?.distanceKm || 0),
+        distanceCarKm: Number(vars.distanceCarKm || staticEntry?.distanceCarKm || 0),
+        difficulty: (vars.difficulty || staticEntry?.difficulty || "facil") as any,
+        seasonality: (vars.seasonality || staticEntry?.seasonality || "anual") as any,
+        requiresGuide: vars.requiresGuide === "true" || vars.requiresGuide === true || staticEntry?.requiresGuide || false,
+        requires4x4: vars.requires4x4 === "true" || vars.requires4x4 === true || staticEntry?.requires4x4 || false,
+        description: { 
+          pt: db.description || staticEntry?.description.pt || "", 
+          en: staticEntry?.description.en || db.description || "", 
+          es: staticEntry?.description.es || db.description || "" 
+        },
+        imageIndex: staticEntry?.imageIndex || 1,
+        storageId: staticEntry?.id || normalize(db.name)
+      } as Waterfall;
     });
-    return merged;
   }, [dbWaterfalls]);
 
   const experiences = useMemo(() => {
-    const merged = [...staticExperiences];
-    dbExperiences.forEach(db => {
-      const idx = merged.findIndex(i => i.id === db.source_id || i.name.pt.toLowerCase() === db.name.toLowerCase());
-      const vars = (db.variables || {}) as any;
-      const staticEntry = idx > -1 ? merged[idx] : null;
-      const validCategories = ["aventura", "bem-estar", "cultura", "contemplacao"];
-      const rawCat = (db.category || db.segment || "").toLowerCase();
-      const finalCat = validCategories.includes(rawCat) ? rawCat : (staticEntry?.category ?? "aventura");
+    if (!dbExperiences || dbExperiences.length === 0) return staticExperiences;
 
-      const mapped: Experience = {
-        id: db.source_id || db.id,
+    return dbExperiences.map(db => {
+      const staticEntry = staticExperiences.find(s => s.id === db.source_id || s.name.pt.toLowerCase() === db.name.toLowerCase());
+      const vars = (db.variables || {}) as any;
+      const validCategories = ["aventura", "bem-estar", "cultura", "contemplacao"];
+      const finalCat = validCategories.includes(db.category?.toLowerCase() || "") ? db.category?.toLowerCase() : (staticEntry?.category || "aventura");
+
+      return {
+        id: db.id,
         name: {
           pt: db.name,
           en: staticEntry?.name.en ?? db.name,
           es: staticEntry?.name.es ?? db.name,
         },
         category: finalCat as ExperienceCategory,
-        priceRange: staticEntry?.priceRange || vars.priceRange || "",
+        priceRange: db.unit_price > 0 ? `R$ ${db.unit_price}` : (staticEntry?.priceRange ?? "Sob consulta"),
         description: {
-          // Always prefer static descriptions (rich, multilingual)
-          pt: staticEntry?.description.pt || db.description || "",
+          pt: db.description || staticEntry?.description.pt || "",
           en: staticEntry?.description.en || db.description || "",
           es: staticEntry?.description.es || db.description || "",
         },
-        // Always prefer static imageKey so gallery images resolve correctly
         imageKey: staticEntry?.imageKey || db.source_id || db.id,
-      };
-      if (idx > -1) merged[idx] = mapped; else merged.push(mapped);
+        storageId: staticEntry?.id || normalize(db.name),
+      } as Experience;
     });
-    return merged;
   }, [dbExperiences]);
 
   const accommodations = useMemo(() => {
-    const merged = [...staticAccommodations];
-    dbAccommodations.forEach(db => {
-      const idx = merged.findIndex(i => i.id === db.source_id || i.name.toLowerCase() === db.name.toLowerCase());
+    if (!dbAccommodations || dbAccommodations.length === 0) return staticAccommodations;
+
+    return dbAccommodations.map(db => {
+      const staticEntry = staticAccommodations.find(s => s.id === db.source_id || s.name.toLowerCase() === db.name.toLowerCase());
       const vars = (db.variables || {}) as any;
-      const staticEntry = idx > -1 ? merged[idx] : null;
-      const mapped: Accommodation = {
-        id: db.source_id || db.id,
+      
+      return {
+        id: db.id,
         name: db.name,
-        region: ((db as any).region || staticEntry?.region || "alto-paraiso") as AccRegion,
+        region: (vars.region || db.category || staticEntry?.region || "alto-paraiso") as AccRegion,
         type: (db.segment || staticEntry?.type || "pousada") as AccType,
-        priceRange: staticEntry?.priceRange || vars.priceRange || "",
+        priceRange: vars.priceRange || staticEntry?.priceRange || "R$ 0 – R$ 0",
         amenities: vars.amenities || staticEntry?.amenities || [],
-        units: vars.units || staticEntry?.units || 1,
-        totalCapacity: vars.totalCapacity || staticEntry?.totalCapacity || 2,
-        capacity: staticEntry?.capacity || "",
+        units: Number(vars.units || staticEntry?.units || 1),
+        totalCapacity: Number(vars.totalCapacity || staticEntry?.totalCapacity || 2),
+        capacity: staticEntry?.capacity || vars.capacity || "2",
         imageIndex: staticEntry?.imageIndex || 1,
-        // Preserve multilingual description structure from static data
         description: {
-          pt: staticEntry?.description.pt || db.description || "",
+          pt: db.description || staticEntry?.description.pt || "",
           en: staticEntry?.description.en || db.description || "",
           es: staticEntry?.description.es || db.description || "",
         },
         longDescription: staticEntry?.longDescription,
-        instagram: staticEntry?.instagram,
-        website: staticEntry?.website,
-        bookingUrl: staticEntry?.bookingUrl,
-        phone: staticEntry?.phone,
-      };
-      if (idx > -1) merged[idx] = mapped; else merged.push(mapped);
+        instagram: vars.instagram || staticEntry?.instagram,
+        website: vars.website || staticEntry?.website,
+        bookingUrl: vars.bookingUrl || staticEntry?.bookingUrl,
+        phone: vars.phone || staticEntry?.phone,
+        storageId: staticEntry?.id || normalize(db.name),
+      } as Accommodation;
     });
-    return merged;
   }, [dbAccommodations]);
 
   const services = useMemo(() => {
-    const merged = [...staticServices];
-    dbServices.forEach(db => {
-      const idx = merged.findIndex(i => i.id === db.source_id);
+    if (!dbServices || dbServices.length === 0) return staticServices;
+
+    return dbServices.map(db => {
+      const staticEntry = staticServices.find(s => s.id === db.source_id);
       const vars = (db.variables || {}) as any;
       
-      // Map admin categories to frontend categories
       const adminCat = (db.category || "").toLowerCase();
       let finalCat: ServiceCategory = "especial";
-      
       if (adminCat === "lanche" || adminCat === "gastronomia") finalCat = "alimentacao";
       else if (adminCat === "drone") finalCat = "registros";
       else if (adminCat === "transfer") finalCat = "transfers";
       else if (adminCat === "especial") finalCat = "especial";
-      else if (idx > -1) finalCat = merged[idx].category;
+      else if (staticEntry) finalCat = staticEntry.category;
 
-      const mapped: Service = {
+      return {
         id: db.source_id || db.id,
-        title: { pt: db.name, en: db.name, es: db.name },
+        title: { 
+          pt: db.name, 
+          en: staticEntry?.title.en || db.name, 
+          es: staticEntry?.title.es || db.name 
+        },
         subtitle: { 
-          pt: vars.subtitle || (db.segment && db.segment !== "b2c" && db.segment !== "b2b" ? db.segment : ""), 
+          pt: vars.subcategory || (db.segment && db.segment !== "b2c" && db.segment !== "b2b" ? db.segment : ""), 
           en: vars.subtitle_en || vars.subtitle || "", 
           es: vars.subtitle_es || vars.subtitle || "" 
         },
         category: finalCat,
-        price: vars.price || (idx > -1 ? merged[idx].price : ""),
-        description: { pt: db.description || "", en: db.description || "", es: db.description || "" },
+        price: db.unit_price ? `R$ ${db.unit_price}` : (staticEntry?.price || vars.price || ""),
+        description: { 
+          pt: db.description || staticEntry?.description.pt || "", 
+          en: staticEntry?.description.en || db.description || "", 
+          es: staticEntry?.description.es || db.description || "" 
+        },
         variations: vars.variations,
         type: "service",
         variables: vars,
         name: db.name,
-      };
-      if (idx > -1) merged[idx] = mapped; else merged.push(mapped);
+        storageId: staticEntry?.id || normalize(db.name),
+      } as Service;
     });
-    return merged;
   }, [dbServices]);
 
   const [selectedWaterfall, setSelectedWaterfall] = useState<Waterfall | null>(null);
@@ -406,6 +420,7 @@ export default function MonteSeuRoteiro() {
                   <button
                     key={tab.id}
                     onClick={() => {
+                      navigate(`/monte-seu-roteiro/${tab.id}`);
                       setActiveTab(tab.id);
                       setSearchQuery("");
                       setAccRegionFilter([]);
@@ -417,8 +432,8 @@ export default function MonteSeuRoteiro() {
                       setWfRegionFilter([]);
                       setWfDifficultyFilter([]);
                       setWfSeasonalityFilter([]);
-                      setWfTrailFilter([0, 20]);
-                      setWfCarDistanceFilter([0, 200]);
+                      setWfTrailFilter([0, 50]);
+                      setWfCarDistanceFilter([0, 500]);
                       setExpCategoryFilter([]);
                       setExpPriceFilter([0, 2000]);
                       setSrvCategoryFilter([]);
@@ -504,7 +519,7 @@ export default function MonteSeuRoteiro() {
                       </>
                     )}
 
-                    {activeTab === 'waterfalls' && (
+                    {activeTab === 'cachoeiras' && (
                       <>
                         <FilterMultiSelect 
                           value={wfRegionFilter}
@@ -525,14 +540,23 @@ export default function MonteSeuRoteiro() {
                           value={wfTrailFilter}
                           onChange={setWfTrailFilter}
                           min={0}
-                          max={20}
+                          max={50}
                           step={0.5}
+                          unit="km"
+                        />
+                        <FilterSlider
+                          label={language === "pt" ? "Carro" : "Car"}
+                          value={wfCarDistanceFilter}
+                          onChange={setWfCarDistanceFilter}
+                          min={0}
+                          max={500}
+                          step={5}
                           unit="km"
                         />
                       </>
                     )}
 
-                    {activeTab === 'experiences' && (
+                    {activeTab === 'experiencias' && (
                       <>
                         <FilterMultiSelect 
                           value={expCategoryFilter}
@@ -553,7 +577,7 @@ export default function MonteSeuRoteiro() {
                       </>
                     )}
 
-                    {activeTab === 'services' && (
+                    {activeTab === 'servicos' && (
                       <FilterMultiSelect 
                         value={srvCategoryFilter}
                         onChange={setSrvCategoryFilter}
@@ -600,9 +624,9 @@ export default function MonteSeuRoteiro() {
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 
-                {activeTab === 'waterfalls' && waterfalls
+                {activeTab === 'cachoeiras' && waterfalls
                   .filter(item => {
-                    const matchSearch = item.name[currentLang].toLowerCase().includes(searchQuery.toLowerCase());
+                    const matchSearch = (item.name[currentLang] || item.name['pt'] || "").toLowerCase().includes(searchQuery.toLowerCase());
                     const matchReg = wfRegionFilter.length === 0 || wfRegionFilter.includes(item.region);
                     const matchDiff = wfDifficultyFilter.length === 0 || wfDifficultyFilter.includes(item.difficulty);
                     const matchSeason = wfSeasonalityFilter.length === 0 || wfSeasonalityFilter.includes(item.seasonality);
@@ -618,9 +642,9 @@ export default function MonteSeuRoteiro() {
                   />
                 ))}
 
-                {activeTab === 'experiences' && experiences
+                {activeTab === 'experiencias' && experiences
                   .filter(item => {
-                    const matchSearch = item.name[currentLang].toLowerCase().includes(searchQuery.toLowerCase());
+                    const matchSearch = (item.name[currentLang] || item.name['pt'] || "").toLowerCase().includes(searchQuery.toLowerCase());
                     const matchCat = expCategoryFilter.length === 0 || expCategoryFilter.includes(item.category);
                     
                     const minPrice = parseMinPrice(item.priceRange) || 0;
@@ -658,7 +682,7 @@ export default function MonteSeuRoteiro() {
                   />
                 ))}
 
-                {activeTab === 'services' && services
+                {activeTab === 'servicos' && services
                   .filter(item => {
                     const matchSearch = item.title[currentLang].toLowerCase().includes(searchQuery.toLowerCase());
                     const matchCat = srvCategoryFilter.length === 0 || srvCategoryFilter.includes(item.category);

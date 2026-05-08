@@ -107,11 +107,13 @@ const App = () => (
                 <Route path="/roteiros" element={<ProtectedRoute><Itineraries /></ProtectedRoute>} />
                 <Route path="/roteiros/:id" element={<ProtectedRoute><ItineraryDetail /></ProtectedRoute>} />
                 <Route path="/monte-seu-roteiro" element={<ProtectedRoute><MonteSeuRoteiro /></ProtectedRoute>} />
+                <Route path="/monte-seu-roteiro/:category" element={<ProtectedRoute><MonteSeuRoteiro /></ProtectedRoute>} />
                 <Route path="/novo-roteiro" element={<ProtectedRoute><BuildItinerary /></ProtectedRoute>} />
-                <Route path="/cachoeiras" element={<ProtectedRoute><Waterfalls /></ProtectedRoute>} />
-                <Route path="/experiencias" element={<ProtectedRoute><Experiences /></ProtectedRoute>} />
-                <Route path="/hospedagens" element={<ProtectedRoute><Accommodations /></ProtectedRoute>} />
-                <Route path="/servicos" element={<ProtectedRoute><Services /></ProtectedRoute>} />
+                {/* Redirect legacy paths to centralized Monte Seu Roteiro */}
+                <Route path="/cachoeiras" element={<Navigate to="/monte-seu-roteiro/cachoeiras" replace />} />
+                <Route path="/experiencias" element={<Navigate to="/monte-seu-roteiro/experiencias" replace />} />
+                <Route path="/hospedagens" element={<Navigate to="/monte-seu-roteiro/hospedagens" replace />} />
+                <Route path="/servicos" element={<Navigate to="/monte-seu-roteiro/servicos" replace />} />
                 <Route path="/imersoes" element={<ProtectedRoute><Immersions /></ProtectedRoute>} />
                 <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
                 <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

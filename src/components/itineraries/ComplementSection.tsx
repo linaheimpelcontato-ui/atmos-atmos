@@ -6,17 +6,17 @@ import { optimizedUrl } from "@/lib/storage";
 const complements = [
   {
     key: "experiences",
-    path: "/experiencias",
+    path: "/monte-seu-roteiro/experiencias",
     image: optimizedUrl("home/cat-experiences.jpg", { width: 640, quality: 75 })
   },
   {
     key: "accommodations",
-    path: "/hospedagens",
+    path: "/monte-seu-roteiro/hospedagens",
     image: optimizedUrl("home/cat-accommodations.jpg", { width: 640, quality: 75 })
   },
   {
     key: "services",
-    path: "/servicos",
+    path: "/monte-seu-roteiro/servicos",
     image: optimizedUrl("home/cat-services.jpg", { width: 640, quality: 75 })
   }
 ];

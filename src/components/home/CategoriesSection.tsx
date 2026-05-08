@@ -3,10 +3,10 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { optimizedUrl } from "@/lib/storage";
 
 const categories = [
-  { key: "waterfalls", path: "/cachoeiras", image: optimizedUrl("home/cat-waterfalls.jpg", { quality: 70 }), objectPosition: "center 80%" },
-  { key: "experiences", path: "/experiencias", image: optimizedUrl("home/cat-experiences.jpg", { quality: 70 }) },
-  { key: "accommodations", path: "/hospedagens", image: optimizedUrl("home/cat-accommodations.jpg", { quality: 70 }) },
-  { key: "services", path: "/servicos", image: optimizedUrl("home/cat-services.jpg", { quality: 70 }), objectPosition: "center 25%" },
+  { key: "waterfalls", path: "/monte-seu-roteiro/cachoeiras", image: optimizedUrl("home/cat-waterfalls.jpg", { quality: 70 }), objectPosition: "center 80%" },
+  { key: "experiences", path: "/monte-seu-roteiro/experiencias", image: optimizedUrl("home/cat-experiences.jpg", { quality: 70 }) },
+  { key: "accommodations", path: "/monte-seu-roteiro/hospedagens", image: optimizedUrl("home/cat-accommodations.jpg", { quality: 70 }) },
+  { key: "services", path: "/monte-seu-roteiro/servicos", image: optimizedUrl("home/cat-services.jpg", { quality: 70 }), objectPosition: "center 25%" },
 ];
 
 export default function CategoriesSection() {

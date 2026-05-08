@@ -48,10 +48,11 @@ type PendingChange = PendingFocal | PendingOverride | PendingImageReplace;
 const PAGES = [
   { label: "Home", path: "/" },
   { label: "Roteiros", path: "/roteiros" },
-  { label: "Cachoeiras", path: "/cachoeiras" },
-  { label: "Experiências", path: "/experiencias" },
-  { label: "Hospedagens", path: "/hospedagens" },
-  { label: "Serviços", path: "/servicos" },
+  { label: "Monte seu Roteiro", path: "/monte-seu-roteiro" },
+  { label: "Cachoeiras", path: "/monte-seu-roteiro/cachoeiras" },
+  { label: "Experiências", path: "/monte-seu-roteiro/experiencias" },
+  { label: "Hospedagens", path: "/monte-seu-roteiro/hospedagens" },
+  { label: "Serviços", path: "/monte-seu-roteiro/servicos" },
   { label: "Imersões", path: "/imersoes" },
   { label: "Dúvidas", path: "/duvidas" },
 ];
