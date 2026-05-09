@@ -45,6 +45,7 @@ export interface Service {
   type?: string;
   variables?: any;
   name?: string;
+  region?: string;
 }
 
 export const categoryLabels: Record<ServiceCategory, Record<Language, string>> = {

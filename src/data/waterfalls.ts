@@ -7,7 +7,7 @@ export type Seasonality = "chuva" | "seca" | "anual";
 export interface Waterfall {
   id: string;
   name: Record<Language, string>;
-  region: Region;
+  region: Region | string;
   difficulty: Difficulty;
   seasonality: Seasonality;
   distanceKm: number;

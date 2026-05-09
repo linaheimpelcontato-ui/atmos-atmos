@@ -14,7 +14,7 @@ export type Amenity =
 export interface Accommodation {
   id: string;
   name: string;
-  region: AccRegion;
+  region: AccRegion | string;
   type: AccType;
   priceRange: string;
   capacity: string;

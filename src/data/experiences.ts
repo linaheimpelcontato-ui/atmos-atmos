@@ -10,6 +10,7 @@ export interface Experience {
   description: Record<Language, string>;
   imageKey: string;
   storageId?: string;
+  region?: string;
 }
 
 export const categoryLabels: Record<ExperienceCategory, Record<Language, string>> = {
