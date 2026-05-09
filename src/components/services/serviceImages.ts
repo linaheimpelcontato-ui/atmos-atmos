@@ -20,15 +20,8 @@ export const serviceImages: Record<ServiceCategory, string[]> = {
 export function useServiceImages(id: string, category: ServiceCategory, storageId?: string) {
   const query = useStorageImages("produtos/servicos", storageId || "");
   const idQuery = useStorageImages("produtos/servicos", id);
-  const accentQuery = useStorageImages("produtos/serviços", storageId || "");
-  const accentIdQuery = useStorageImages("produtos/serviços", id);
 
-  const allImages = [
-    ...(query.data || []), 
-    ...(idQuery.data || []),
-    ...(accentQuery.data || []),
-    ...(accentIdQuery.data || [])
-  ];
+  const allImages = [...(query.data || []), ...(idQuery.data || [])];
   const uniqueImages = Array.from(new Set(allImages));
 
   // Fallback to category defaults while loading or if empty

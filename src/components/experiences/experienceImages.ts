@@ -20,15 +20,8 @@ export function useExperienceGallery(imageKey: string, namePt?: string, id?: str
   // Use both imageKey and namePt as potential prefixes
   const query = useStorageImages("produtos/experiencias", imageKey);
   const nameQuery = useStorageImages("produtos/experiencias", namePt || "", !!namePt);
-  const capQuery = useStorageImages("produtos/Experiencias", imageKey);
-  const capNameQuery = useStorageImages("produtos/Experiencias", namePt || "", !!namePt);
 
-  const allImages = [
-    ...(query.data || []), 
-    ...(nameQuery.data || []),
-    ...(capQuery.data || []),
-    ...(capNameQuery.data || [])
-  ];
+  const allImages = [...(query.data || []), ...(nameQuery.data || [])];
   const uniqueImages = Array.from(new Set(allImages));
 
   const fallbackPath = (id && experienceSpecifics[id]) 
@@ -39,7 +32,7 @@ export function useExperienceGallery(imageKey: string, namePt?: string, id?: str
 
   return {
     images: uniqueImages.length > 0 ? uniqueImages : fallback,
-    isLoading: query.isLoading || nameQuery.isLoading || capQuery.isLoading || capNameQuery.isLoading,
+    isLoading: query.isLoading || nameQuery.isLoading,
   };
 }
 

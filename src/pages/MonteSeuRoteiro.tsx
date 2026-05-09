@@ -17,7 +17,7 @@ import { experiences as staticExperiences, Experience, ExperienceCategory, categ
 import { accommodations as staticAccommodations, Accommodation, AccRegion, AccType, accRegionLabels, accTypeLabels, amenityLabels, getAllAmenities, parsePriceRange } from "@/data/accommodations";
 import { services as staticServices, Service, categoryLabels as srvCategoryLabels, ServiceCategory } from "@/data/services";
 
-const regionLabels = { ...wfRegionLabels, ...accRegionLabels };
+const regionLabels = { ...wfRegionLabels, ...accRegionLabels } as any;
 
 // Components
 import WaterfallCard from "@/components/waterfalls/WaterfallCard";
