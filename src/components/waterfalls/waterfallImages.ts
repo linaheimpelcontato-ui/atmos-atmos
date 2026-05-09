@@ -15,8 +15,15 @@ export function useWaterfallImages(id: string, name: string) {
   // Use the full name and normalized ID for better matching with R2 folders
   const query = useStorageImages("produtos/cachoeiras", name);
   const idQuery = useStorageImages("produtos/cachoeiras", id);
+  const capQuery = useStorageImages("produtos/Cachoeiras", name);
+  const capIdQuery = useStorageImages("produtos/Cachoeiras", id);
   
-  const allImages = [...(query.data || []), ...(idQuery.data || [])];
+  const allImages = [
+    ...(query.data || []), 
+    ...(idQuery.data || []),
+    ...(capQuery.data || []),
+    ...(capIdQuery.data || [])
+  ];
   const uniqueImages = Array.from(new Set(allImages));
 
   // Fallback to optimized URLs using the new structure
@@ -24,7 +31,7 @@ export function useWaterfallImages(id: string, name: string) {
 
   return {
     images: uniqueImages.length > 0 ? uniqueImages : fallback,
-    isLoading: query.isLoading || idQuery.isLoading,
+    isLoading: query.isLoading || idQuery.isLoading || capQuery.isLoading || capIdQuery.isLoading,
   };
 }
 

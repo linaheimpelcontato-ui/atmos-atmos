@@ -17,6 +17,8 @@ import { experiences as staticExperiences, Experience, ExperienceCategory, categ
 import { accommodations as staticAccommodations, Accommodation, AccRegion, AccType, accRegionLabels, accTypeLabels, amenityLabels, getAllAmenities, parsePriceRange } from "@/data/accommodations";
 import { services as staticServices, Service, categoryLabels as srvCategoryLabels, ServiceCategory } from "@/data/services";
 
+const regionLabels = { ...wfRegionLabels, ...accRegionLabels };
+
 // Components
 import WaterfallCard from "@/components/waterfalls/WaterfallCard";
 import WaterfallDetailDialog from "@/components/waterfalls/WaterfallDetailDialog";
@@ -144,6 +146,18 @@ const FilterSlider = ({ value, onChange, min, max, step, label, unit }: { value:
   </Popover>
 );
 
+// Super Normalizer: Removes accents, spaces, and special chars for total resilience
+const superNormalize = (str: string | null | undefined): string => {
+  if (!str) return "";
+  return str
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // Remove accents
+    .replace(/[^\w\s-]/g, "") // Remove special chars
+    .replace(/\s+/g, "-") // Spaces to hyphens
+    .trim();
+};
+
 export default function MonteSeuRoteiro() {
   const { language = "pt", t } = useLanguage();
   const { count } = useWishlist();
@@ -184,6 +198,17 @@ export default function MonteSeuRoteiro() {
   const { data: dbAccommodations = [] } = useProducts("accommodation");
   const { data: dbServices = [] } = useProducts("service");
 
+  useEffect(() => {
+    const uniqueRegions = [...new Set(dbWaterfalls.map(d => d.segment).filter(Boolean))];
+    console.log("DEBUG - Unique Regions in DB:", uniqueRegions);
+    console.log("DEBUG - Products Data Count:", {
+      waterfalls: dbWaterfalls.length,
+      experiences: dbExperiences.length,
+      accommodations: dbAccommodations.length,
+      services: dbServices.length
+    });
+  }, [dbWaterfalls, dbExperiences, dbAccommodations, dbServices]);
+
   const waterfalls = useMemo(() => {
     if (!dbWaterfalls || dbWaterfalls.length === 0) return staticWaterfalls;
 
@@ -198,7 +223,7 @@ export default function MonteSeuRoteiro() {
           en: staticEntry?.name.en || db.name, 
           es: staticEntry?.name.es || db.name 
         },
-        region: (db.segment || staticEntry?.region || "alto-paraiso") as any,
+        region: superNormalize((db.variables as any)?.region || (db.category && regionLabels[db.category] ? db.category : "") || (db.segment !== "b2c" && db.segment !== "b2b" ? db.segment : "") || staticEntry?.region || "alto-paraiso") as any,
         distanceKm: Number(vars.distanceKm || staticEntry?.distanceKm || 0),
         distanceCarKm: Number(vars.distanceCarKm || staticEntry?.distanceCarKm || 0),
         difficulty: (vars.difficulty || staticEntry?.difficulty || "facil") as any,
@@ -239,6 +264,7 @@ export default function MonteSeuRoteiro() {
           en: staticEntry?.description.en || db.description || "",
           es: staticEntry?.description.es || db.description || "",
         },
+        region: superNormalize((db.variables as any)?.region || (db.category && regionLabels[db.category] ? db.category : "") || (db.segment !== "b2c" && db.segment !== "b2b" ? db.segment : "") || staticEntry?.region || "alto-paraiso") as any,
         imageKey: staticEntry?.imageKey || db.source_id || db.id,
         storageId: staticEntry?.id || normalize(db.name),
       } as Experience;
@@ -255,8 +281,8 @@ export default function MonteSeuRoteiro() {
       return {
         id: db.id,
         name: db.name,
-        region: (vars.region || db.category || staticEntry?.region || "alto-paraiso") as AccRegion,
-        type: (db.segment || staticEntry?.type || "pousada") as AccType,
+        region: superNormalize((db.variables as any)?.region || (db.category && regionLabels[db.category] ? db.category : "") || (db.segment !== "b2c" && db.segment !== "b2b" ? db.segment : "") || staticEntry?.region || "alto-paraiso") as any,
+        type: (vars.type || db.category || staticEntry?.type || "pousada") as AccType,
         priceRange: vars.priceRange || staticEntry?.priceRange || "R$ 0 – R$ 0",
         amenities: vars.amenities || staticEntry?.amenities || [],
         units: Number(vars.units || staticEntry?.units || 1),
@@ -627,7 +653,11 @@ export default function MonteSeuRoteiro() {
                 {activeTab === 'cachoeiras' && waterfalls
                   .filter(item => {
                     const matchSearch = (item.name[currentLang] || item.name['pt'] || "").toLowerCase().includes(searchQuery.toLowerCase());
-                    const matchReg = wfRegionFilter.length === 0 || wfRegionFilter.includes(item.region);
+                    const matchReg = wfRegionFilter.length === 0 || wfRegionFilter.some(f => {
+                      const itemReg = superNormalize(item.region);
+                      const filterReg = superNormalize(f);
+                      return itemReg.includes(filterReg) || filterReg.includes(itemReg);
+                    });
                     const matchDiff = wfDifficultyFilter.length === 0 || wfDifficultyFilter.includes(item.difficulty);
                     const matchSeason = wfSeasonalityFilter.length === 0 || wfSeasonalityFilter.includes(item.seasonality);
                     const matchTrail = item.distanceKm >= wfTrailFilter[0] && item.distanceKm <= wfTrailFilter[1];
@@ -663,7 +693,11 @@ export default function MonteSeuRoteiro() {
                 {activeTab === 'hospedagens' && accommodations
                   .filter(item => {
                     const matchSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
-                    const matchReg = accRegionFilter.length === 0 || accRegionFilter.includes(item.region);
+                    const matchReg = accRegionFilter.length === 0 || accRegionFilter.some(f => {
+                      const itemReg = superNormalize(item.region);
+                      const filterReg = superNormalize(f);
+                      return itemReg.includes(filterReg) || filterReg.includes(itemReg);
+                    });
                     const matchType = accTypeFilter.length === 0 || accTypeFilter.includes(item.type);
                     const matchUnits = item.units >= accUnitsFilter[0] && item.units <= accUnitsFilter[1];
                     const matchCapacity = item.totalCapacity >= accCapacityFilter[0] && item.totalCapacity <= accCapacityFilter[1];

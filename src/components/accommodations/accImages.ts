@@ -4,8 +4,15 @@ import { useStorageImages } from "@/hooks/useStorageImages";
 export function useAccImages(id: string, name?: string) {
   const query = useStorageImages("produtos/hospedagens", name || "");
   const idQuery = useStorageImages("produtos/hospedagens", id);
+  const capQuery = useStorageImages("produtos/Hospedagens", name || "");
+  const capIdQuery = useStorageImages("produtos/Hospedagens", id);
 
-  const allImages = [...(query.data || []), ...(idQuery.data || [])];
+  const allImages = [
+    ...(query.data || []), 
+    ...(idQuery.data || []),
+    ...(capQuery.data || []),
+    ...(capIdQuery.data || [])
+  ];
   const uniqueImages = Array.from(new Set(allImages));
 
   // Fallback using the new structure
@@ -15,7 +22,7 @@ export function useAccImages(id: string, name?: string) {
 
   return {
     images: uniqueImages.length > 0 ? uniqueImages : fallback,
-    isLoading: query.isLoading || idQuery.isLoading,
+    isLoading: query.isLoading || idQuery.isLoading || capQuery.isLoading || capIdQuery.isLoading,
   };
 }
 
