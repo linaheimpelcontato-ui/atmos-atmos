@@ -164,16 +164,26 @@ function SmartFilterPopover({
   // Extract unique values
   const uniqueValues = useMemo(() => {
     const valSet = new Map<string, string>(); // strVal → displayLabel
+    
+    // 1. First, if we have a labelMap, pre-populate with all possible options
+    if (labelMap) {
+      Object.entries(labelMap).forEach(([val, label]) => {
+        valSet.set(val, label);
+      });
+    }
+
+    // 2. Then, add any values that exist in the data but aren't in the labelMap
     data.forEach((row) => {
       const rawVal = valueExtractor
         ? valueExtractor(row)
         : (row as Record<string, unknown>)[sortKey];
       const strVal = rawVal == null ? "" : String(rawVal);
       if (!valSet.has(strVal)) {
-        const display = labelMap?.[strVal] || (strVal === "" ? "(vazio)" : strVal);
+        const display = (strVal === "" ? "(vazio)" : strVal);
         valSet.set(strVal, display);
       }
     });
+
     return Array.from(valSet.entries())
       .sort((a, b) => String(a[1]).localeCompare(String(b[1]), "pt-BR", { sensitivity: "base" }));
   }, [data, sortKey, valueExtractor, labelMap]);
@@ -496,11 +506,18 @@ export function SortableSmartTableHead({
 
   const uniqueValues = useMemo(() => {
     const valSet = new Map<string, string>();
+    
+    if (labelMap) {
+      Object.entries(labelMap).forEach(([val, label]) => {
+        valSet.set(val, label);
+      });
+    }
+
     data.forEach((row) => {
       const rawVal = valueExtractor ? valueExtractor(row) : (row as Record<string, unknown>)[sortKey];
       const strVal = rawVal == null ? "" : String(rawVal);
       if (!valSet.has(strVal)) {
-        const display = labelMap?.[strVal] || (strVal === "" ? "(vazio)" : strVal);
+        const display = (strVal === "" ? "(vazio)" : strVal);
         valSet.set(strVal, display);
       }
     });
