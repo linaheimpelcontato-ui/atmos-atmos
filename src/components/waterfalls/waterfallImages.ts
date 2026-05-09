@@ -1,4 +1,4 @@
-import { storageUrl } from "@/lib/storage";
+import { storageUrl, optimizedUrl } from "@/lib/storage";
 import { useStorageImages } from "@/hooks/useStorageImages";
 
 /** Map of waterfall IDs that use a different storage key than their data ID */
@@ -19,7 +19,7 @@ export function useWaterfallImages(id: string, name: string) {
   const uniqueImages = Array.from(new Set(allImages));
 
   // Fallback to optimized URLs using the new structure
-  const fallback = [1, 2, 3].map((n) => storageUrl(`produtos/cachoeiras/${id}/${id}-${n}.jpg`));
+  const fallback = [1, 2, 3].map((n) => optimizedUrl(`produtos/cachoeiras/${id}/${id}-${n}.jpg`, { width: 1000, quality: 80 }));
 
   return {
     images: uniqueImages.length > 0 ? uniqueImages : fallback,
@@ -29,10 +29,10 @@ export function useWaterfallImages(id: string, name: string) {
 
 /** Synchronous fallback — used for cards (always first image) */
 export function getWaterfallCardImage(id: string, name: string): string {
-  return storageUrl(`produtos/cachoeiras/${id}/${id}-1.jpg`);
+  return optimizedUrl(`produtos/cachoeiras/${id}/${id}-1.jpg`, { width: 1000, quality: 80 });
 }
 
 /** Legacy sync function — kept for backward compatibility */
 export function getWaterfallImages(id: string, name: string): string[] {
-  return [1, 2, 3].map((n) => storageUrl(`produtos/cachoeiras/${id}/${id}-n.jpg`));
+  return [1, 2, 3].map((n) => optimizedUrl(`produtos/cachoeiras/${id}/${id}-n.jpg`, { width: 1000, quality: 80 }));
 }

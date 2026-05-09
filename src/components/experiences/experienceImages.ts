@@ -28,7 +28,7 @@ export function useExperienceGallery(imageKey: string, namePt?: string, id?: str
     ? (experienceSpecifics[id].startsWith('produtos') ? experienceSpecifics[id] : `produtos/experiencias/${experienceSpecifics[id].split('/').pop()}`)
     : `produtos/experiencias/${imageKey}/${imageKey}-1.jpg`;
     
-  const fallback = [storageUrl(fallbackPath)];
+  const fallback = [optimizedUrl(fallbackPath, { width: 1000, quality: 80 })];
 
   return {
     images: uniqueImages.length > 0 ? uniqueImages : fallback,
@@ -42,14 +42,14 @@ export function getCardImage(id: string, imageKey?: string): string {
   
   if (experienceSpecifics[id]) {
     const path = experienceSpecifics[id];
-    return storageUrl(path.startsWith('produtos') ? path : `produtos/experiencias/${path.split('/').pop()}`);
+    return optimizedUrl(path.startsWith('produtos') ? path : `produtos/experiencias/${path.split('/').pop()}`, { width: 1000, quality: 80 });
   }
   
   const key = imageKey || id;
   if (key.startsWith('http')) return key;
-  if (key.includes('/')) return storageUrl(key);
+  if (key.includes('/')) return optimizedUrl(key, { width: 1000, quality: 80 });
   
-  return storageUrl(`produtos/experiencias/${key}/${key}-1.jpg`);
+  return optimizedUrl(`produtos/experiencias/${key}/${key}-1.jpg`, { width: 1000, quality: 80 });
 }
 
 /** Legacy sync function — kept for backward compatibility */
