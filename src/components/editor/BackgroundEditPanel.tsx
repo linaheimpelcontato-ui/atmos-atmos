@@ -287,7 +287,7 @@ export default function BackgroundEditPanel({ element, onOverride, onClose, curr
           </label>
           {bgImage ? (
             <div className="relative rounded-lg overflow-hidden border border-white/10">
-              <img src={bgImage} alt="" className="w-full h-20 object-cover" />
+              <img loading="lazy" src={bgImage} alt="" className="w-full h-20 object-cover" />
               <button
                 onClick={() => setBgImage(null)}
                 className="absolute top-1 right-1 bg-red-500/90 hover:bg-red-600 text-white p-1 rounded"

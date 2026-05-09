@@ -199,7 +199,7 @@ export function ProductVariationsTab({
                           {v.media && v.media.length > 0 && info ? (
                             <div className="grid grid-cols-2 grid-rows-2 w-full h-full gap-0.5">
                               {v.media.slice(0, 4).map((m, i) => (
-                                <img 
+                                <img loading="lazy" 
                                   key={i}
                                   src={optimizedUrl(`${info.folder}/${m}`, IMAGE_PRESETS.thumbnail)}
                                   className="w-full h-full object-cover"
@@ -254,7 +254,7 @@ export function ProductVariationsTab({
                                         (v.media || []).includes(m) ? "border-primary ring-2 ring-primary/20" : "border-transparent hover:border-muted-foreground/30"
                                       )}
                                     >
-                                      <img 
+                                      <img loading="lazy" 
                                         src={optimizedUrl(`${info!.folder}/${m}`, IMAGE_PRESETS.thumbnail)}
                                         className="w-full h-full object-cover"
                                         alt=""
@@ -346,7 +346,7 @@ export function ProductVariationsTab({
                         <div className="flex flex-wrap gap-1.5 pt-1">
                           {v.media.map((m) => (
                             <div key={m} className="group/img relative h-7 w-7 rounded-lg overflow-hidden border border-border/50 bg-muted/20 shadow-sm">
-                              <img 
+                              <img loading="lazy" 
                                 src={optimizedUrl(`${info.folder}/${m}`, IMAGE_PRESETS.thumbnail)}
                                 className="w-full h-full object-cover"
                                 alt=""

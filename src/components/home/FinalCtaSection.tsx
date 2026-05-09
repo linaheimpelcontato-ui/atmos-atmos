@@ -78,7 +78,7 @@ const GalleryRing = ({ radius, count, speed, imgSize, opacity = 1, images }: { r
               transform: `translate(-50%, -50%) rotate(${angleStep + 90}deg)`,
             }}
           >
-            <img src={img} alt="" className="w-full h-full object-cover" />
+            <img loading="lazy" src={img} alt="" className="w-full h-full object-cover" />
           </div>
         );
       })}

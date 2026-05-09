@@ -171,7 +171,7 @@ function Lightbox({
                   <Film className="h-3 w-3 text-white/50" />
                 </div>
               ) : (
-                <img src={u} alt={fileNames[i].split('/').pop()} className="w-full h-full object-cover" />
+                <img loading="lazy" src={u} alt={fileNames[i].split('/').pop()} className="w-full h-full object-cover" />
               )}
             </button>
           ))}

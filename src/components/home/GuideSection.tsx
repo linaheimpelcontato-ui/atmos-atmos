@@ -12,7 +12,7 @@ export default function GuideSection() {
         <div className="flex flex-col md:flex-row items-center gap-10">
           <div className="flex-shrink-0">
             <div className="w-48 h-48 rounded-full overflow-hidden shadow-lg">
-              <img src={joaoAccioly} alt="João Accioly" className="w-full h-full object-cover" />
+              <img loading="lazy" src={joaoAccioly} alt="João Accioly" className="w-full h-full object-cover" />
             </div>
           </div>
           <div>

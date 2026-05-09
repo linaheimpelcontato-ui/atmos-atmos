@@ -230,7 +230,7 @@ const Wishlist = () => {
       <section className="relative min-h-[40vh] flex items-center bg-[#1A261B] overflow-hidden">
         {/* Background Image - User provided */}
         <div className="absolute inset-0 z-0">
-          <img 
+          <img loading="lazy" 
             src={storageUrl("preferencias/preferencias-bg.jpeg")} 
             className="w-full h-full object-cover"
             alt="Preferências Background"
@@ -342,7 +342,7 @@ const Wishlist = () => {
                               const finalUrl = item.imageUrl || storageUrl(`${bucket}/${storageId}-1.jpg`);
 
                               return finalUrl ? (
-                                <img 
+                                <img loading="lazy" 
                                   src={finalUrl} 
                                   alt={item.name} 
                                   className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"

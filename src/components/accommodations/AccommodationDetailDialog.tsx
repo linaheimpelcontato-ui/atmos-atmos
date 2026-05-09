@@ -182,7 +182,7 @@ export default function AccommodationDetailDialog({
                 transition={{ delay: 0.1 * index }}
                 className="aspect-[4/5] overflow-hidden rounded-[2px] border border-[#1A261B]/5"
               >
-                <img 
+                <img loading="lazy" 
                   src={img} 
                   className="w-full h-full object-cover grayscale-[0.2] hover:grayscale-0 transition-all duration-700 hover:scale-110" 
                   alt={`${accommodation.name} ${index + 1}`} 
@@ -317,7 +317,7 @@ export default function AccommodationDetailDialog({
                     <span className="text-[10px] font-bold uppercase tracking-widest text-white block drop-shadow-lg">Assista o vídeo</span>
                   </div>
                 </div>
-                <img 
+                <img loading="lazy" 
                   src={images[3] || images[0]} 
                   className="w-full h-full object-cover grayscale-[0.2] transition-transform duration-1000 group-hover:scale-105" 
                   alt="Video thumbnail" 
@@ -340,7 +340,7 @@ export default function AccommodationDetailDialog({
                 transition={{ delay: index * 0.05 }}
                 className="break-inside-avoid relative overflow-hidden rounded-[2px] group cursor-pointer border border-[#1A261B]/5"
               >
-                <img 
+                <img loading="lazy" 
                   src={img} 
                   className="w-full h-auto object-cover transition-transform duration-1000 group-hover:scale-105" 
                   alt={`${accommodation.name} gallery ${index + 1}`}

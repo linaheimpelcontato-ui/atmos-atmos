@@ -70,7 +70,7 @@ export default function KanbanCard({ prospect, onClick, onDragStart, feedbackCou
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             {prospect.logo_url && (
-              <img src={prospect.logo_url} alt="" className="h-5 w-5 rounded object-cover shrink-0" />
+              <img loading="lazy" src={prospect.logo_url} alt="" className="h-5 w-5 rounded object-cover shrink-0" />
             )}
             <p className="font-black text-sm truncate flex-1 text-admin-primary dark:text-white">{prospect.name}</p>
             <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border shrink-0 ${SOURCE_STYLES[prospect.source] ?? SOURCE_STYLES.manual}`}>

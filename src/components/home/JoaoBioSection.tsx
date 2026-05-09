@@ -63,7 +63,7 @@ export default function JoaoBioSection() {
           >
             <div className="aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl relative group">
               <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-700 z-10" />
-              <img 
+              <img loading="lazy" 
                 src={joaoAccioly} 
                 alt="João Accioly" 
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 ease-out" 

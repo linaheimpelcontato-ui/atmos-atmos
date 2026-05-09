@@ -84,7 +84,7 @@ export default function GuideLayout() {
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex w-64 bg-card border-r border-border flex-col shrink-0 shadow-sm z-10">
         <div className="px-5 py-5 border-b border-border">
-          <img src={logoAtmos} alt="ATMOS" className="h-10 mb-1" />
+          <img loading="lazy" src={logoAtmos} alt="ATMOS" className="h-10 mb-1" />
           <div className="flex items-center gap-1.5 mt-2">
             <ShieldCheck className="h-3.5 w-3.5 text-green-600" />
             <span className="text-[11px] font-bold text-green-600 uppercase tracking-widest">Painel Parceiro</span>
@@ -103,7 +103,7 @@ export default function GuideLayout() {
           >
             <Menu className="h-5 w-5" />
           </button>
-          <img src={logoAtmos} alt="ATMOS" className="h-7" />
+          <img loading="lazy" src={logoAtmos} alt="ATMOS" className="h-7" />
         </div>
         <div className="flex items-center justify-center h-7 w-7 rounded-full bg-green-100">
            <ShieldCheck className="h-4 w-4 text-green-600" />
@@ -115,7 +115,7 @@ export default function GuideLayout() {
         <SheetContent side="left" className="w-72 p-0 flex flex-col overflow-hidden bg-card">
           <SheetHeader className="px-5 py-5 border-b border-border shrink-0">
             <SheetTitle className="flex flex-col items-start gap-2 text-left">
-              <img src={logoAtmos} alt="ATMOS" className="h-9" />
+              <img loading="lazy" src={logoAtmos} alt="ATMOS" className="h-9" />
               <div className="flex items-center gap-1.5">
                 <ShieldCheck className="h-3 w-3 text-green-600" />
                 <span className="text-[10px] font-bold text-green-600 uppercase tracking-wider">Painel Parceiro</span>

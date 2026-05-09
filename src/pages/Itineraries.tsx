@@ -359,7 +359,7 @@ const Itineraries = () => {
         <section className="py-24 overflow-hidden relative bg-[#0A0F0A]">
           {/* Background Image with Blur (No Grayscale) */}
           <div className="absolute inset-0 z-0">
-            <img 
+            <img loading="lazy" 
               src={storageUrl("duvidas/duvidas-bg.jpg")} 
               alt="" 
               className="w-full h-full object-cover opacity-60 blur-sm scale-110" 

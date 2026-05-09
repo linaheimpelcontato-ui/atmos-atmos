@@ -80,7 +80,7 @@ export default function ResetPassword() {
         {/* Logo */}
         <div className="flex justify-center mb-8">
           <a href="/">
-            <img src={logoAtmos} alt="ATMOS" className="h-16" />
+            <img loading="lazy" src={logoAtmos} alt="ATMOS" className="h-16" />
           </a>
         </div>
 

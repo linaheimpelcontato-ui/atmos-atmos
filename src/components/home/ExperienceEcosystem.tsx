@@ -154,7 +154,7 @@ export default function ExperienceEcosystem() {
                   className="flex flex-col md:flex-row items-center md:items-start gap-6 group text-center md:text-left"
                 >
                   <div className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center shrink-0 border border-white/20 transition-all group-hover:bg-[#A88B4C] group-hover:text-white">
-                    <img src={item.image} alt={item.title} className="w-12 h-12 object-contain filter brightness-0 invert" />
+                    <img loading="lazy" src={item.image} alt={item.title} className="w-12 h-12 object-contain filter brightness-0 invert" />
                   </div>
                   <div className="space-y-2">
                     <h3 className="text-white text-lg font-display tracking-wide">{item.title}</h3>
@@ -207,7 +207,7 @@ export default function ExperienceEcosystem() {
                   className="flex flex-col md:flex-row-reverse items-center md:items-start gap-6 group text-center md:text-right"
                 >
                   <div className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center shrink-0 border border-white/20 transition-all group-hover:bg-[#A88B4C] group-hover:text-white">
-                    <img src={item.image} alt={item.title} className="w-12 h-12 object-contain filter brightness-0 invert" />
+                    <img loading="lazy" src={item.image} alt={item.title} className="w-12 h-12 object-contain filter brightness-0 invert" />
                   </div>
                   <div className="space-y-2">
                     <h3 className="text-white text-lg font-display tracking-wide">{item.title}</h3>

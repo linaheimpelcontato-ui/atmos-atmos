@@ -42,7 +42,7 @@ export function ProductTableRow({
           <div className="flex items-center gap-4 min-w-[250px]">
             <div className="h-10 w-10 rounded-xl bg-admin-muted border border-admin-border/50 flex items-center justify-center overflow-hidden shrink-0 shadow-sm group-hover:border-admin-primary/20 transition-all group-hover:scale-105">
               {p.variables && (p.variables as any).variations?.[0]?.media?.[0] ? (
-                <img src={(p.variables as any).variations[0].media[0]} className="h-full w-full object-cover" />
+                <img loading="lazy" src={(p.variables as any).variations[0].media[0]} className="h-full w-full object-cover" />
               ) : (
                 <ImageIcon className="h-4 w-4 text-muted-foreground/30" />
               )}

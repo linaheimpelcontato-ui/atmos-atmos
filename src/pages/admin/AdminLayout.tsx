@@ -186,7 +186,7 @@ export default function AdminLayout() {
       <aside className="hidden md:flex w-[var(--admin-sidebar-w)] bg-white border-r border-admin-border/60 flex-col shrink-0 z-30 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
         <div className="px-8 py-10">
           <Link to="/admin" className="block transition-transform active:scale-95">
-            <img src={logoAtmos} alt="ATMOS" className="h-9 w-auto object-contain" />
+            <img loading="lazy" src={logoAtmos} alt="ATMOS" className="h-9 w-auto object-contain" />
           </Link>
           <div className="flex items-center gap-2.5 mt-6 px-1">
             <div className="h-1.5 w-1.5 rounded-full bg-admin-primary animate-pulse" />
@@ -206,7 +206,7 @@ export default function AdminLayout() {
           >
             <Menu className="h-5 w-5 text-admin-primary" />
           </button>
-          <img src={logoAtmos} alt="ATMOS" className="h-6" />
+          <img loading="lazy" src={logoAtmos} alt="ATMOS" className="h-6" />
         </div>
         <div className="h-10 w-10 rounded-2xl bg-admin-primary flex items-center justify-center text-white shadow-lg shadow-admin-primary/30">
           <Shield className="h-5 w-5" />
@@ -217,7 +217,7 @@ export default function AdminLayout() {
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent side="left" className="w-[var(--admin-sidebar-w)] p-0 flex flex-col h-full border-none">
           <div className="px-8 py-10 border-b border-admin-border/50 bg-white">
-            <img src={logoAtmos} alt="ATMOS" className="h-8" />
+            <img loading="lazy" src={logoAtmos} alt="ATMOS" className="h-8" />
             <div className="flex items-center gap-2 mt-3">
               <div className="h-1.5 w-1.5 rounded-full bg-admin-primary" />
               <span className="text-[9px] font-black text-admin-primary/30 uppercase tracking-[0.2em]">Painel de Controle</span>

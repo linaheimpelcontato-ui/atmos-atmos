@@ -211,7 +211,7 @@ function DayBanner({ children, bgImage }: { children: React.ReactNode; bgImage?:
           transition={{ duration: 1.5 }}
           className="absolute inset-0 z-0"
         >
-          <img src={bgImage} alt="" className="w-full h-full object-cover grayscale-[20%]" />
+          <img loading="lazy" src={bgImage} alt="" className="w-full h-full object-cover grayscale-[20%]" />
           <div className="absolute inset-0 bg-gradient-to-b from-[#2e2019]/60 via-transparent to-[#2e2019]/80" />
         </motion.div>
       )}
@@ -775,7 +775,7 @@ export default function ProposalPublic() {
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: "#fcfaf7" }}>
       <div className="flex flex-col items-center gap-4">
-        <img src={logoAtmos} alt="ATMOS" className="h-10 animate-pulse" />
+        <img loading="lazy" src={logoAtmos} alt="ATMOS" className="h-10 animate-pulse" />
         <p className="text-sm" style={{ color: "#8d7b63" }}>Carregando...</p>
       </div>
     </div>
@@ -938,7 +938,7 @@ export default function ProposalPublic() {
       {proposal.published_at && !isAdmin && (
         <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-10 py-2"
           style={{ background: "rgba(0,0,0,0.08)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}>
-          <img src={logoAtmos} alt="ATMOS" className="h-16 md:h-20 brightness-0 invert drop-shadow-xl" />
+          <img loading="lazy" src={logoAtmos} alt="ATMOS" className="h-16 md:h-20 brightness-0 invert drop-shadow-xl" />
           <div className="flex items-center gap-2">
             {["sent", "negotiating"].includes(proposal.status) && (
               <button
@@ -999,7 +999,7 @@ export default function ProposalPublic() {
       {isAdmin && (
         <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-10 py-2"
           style={{ background: "rgba(255,255,255,0.9)", borderBottom: "1px solid #e4dbcc", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", isolation: "isolate" }}>
-          <img src={logoAtmos} alt="ATMOS" className="h-12 md:h-16 shrink-0" />
+          <img loading="lazy" src={logoAtmos} alt="ATMOS" className="h-12 md:h-16 shrink-0" />
           <div className="flex flex-wrap justify-end gap-1">
             <button
               onClick={() => { if (window.history.length > 1) navigate(-1); else navigate("/admin"); }}
@@ -1163,7 +1163,7 @@ export default function ProposalPublic() {
         className="py-32 md:py-48 px-6 bg-white border-y border-[#e4dbcc]"
       >
         <div className="max-w-4xl mx-auto text-center">
-          <img src={logoAtmos} alt="ATMOS" className="h-20 mx-auto mb-12 opacity-80" />
+          <img loading="lazy" src={logoAtmos} alt="ATMOS" className="h-20 mx-auto mb-12 opacity-80" />
           <h2 className="text-3xl md:text-6xl font-black leading-none mb-10 font-outfit uppercase tracking-tighter" style={{ color: "#2e2019" }}>
             {t.brandTitle}
           </h2>
@@ -1180,7 +1180,7 @@ export default function ProposalPublic() {
 
       {/* ══════════════════════ DIVIDER ══════════════════════ */}
       <div className="h-[40vh] md:h-[50vh] overflow-hidden">
-        <img src={dividerImage} alt="" className="w-full h-full object-cover" loading="lazy" />
+        <img loading="lazy" src={dividerImage} alt="" className="w-full h-full object-cover" />
       </div>
 
       {/* ══════════════════════ ITINERARY SECTION TITLE ══════════════════════ */}
@@ -1816,7 +1816,7 @@ export default function ProposalPublic() {
           <p className="italic text-2xl md:text-4xl font-light mb-16 leading-tight" style={{ color: "rgba(255,255,255,0.7)" }}>
             "{t.inspirational}"
           </p>
-          <img src={logoAtmos} alt="ATMOS" className="h-12 mx-auto mb-8 brightness-0 invert opacity-40" />
+          <img loading="lazy" src={logoAtmos} alt="ATMOS" className="h-12 mx-auto mb-8 brightness-0 invert opacity-40" />
           <div className="w-12 h-[1px] bg-white/10 mx-auto mb-8" />
           <p className="text-[10px] uppercase tracking-[0.5em] font-black" style={{ color: "rgba(255,255,255,0.2)" }}>{t.poweredBy}</p>
         </div>
