@@ -3,9 +3,13 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { WishlistProvider } from "./contexts/WishlistContext";
+
+import { RouteTracker } from "./components/RouteTracker";
+import { CookieConsent } from "./components/ui/CookieConsent";
 
 // Pages
 import Index from "./pages/Index";
@@ -90,12 +94,15 @@ const queryClient = new QueryClient({
 });
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <LanguageProvider>
-      <AuthProvider>
-        <BrowserRouter>
-          <WishlistProvider>
-            <TooltipProvider>
+  <HelmetProvider>
+    <QueryClientProvider client={queryClient}>
+      <LanguageProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <WishlistProvider>
+              <TooltipProvider>
+              <CookieConsent />
+              <RouteTracker />
               <Toaster />
               <Sonner />
               <Routes>
@@ -103,18 +110,20 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/duvidas" element={<FAQ />} />
                 
-                {/* Protected Public Pages */}
-                <Route path="/roteiros" element={<ProtectedRoute><Itineraries /></ProtectedRoute>} />
-                <Route path="/roteiros/:id" element={<ProtectedRoute><ItineraryDetail /></ProtectedRoute>} />
-                <Route path="/monte-seu-roteiro" element={<ProtectedRoute><MonteSeuRoteiro /></ProtectedRoute>} />
-                <Route path="/monte-seu-roteiro/:category" element={<ProtectedRoute><MonteSeuRoteiro /></ProtectedRoute>} />
+                {/* Public Catalog Pages (SEO Enabled) */}
+                <Route path="/roteiros" element={<Itineraries />} />
+                <Route path="/roteiros/:id" element={<ItineraryDetail />} />
+                <Route path="/monte-seu-roteiro" element={<MonteSeuRoteiro />} />
+                <Route path="/monte-seu-roteiro/:category" element={<MonteSeuRoteiro />} />
                 <Route path="/novo-roteiro" element={<ProtectedRoute><BuildItinerary /></ProtectedRoute>} />
                 {/* Redirect legacy paths to centralized Monte Seu Roteiro */}
                 <Route path="/cachoeiras" element={<Navigate to="/monte-seu-roteiro/cachoeiras" replace />} />
                 <Route path="/experiencias" element={<Navigate to="/monte-seu-roteiro/experiencias" replace />} />
                 <Route path="/hospedagens" element={<Navigate to="/monte-seu-roteiro/hospedagens" replace />} />
                 <Route path="/servicos" element={<Navigate to="/monte-seu-roteiro/servicos" replace />} />
-                <Route path="/imersoes" element={<ProtectedRoute><Immersions /></ProtectedRoute>} />
+                <Route path="/imersoes" element={<Immersions />} />
+                
+                {/* Private User Pages */}
                 <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
                 <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                 
@@ -178,6 +187,7 @@ const App = () => (
       </AuthProvider>
     </LanguageProvider>
   </QueryClientProvider>
+  </HelmetProvider>
 );
 
 export default App;

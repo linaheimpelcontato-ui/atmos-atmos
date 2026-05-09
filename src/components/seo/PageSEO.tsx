@@ -10,9 +10,10 @@ interface PageSEOProps {
   description: string;
   path: string;
   image?: string;
+  keywords?: string;
 }
 
-export default function PageSEO({ title, description, path, image }: PageSEOProps) {
+export default function PageSEO({ title, description, path, image, keywords }: PageSEOProps) {
   const fullTitle = path === "/" ? title : `${title} — ${SITE_NAME}`;
   const canonical = `${BASE_URL}${path}`;
   const ogImage = image || DEFAULT_OG_IMAGE;
@@ -21,6 +22,7 @@ export default function PageSEO({ title, description, path, image }: PageSEOProp
     <Helmet>
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
+      {keywords && <meta name="keywords" content={keywords} />}
       <link rel="canonical" href={canonical} />
 
       <meta property="og:title" content={fullTitle} />
