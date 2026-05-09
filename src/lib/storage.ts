@@ -8,7 +8,7 @@ export const MAP_R2_PATH = (path: string): string => {
   return path;
 };
 
-export function storageUrl(path: string): string {
+export function getBaseStorageUrl(path: string): string {
   // If the path is already a full URL, return it as is
   if (path.startsWith("http")) return path;
   
@@ -24,6 +24,26 @@ export function storageUrl(path: string): string {
   }
   
   return `${STORAGE_BASE}/${encodedPath}`;
+}
+
+export function storageUrl(path: string): string {
+  const rawUrl = getBaseStorageUrl(path);
+  
+  // If it's already an optimized wsrv.nl URL or a video, return as is
+  if (rawUrl.includes('wsrv.nl') || rawUrl.match(/\.(mp4|mov|webm|svg|gif)$/i)) {
+    return rawUrl;
+  }
+
+  // Auto-optimize all images (jpeg, jpg, png, webp) globally for hero banners/backgrounds
+  if (rawUrl.match(/\.(jpeg|jpg|png|webp)$/i)) {
+    const absoluteUrl = rawUrl.startsWith('http') 
+      ? rawUrl 
+      : `https://www.atmos.tur.br${rawUrl}`;
+    // 1920px is safe for full screen backgrounds, compressed down to 80% quality webp
+    return `https://wsrv.nl/?url=${encodeURIComponent(absoluteUrl)}&w=1920&q=80&output=webp`;
+  }
+
+  return rawUrl;
 }
 
 interface OptimizedOptions {
@@ -44,14 +64,16 @@ export const IMAGE_PRESETS = {
 };
 
 /**
- * Returns an optimized image URL using Vercel Image Optimization.
+ * Returns an optimized image URL using wsrv.nl proxy.
  * This handles resizing, compression, and format conversion (WebP/AVIF) at the edge without extra costs.
  */
 export function optimizedUrl(path: string, opts?: OptimizedOptions): string {
   if (!path) return "";
   
   // 1. Get the base storage URL (Cloudflare R2 or Supabase)
-  const rawUrl = storageUrl(path);
+  const rawUrl = getBaseStorageUrl(path);
+  
+  if (rawUrl.includes('wsrv.nl')) return rawUrl;
   
   // 2. Build wsrv.nl optimization parameters
   // wsrv.nl caches and compresses images perfectly for free
