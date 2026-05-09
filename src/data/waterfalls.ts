@@ -57,6 +57,26 @@ export const regionDescriptions: Record<Region, Record<Language, string>> = {
     en: "Rural region located in the Kalunga Territory, about 25 km from Cavalcante. It is the base for visiting attractions such as Santa Bárbara, Candaru and Capivara. The area is the largest quilombola community in the country, with historical and cultural importance. Basic infrastructure and limited access, ideal for those seeking authentic immersion and guided cultural experiences.",
     es: "Región rural ubicada en el Territorio Kalunga, a unos 25 km de Cavalcante. Es la base para visitar atracciones como Santa Bárbara, Candaru y Capivara. El área es la mayor comunidad quilombola del país, con importancia histórica y cultural. Infraestructura básica y acceso limitado, ideal para quienes buscan inmersión auténtica y experiencias guiadas con enfoque cultural.",
   },
+  "teresina-goias": {
+    pt: "Teresina de Goiás está situada no norte da Chapada, servindo como importante ponto de acesso para diversas cachoeiras e atrativos menos explorados, oferecendo uma experiência autêntica de interior.",
+    en: "Teresina de Goiás is situated in the north of the Chapada, serving as an important access point for several less-explored waterfalls and attractions, offering an authentic countryside experience.",
+    es: "Teresina de Goiás está situada en el norte de la Chapada, sirviendo como importante punto de acesso para diversas cascadas y atractivos menos explorados, ofreciendo una experiencia auténtica de interior.",
+  },
+  "moinho": {
+    pt: "A Vila do Moinho é um refúgio rústico e charmoso próximo a Alto Paraíso, conhecido por sua tranquilidade, produção orgânica e proximidade com cachoeiras paradisíacas como as do complexo Anjos e Arcanjos.",
+    en: "Moinho Village is a rustic and charming refuge near Alto Paraíso, known for its tranquility, organic production and proximity to paradisiacal waterfalls like the Anjos and Arcanjos complex.",
+    es: "Vila do Moinho é un refugio rústico y encantador cerca de Alto Paraíso, conocido por su tranquilidad, producción orgánica y proximidad a cascadas paradisíacas como as do complejo Anjos y Arcanjos.",
+  },
+  "campo-alegre": {
+    pt: "Campo Alegre oferece vastas paisagens de Cerrado preservado e acesso a complexos de cachoeiras únicos, ideal para quem busca isolamento e contato profundo com a natureza.",
+    en: "Campo Alegre offers vast landscapes of preserved Cerrado and access to unique waterfall complexes, ideal for those seeking isolation and deep contact with nature.",
+    es: "Campo Alegre ofrece vastos paisajes de Cerrado preservado y acceso a complejos de cascadas únicos, ideal para quienes buscan aislamiento y contacto profundo con la naturaleza.",
+  },
+  "tocantins": {
+    pt: "A região do Tocantins, na divisa com a Chapada, amplia os horizontes do ecoturismo com rios volumosos e formações geológicas singulares, integrando novos roteiros de aventura ao ecossistema da região.",
+    en: "The Tocantins region, on the border with the Chapada, expands ecotourism horizons with voluminous rivers and unique geological formations, integrating new adventure itineraries into the region's ecosystem.",
+    es: "La región de Tocantins, en la frontera con la Chapada, amplía los horizontes do ecoturismo con ríos volumosos y formaciones geológicas singulares, integrando nuevas rutas de aventura al ecossistema da região.",
+  },
 };
 
 export const difficultyLabels: Record<Difficulty, Record<Language, string>> = {
