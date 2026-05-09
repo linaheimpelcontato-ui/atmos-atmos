@@ -7,8 +7,18 @@ declare global {
 }
 
 function trackEvent(eventName: string, params?: Record<string, string | number | boolean>) {
-  if (typeof window !== "undefined" && window.gtag) {
-    window.gtag("event", eventName, params);
+  if (typeof window !== "undefined") {
+    // Disparo para o Google Analytics 4 direto
+    if (window.gtag) {
+      window.gtag("event", eventName, params);
+    }
+    // Disparo explícito para o Google Tag Manager
+    if (window.dataLayer) {
+      window.dataLayer.push({
+        event: eventName,
+        ...params
+      });
+    }
   }
 }
 

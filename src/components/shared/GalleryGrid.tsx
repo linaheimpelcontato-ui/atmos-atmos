@@ -27,6 +27,7 @@ export default function GalleryGrid({ images, alt, fallbackSrc }: GalleryGridPro
             <img
               src={img}
               alt={`${alt} ${idx + 1}`}
+              loading="lazy"
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
               onError={(e) => {
                 if (fallbackSrc) (e.currentTarget as HTMLImageElement).src = fallbackSrc;

@@ -27,6 +27,8 @@ import Wishlist from "./pages/Wishlist";
 import Profile from "./pages/Profile";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
+import Privacidade from "./pages/Privacidade";
+import Termos from "./pages/Termos";
 import ProposalPublic from "./pages/ProposalPublic";
 
 // Admin Pages
@@ -109,6 +111,8 @@ const App = () => (
                 {/* Public Home */}
                 <Route path="/" element={<Index />} />
                 <Route path="/duvidas" element={<FAQ />} />
+                <Route path="/privacidade" element={<Privacidade />} />
+                <Route path="/termos" element={<Termos />} />
                 
                 {/* Public Catalog Pages (SEO Enabled) */}
                 <Route path="/roteiros" element={<Itineraries />} />
