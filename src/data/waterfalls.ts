@@ -1,6 +1,6 @@
 import { type Language } from "@/contexts/LanguageContext";
 
-export type Region = "alto-paraiso" | "sao-jorge" | "sao-joao" | "cavalcante" | "kalunga" | "teresina-goias" | "moinho" | "campo-alegre" | "tocantins";
+export type Region = "alto-paraiso" | "sao-jorge" | "sao-joao" | "cavalcante" | "kalunga" | "teresina-goias" | "moinho" | "campo-alegre" | "colinas-do-sul" | "tocantins";
 export type Difficulty = "facil" | "moderado" | "dificil";
 export type Seasonality = "chuva" | "seca" | "anual";
 
@@ -26,8 +26,9 @@ export const regionLabels: Record<Region, Record<Language, string>> = {
   "cavalcante": { pt: "Cavalcante", en: "Cavalcante", es: "Cavalcante" },
   "kalunga": { pt: "Território Kalunga", en: "Kalunga Territory", es: "Territorio Kalunga" },
   "teresina-goias": { pt: "Teresina de Goiás", en: "Teresina de Goiás", es: "Teresina de Goiás" },
-  "moinho": { pt: "Vila do Moinho", en: "Moinho Village", es: "Vila do Moinho" },
+  "moinho": { pt: "Moinho", en: "Moinho", es: "Moinho" },
   "campo-alegre": { pt: "Campo Alegre", en: "Campo Alegre", es: "Campo Alegre" },
+  "colinas-do-sul": { pt: "Colinas do Sul", en: "Colinas do Sul", es: "Colinas do Sul" },
   "tocantins": { pt: "Tocantins", en: "Tocantins", es: "Tocantins" },
 };
 
@@ -63,14 +64,19 @@ export const regionDescriptions: Record<Region, Record<Language, string>> = {
     es: "Teresina de Goiás está situada en el norte de la Chapada, sirviendo como importante punto de acesso para diversas cascadas y atractivos menos explorados, ofreciendo una experiencia auténtica de interior.",
   },
   "moinho": {
-    pt: "A Vila do Moinho é um refúgio rústico e charmoso próximo a Alto Paraíso, conhecido por sua tranquilidade, produção orgânica e proximidade com cachoeiras paradisíacas como as do complexo Anjos e Arcanjos.",
-    en: "Moinho Village is a rustic and charming refuge near Alto Paraíso, known for its tranquility, organic production and proximity to paradisiacal waterfalls like the Anjos and Arcanjos complex.",
-    es: "Vila do Moinho é un refugio rústico y encantador cerca de Alto Paraíso, conocido por su tranquilidad, producción orgánica y proximidad a cascadas paradisíacas como as do complejo Anjos y Arcanjos.",
+    pt: "O Moinho é um refúgio rústico e charmoso próximo a Alto Paraíso, conhecido por sua tranquilidade, produção orgânica e proximidade com cachoeiras paradisíacas como as do complexo Anjos e Arcanjos.",
+    en: "Moinho is a rustic and charming refuge near Alto Paraíso, known for its tranquility, organic production and proximity to paradisiacal waterfalls like the Anjos and Arcanjos complex.",
+    es: "Moinho é un refugio rústico y encantador cerca de Alto Paraíso, conhecido por su tranquilidade, producción orgánica y proximidad a cascadas paradisíacas como as do complejo Anjos y Arcanjos.",
   },
   "campo-alegre": {
     pt: "Campo Alegre oferece vastas paisagens de Cerrado preservado e acesso a complexos de cachoeiras únicos, ideal para quem busca isolamento e contato profundo com a natureza.",
     en: "Campo Alegre offers vast landscapes of preserved Cerrado and access to unique waterfall complexes, ideal for those seeking isolation and deep contact with nature.",
     es: "Campo Alegre ofrece vastos paisajes de Cerrado preservado y acceso a complejos de cascadas únicos, ideal para quienes buscan aislamiento y contacto profundo con la naturaleza.",
+  },
+  "colinas-do-sul": {
+    pt: "Colinas do Sul está localizada no oeste da Chapada, próxima ao Lago Serra da Mesa. É famosa pelas águas termais, clima de interior e por abrigar atrativos como as Termas do Jequitibá, oferecendo uma experiência de relaxamento e conexão com o cerrado.",
+    en: "Colinas do Sul is located in the west of the Chapada, near Lake Serra da Mesa. It is famous for its thermal waters, countryside atmosphere and for housing attractions such as Termas do Jequitibá, offering a relaxation and connection with the cerrado experience.",
+    es: "Colinas do Sul se encuentra en el oeste de la Chapada, cerca del lago Serra da Mesa. Es famosa por sus aguas termales, ambiente campestre y por albergar atractivos como Termas do Jequitibá, ofreciendo una experiencia de relajación y conexión con el cerrado.",
   },
   "tocantins": {
     pt: "A região do Tocantins, na divisa com a Chapada, amplia os horizontes do ecoturismo com rios volumosos e formações geológicas singulares, integrando novos roteiros de aventura ao ecossistema da região.",
@@ -826,7 +832,7 @@ export const waterfalls: Waterfall[] = [
 ];
 
 // Helper functions
-export const getRegions = (): Region[] => ["alto-paraiso", "sao-jorge", "sao-joao", "cavalcante", "kalunga", "teresina-goias", "moinho", "campo-alegre", "tocantins"];
+export const getRegions = (): Region[] => ["alto-paraiso", "sao-jorge", "sao-joao", "cavalcante", "kalunga", "teresina-goias", "moinho", "campo-alegre", "colinas-do-sul", "tocantins"];
 export const getDifficulties = (): Difficulty[] => ["facil", "moderado", "dificil"];
 export const getSeasonalities = (): Seasonality[] => ["chuva", "seca", "anual"];
 

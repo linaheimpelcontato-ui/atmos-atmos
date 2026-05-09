@@ -90,10 +90,10 @@ export const regionLabels: Record<string, string> = {
   "cavalcante": "Cavalcante",
   "kalunga": "Território Kalunga",
   "teresina-goias": "Teresina de Goiás",
-  "moinho": "Vila do Moinho",
+  "moinho": "Moinho",
   "campo-alegre": "Campo Alegre",
+  "colinas-do-sul": "Colinas do Sul",
   "tocantins": "Tocantins",
-  "chapada-norte": "Chapada Norte",
 };
 
 export const categoryLabels: Record<string, string> = {
@@ -269,6 +269,7 @@ export const typeFields: Record<string, FieldDef[]> = {
     { key: "distanceCarKm", label: "Carro (km)", type: "number" },
   ],
   experience: [
+    { key: "region", label: "Região", type: "select", options: regionLabels },
     { key: "empresa", label: "Empresa", type: "text" },
     { key: "responsavel", label: "Responsável", type: "text" },
     { key: "telefone", label: "Telefone", type: "text" },
@@ -405,6 +406,7 @@ export const categoryFields: Record<string, FieldDef[]> = {
   // Experience (type-level)
   experience: [
     ...BASE_CATEGORY_FIELDS,
+    { key: "region", label: "Região", type: "select", options: regionLabels },
     { key: "instagram", label: "Instagram", type: "text" },
     { key: "minPessoas", label: "Mín. Pessoas", type: "number" },
     { key: "maxPessoas", label: "Máx. Pessoas", type: "number" },
@@ -414,6 +416,7 @@ export const categoryFields: Record<string, FieldDef[]> = {
   // Accommodation (type-level)
   accommodation: [
     ...BASE_CATEGORY_FIELDS,
+    { key: "region", label: "Região", type: "select", options: regionLabels },
     { key: "instagram", label: "Instagram", type: "text" },
     { key: "site", label: "Site", type: "text" },
     { key: "accommodation_type", label: "Tipo", type: "select", options: { hotel: "Hotel", pousada: "Pousada", casa: "Casa", chale: "Chalé", bangalo: "Bangalô", resort: "Resort", hostel: "Hostel" } },

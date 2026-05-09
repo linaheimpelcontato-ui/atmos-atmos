@@ -1,6 +1,6 @@
 import { type Language } from "@/contexts/LanguageContext";
 
-export type AccRegion = "alto-paraiso" | "sao-jorge" | "cavalcante" | "teresina-goias" | "moinho" | "campo-alegre" | "tocantins";
+export type AccRegion = "alto-paraiso" | "sao-jorge" | "cavalcante" | "teresina-goias" | "moinho" | "campo-alegre" | "colinas-do-sul" | "tocantins";
 export type AccType = "pousada" | "chale" | "casa" | "lodge";
 export type Amenity =
   | "piscina" | "piscina-aquecida" | "piscina-privada"
@@ -88,8 +88,9 @@ export const accRegionLabels: Record<AccRegion, Record<Language, string>> = {
   "sao-jorge": { pt: "São Jorge", en: "São Jorge", es: "São Jorge" },
   "cavalcante": { pt: "Cavalcante", en: "Cavalcante", es: "Cavalcante" },
   "teresina-goias": { pt: "Teresina de Goiás", en: "Teresina de Goiás", es: "Teresina de Goiás" },
-  "moinho": { pt: "Vila do Moinho", en: "Moinho Village", es: "Vila do Moinho" },
+  "moinho": { pt: "Moinho", en: "Moinho", es: "Moinho" },
   "campo-alegre": { pt: "Campo Alegre", en: "Campo Alegre", es: "Campo Alegre" },
+  "colinas-do-sul": { pt: "Colinas do Sul", en: "Colinas do Sul", es: "Colinas do Sul" },
   "tocantins": { pt: "Tocantins", en: "Tocantins", es: "Tocantins" },
 };
 
@@ -758,7 +759,7 @@ export const accommodations: Accommodation[] = [
 ];
 
 // Helpers
-export const getAccRegions = (): AccRegion[] => ["alto-paraiso", "sao-jorge", "cavalcante", "teresina-goias", "moinho", "campo-alegre", "tocantins"];
+export const getAccRegions = (): AccRegion[] => ["alto-paraiso", "sao-jorge", "cavalcante", "teresina-goias", "moinho", "campo-alegre", "colinas-do-sul", "tocantins"];
 export const getAccTypes = (): AccType[] => ["pousada", "chale", "casa", "lodge"];
 
 export const filterAccommodations = (
