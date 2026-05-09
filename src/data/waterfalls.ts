@@ -35,7 +35,7 @@ export const regionDescriptions: Record<Region, Record<Language, string>> = {
   "alto-paraiso": {
     pt: "Alto Paraíso está localizado na região centro-sul da Chapada dos Veadeiros, a aproximadamente 230 km de Brasília. É o município com a melhor estrutura urbana da Chapada, contando com ampla rede de hospedagem, restaurantes, mercados, farmácias, agências e serviços. Excelente ponto de apoio logístico para deslocamentos rumo a São Jorge, Cavalcante ou São João d'Aliança.",
     en: "Alto Paraíso is located in the south-central region of Chapada dos Veadeiros, approximately 230 km from Brasília. It is the municipality with the best urban infrastructure in the Chapada, with a wide network of accommodation, restaurants, markets, pharmacies, agencies and services. Excellent logistics hub for trips to São Jorge, Cavalcante or São João d'Aliança.",
-    es: "Alto Paraíso está ubicado en la región centro-sur de Chapada dos Veadeiros, a aproximadamente 230 km de Brasilia. Es el municipio con la mejor infraestructura urbana de la Chapada, con una amplia red de hospedaje, restaurantes, mercados, farmacias, agencias y servicios. Excelente punto de apoyo logístico para desplazamientos hacia São Jorge, Cavalcante o São João d'Aliança.",
+    es: "Alto Paraíso está ubicado en la región centro-sur de Chapada dos Veadeiros, a aproximadamente 230 km de Brasilia. Es el municipio con la mejor infraestructura urbana de la Chapada, con una amplia red de hospedaje, restaurantes, mercados, farmacias, agencias e servicios. Excelente punto de apoyo logístico para desplazamientos hacia São Jorge, Cavalcante o São João d'Aliança.",
   },
   "sao-jorge": {
     pt: "A Vila de São Jorge está localizada no oeste da Chapada dos Veadeiros, dentro do município de Alto Paraíso e a 36 km do centro da cidade. É a porta de entrada oficial para o Parque Nacional, oferecendo acesso direto a trilhas como Saltos, Cânions e Carrossel. Menos urbana e mais rústica, tem infraestrutura básica e uma atmosfera mais tranquila, voltada ao ecoturismo e à contemplação.",
@@ -45,12 +45,12 @@ export const regionDescriptions: Record<Region, Record<Language, string>> = {
   "sao-joao": {
     pt: "Situado ao sul da Chapada, a cerca de 160 km de Brasília, sendo o município mais próximo da capital federal. Tem acesso rápido por estrada asfaltada e está se consolidando como nova fronteira do ecoturismo na região. Boa opção para quem deseja fazer bate-volta de Brasília ou explorar novos roteiros com menor fluxo de visitantes.",
     en: "Located in the south of the Chapada, about 160 km from Brasília, it is the closest municipality to the federal capital. It has quick access via paved roads and is establishing itself as a new ecotourism frontier in the region. Good option for those who want to take day trips from Brasília or explore new routes with fewer visitors.",
-    es: "Situado al sur de la Chapada, a unos 160 km de Brasilia, siendo el municipio más cercano a la capital federal. Tiene acceso rápido por carretera asfaltada y se está consolidando como nueva frontera del ecoturismo en la región. Buena opción para quien desea hacer excursiones desde Brasilia o explorar nuevas rutas con menor flujo de visitantes.",
+    es: "Situado al sur de la Chapada, a unos 160 km de Brasilia, siendo el municipio más cercano a la capital federal. Tiene acceso rápido por carretera asfaltada y se está consolidando como nueva frontera del ecoturismo en la región. Buena opção para quien desea hacer excursiones desde Brasilia o explorar nuevas rutas con menor flujo de visitantes.",
   },
   "cavalcante": {
     pt: "Localizada no norte da Chapada, a cerca de 320 km de Brasília. Abriga algumas das cachoeiras mais famosas do Cerrado, como Ponte de Pedra, Canjica e Catoá. A infraestrutura é mais limitada, mas ainda conta com boas opções de hospedagem e alimentação. Ideal para quem busca vivenciar experiências mais remotas.",
     en: "Located in the north of the Chapada, about 320 km from Brasília. It is home to some of the most famous waterfalls in the Cerrado, such as Ponte de Pedra, Canjica and Catoá. Infrastructure is more limited but still has good accommodation and dining options. Ideal for those seeking more remote experiences.",
-    es: "Ubicada al norte de la Chapada, a unos 320 km de Brasilia. Alberga algunas de las cascadas más famosas del Cerrado, como Ponte de Pedra, Canjica y Catoá. La infraestructura es más limitada, pero aún cuenta con buenas opciones de hospedaje y alimentación. Ideal para quienes buscan vivir experiencias más remotas.",
+    es: "Ubicada al norte de la Chapada, a unos 320 km de Brasilia. Alberga algunas de las cascadas más famosas del Cerrado, como Ponte de Pedra, Canjica y Catoá. La infraestructura es mais limitada, pero aún cuenta con buenas opciones de hospedaje y alimentación. Ideal para quienes buscan vivir experiencias más remotas.",
   },
   "kalunga": {
     pt: "Região rural localizada no Território Kalunga, a cerca de 25 km de Cavalcante. É a base para visitar atrações como Santa Bárbara, Candaru e Capivara. A área é a maior comunidade quilombola do país, com importância histórica e cultural. Infraestrutura básica e acesso mais limitado, ideal para quem busca imersão autêntica e experiências guiadas com foco cultural.",
@@ -806,7 +806,7 @@ export const waterfalls: Waterfall[] = [
 ];
 
 // Helper functions
-export const getRegions = (): Region[] => ["alto-paraiso", "sao-jorge", "sao-joao", "cavalcante", "kalunga"];
+export const getRegions = (): Region[] => ["alto-paraiso", "sao-jorge", "sao-joao", "cavalcante", "kalunga", "teresina-goias", "moinho", "campo-alegre", "tocantins"];
 export const getDifficulties = (): Difficulty[] => ["facil", "moderado", "dificil"];
 export const getSeasonalities = (): Seasonality[] => ["chuva", "seca", "anual"];
 
@@ -814,7 +814,7 @@ export const TRAIL_DISTANCE_MAX = 25;
 export const CAR_DISTANCE_MAX = 500;
 
 export const filterWaterfalls = (
-  regions?: Region[],
+  regions?: string[],
   difficulties?: Difficulty[],
   seasonalities?: Seasonality[],
   searchQuery?: string,

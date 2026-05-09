@@ -758,11 +758,11 @@ export const accommodations: Accommodation[] = [
 ];
 
 // Helpers
-export const getAccRegions = (): AccRegion[] => ["alto-paraiso", "sao-jorge", "cavalcante"];
+export const getAccRegions = (): AccRegion[] => ["alto-paraiso", "sao-jorge", "cavalcante", "teresina-goias", "moinho", "campo-alegre", "tocantins"];
 export const getAccTypes = (): AccType[] => ["pousada", "chale", "casa", "lodge"];
 
 export const filterAccommodations = (
-  regions?: AccRegion[],
+  regions?: string[],
   types?: AccType[],
   searchQuery?: string,
   priceMax?: number,
