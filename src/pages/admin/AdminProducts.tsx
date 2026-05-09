@@ -276,6 +276,7 @@ export default function AdminProducts() {
             const val = v[vKey] !== undefined ? v[vKey] : (p[vKey] !== undefined ? p[vKey] : p[key]);
             return val;
           }
+          labelMap: key === "region" ? regionLabels : (key === "status" ? { true: "Público", false: "Oculto" } : undefined),
         };
       }),
       { label: "Ações" }

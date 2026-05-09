@@ -179,7 +179,7 @@ function SmartFilterPopover({
         : (row as Record<string, unknown>)[sortKey];
       const strVal = rawVal == null ? "" : String(rawVal);
       if (!valSet.has(strVal)) {
-        const display = (strVal === "" ? "(vazio)" : strVal);
+        const display = labelMap?.[strVal] || (strVal === "" ? "(vazio)" : strVal);
         valSet.set(strVal, display);
       }
     });
@@ -517,7 +517,7 @@ export function SortableSmartTableHead({
       const rawVal = valueExtractor ? valueExtractor(row) : (row as Record<string, unknown>)[sortKey];
       const strVal = rawVal == null ? "" : String(rawVal);
       if (!valSet.has(strVal)) {
-        const display = (strVal === "" ? "(vazio)" : strVal);
+        const display = labelMap?.[strVal] || (strVal === "" ? "(vazio)" : strVal);
         valSet.set(strVal, display);
       }
     });

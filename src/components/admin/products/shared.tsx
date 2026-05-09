@@ -158,7 +158,7 @@ export const ALL_COLUMNS: ColumnInfo[] = [
   { key: "subcategory", label: "Subcategoria", defaultVisible: true },
   { key: "category", label: "Pasta / Ref. Interna", defaultVisible: false },
   { key: "variations", label: "Opções", defaultVisible: true },
-  { key: "region", label: "Região", defaultVisible: false },
+  { key: "region", label: "Região", defaultVisible: true },
   { key: "empresa", label: "Empresa", defaultVisible: false },
   { key: "responsavel", label: "Contato", defaultVisible: false },
   { key: "telefone", label: "Telefone", defaultVisible: false },
@@ -190,8 +190,8 @@ export const COMMON_COLUMNS: ColumnKey[] = [
 
 export const TYPE_RELEVANT_COLUMNS: Record<string, ColumnKey[]> = {
   waterfall: ["region", "difficulty", "distance_trail", "distance_car"],
-  experience: ["empresa", "responsavel", "telefone", "instagram", "comissao", "duration", "seasonality"],
-  service: ["empresa", "responsavel", "telefone", "comissao"],
+  experience: ["region", "empresa", "responsavel", "telefone", "instagram", "comissao", "duration", "seasonality"],
+  service: ["region", "empresa", "responsavel", "telefone", "comissao"],
   accommodation: ["region", "responsavel", "telefone", "instagram", "site", "comissao", "capacity", "rooms", "notes"],
   itinerary: [], // Common columns are enough for itineraries
 };
