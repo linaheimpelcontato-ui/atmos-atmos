@@ -17,7 +17,7 @@ import {
   ProductTable, InlinePrice, productTypeLabels, DEDICATED_TYPES, 
   type Product, type UpdatePayload, type ColumnDef, useSmartFilters,
   ALL_COLUMNS, getVisibleColumns, saveVisibleColumns, type ColumnKey,
-  getProductRegion
+  getProductRegion, regionLabels
 } from "@/components/admin/products/shared";
 import { ProductTableRow } from "@/components/admin/products/ProductTableRow";
 import { useRowSelection } from "@/hooks/useRowSelection";
@@ -275,7 +275,7 @@ export default function AdminProducts() {
             const vKey = varMap[key] || key;
             const val = v[vKey] !== undefined ? v[vKey] : (p[vKey] !== undefined ? p[vKey] : p[key]);
             return val;
-          }
+          },
           labelMap: key === "region" ? regionLabels : (key === "status" ? { true: "Público", false: "Oculto" } : undefined),
         };
       }),
