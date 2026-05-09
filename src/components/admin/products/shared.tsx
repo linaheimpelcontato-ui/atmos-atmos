@@ -87,8 +87,12 @@ export const regionLabels: Record<string, string> = {
   "alto-paraiso": "Alto Paraíso",
   "sao-jorge": "São Jorge",
   "sao-joao": "São João d'Aliança",
-  cavalcante: "Cavalcante",
-  kalunga: "Território Kalunga",
+  "cavalcante": "Cavalcante",
+  "kalunga": "Território Kalunga",
+  "teresina-goias": "Teresina de Goiás",
+  "moinho": "Vila do Moinho",
+  "campo-alegre": "Campo Alegre",
+  "tocantins": "Tocantins",
   "chapada-norte": "Chapada Norte",
 };
 

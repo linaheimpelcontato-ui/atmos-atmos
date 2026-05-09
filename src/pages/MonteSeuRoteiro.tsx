@@ -188,9 +188,11 @@ export default function MonteSeuRoteiro() {
   const [wfCarDistanceFilter, setWfCarDistanceFilter] = useState([0, 500]);
   
   const [expCategoryFilter, setExpCategoryFilter] = useState<string[]>([]);
+  const [expRegionFilter, setExpRegionFilter] = useState<string[]>([]);
   const [expPriceFilter, setExpPriceFilter] = useState([0, 5000]);
 
   const [srvCategoryFilter, setSrvCategoryFilter] = useState<string[]>([]);
+  const [srvRegionFilter, setSrvRegionFilter] = useState<string[]>([]);
 
   // Dialog states
   const { data: dbWaterfalls = [] } = useProducts("waterfall");
@@ -591,6 +593,13 @@ export default function MonteSeuRoteiro() {
                           defaultLabel={language === "pt" ? "Categoria" : "Category"}
                           language={language}
                         />
+                        <FilterMultiSelect 
+                          value={expRegionFilter}
+                          onChange={setExpRegionFilter}
+                          options={Object.entries(regionLabels).map(([k, v]) => ({ value: k, label: v[currentLang] || v }))}
+                          defaultLabel={language === "pt" ? "Região" : "Region"}
+                          language={language}
+                        />
                         <FilterSlider
                           label={language === "pt" ? "Preço" : "Price"}
                           value={expPriceFilter}
@@ -604,13 +613,22 @@ export default function MonteSeuRoteiro() {
                     )}
 
                     {activeTab === 'servicos' && (
-                      <FilterMultiSelect 
-                        value={srvCategoryFilter}
-                        onChange={setSrvCategoryFilter}
-                        options={Object.entries(srvCategoryLabels).map(([k, v]) => ({ value: k, label: v[currentLang] }))}
-                        defaultLabel={language === "pt" ? "Todos os Serviços" : "All Services"}
-                        language={language}
-                      />
+                      <>
+                        <FilterMultiSelect 
+                          value={srvCategoryFilter}
+                          onChange={setSrvCategoryFilter}
+                          options={Object.entries(srvCategoryLabels).map(([k, v]) => ({ value: k, label: v[currentLang] }))}
+                          defaultLabel={language === "pt" ? "Categoria" : "Category"}
+                          language={language}
+                        />
+                        <FilterMultiSelect 
+                          value={srvRegionFilter}
+                          onChange={setSrvRegionFilter}
+                          options={Object.entries(regionLabels).map(([k, v]) => ({ value: k, label: v[currentLang] || v }))}
+                          defaultLabel={language === "pt" ? "Região" : "Region"}
+                          language={language}
+                        />
+                      </>
                     )}
                   </motion.div>
                 </AnimatePresence>
@@ -675,12 +693,13 @@ export default function MonteSeuRoteiro() {
                 {activeTab === 'experiencias' && experiences
                   .filter(item => {
                     const matchSearch = (item.name[currentLang] || item.name['pt'] || "").toLowerCase().includes(searchQuery.toLowerCase());
-                    const matchCat = expCategoryFilter.length === 0 || expCategoryFilter.includes(item.category);
+                    if (expCategoryFilter.length > 0 && !expCategoryFilter.includes(item.category)) return false;
+                    if (expRegionFilter.length > 0 && !expRegionFilter.includes(item.region || "")) return false;
                     
                     const minPrice = parseMinPrice(item.priceRange) || 0;
                     const matchPrice = minPrice >= expPriceFilter[0] && minPrice <= expPriceFilter[1];
 
-                    return matchSearch && matchCat && matchPrice;
+                    return matchSearch && matchPrice;
                   })
                   .map(item => (
                   <ExperienceCard 
@@ -719,8 +738,9 @@ export default function MonteSeuRoteiro() {
                 {activeTab === 'servicos' && services
                   .filter(item => {
                     const matchSearch = item.title[currentLang].toLowerCase().includes(searchQuery.toLowerCase());
-                    const matchCat = srvCategoryFilter.length === 0 || srvCategoryFilter.includes(item.category);
-                    return matchSearch && matchCat;
+                    if (srvCategoryFilter.length > 0 && !srvCategoryFilter.includes(item.category)) return false;
+                    if (srvRegionFilter.length > 0 && !srvRegionFilter.includes(item.region || "")) return false;
+                    return matchSearch;
                   })
                   .map(item => (
                   <ServiceCard 

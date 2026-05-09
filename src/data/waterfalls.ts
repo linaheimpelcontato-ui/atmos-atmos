@@ -1,6 +1,6 @@
 import { type Language } from "@/contexts/LanguageContext";
 
-export type Region = "alto-paraiso" | "sao-jorge" | "sao-joao" | "cavalcante" | "kalunga";
+export type Region = "alto-paraiso" | "sao-jorge" | "sao-joao" | "cavalcante" | "kalunga" | "teresina-goias" | "moinho" | "campo-alegre" | "tocantins";
 export type Difficulty = "facil" | "moderado" | "dificil";
 export type Seasonality = "chuva" | "seca" | "anual";
 
@@ -25,6 +25,10 @@ export const regionLabels: Record<Region, Record<Language, string>> = {
   "sao-joao": { pt: "São João d'Aliança", en: "São João d'Aliança", es: "São João d'Aliança" },
   "cavalcante": { pt: "Cavalcante", en: "Cavalcante", es: "Cavalcante" },
   "kalunga": { pt: "Território Kalunga", en: "Kalunga Territory", es: "Territorio Kalunga" },
+  "teresina-goias": { pt: "Teresina de Goiás", en: "Teresina de Goiás", es: "Teresina de Goiás" },
+  "moinho": { pt: "Vila do Moinho", en: "Moinho Village", es: "Vila do Moinho" },
+  "campo-alegre": { pt: "Campo Alegre", en: "Campo Alegre", es: "Campo Alegre" },
+  "tocantins": { pt: "Tocantins", en: "Tocantins", es: "Tocantins" },
 };
 
 export const regionDescriptions: Record<Region, Record<Language, string>> = {

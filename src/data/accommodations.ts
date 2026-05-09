@@ -1,6 +1,6 @@
 import { type Language } from "@/contexts/LanguageContext";
 
-export type AccRegion = "alto-paraiso" | "sao-jorge" | "cavalcante";
+export type AccRegion = "alto-paraiso" | "sao-jorge" | "cavalcante" | "teresina-goias" | "moinho" | "campo-alegre" | "tocantins";
 export type AccType = "pousada" | "chale" | "casa" | "lodge";
 export type Amenity =
   | "piscina" | "piscina-aquecida" | "piscina-privada"
@@ -86,7 +86,11 @@ export function getGlobalCapacityRange(): [number, number] {
 export const accRegionLabels: Record<AccRegion, Record<Language, string>> = {
   "alto-paraiso": { pt: "Alto Paraíso", en: "Alto Paraíso", es: "Alto Paraíso" },
   "sao-jorge": { pt: "São Jorge", en: "São Jorge", es: "São Jorge" },
-  cavalcante: { pt: "Cavalcante", en: "Cavalcante", es: "Cavalcante" },
+  "cavalcante": { pt: "Cavalcante", en: "Cavalcante", es: "Cavalcante" },
+  "teresina-goias": { pt: "Teresina de Goiás", en: "Teresina de Goiás", es: "Teresina de Goiás" },
+  "moinho": { pt: "Vila do Moinho", en: "Moinho Village", es: "Vila do Moinho" },
+  "campo-alegre": { pt: "Campo Alegre", en: "Campo Alegre", es: "Campo Alegre" },
+  "tocantins": { pt: "Tocantins", en: "Tocantins", es: "Tocantins" },
 };
 
 export const accTypeLabels: Record<AccType, Record<Language, string>> = {
