@@ -77,6 +77,8 @@ export default function ExperienceCard({ experience, onClick }: ExperienceCardPr
             className="absolute inset-0 w-full h-full object-cover"
             containerClassName="w-full h-full"
             fallbackSrc="https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&q=80"
+            width={400}
+            height={533}
           />
         </AnimatePresence>
       </div>

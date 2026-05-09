@@ -67,25 +67,21 @@ export const IMAGE_PRESETS = {
  * Returns an optimized image URL using wsrv.nl proxy.
  * This handles resizing, compression, and format conversion (WebP/AVIF) at the edge without extra costs.
  */
-export function optimizedUrl(path: string, opts?: OptimizedOptions): string {
-  if (!path) return "";
-  
-  // 1. Get the base storage URL (Cloudflare R2 or Supabase)
-  const rawUrl = getBaseStorageUrl(path);
-  
-  if (rawUrl.includes('wsrv.nl')) return rawUrl;
-  
-  // 2. Build wsrv.nl optimization parameters
-  // wsrv.nl caches and compresses images perfectly for free
-  const width = opts?.width || 800;
-  const quality = opts?.quality || 75;
+export function optimizedUrl(path: string, options: { width?: number; height?: number; quality?: number; format?: string } = {}): string {
+  if (!path || path.startsWith('http')) return path;
 
-  // We must ensure the URL is absolute for wsrv.nl
-  const absoluteUrl = rawUrl.startsWith('http') 
-    ? rawUrl 
-    : `https://www.atmos.tur.br${rawUrl}`;
+  const fullUrl = getBaseStorageUrl(path);
+  
+  // If no width is specified, we serve the original file for maximum reliability
+  // This avoids any "middleman" issues for main assets.
+  if (!options.width) return fullUrl;
 
-  return `https://wsrv.nl/?url=${encodeURIComponent(absoluteUrl)}&w=${width}&q=${quality}&output=webp`;
+  // Use wsrv.nl as an optional optimizer, but we'll wrap it in a way that
+  // if it fails, the OptimizedImage component (already modified) catches it.
+  const width = options.width;
+  const quality = options.quality || 75;
+
+  return `https://wsrv.nl/?url=${encodeURIComponent(fullUrl)}&w=${width}&q=${quality}&output=webp&il`;
 }
 
 /** 

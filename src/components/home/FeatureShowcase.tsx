@@ -163,7 +163,7 @@ export default function FeatureShowcase() {
               <h2 className="text-[#2C3E2D] font-display text-3xl sm:text-4xl lg:text-5xl xl:text-6xl leading-[1] tracking-tighter mb-6">
                 Como montar seu roteiro
               </h2>
-              <p className="text-sm lg:text-base font-sans text-[#2C3E2D] opacity-60 uppercase tracking-[0.2em] font-semibold mb-8 max-w-md">
+              <p className="text-sm lg:text-base font-sans text-[#2C3E2D] uppercase tracking-[0.2em] font-semibold mb-8 max-w-md">
                 Entenda o que você acessa ao criar seu login gratuito na ATMOS.
               </p>
 
@@ -201,6 +201,7 @@ export default function FeatureShowcase() {
                       key={s.id}
                       onClick={() => resetTimer(i)}
                       className="flex flex-col items-center group flex-1"
+                      aria-label={`Ir para etapa ${s.label}`}
                     >
                       <motion.div 
                         animate={{ 
@@ -212,7 +213,7 @@ export default function FeatureShowcase() {
                       >
                         {i + 1}
                       </motion.div>
-                      <span className={`text-[7px] lg:text-[8px] font-bold tracking-[0.25em] transition-all uppercase text-center h-4 ${isActive ? 'text-[#2C3E2D]' : 'text-[#2C3E2D]/30'}`}>
+                      <span className={`text-[7px] lg:text-[8px] font-bold tracking-[0.25em] transition-all uppercase text-center h-4 ${isActive ? 'text-[#2C3E2D]' : 'text-[#2C3E2D]/60'}`}>
                         {s.label}
                       </span>
                     </button>
@@ -340,7 +341,7 @@ export default function FeatureShowcase() {
                                 const isCatActive = (subStep < 2 && i === 0) || (subStep >= 2 && i === 1);
                                 return (
                                   <div key={cat.id} className={`relative h-12 rounded-xl overflow-hidden border-2 transition-all ${isCatActive ? 'border-[#2C3E2D] shadow-md' : 'border-transparent opacity-60'}`}>
-                                    <img loading="lazy" src={getProductionUrl(cat.img)} className="w-full h-full object-cover" />
+                                    <img loading="lazy" src={getProductionUrl(cat.img)} className="w-full h-full object-cover" alt={`Categoria ${cat.label}`} />
                                     <div className={`absolute inset-0 flex items-center justify-center ${isCatActive ? 'bg-[#2C3E2D]/40' : 'bg-black/20'}`}>
                                       <span className="text-[9px] text-white font-display tracking-widest font-bold uppercase">{cat.label}</span>
                                     </div>

@@ -144,8 +144,15 @@ export default function FacilitadorSection() {
           </div>
         </div>
 
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] opacity-[0.05] pointer-events-none">
-          <img loading="lazy" src={storageUrl("home/simboloatmos.png")} alt="" className="w-full h-full grayscale invert" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full opacity-[0.03] pointer-events-none flex items-center justify-center">
+          <img 
+            loading="lazy" 
+            src={storageUrl("home/simboloatmos.png")} 
+            alt="Atmos Symbol Watermark" 
+            className="w-auto h-[80%] max-w-full object-contain grayscale invert"
+            width="800"
+            height="800"
+          />
         </div>
 
       </div>

@@ -2,18 +2,29 @@ import { optimizedUrl, IMAGE_PRESETS, storageUrl } from "@/lib/storage";
 import { useStorageImages } from "@/hooks/useStorageImages";
 import type { ServiceCategory } from "@/data/services";
 
+/** 
+ * Map of service IDs or categories to their EXACT storage paths.
+ * Ensures instant loading by bypassing bucket discovery.
+ */
+const serviceSpecifics: Record<string, string> = {
+  "transfers": "produtos/servicos/transfer.jpg",
+  "seguro-viagem": "produtos/servicos/seguro.jpg",
+  "lanche-de-trilha": "produtos/servicos/lanche.jpg",
+  "registro-drone": "produtos/servicos/drone.jpg"
+};
+
 export const serviceImages: Record<ServiceCategory, string[]> = {
   alimentacao: [
-    optimizedUrl("servicos/lanche.jpg", IMAGE_PRESETS.gallery)
+    optimizedUrl("produtos/servicos/lanche.jpg", IMAGE_PRESETS.gallery)
   ],
   registros: [
-    optimizedUrl("servicos/drone.jpg", IMAGE_PRESETS.gallery)
+    optimizedUrl("produtos/servicos/drone.jpg", IMAGE_PRESETS.gallery)
   ],
   transfers: [
-    optimizedUrl("servicos/transfer.jpg", IMAGE_PRESETS.gallery)
+    optimizedUrl("produtos/servicos/transfer.jpg", IMAGE_PRESETS.gallery)
   ],
   especial: [
-    optimizedUrl("servicos/especial.jpg", IMAGE_PRESETS.gallery)
+    optimizedUrl("produtos/servicos/especial.jpg", IMAGE_PRESETS.gallery)
   ],
 };
 
@@ -24,11 +35,14 @@ export function useServiceImages(id: string, category: ServiceCategory, storageI
   const allImages = [...(query.data || []), ...(idQuery.data || [])];
   const uniqueImages = Array.from(new Set(allImages));
 
-  // Fallback to category defaults while loading or if empty
-  const fallback = serviceImages[category] || [storageUrl(`servicos/${category}.jpg`)];
+  const primaryFallback = serviceSpecifics[id] || serviceSpecifics[category]
+    ? [optimizedUrl(serviceSpecifics[id] || serviceSpecifics[category], IMAGE_PRESETS.gallery)]
+    : [];
+
+  const fallback = uniqueImages.length > 0 ? uniqueImages : (primaryFallback.length > 0 ? primaryFallback : serviceImages[category]);
 
   return {
-    images: uniqueImages.length > 0 ? uniqueImages : fallback,
+    images: fallback,
     isLoading: query.isLoading || idQuery.isLoading,
   };
 }

@@ -11,65 +11,67 @@ import { WishlistProvider } from "./contexts/WishlistContext";
 import { RouteTracker } from "./components/RouteTracker";
 import { CookieConsent } from "./components/ui/CookieConsent";
 
-// Pages
-import Index from "./pages/Index";
-import Itineraries from "./pages/Itineraries";
-import ItineraryDetail from "./pages/ItineraryDetail";
-import BuildItinerary from "./pages/BuildItinerary";
-import MonteSeuRoteiro from "./pages/MonteSeuRoteiro";
-import Waterfalls from "./pages/Waterfalls";
-import Experiences from "./pages/Experiences";
-import Accommodations from "./pages/Accommodations";
-import Services from "./pages/Services";
-import Immersions from "./pages/Immersions";
-import FAQ from "./pages/FAQ";
-import Wishlist from "./pages/Wishlist";
-import Profile from "./pages/Profile";
-import ResetPassword from "./pages/ResetPassword";
-import NotFound from "./pages/NotFound";
-import Privacidade from "./pages/Privacidade";
-import Termos from "./pages/Termos";
-import ProposalPublic from "./pages/ProposalPublic";
+import { lazy, Suspense } from "react";
 
-// Admin Pages
-import AdminLayout from "./pages/admin/AdminLayout";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminDashboardB2C from "./pages/admin/AdminDashboardB2C";
-import AdminDashboardB2B from "./pages/admin/AdminDashboardB2B";
-import AdminProducts from "./pages/admin/AdminProducts";
-import AdminGuides from "./pages/admin/AdminGuides";
-import AdminSellers from "./pages/admin/AdminSellers";
-import AdminSuppliers from "./pages/admin/AdminSuppliers";
-import AdminProspects from "./pages/admin/AdminProspects";
-import AdminPipeline from "./pages/admin/AdminPipeline";
-import AdminProposals from "./pages/admin/AdminProposals";
-import AdminQuotes from "./pages/admin/AdminQuotes";
-import AdminSettings from "./pages/admin/AdminSettings";
-import AdminGoals from "./pages/admin/AdminGoals";
-import AdminCalendar from "./pages/admin/AdminCalendar";
-import AdminMap from "./pages/admin/AdminMap";
-import AdminVisualEditor from "./pages/admin/AdminVisualEditor";
-import AdminDiscover from "./pages/admin/AdminDiscover";
-import AdminTemplates from "./pages/admin/AdminTemplates";
-import AdminMeetingCalendar from "./pages/admin/AdminMeetingCalendar";
+// Pages - Lazy Loaded
+const Index = lazy(() => import("./pages/Index"));
+const Itineraries = lazy(() => import("./pages/Itineraries"));
+const ItineraryDetail = lazy(() => import("./pages/ItineraryDetail"));
+const BuildItinerary = lazy(() => import("./pages/BuildItinerary"));
+const MonteSeuRoteiro = lazy(() => import("./pages/MonteSeuRoteiro"));
+const Waterfalls = lazy(() => import("./pages/Waterfalls"));
+const Experiences = lazy(() => import("./pages/Experiences"));
+const Accommodations = lazy(() => import("./pages/Accommodations"));
+const Services = lazy(() => import("./pages/Services"));
+const Immersions = lazy(() => import("./pages/Immersions"));
+const FAQ = lazy(() => import("./pages/FAQ"));
+const Wishlist = lazy(() => import("./pages/Wishlist"));
+const Profile = lazy(() => import("./pages/Profile"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Privacidade = lazy(() => import("./pages/Privacidade"));
+const Termos = lazy(() => import("./pages/Termos"));
+const ProposalPublic = lazy(() => import("./pages/ProposalPublic"));
 
-// Finance Pages
-import AdminFinanceDashboard from "./pages/admin/AdminFinanceDashboard";
-import AdminFinanceReceitas from "./pages/admin/AdminFinanceReceitas";
-import AdminFinanceDespesas from "./pages/admin/AdminFinanceDespesas";
-import AdminFinanceContasReceber from "./pages/admin/AdminFinanceContasReceber";
-import AdminFinanceContasPagar from "./pages/admin/AdminFinanceContasPagar";
-import AdminFinanceLucroMargem from "./pages/admin/AdminFinanceLucroMargem";
-import AdminFinanceFluxoCaixa from "./pages/admin/AdminFinanceFluxoCaixa";
-import AdminFinanceReports from "./pages/admin/AdminFinanceReports";
-import AdminFinanceConfig from "./pages/admin/AdminFinanceConfig";
+// Admin Pages - Lazy Loaded (Heavy bundle)
+const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const AdminDashboardB2C = lazy(() => import("./pages/admin/AdminDashboardB2C"));
+const AdminDashboardB2B = lazy(() => import("./pages/admin/AdminDashboardB2B"));
+const AdminProducts = lazy(() => import("./pages/admin/AdminProducts"));
+const AdminGuides = lazy(() => import("./pages/admin/AdminGuides"));
+const AdminSellers = lazy(() => import("./pages/admin/AdminSellers"));
+const AdminSuppliers = lazy(() => import("./pages/admin/AdminSuppliers"));
+const AdminProspects = lazy(() => import("./pages/admin/AdminProspects"));
+const AdminPipeline = lazy(() => import("./pages/admin/AdminPipeline"));
+const AdminProposals = lazy(() => import("./pages/admin/AdminProposals"));
+const AdminQuotes = lazy(() => import("./pages/admin/AdminQuotes"));
+const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
+const AdminGoals = lazy(() => import("./pages/admin/AdminGoals"));
+const AdminCalendar = lazy(() => import("./pages/admin/AdminCalendar"));
+const AdminMap = lazy(() => import("./pages/admin/AdminMap"));
+const AdminVisualEditor = lazy(() => import("./pages/admin/AdminVisualEditor"));
+const AdminDiscover = lazy(() => import("./pages/admin/AdminDiscover"));
+const AdminTemplates = lazy(() => import("./pages/admin/AdminTemplates"));
+const AdminMeetingCalendar = lazy(() => import("./pages/admin/AdminMeetingCalendar"));
 
-// Guide Pages
-import GuideLayout from "./pages/guide/GuideLayout";
-import GuideDashboard from "./pages/guide/GuideDashboard";
-import GuideAgenda from "./pages/guide/GuideAgenda";
-import GuideProfile from "./pages/guide/GuideProfile";
-import GuideWaterfalls from "./pages/guide/GuideWaterfalls";
+// Finance Pages - Lazy Loaded
+const AdminFinanceDashboard = lazy(() => import("./pages/admin/AdminFinanceDashboard"));
+const AdminFinanceReceitas = lazy(() => import("./pages/admin/AdminFinanceReceitas"));
+const AdminFinanceDespesas = lazy(() => import("./pages/admin/AdminFinanceDespesas"));
+const AdminFinanceContasReceber = lazy(() => import("./pages/admin/AdminFinanceContasReceber"));
+const AdminFinanceContasPagar = lazy(() => import("./pages/admin/AdminFinanceContasPagar"));
+const AdminFinanceLucroMargem = lazy(() => import("./pages/admin/AdminFinanceLucroMargem"));
+const AdminFinanceFluxoCaixa = lazy(() => import("./pages/admin/AdminFinanceFluxoCaixa"));
+const AdminFinanceReports = lazy(() => import("./pages/admin/AdminFinanceReports"));
+const AdminFinanceConfig = lazy(() => import("./pages/admin/AdminFinanceConfig"));
+
+// Guide Pages - Lazy Loaded
+const GuideLayout = lazy(() => import("./pages/guide/GuideLayout"));
+const GuideDashboard = lazy(() => import("./pages/guide/GuideDashboard"));
+const GuideAgenda = lazy(() => import("./pages/guide/GuideAgenda"));
+const GuideProfile = lazy(() => import("./pages/guide/GuideProfile"));
+const GuideWaterfalls = lazy(() => import("./pages/guide/GuideWaterfalls"));
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -107,84 +109,86 @@ const App = () => (
               <RouteTracker />
               <Toaster />
               <Sonner />
-              <Routes>
-                {/* Public Home */}
-                <Route path="/" element={<Index />} />
-                <Route path="/duvidas" element={<FAQ />} />
-                <Route path="/privacidade" element={<Privacidade />} />
-                <Route path="/termos" element={<Termos />} />
-                
-                {/* Public Catalog Pages (SEO Enabled) */}
-                <Route path="/roteiros" element={<Itineraries />} />
-                <Route path="/roteiros/:id" element={<ItineraryDetail />} />
-                <Route path="/monte-seu-roteiro" element={<MonteSeuRoteiro />} />
-                <Route path="/monte-seu-roteiro/:category" element={<MonteSeuRoteiro />} />
-                <Route path="/novo-roteiro" element={<ProtectedRoute><BuildItinerary /></ProtectedRoute>} />
-                {/* Redirect legacy paths to centralized Monte Seu Roteiro */}
-                <Route path="/cachoeiras" element={<Navigate to="/monte-seu-roteiro/cachoeiras" replace />} />
-                <Route path="/experiencias" element={<Navigate to="/monte-seu-roteiro/experiencias" replace />} />
-                <Route path="/hospedagens" element={<Navigate to="/monte-seu-roteiro/hospedagens" replace />} />
-                <Route path="/servicos" element={<Navigate to="/monte-seu-roteiro/servicos" replace />} />
-                <Route path="/imersoes" element={<Immersions />} />
-                
-                {/* Private User Pages */}
-                <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
-                <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-                
-                {/* Authentication Utilities */}
-                <Route path="/reset-password" element={<ResetPassword />} />
-                
-                {/* Public Proposal (accessible via token) */}
-                <Route path="/proposta/:token" element={<ProposalPublic />} />
-
-                {/* Admin panel */}
-                <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
-                  <Route index element={<AdminDashboard />} />
-                  <Route path="editor-visual" element={<AdminVisualEditor />} />
-                  <Route path="mapa" element={<AdminMap />} />
-                  <Route path="b2c/solicitacoes" element={<AdminQuotes segment="b2c" />} />
-                  <Route path="b2b/solicitacoes" element={<AdminQuotes segment="b2b" />} />
-                  <Route path="produtos" element={<AdminProducts />} />
-                  <Route path="guias" element={<AdminGuides />} />
-                  <Route path="vendedores" element={<AdminSellers />} />
-                  <Route path="fornecedores" element={<AdminSuppliers />} />
-                  <Route path="b2c/dashboard" element={<AdminDashboardB2C />} />
-                  <Route path="b2c/prospects" element={<AdminProspects segment="b2c" />} />
-                  <Route path="b2c/pipeline" element={<AdminPipeline segment="b2c" />} />
-                  <Route path="b2c/propostas" element={<AdminProposals segment="b2c" />} />
-                  <Route path="b2b/dashboard" element={<AdminDashboardB2B />} />
-                  <Route path="b2b/prospects" element={<AdminProspects segment="b2b" />} />
-                  <Route path="b2b/pipeline" element={<AdminPipeline segment="b2b" />} />
-                  <Route path="b2b/propostas" element={<AdminProposals segment="b2b" />} />
-                  <Route path="b2b/descobrir" element={<AdminDiscover />} />
-                  <Route path="b2b/templates" element={<AdminTemplates />} />
-                  <Route path="b2b/reunioes" element={<AdminMeetingCalendar />} />
+              <Suspense fallback={<div className="h-screen w-screen bg-[#FAF9F6]" />}>
+                <Routes>
+                  {/* Public Home */}
+                  <Route path="/" element={<Index />} />
+                  <Route path="/duvidas" element={<FAQ />} />
+                  <Route path="/privacidade" element={<Privacidade />} />
+                  <Route path="/termos" element={<Termos />} />
                   
-                  <Route path="financeiro/dashboard" element={<AdminFinanceDashboard />} />
-                  <Route path="financeiro/receitas" element={<AdminFinanceReceitas />} />
-                  <Route path="financeiro/despesas" element={<AdminFinanceDespesas />} />
-                  <Route path="financeiro/contas-receber" element={<AdminFinanceContasReceber />} />
-                  <Route path="financeiro/contas-pagar" element={<AdminFinanceContasPagar />} />
-                  <Route path="financeiro/lucro-margem" element={<AdminFinanceLucroMargem />} />
-                  <Route path="financeiro/fluxo-caixa" element={<AdminFinanceFluxoCaixa />} />
-                  <Route path="financeiro/relatorios" element={<AdminFinanceReports />} />
-                  <Route path="financeiro/configuracoes" element={<AdminFinanceConfig />} />
-                  <Route path="configuracoes" element={<AdminSettings />} />
-                  <Route path="metas" element={<AdminGoals />} />
-                  <Route path="calendario" element={<AdminCalendar />} />
-                </Route>
-                
-                {/* Guide portal */}
-                <Route path="/guia" element={<ProtectedRoute><GuideLayout /></ProtectedRoute>}>
-                  <Route index element={<GuideDashboard />} />
-                  <Route path="dashboard" element={<GuideDashboard />} />
-                  <Route path="agenda" element={<GuideAgenda />} />
-                  <Route path="perfil" element={<GuideProfile />} />
-                  <Route path="cachoeiras" element={<GuideWaterfalls />} />
-                </Route>
-                
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+                  {/* Public Catalog Pages (SEO Enabled) */}
+                  <Route path="/roteiros" element={<Itineraries />} />
+                  <Route path="/roteiros/:id" element={<ItineraryDetail />} />
+                  <Route path="/monte-seu-roteiro" element={<MonteSeuRoteiro />} />
+                  <Route path="/monte-seu-roteiro/:category" element={<MonteSeuRoteiro />} />
+                  <Route path="/novo-roteiro" element={<ProtectedRoute><BuildItinerary /></ProtectedRoute>} />
+                  {/* Redirect legacy paths to centralized Monte Seu Roteiro */}
+                  <Route path="/cachoeiras" element={<Navigate to="/monte-seu-roteiro/cachoeiras" replace />} />
+                  <Route path="/experiencias" element={<Navigate to="/monte-seu-roteiro/experiencias" replace />} />
+                  <Route path="/hospedagens" element={<Navigate to="/monte-seu-roteiro/hospedagens" replace />} />
+                  <Route path="/servicos" element={<Navigate to="/monte-seu-roteiro/servicos" replace />} />
+                  <Route path="/imersoes" element={<Immersions />} />
+                  
+                  {/* Private User Pages */}
+                  <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
+                  <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                  
+                  {/* Authentication Utilities */}
+                  <Route path="/reset-password" element={<ResetPassword />} />
+                  
+                  {/* Public Proposal (accessible via token) */}
+                  <Route path="/proposta/:token" element={<ProposalPublic />} />
+
+                  {/* Admin panel */}
+                  <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
+                    <Route index element={<AdminDashboard />} />
+                    <Route path="editor-visual" element={<AdminVisualEditor />} />
+                    <Route path="mapa" element={<AdminMap />} />
+                    <Route path="b2c/solicitacoes" element={<AdminQuotes segment="b2c" />} />
+                    <Route path="b2b/solicitacoes" element={<AdminQuotes segment="b2b" />} />
+                    <Route path="produtos" element={<AdminProducts />} />
+                    <Route path="guias" element={<AdminGuides />} />
+                    <Route path="vendedores" element={<AdminSellers />} />
+                    <Route path="fornecedores" element={<AdminSuppliers />} />
+                    <Route path="b2c/dashboard" element={<AdminDashboardB2C />} />
+                    <Route path="b2c/prospects" element={<AdminProspects segment="b2c" />} />
+                    <Route path="b2c/pipeline" element={<AdminPipeline segment="b2c" />} />
+                    <Route path="b2c/propostas" element={<AdminProposals segment="b2c" />} />
+                    <Route path="b2b/dashboard" element={<AdminDashboardB2B />} />
+                    <Route path="b2b/prospects" element={<AdminProspects segment="b2b" />} />
+                    <Route path="b2b/pipeline" element={<AdminPipeline segment="b2b" />} />
+                    <Route path="b2b/propostas" element={<AdminProposals segment="b2b" />} />
+                    <Route path="b2b/descobrir" element={<AdminDiscover />} />
+                    <Route path="b2b/templates" element={<AdminTemplates />} />
+                    <Route path="b2b/reunioes" element={<AdminMeetingCalendar />} />
+                    
+                    <Route path="financeiro/dashboard" element={<AdminFinanceDashboard />} />
+                    <Route path="financeiro/receitas" element={<AdminFinanceReceitas />} />
+                    <Route path="financeiro/despesas" element={<AdminFinanceDespesas />} />
+                    <Route path="financeiro/contas-receber" element={<AdminFinanceContasReceber />} />
+                    <Route path="financeiro/contas-pagar" element={<AdminFinanceContasPagar />} />
+                    <Route path="financeiro/lucro-margem" element={<AdminFinanceLucroMargem />} />
+                    <Route path="financeiro/fluxo-caixa" element={<AdminFinanceFluxoCaixa />} />
+                    <Route path="financeiro/relatorios" element={<AdminFinanceReports />} />
+                    <Route path="financeiro/configuracoes" element={<AdminFinanceConfig />} />
+                    <Route path="configuracoes" element={<AdminSettings />} />
+                    <Route path="metas" element={<AdminGoals />} />
+                    <Route path="calendario" element={<AdminCalendar />} />
+                  </Route>
+                  
+                  {/* Guide portal */}
+                  <Route path="/guia" element={<ProtectedRoute><GuideLayout /></ProtectedRoute>}>
+                    <Route index element={<GuideDashboard />} />
+                    <Route path="dashboard" element={<GuideDashboard />} />
+                    <Route path="agenda" element={<GuideAgenda />} />
+                    <Route path="/guia/perfil" element={<GuideProfile />} />
+                    <Route path="cachoeiras" element={<GuideWaterfalls />} />
+                  </Route>
+                  
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
             </TooltipProvider>
           </WishlistProvider>
         </BrowserRouter>

@@ -73,9 +73,9 @@ export function OptimizedImage({
   };
 
   return (
-    <div className={cn("relative overflow-hidden", containerClassName)}>
+    <div className={cn("relative overflow-hidden bg-[#242f25]", containerClassName)}>
       {!loaded && !error && (
-        <Skeleton className="absolute inset-0 w-full h-full bg-[#1A261B]/5 animate-pulse" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#1A261B] to-[#2A362B] animate-pulse" />
       )}
       <motion.img
         src={currentSrc}
@@ -86,13 +86,22 @@ export function OptimizedImage({
         }}
         onError={handleError}
         className={cn(
-          "transition-opacity duration-700",
+          "transition-opacity duration-500",
           !loaded ? "opacity-0" : "opacity-100",
           className
         )}
-        loading="lazy"
+        loading={props.loading || "lazy"}
         {...(props as any)}
       />
+      {error && (
+        <div className="absolute inset-0 flex items-center justify-center bg-[#1A261B]">
+           <img 
+            src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=500&q=75" 
+            className="w-full h-full object-cover opacity-40 grayscale"
+            alt="Fallback"
+          />
+        </div>
+      )}
     </div>
   );
 }

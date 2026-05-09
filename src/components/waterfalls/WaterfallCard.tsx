@@ -25,6 +25,11 @@ export default function WaterfallCard({ waterfall, onClick }: WaterfallCardProps
   useEffect(() => {
     if (cardImages.length <= 1) return;
     
+    // Performance: Only run auto-carousel on desktop
+    // On mobile, processing multiple high-res transitions kills the PageSpeed score
+    const isMobile = window.innerWidth < 768;
+    if (isMobile) return;
+
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % cardImages.length);
     }, 4000);
@@ -58,21 +63,31 @@ export default function WaterfallCard({ waterfall, onClick }: WaterfallCardProps
     >
       {/* Background Image Carousel - Multi-layer for fluid transitions */}
       <div className="absolute inset-0 w-full h-full bg-[#1A261B]">
-        {cardImages.map((src, idx) => (
-          <motion.img
-            key={src}
-            src={src}
-            initial={false}
-            animate={{ 
-              opacity: idx === currentIndex ? 1 : 0,
-              scale: isHovering ? 1.15 : 1.1 
-            }}
-            transition={{ duration: 1.5, ease: "easeInOut" }}
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{ zIndex: idx === currentIndex ? 1 : 0 }}
-            loading={idx === 0 ? "eager" : "lazy"}
-          />
-        ))}
+        {cardImages.map((src, idx) => {
+          // Optimization: only render the active image or the next one to prepare
+          // This saves massive bandwidth on mobile as detected by PageSpeed
+          const isActive = idx === currentIndex;
+          if (!isActive && !isHovering) return null;
+
+          return (
+            <motion.img
+              key={src}
+              src={src}
+              initial={false}
+              animate={{ 
+                opacity: isActive ? 1 : 0,
+                scale: isHovering ? 1.15 : 1.1 
+              }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
+              className="absolute inset-0 w-full h-full object-cover"
+              style={{ zIndex: isActive ? 1 : 0 }}
+              loading={idx === 0 ? "eager" : "lazy"}
+              width="400"
+              height="533"
+              {...(idx === 0 ? { "fetchPriority": "high" } as any : {})}
+            />
+          );
+        })}
       </div>
       
       {/* Gradients */}

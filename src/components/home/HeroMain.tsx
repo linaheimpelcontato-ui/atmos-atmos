@@ -1,9 +1,9 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AuthModal from "@/components/auth/AuthModal";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { storageUrl } from "@/lib/storage";
+import { storageUrl, optimizedUrl } from "@/lib/storage";
 
 export default function HeroMain({ 
   tagline = "O seu espaço para explorar a", 
@@ -15,33 +15,45 @@ export default function HeroMain({
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup">("signup");
   const { user } = useAuth();
+  const [videoActive, setVideoActive] = useState(false);
+
+  // Defer video loading to prioritize LCP (the poster image)
+  useEffect(() => {
+    const timer = setTimeout(() => setVideoActive(true), 2000);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <section className="relative min-h-[calc(100vh-80px)] lg:min-h-[calc(100vh-120px)] w-full flex flex-col items-center justify-center bg-black px-6 overflow-hidden">
       {/* EXCLUSIVE VIVID VIDEO BACKGROUND */}
       <div className="absolute inset-0 z-0">
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          preload="metadata"
-          poster={storageUrl("home/hero-bg-poster.jpg")}
-          className="w-full h-full object-cover object-bottom opacity-80"
-        >
-          <source
-            src={storageUrl("home/hero-bg.mp4")}
-            type="video/mp4"
+        {videoActive ? (
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+            poster="https://assets.atmos.tur.br/home/hero-bg-poster.jpg"
+            className="w-full h-full object-cover object-bottom opacity-70"
+          >
+            <source
+              src="https://assets.atmos.tur.br/home/hero-bg.mp4"
+              type="video/mp4"
+            />
+          </video>
+        ) : (
+          <img 
+            src="https://assets.atmos.tur.br/home/hero-bg-poster.jpg"
+            className="w-full h-full object-cover object-bottom opacity-70"
+            alt="Atmos Chapada dos Veadeiros Hero"
+            fetchPriority="high"
           />
-          <source
-            src={storageUrl("home/hero-bg.MOV")}
-            type="video/quicktime"
-          />
-        </video>
+        )}
         
-        {/* Subtle Dark Vignette for Premium Legibility */}
-        <div className="absolute inset-0 bg-black/15 z-1" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/20 z-1" />
+        {/* Enhanced Vignette for Accessibility/Contrast (Page 20 of report) */}
+        <div className="absolute inset-0 bg-black/30 z-1" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/50 z-1" />
       </div>
 
       {/* Hero Content - Optimized for Video Background */}

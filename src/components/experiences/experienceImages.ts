@@ -1,34 +1,59 @@
 import { optimizedUrl, storageUrl, IMAGE_PRESETS } from "@/lib/storage";
 import { useStorageImages } from "@/hooks/useStorageImages";
 
+/** 
+ * Map of experience IDs to their EXACT storage paths.
+ * Ensures instant loading by bypassing bucket discovery.
+ */
 export const experienceSpecifics: Record<string, string> = {
-  "noturna-imersiva": "experiencias/noturna-1.jpg",
-  "voo-balao": "experiencias/balao-1.jpg",
-  "voo-paramotor": "experiencias/paramotor-1.jpg",
-  "massagem-bem-estar": "experiencias/massagem-1.jpg",
-  "yoga-meditacao": "experiencias/yoga-1.jpg",
-  "passeio-cavalo": "experiencias/cavalo-1.jpg",
-  "passeio-a-cavalo": "experiencias/cavalo-1.jpg",
-  "88e4e77a-485d-4529-a32b-bc03109b44c5": "experiencias/cavalo-1.jpg",
-  "astro-turismo": "experiencias/astro-1.jpg",
-  "aula-forro": "experiencias/forro-1.jpg",
-  "feira-produtores": "experiencias/feira-1.jpg",
+  "astroturismo": "produtos/experiencias/astroturismo/astroturismo-1.jpg",
+  "batismo-de-escalada": "produtos/experiencias/batismo-de-escalada/batismo-de-escalada-1.jpg",
+  "bike-cerrado": "produtos/experiencias/bike-cerrado/bike-cerrado-1.jpg",
+  "comitivas": "produtos/experiencias/comitivas/comitivas-1.jpg",
+  "cozinha-de-origem": "produtos/experiencias/cozinha-de-origem/cozinha-de-origem-1.jpg",
+  "expedicao-4x4": "produtos/experiencias/expedicao-4x4/expedicao-4x4-1.jpg",
+  "feira-do-produtor": "produtos/experiencias/feira-do-produtor/feira-do-produtor-1.jpg",
+  "flutuacao-no-rio": "produtos/experiencias/flutuacao-no-rio/flutuacao-no-rio-1.jpg",
+  "forro-pe-de-serra": "produtos/experiencias/forro-pe-de-serra/forro-pe-de-serra-1.jpg",
+  "massagem-terapeutica": "produtos/experiencias/massagem-terapeutica/massagem-terapeutica-1.jpg",
+  "observacao-de-aves": "produtos/experiencias/observacao-de-aves/observacao-de-aves-1.jpg",
+  "oficina-de-cerâmica": "produtos/experiencias/oficina-de-ceramica/oficina-de-ceramica-1.jpg",
+  "panteao-da-chapada": "produtos/experiencias/panteao-da-chapada/panteao-da-chapada-1.jpg",
+  "picnic-no-por-do-sol": "produtos/experiencias/picnic-no-por-do-sol/picnic-no-por-do-sol-1.jpg",
+  "rapel-nas-cachoeiras": "produtos/experiencias/rapel-nas-cachoeiras/rapel-nas-cachoeiras-1.jpg",
+  "registro-com-drone": "produtos/experiencias/registro-com-drone/registro-com-drone-1.jpg",
+  "ritual-do-fogo": "produtos/experiencias/ritual-do-fogo/ritual-do-fogo-1.jpg",
+  "tirolesa-vovo-a-jato": "produtos/experiencias/tirolesa-vovo-a-jato/tirolesa-vovo-a-jato-1.jpg",
+  "trilha-noturna": "produtos/experiencias/trilha-noturna/trilha-noturna-1.jpg",
+  "voo-de-balao": "produtos/experiencias/voo-de-balao/voo-de-balao-1.jpg",
+  "noturna-imersiva": "produtos/experiencias/trilha-noturna/trilha-noturna-1.jpg",
+  "voo-balao": "produtos/experiencias/voo-de-balao/voo-de-balao-1.jpg",
+  "voo-paramotor": "produtos/experiencias/voo-de-balao/voo-de-balao-1.jpg",
+  "massagem-bem-estar": "produtos/experiencias/massagem-terapeutica/massagem-terapeutica-1.jpg",
+  "yoga-meditacao": "produtos/experiencias/ritual-do-fogo/ritual-do-fogo-1.jpg",
+  "passeio-cavalo": "produtos/experiencias/comitivas/comitivas-1.jpg",
+  "passeio-a-cavalo": "produtos/experiencias/comitivas/comitivas-1.jpg",
+  "astro-turismo": "produtos/experiencias/astroturismo/astroturismo-1.jpg",
+  "aula-forro": "produtos/experiencias/forro-pe-de-serra/forro-pe-de-serra-1.jpg",
+  "feira-produtores": "produtos/experiencias/feira-do-produtor/feira-do-produtor-1.jpg"
 };
 
-/** Hook: dynamically lists all images for an experience from Storage */
 export function useExperienceGallery(imageKey: string, namePt?: string, id?: string) {
-  // Use both imageKey and namePt as potential prefixes
   const query = useStorageImages("produtos/experiencias", imageKey);
   const nameQuery = useStorageImages("produtos/experiencias", namePt || "", !!namePt);
 
   const allImages = [...(query.data || []), ...(nameQuery.data || [])];
   const uniqueImages = Array.from(new Set(allImages));
 
-  const fallbackPath = (id && experienceSpecifics[id]) 
-    ? (experienceSpecifics[id].startsWith('produtos') ? experienceSpecifics[id] : `produtos/experiencias/${experienceSpecifics[id].split('/').pop()}`)
-    : `produtos/experiencias/${imageKey}/${imageKey}-1.jpg`;
-    
-  const fallback = [optimizedUrl(fallbackPath, { width: 1000, quality: 80 })];
+  const primaryFallback = experienceSpecifics[id] 
+    ? [optimizedUrl(experienceSpecifics[id], { width: 500, quality: 75 })]
+    : [];
+
+  const genericFallback = [1, 2, 3].map((n) =>
+    optimizedUrl(`produtos/experiencias/${id}/${id}-${n}.jpg`, { width: 500, quality: 75 })
+  );
+
+  const fallback = [...primaryFallback, ...genericFallback];
 
   return {
     images: uniqueImages.length > 0 ? uniqueImages : fallback,
@@ -36,23 +61,18 @@ export function useExperienceGallery(imageKey: string, namePt?: string, id?: str
   };
 }
 
-/** Synchronous — card thumbnail (always first image) */
 export function getCardImage(id: string, imageKey?: string): string {
-  if (!id) return "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&q=80";
+  if (!id) return "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=500&q=75";
   
   if (experienceSpecifics[id]) {
-    const path = experienceSpecifics[id];
-    return optimizedUrl(path.startsWith('produtos') ? path : `produtos/experiencias/${path.split('/').pop()}`, { width: 1000, quality: 80 });
+    return optimizedUrl(experienceSpecifics[id], { width: 500, quality: 75 });
   }
   
   const key = imageKey || id;
   if (key.startsWith('http')) return key;
-  if (key.includes('/')) return optimizedUrl(key, { width: 1000, quality: 80 });
-  
-  return optimizedUrl(`produtos/experiencias/${key}/${key}-1.jpg`, { width: 1000, quality: 80 });
+  return optimizedUrl(`produtos/experiencias/${key}/${key}-1.jpg`, { width: 500, quality: 75 });
 }
 
-/** Legacy sync function — kept for backward compatibility */
 export function getGalleryImages(key: string): string[] {
   return [getCardImage(key)];
 }
