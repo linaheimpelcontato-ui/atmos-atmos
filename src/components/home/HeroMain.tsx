@@ -35,17 +35,17 @@ export default function HeroMain({
             playsInline
             preload="auto"
             title="Atmos Chapada dos Veadeiros Cinematic"
-            poster="https://assets.atmos.tur.br/home/hero-bg-poster.jpg"
+            poster={storageUrl("home/hero-bg-poster.jpg")}
             className="w-full h-full object-cover object-bottom opacity-70"
           >
             <source
-              src="https://assets.atmos.tur.br/home/hero-bg.mp4"
+              src={storageUrl("home/hero-bg.mp4")}
               type="video/mp4"
             />
           </video>
         ) : (
           <img 
-            src="https://assets.atmos.tur.br/home/hero-bg-poster.jpg"
+            src={storageUrl("home/hero-bg-poster.jpg")}
             className="w-full h-full object-cover object-bottom opacity-70"
             alt="Atmos Chapada dos Veadeiros Hero"
             fetchPriority="high"
