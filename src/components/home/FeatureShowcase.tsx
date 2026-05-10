@@ -88,6 +88,10 @@ export default function FeatureShowcase() {
   const [step, setStep] = useState(0);
   const [subStep, setSubStep] = useState(0);
   const [progress, setProgress] = useState(0);
+  const [startTime, setStartTime] = useState(Date.now());
+
+  const stepDuration = 8000;
+  const totalTime = stepDuration * JOURNEY_STEPS.length;
 
   const resetTimer = (targetStep: number) => {
     const newStartTime = Date.now() - (targetStep * stepDuration);

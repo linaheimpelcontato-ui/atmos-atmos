@@ -6,37 +6,37 @@ import { storageUrl, optimizedUrl, IMAGE_PRESETS } from "@/lib/storage";
 
 // Supabase Storage Public URLs for Joao's photos - Optimized for fast loading
 const JOAO_IMAGES = [
-  optimizedUrl("home/Joao/joao-1.jpg", IMAGE_PRESETS.large),
-  optimizedUrl("home/Joao/joao-2.jpg", IMAGE_PRESETS.large),
-  optimizedUrl("home/Joao/joao-4.jpg", IMAGE_PRESETS.large),
-  optimizedUrl("home/Joao/joao-5.jpg", IMAGE_PRESETS.large),
-  optimizedUrl("home/Joao/joao-6.jpg", IMAGE_PRESETS.large),
+  optimizedUrl("home/Joao/joao-1.jpg", IMAGE_PRESETS.card),
+  optimizedUrl("home/Joao/joao-2.jpg", IMAGE_PRESETS.card),
+  optimizedUrl("home/Joao/joao-4.jpg", IMAGE_PRESETS.card),
+  optimizedUrl("home/Joao/joao-5.jpg", IMAGE_PRESETS.card),
+  optimizedUrl("home/Joao/joao-6.jpg", IMAGE_PRESETS.card),
 ];
 
-// Real Guide Images from public folder
+// Real Guide Images from public folder - Using thumbnail preset for performance
 const GUIDE_IMAGES = [
-  storageUrl("home/guides/guia-aline.jpg"),
-  storageUrl("home/guides/guia-anacarolina.jpg"),
-  storageUrl("home/guides/guia-aurora.jpg"),
-  storageUrl("home/guides/guia-big.jpg"),
-  storageUrl("home/guides/guia-camilla.jpg"),
-  storageUrl("home/guides/guia-chico.jpg"),
-  storageUrl("home/guides/guia-gudu.jpg"),
-  storageUrl("home/guides/guia-henrique.jpg"),
-  storageUrl("home/guides/guia-jessica.jpg"),
-  storageUrl("home/guides/guia-joao.jpg"),
-  storageUrl("home/guides/guia-leocanastra.jpg"),
-  storageUrl("home/guides/guia-magela.jpg"),
-  storageUrl("home/guides/guia-naia.jpg"),
-  storageUrl("home/guides/guia-nissen.jpg"),
-  storageUrl("home/guides/guia-pedropilla.jpg"),
-  storageUrl("home/guides/guia-raphaelmaia.jpg"),
-  storageUrl("home/guides/guia-thiagoalmanamala.jpg"),
-  storageUrl("home/guides/guia-thiagoqueiroz.jpg"),
-  storageUrl("home/guides/guia-tony.jpg"),
-  storageUrl("home/guides/guia-victoria.jpg"),
-  storageUrl("home/guides/guia-vini.jpg"),
-  storageUrl("home/guides/guia-yago.jpg")
+  optimizedUrl("home/guides/guia-aline.jpg", IMAGE_PRESETS.thumbnail),
+  optimizedUrl("home/guides/guia-anacarolina.jpg", IMAGE_PRESETS.thumbnail),
+  optimizedUrl("home/guides/guia-aurora.jpg", IMAGE_PRESETS.thumbnail),
+  optimizedUrl("home/guides/guia-big.jpg", IMAGE_PRESETS.thumbnail),
+  optimizedUrl("home/guides/guia-camilla.jpg", IMAGE_PRESETS.thumbnail),
+  optimizedUrl("home/guides/guia-chico.jpg", IMAGE_PRESETS.thumbnail),
+  optimizedUrl("home/guides/guia-gudu.jpg", IMAGE_PRESETS.thumbnail),
+  optimizedUrl("home/guides/guia-henrique.jpg", IMAGE_PRESETS.thumbnail),
+  optimizedUrl("home/guides/guia-jessica.jpg", IMAGE_PRESETS.thumbnail),
+  optimizedUrl("home/guides/guia-joao.jpg", IMAGE_PRESETS.thumbnail),
+  optimizedUrl("home/guides/guia-leocanastra.jpg", IMAGE_PRESETS.thumbnail),
+  optimizedUrl("home/guides/guia-magela.jpg", IMAGE_PRESETS.thumbnail),
+  optimizedUrl("home/guides/guia-naia.jpg", IMAGE_PRESETS.thumbnail),
+  optimizedUrl("home/guides/guia-nissen.jpg", IMAGE_PRESETS.thumbnail),
+  optimizedUrl("home/guides/guia-pedropilla.jpg", IMAGE_PRESETS.thumbnail),
+  optimizedUrl("home/guides/guia-raphaelmaia.jpg", IMAGE_PRESETS.thumbnail),
+  optimizedUrl("home/guides/guia-thiagoalmanamala.jpg", IMAGE_PRESETS.thumbnail),
+  optimizedUrl("home/guides/guia-thiagoqueiroz.jpg", IMAGE_PRESETS.thumbnail),
+  optimizedUrl("home/guides/guia-tony.jpg", IMAGE_PRESETS.thumbnail),
+  optimizedUrl("home/guides/guia-victoria.jpg", IMAGE_PRESETS.thumbnail),
+  optimizedUrl("home/guides/guia-vini.jpg", IMAGE_PRESETS.thumbnail),
+  optimizedUrl("home/guides/guia-yago.jpg", IMAGE_PRESETS.thumbnail)
 ];
 
 const StatItem = ({ number, label, suffix = "" }: { number: number, label: string, suffix?: string }) => {

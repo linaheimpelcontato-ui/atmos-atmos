@@ -64,8 +64,10 @@ const CategoryCard = ({ item, isLast }: { item: typeof CATEGORIES[0], isLast: bo
   const [imgIndex, setImgIndex] = useState(0);
 
   useEffect(() => {
+    // Reduce number of images on mobile to save bandwidth
+    const maxImages = typeof window !== 'undefined' && window.innerWidth < 768 ? 3 : item.images.length;
     const timer = setInterval(() => {
-      setImgIndex((prev) => (prev + 1) % item.images.length);
+      setImgIndex((prev) => (prev + 1) % maxImages);
     }, 2500); // Slower, more elegant transitions
     return () => clearInterval(timer);
   }, [item.images.length]);
@@ -83,6 +85,7 @@ const CategoryCard = ({ item, isLast }: { item: typeof CATEGORIES[0], isLast: bo
             initial={{ opacity: 0, scale: 1.05 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
+            loading="lazy"
             transition={{ 
               opacity: { duration: 1.5, ease: "easeInOut" },
               scale: { duration: 3, ease: "easeOut" }

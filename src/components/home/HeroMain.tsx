@@ -38,32 +38,43 @@ export default function HeroMain({
     <section className="relative min-h-[calc(100vh-80px)] lg:min-h-[calc(100vh-120px)] w-full flex flex-col items-center justify-center bg-black px-6 overflow-hidden">
       {/* EXCLUSIVE VIVID VIDEO BACKGROUND */}
       <div className="absolute inset-0 z-0">
-        {!isMobile && videoActive ? (
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="auto"
-            title="Atmos Chapada dos Veadeiros Cinematic"
-            poster={optimizedUrl("home/hero-bg-poster.jpg", IMAGE_PRESETS.large)}
-            className="w-full h-full object-cover object-bottom opacity-70"
-          >
-            <source
-              src={storageUrl("home/hero-bg.mp4")}
-              type="video/mp4"
-            />
-          </video>
-        ) : (
-          <img 
-            src={optimizedUrl("home/hero-bg-poster.jpg", IMAGE_PRESETS.large)}
-            className="w-full h-full object-cover object-bottom opacity-70"
-            alt="Atmos Chapada dos Veadeiros Hero"
-            fetchPriority="high"
-            width="1920"
-            height="1080"
+        {/* Desktop Video - Hidden on mobile via CSS for faster discovery */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="none"
+          title="Atmos Chapada dos Veadeiros Cinematic"
+          poster={optimizedUrl("home/hero-bg-poster.jpg", IMAGE_PRESETS.large)}
+          className="hidden md:block w-full h-full object-cover object-bottom opacity-70"
+        >
+          <source
+            src={storageUrl("home/hero-bg.mp4")}
+            type="video/mp4"
           />
-        )}
+        </video>
+
+        {/* Mobile/Fallback Image - Using a smaller preset for cellular connections */}
+        <img 
+          src={optimizedUrl("home/hero-bg-poster.jpg", IMAGE_PRESETS.large)}
+          srcSet={`${optimizedUrl("home/hero-bg-poster.jpg", IMAGE_PRESETS.card)} 600w, ${optimizedUrl("home/hero-bg-poster.jpg", IMAGE_PRESETS.large)} 1200w`}
+          sizes="(max-width: 768px) 100vw, 100vw"
+          className="md:hidden w-full h-full object-cover object-bottom opacity-70"
+          alt="Atmos Chapada dos Veadeiros Hero"
+          fetchPriority="high"
+          loading="eager"
+          width="1920"
+          height="1080"
+        />
+        
+        {/* Universal Fallback Image (Visible if Video Fails/Loading) */}
+        <img 
+          src={optimizedUrl("home/hero-bg-poster.jpg", IMAGE_PRESETS.large)}
+          className="hidden md:block absolute inset-0 w-full h-full object-cover object-bottom opacity-70 -z-10"
+          alt=""
+          fetchPriority="high"
+        />
         
         {/* Enhanced Vignette for Accessibility/Contrast (Page 20 of report) */}
         <div className="absolute inset-0 bg-black/30 z-1" />
