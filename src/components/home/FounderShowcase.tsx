@@ -233,6 +233,8 @@ export default function FounderShowcase() {
                 src={src}
                 alt="Equipe de Guias Atmos"
                 className="w-full h-full object-cover"
+                width="160"
+                height="213"
               />
             </div>
           ))}

@@ -97,24 +97,10 @@ export default function FeatureShowcase() {
     return storageUrl(cleanPath);
   };
 
-  // Preload all critical emulator images in the background to prevent black screens/flickering
-  useEffect(() => {
-    const allImages = [
-      "destaques-categorias/Cachoeira-Destaque-1.jpg",
-      "destaques-categorias/Experiencias-Destaque-1.jpeg",
-      "destaques-categorias/Hospedagens-Destaque-1.jpeg",
-      "destaques-categorias/Serviços-Destaque-1.jpg",
-      "home/about-bg.jpg",
-      "home/hero-bg.jpg",
-      ...CURATION_CATEGORIES_DATA.CACHOEIRAS.map(p => p.img),
-      ...CURATION_CATEGORIES_DATA.EXPERIÊNCIAS.map(p => p.img)
-    ];
-
-    allImages.forEach(path => {
-      const img = new Image();
-      img.src = getProductionUrl(path);
-    });
-  }, []);
+  // Image optimization helper using our unified storage utility
+  const getOptimizedImage = (path: string, size = IMAGE_PRESETS.medium) => {
+    return optimizedUrl(path, size);
+  };
 
   const [startTime, setStartTime] = useState(Date.now());
   const totalTime = 50000;
@@ -341,7 +327,12 @@ export default function FeatureShowcase() {
                                 const isCatActive = (subStep < 2 && i === 0) || (subStep >= 2 && i === 1);
                                 return (
                                   <div key={cat.id} className={`relative h-12 rounded-xl overflow-hidden border-2 transition-all ${isCatActive ? 'border-[#2C3E2D] shadow-md' : 'border-transparent opacity-60'}`}>
-                                    <img loading="lazy" src={getProductionUrl(cat.img)} className="w-full h-full object-cover" alt={`Categoria ${cat.label}`} />
+                                    <img 
+                                      loading="lazy" 
+                                      src={getOptimizedImage(cat.img, IMAGE_PRESETS.thumbnail)} 
+                                      className="w-full h-full object-cover" 
+                                      alt={`Categoria ${cat.label}`} 
+                                    />
                                     <div className={`absolute inset-0 flex items-center justify-center ${isCatActive ? 'bg-[#2C3E2D]/40' : 'bg-black/20'}`}>
                                       <span className="text-[9px] text-white font-display tracking-widest font-bold uppercase">{cat.label}</span>
                                     </div>
@@ -387,7 +378,7 @@ export default function FeatureShowcase() {
                                     return (
                                       <div key={i} className="rounded-2xl overflow-hidden bg-white shadow-sm border border-black/5">
                                         <div className="aspect-video relative">
-                                          <img loading="lazy" src={getProductionUrl(item.img)} className="w-full h-full object-cover" />
+                                          <img loading="lazy" src={getOptimizedImage(item.img, IMAGE_PRESETS.medium)} className="w-full h-full object-cover" />
                                           <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/40 backdrop-blur-md flex items-center justify-center">
                                             <motion.div
                                               animate={{ 
@@ -433,7 +424,7 @@ export default function FeatureShowcase() {
                                     return (
                                       <div key={i} className="rounded-2xl overflow-hidden bg-white shadow-sm border border-black/5">
                                         <div className="aspect-video relative">
-                                          <img loading="lazy" src={getProductionUrl(item.img)} className="w-full h-full object-cover" />
+                                          <img loading="lazy" src={getOptimizedImage(item.img, IMAGE_PRESETS.medium)} className="w-full h-full object-cover" />
                                           <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/40 backdrop-blur-md flex items-center justify-center">
                                             <motion.div
                                               animate={{ 
@@ -637,7 +628,7 @@ export default function FeatureShowcase() {
                             className="relative mb-6"
                           >
                             <div className="w-20 h-20 rounded-full border-2 border-white/20 p-1">
-                              <img loading="lazy" src={storageUrl("home/about-bg.jpg")} className="w-full h-full rounded-full object-cover grayscale" />
+                              <img loading="lazy" src={getOptimizedImage("home/about-bg.jpg", IMAGE_PRESETS.thumbnail)} className="w-full h-full rounded-full object-cover grayscale" />
                             </div>
                             <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-[#2C3E2D] rounded-full flex items-center justify-center border-2 border-white">
                               <Sparkles className="w-3 h-3 text-white" />
@@ -673,7 +664,7 @@ export default function FeatureShowcase() {
                                  <div className="flex-1 p-5 pt-12 relative z-10">
                                    <div className="mb-10">
                                      <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 p-1 mb-4 shadow-2xl">
-                                       <img loading="lazy" src={getProductionUrl("produtos/cachoeiras/bocaina-do-farias/bocaina-do-farias-1.jpg")} className="w-full h-full object-cover rounded-xl grayscale opacity-60" />
+                                       <img loading="lazy" src={getOptimizedImage("produtos/cachoeiras/bocaina-do-farias/bocaina-do-farias-1.jpg", IMAGE_PRESETS.thumbnail)} className="w-full h-full object-cover rounded-xl grayscale opacity-60" />
                                      </div>
                                      <span className="text-[7px] text-white/40 tracking-[0.4em] uppercase block leading-tight mb-1">Itinerário Atmos</span>
                                    </div>
@@ -764,7 +755,7 @@ export default function FeatureShowcase() {
 
                                         <div className="flex-1 bg-white rounded-3xl p-4 shadow-[0_4px_20px_-5px_rgba(0,0,0,0.05)] border border-black/5 flex gap-4 items-center group hover:border-[#A88B4C]/20 transition-colors">
                                           <div className="w-16 h-16 rounded-2xl overflow-hidden shrink-0 shadow-inner">
-                                            <img loading="lazy" src={getProductionUrl(item.img)} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                                            <img loading="lazy" src={getOptimizedImage(item.img, IMAGE_PRESETS.thumbnail)} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                                           </div>
                                           <div className="flex-1">
                                             <div className="flex items-center justify-between mb-1">
