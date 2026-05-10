@@ -85,7 +85,7 @@ export default function FounderShowcase() {
   useEffect(() => {
     const timer = setInterval(() => {
       setImgIndex((prev) => (prev + 1) % JOAO_IMAGES.length);
-    }, 2000); 
+    }, 2000);
     return () => clearInterval(timer);
   }, []);
 

@@ -108,9 +108,9 @@ export default function HeroScratch({
           <p className="text-xs md:text-sm font-medium tracking-[0.3em] text-[#2C3E2D] mb-3 opacity-60 uppercase">
             {tagline}
           </p>
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-display text-[#2C3E2D] tracking-tight leading-tight">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-display text-[#2C3E2D] tracking-tight leading-tight">
             {title}
-          </h1>
+          </h2>
         </motion.div>
 
         {/* Action Buttons - Protected zone */}

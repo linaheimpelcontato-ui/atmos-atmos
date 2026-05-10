@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   SupplierCombobox, getDialogFields, PRICING_TYPE_FIELDS, FISCAL_FIELDS, SEO_FIELDS,
-  productTypeLabels, regionLabels, type Product,
+  productTypeLabels, regionLabels, type Product, slugify
 } from "./shared";
 import { ProductMediaTab } from "./ProductMediaTab";
 import { ProductVariationsTab } from "./ProductVariationsTab";
@@ -119,6 +119,32 @@ export function ProductDialog({
       }
     }
   }, [open, editingProduct]);
+
+  // Intelligent SEO Auto-generation
+  useEffect(() => {
+    if (formName && !editingProduct) {
+      setFormVars(prev => {
+        const next = { ...prev };
+        
+        // 1. URL Slug
+        if (!next.seo_slug) {
+          next.seo_slug = slugify(formName);
+        }
+        
+        // 2. Meta Title (Standard: Name | ATMOS)
+        if (!next.seo_title) {
+          next.seo_title = `${formName} | ATMOS`;
+        }
+        
+        // 3. Meta Description (Standard: Subtitle if available)
+        if (!next.seo_description && formSubtitle) {
+          next.seo_description = formSubtitle;
+        }
+        
+        return next;
+      });
+    }
+  }, [formName, formSubtitle, editingProduct]);
 
   const handleSave = () => {
     const varsObj: Record<string, unknown> = {};

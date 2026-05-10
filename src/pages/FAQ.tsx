@@ -250,8 +250,9 @@ export default function FAQ() {
   return (
     <Layout>
       <PageSEO
-        title={labels.title}
-        description={labels.subtitle}
+        title={`${labels.title} — Planeje sua Viagem | ATMOS`}
+        description="Saiba tudo sobre o clima, logística, melhor época e trilhas na Chapada dos Veadeiros. Tire suas dúvidas e planeje sua jornada com a ATMOS."
+        keywords="quando ir chapada dos veadeiros, melhor epoca chapada, clima chapada dos veadeiros, como chegar alto paraiso, trilhas chapada dos veadeiros, guia chapada dos veadeiros"
         path="/duvidas"
       />
 

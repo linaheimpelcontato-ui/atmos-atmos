@@ -370,9 +370,9 @@ export default function MonteSeuRoteiro() {
   return (
     <Layout hideWishlist={true}>
       <PageSEO
-        title="Monte seu Roteiro | ATMOS"
-        description="Crie seu roteiro personalizado na Chapada dos Veadeiros com a ATMOS navegando por categorias."
-        path="/monte-seu-roteiro"
+        title={`${TABS.find(t => t.id === activeTab)?.label || "Monte seu Roteiro"} | ATMOS`}
+        description={`Explore nossa seleção de ${activeTab} na Chapada dos Veadeiros e monte seu roteiro personalizado com a ATMOS.`}
+        path={`/monte-seu-roteiro/${activeTab}`}
       />
 
       {/* Hero with Video Background */}

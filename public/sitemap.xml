@@ -1,23 +1,100 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Core Pages -->
   <url>
     <loc>https://atmos.tur.br/</loc>
-    <changefreq>weekly</changefreq>
+    <lastmod>2024-05-22</lastmod>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://atmos.tur.br/monte-seu-roteiro</loc>
-    <changefreq>daily</changefreq>
+    <loc>https://atmos.tur.br/roteiros</loc>
+    <lastmod>2024-05-22</lastmod>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://atmos.tur.br/imersoes</loc>
-    <changefreq>weekly</changefreq>
+    <loc>https://atmos.tur.br/monte-seu-roteiro</loc>
+    <lastmod>2024-05-22</lastmod>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Category Landing Pages -->
+  <url>
+    <loc>https://atmos.tur.br/monte-seu-roteiro/cachoeiras</loc>
+    <lastmod>2024-05-22</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://atmos.tur.br/wishlist</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <loc>https://atmos.tur.br/monte-seu-roteiro/experiencias</loc>
+    <lastmod>2024-05-22</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://atmos.tur.br/monte-seu-roteiro/hospedagens</loc>
+    <lastmod>2024-05-22</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://atmos.tur.br/monte-seu-roteiro/servicos</loc>
+    <lastmod>2024-05-22</lastmod>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Specific Itineraries -->
+  <url>
+    <loc>https://atmos.tur.br/roteiros/2d-classico</loc>
+    <lastmod>2024-05-22</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://atmos.tur.br/roteiros/2d-jurassico</loc>
+    <lastmod>2024-05-22</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://atmos.tur.br/roteiros/3d-classico</loc>
+    <lastmod>2024-05-22</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://atmos.tur.br/roteiros/3d-jurassico</loc>
+    <lastmod>2024-05-22</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://atmos.tur.br/roteiros/4d-classico</loc>
+    <lastmod>2024-05-22</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://atmos.tur.br/roteiros/4d-jurassico</loc>
+    <lastmod>2024-05-22</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://atmos.tur.br/roteiros/5d-classico</loc>
+    <lastmod>2024-05-22</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://atmos.tur.br/roteiros/5d-jurassico</loc>
+    <lastmod>2024-05-22</lastmod>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Support Pages -->
+  <url>
+    <loc>https://atmos.tur.br/faq</loc>
+    <lastmod>2024-05-22</lastmod>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://atmos.tur.br/privacidade</loc>
+    <lastmod>2024-05-22</lastmod>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://atmos.tur.br/termos</loc>
+    <lastmod>2024-05-22</lastmod>
+    <priority>0.3</priority>
   </url>
 </urlset>

@@ -59,7 +59,7 @@ export default function HeroMain({
         <img 
           src={optimizedUrl("home/hero-home.jpg", IMAGE_PRESETS.large)}
           className="md:hidden w-full h-full object-cover object-bottom opacity-70"
-          alt="Atmos Chapada dos Veadeiros Hero"
+          alt="Vista panorâmica da Chapada dos Veadeiros - ATMOS Turismo"
           fetchPriority="high"
           loading="eager"
           width="1920"

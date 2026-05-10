@@ -268,8 +268,9 @@ const Itineraries = () => {
   return (
     <Layout>
       <PageSEO
-        title={l.title + " | ATMOS"}
-        description={l.subtitle}
+        title="Roteiros Personalizados e Curadoria Atmos | ATMOS"
+        description="Explore nossa seleção exclusiva de roteiros clássicos e jurássicos na Chapada dos Veadeiros. Experiências planejadas para o máximo de imersão e conforto."
+        keywords="roteiros chapada dos veadeiros, viagem personalizada, curadoria atmos, roteiro 3 dias, roteiro 5 dias, turismo de luxo brasil"
         path="/roteiros"
       />
       

@@ -13,9 +13,16 @@ const FacilitadorSection = lazy(() => import("@/components/home/FacilitadorSecti
 const FounderShowcase = lazy(() => import("@/components/home/FounderShowcase"));
 const ExperienceEcosystem = lazy(() => import("@/components/home/ExperienceEcosystem"));
 
+import SEO from "@/components/SEO";
+
 const Index = () => {
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
+      <SEO 
+        title="Experiências Exclusivas na Chapada dos Veadeiros" 
+        description="A ATMOS oferece a melhor curadoria de experiências, roteiros personalizados e guias bilingues na Chapada dos Veadeiros. Descubra o turismo de luxo consciente."
+        keywords="Chapada dos Veadeiros, turismo de luxo, guia bilingue, roteiros personalizados, experiências exclusivas, Alto Paraíso"
+      />
       <Header />
       <main className="overflow-hidden">
         {/* TOP HERO: VIDEO EXCLUSIVE - LOADED IMMEDIATELY */}

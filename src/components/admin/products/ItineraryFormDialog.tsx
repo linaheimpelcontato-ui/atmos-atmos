@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Trash2, Plus, ChevronDown, Pencil, Search, Package, RefreshCw, ImageIcon } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import type { Product } from "./shared";
-import { productTypeLabels } from "./shared";
+import { productTypeLabels, slugify } from "./shared";
 import { ProductMediaTab } from "./ProductMediaTab";
 
 type DayItem = {
@@ -29,6 +29,15 @@ type Day = {
   description: string;
 };
 
+// Type for database persistence (with translation objects)
+type SavedDay = {
+  dayNumber: number;
+  items: DayItem[];
+  guidePricing: Pricing | {};
+  attractions: { pt: string[] };
+  description: { pt: string };
+};
+
 import { regionLabels } from "./shared";
 
 type PricingTier = { individual?: number; dupla?: number; trio?: number };
@@ -36,7 +45,7 @@ type Pricing = { atmos4x4?: PricingTier; carroProprio?: PricingTier };
 
 type ItineraryVars = {
   duration: number;
-  days: Day[];
+  days: SavedDay[];
   extraCosts?: { equipmentFees?: number; equipmentItems?: string; entranceFees?: number };
   pricing?: Pricing;
   discount?: number;
@@ -183,6 +192,26 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
     setSubcategory((vars.subcategory as any) || "");
     setDescription(product?.description || "");
   }, [open, product, allProducts]);
+
+  // Intelligent SEO Auto-generation for Itineraries
+  useEffect(() => {
+    if (name && !isEdit) {
+      // 1. URL Slug
+      if (!seoSlug) {
+        setSeoSlug(slugify(name));
+      }
+      
+      // 2. Meta Title
+      if (!seoTitle) {
+        setSeoTitle(`${name} | ATMOS`);
+      }
+      
+      // 3. Meta Description (Standard: Description if available)
+      if (!seoDescription && description) {
+        setSeoDescription(description.slice(0, 160)); // Truncate for SEO best practices
+      }
+    }
+  }, [name, description, isEdit]);
 
   const addDay = () => setDays([...days, { dayNumber: days.length + 1, items: [], attractions: "", description: "" }]);
   const removeDay = (idx: number) => {

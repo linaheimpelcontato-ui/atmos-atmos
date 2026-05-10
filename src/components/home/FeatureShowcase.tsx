@@ -365,7 +365,7 @@ export default function FeatureShowcase() {
                                     return (
                                       <div key={i} className="rounded-2xl overflow-hidden bg-white shadow-sm border border-black/5">
                                         <div className="aspect-video relative">
-                                          <img loading="lazy" src={getOptimizedImage(item.img, IMAGE_PRESETS.card)} className="w-full h-full object-cover" />
+                                          <img loading="lazy" src={getOptimizedImage(item.img, IMAGE_PRESETS.card)} alt={`Atmos — ${item.t}`} className="w-full h-full object-cover" />
                                           <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/40 backdrop-blur-md flex items-center justify-center">
                                             <motion.div
                                               animate={{ 
@@ -411,7 +411,7 @@ export default function FeatureShowcase() {
                                     return (
                                       <div key={i} className="rounded-2xl overflow-hidden bg-white shadow-sm border border-black/5">
                                         <div className="aspect-video relative">
-                                          <img loading="lazy" src={getOptimizedImage(item.img, IMAGE_PRESETS.card)} className="w-full h-full object-cover" />
+                                          <img loading="lazy" src={getOptimizedImage(item.img, IMAGE_PRESETS.card)} alt={`Atmos — ${item.t}`} className="w-full h-full object-cover" />
                                           <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/40 backdrop-blur-md flex items-center justify-center">
                                             <motion.div
                                               animate={{ 
@@ -615,7 +615,7 @@ export default function FeatureShowcase() {
                             className="relative mb-6"
                           >
                             <div className="w-20 h-20 rounded-full border-2 border-white/20 p-1">
-                              <img loading="lazy" src={getOptimizedImage("home/about-bg.jpg", IMAGE_PRESETS.thumbnail)} className="w-full h-full rounded-full object-cover grayscale" />
+                              <img loading="lazy" src={getOptimizedImage("home/about-bg.jpg", IMAGE_PRESETS.thumbnail)} alt="Equipe Atmos — Especialista em Chapada" className="w-full h-full rounded-full object-cover grayscale" />
                             </div>
                             <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-[#2C3E2D] rounded-full flex items-center justify-center border-2 border-white">
                               <Sparkles className="w-3 h-3 text-white" />
@@ -651,7 +651,7 @@ export default function FeatureShowcase() {
                                  <div className="flex-1 p-5 pt-12 relative z-10">
                                    <div className="mb-10">
                                      <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 p-1 mb-4 shadow-2xl">
-                                       <img loading="lazy" src={getOptimizedImage("produtos/cachoeiras/bocaina-do-farias/bocaina-do-farias-1.jpg", IMAGE_PRESETS.thumbnail)} className="w-full h-full object-cover rounded-xl grayscale opacity-60" />
+                                       <img loading="lazy" src={getOptimizedImage("produtos/cachoeiras/bocaina-do-farias/bocaina-do-farias-1.jpg", IMAGE_PRESETS.thumbnail)} alt="Expedição 4x4 — Bocaina do Farias" className="w-full h-full object-cover rounded-xl grayscale opacity-60" />
                                      </div>
                                      <span className="text-[7px] text-white/40 tracking-[0.4em] uppercase block leading-tight mb-1">Itinerário Atmos</span>
                                    </div>
@@ -695,7 +695,7 @@ export default function FeatureShowcase() {
                                         "Desenhamos este roteiro com o cuidado de quem conhece cada segredo da Chapada."
                                       </p>
                                     </div>
-                                    <img loading="lazy" src={logoAtmos} className="h-4 opacity-30 grayscale brightness-200 ml-1" />
+                                    <img loading="lazy" src={logoAtmos} alt="ATMOS Interface" className="h-4 opacity-30 grayscale brightness-200 ml-1" />
                                  </div>
                               </div>
 
@@ -742,7 +742,7 @@ export default function FeatureShowcase() {
 
                                         <div className="flex-1 bg-white rounded-3xl p-4 shadow-[0_4px_20px_-5px_rgba(0,0,0,0.05)] border border-black/5 flex gap-4 items-center group hover:border-[#A88B4C]/20 transition-colors">
                                           <div className="w-16 h-16 rounded-2xl overflow-hidden shrink-0 shadow-inner">
-                                            <img loading="lazy" src={getOptimizedImage(item.img, IMAGE_PRESETS.thumbnail)} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                                            <img loading="lazy" src={getOptimizedImage(item.img, IMAGE_PRESETS.thumbnail)} alt={`ATMOS — ${item.title}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                                           </div>
                                           <div className="flex-1">
                                             <div className="flex items-center justify-between mb-1">
