@@ -67,7 +67,7 @@ const pillars = [
   {
     id: "pensamento",
     title: "PENSAMENTO",
-    description: "Propostas que estimulam a criatividade, o aprendizado e novas formas de olhar o mundo.",
+    description: "Propostas que estimulam a criatividade, o aprendizado e novas formas de olhar o mundo e a si mesmo.",
     image: "/assets/home/Pensamento.png",
     scale: 1.2,
     bg: "bg-[#8d7b63]",
