@@ -98,7 +98,7 @@ export default function FeatureShowcase() {
   };
 
   // Image optimization helper using our unified storage utility
-  const getOptimizedImage = (path: string, size = IMAGE_PRESETS.medium) => {
+  const getOptimizedImage = (path: string, size = IMAGE_PRESETS.card) => {
     return optimizedUrl(path, size);
   };
 
@@ -378,7 +378,7 @@ export default function FeatureShowcase() {
                                     return (
                                       <div key={i} className="rounded-2xl overflow-hidden bg-white shadow-sm border border-black/5">
                                         <div className="aspect-video relative">
-                                          <img loading="lazy" src={getOptimizedImage(item.img, IMAGE_PRESETS.medium)} className="w-full h-full object-cover" />
+                                          <img loading="lazy" src={getOptimizedImage(item.img, IMAGE_PRESETS.card)} className="w-full h-full object-cover" />
                                           <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/40 backdrop-blur-md flex items-center justify-center">
                                             <motion.div
                                               animate={{ 
@@ -424,7 +424,7 @@ export default function FeatureShowcase() {
                                     return (
                                       <div key={i} className="rounded-2xl overflow-hidden bg-white shadow-sm border border-black/5">
                                         <div className="aspect-video relative">
-                                          <img loading="lazy" src={getOptimizedImage(item.img, IMAGE_PRESETS.medium)} className="w-full h-full object-cover" />
+                                          <img loading="lazy" src={getOptimizedImage(item.img, IMAGE_PRESETS.card)} className="w-full h-full object-cover" />
                                           <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/40 backdrop-blur-md flex items-center justify-center">
                                             <motion.div
                                               animate={{ 
