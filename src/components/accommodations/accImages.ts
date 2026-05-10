@@ -1,4 +1,4 @@
-import { storageUrl, optimizedUrl } from "@/lib/storage";
+import { optimizedUrl, IMAGE_PRESETS } from "@/lib/storage";
 import { useStorageImages } from "@/hooks/useStorageImages";
 
 /** 
@@ -21,14 +21,17 @@ export function useAccImages(id: string, name?: string) {
   const idQuery = useStorageImages("produtos/hospedagens", id);
 
   const allImages = [...(query.data || []), ...(idQuery.data || [])];
-  const uniqueImages = Array.from(new Set(allImages));
+  // Ensure all fetched images are optimized
+  const uniqueImages = Array.from(new Set(allImages)).map(img => 
+    optimizedUrl(img, IMAGE_PRESETS.card)
+  );
 
   const primaryFallback = accommodationSpecifics[id]
-    ? [optimizedUrl(accommodationSpecifics[id], { width: 500, quality: 75 })]
+    ? [optimizedUrl(accommodationSpecifics[id], IMAGE_PRESETS.card)]
     : [];
 
   const genericFallback = Array.from({ length: 6 }, (_, i) =>
-    optimizedUrl(`produtos/hospedagens/${id}/${id}-${i + 1}.jpg`, { width: 500, quality: 75 })
+    optimizedUrl(`produtos/hospedagens/${id}/${id}-${i + 1}.jpg`, IMAGE_PRESETS.card)
   );
 
   const fallback = [...primaryFallback, ...genericFallback];
@@ -42,17 +45,17 @@ export function useAccImages(id: string, name?: string) {
 /** Synchronous — card thumbnail (always first image) */
 export function getAccCardImage(id: string, name?: string): string {
   if (accommodationSpecifics[id]) {
-    return optimizedUrl(accommodationSpecifics[id], { width: 500, quality: 75 });
+    return optimizedUrl(accommodationSpecifics[id], IMAGE_PRESETS.card);
   }
-  return optimizedUrl(`produtos/hospedagens/${id}/${id}-1.jpg`, { width: 500, quality: 75 });
+  return optimizedUrl(`produtos/hospedagens/${id}/${id}-1.jpg`, IMAGE_PRESETS.card);
 }
 
 /** Legacy sync function */
 export function getAccImages(id: string, name?: string): string[] {
   if (accommodationSpecifics[id]) {
-    return [optimizedUrl(accommodationSpecifics[id], { width: 500, quality: 75 })];
+    return [optimizedUrl(accommodationSpecifics[id], IMAGE_PRESETS.card)];
   }
   return Array.from({ length: 6 }, (_, i) =>
-    optimizedUrl(`produtos/hospedagens/${id}/${id}-${i + 1}.jpg`, { width: 500, quality: 75 })
+    optimizedUrl(`produtos/hospedagens/${id}/${id}-${i + 1}.jpg`, IMAGE_PRESETS.card)
   );
 }

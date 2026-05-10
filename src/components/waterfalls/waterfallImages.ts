@@ -1,4 +1,4 @@
-import { storageUrl, optimizedUrl } from "@/lib/storage";
+import { optimizedUrl, IMAGE_PRESETS } from "@/lib/storage";
 import { useStorageImages } from "@/hooks/useStorageImages";
 
 /** 
@@ -34,15 +34,18 @@ export function useWaterfallImages(id: string, name: string) {
   const idQuery = useStorageImages("produtos/cachoeiras", id);
   
   const allImages = [...(query.data || []), ...(idQuery.data || [])];
-  const uniqueImages = Array.from(new Set(allImages));
+  // Ensure all fetched images are optimized
+  const uniqueImages = Array.from(new Set(allImages)).map(img => 
+    optimizedUrl(img, IMAGE_PRESETS.card)
+  );
 
   // If we have a specific mapping, use it as the first fallback for instant results
   const primaryFallback = waterfallSpecifics[id] 
-    ? [optimizedUrl(waterfallSpecifics[id], { width: 500, quality: 75 })]
+    ? [optimizedUrl(waterfallSpecifics[id], IMAGE_PRESETS.card)]
     : [];
 
   const genericFallback = [1, 2, 3].map((n) => 
-    optimizedUrl(`produtos/cachoeiras/${id}/${id}-${n}.jpg`, { width: 500, quality: 75 })
+    optimizedUrl(`produtos/cachoeiras/${id}/${id}-${n}.jpg`, IMAGE_PRESETS.card)
   );
 
   const fallback = [...primaryFallback, ...genericFallback];
@@ -56,15 +59,15 @@ export function useWaterfallImages(id: string, name: string) {
 /** Synchronous fallback — used for cards (always first image) */
 export function getWaterfallCardImage(id: string, name: string): string {
   if (waterfallSpecifics[id]) {
-    return optimizedUrl(waterfallSpecifics[id], { width: 500, quality: 75 });
+    return optimizedUrl(waterfallSpecifics[id], IMAGE_PRESETS.card);
   }
-  return optimizedUrl(`produtos/cachoeiras/${id}/${id}-1.jpg`, { width: 500, quality: 75 });
+  return optimizedUrl(`produtos/cachoeiras/${id}/${id}-1.jpg`, IMAGE_PRESETS.card);
 }
 
 /** Legacy sync function — kept for backward compatibility */
 export function getWaterfallImages(id: string, name: string): string[] {
   if (waterfallSpecifics[id]) {
-    return [optimizedUrl(waterfallSpecifics[id], { width: 500, quality: 75 })];
+    return [optimizedUrl(waterfallSpecifics[id], IMAGE_PRESETS.card)];
   }
-  return [1, 2, 3].map((n) => optimizedUrl(`produtos/cachoeiras/${id}/${id}-${n}.jpg`, { width: 500, quality: 75 }));
+  return [1, 2, 3].map((n) => optimizedUrl(`produtos/cachoeiras/${id}/${id}-${n}.jpg`, IMAGE_PRESETS.card));
 }

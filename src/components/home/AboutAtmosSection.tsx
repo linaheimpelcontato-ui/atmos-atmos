@@ -1,8 +1,8 @@
 import React, { useRef } from "react";
 import { motion, useScroll, useTransform, animate, motionValue, useInView } from "framer-motion";
-import { storageUrl } from "@/lib/storage";
-const logoAtmos = storageUrl("home/logo-atmos.png");
-const flowerSymbol = storageUrl("home/simboloatmos.png");
+import { optimizedUrl, IMAGE_PRESETS } from "@/lib/storage";
+const logoAtmos = optimizedUrl("home/logo-atmos.png", IMAGE_PRESETS.thumbnail);
+const flowerSymbol = optimizedUrl("home/simboloatmos.png", IMAGE_PRESETS.thumbnail);
 
 export default function AboutAtmosSection() {
   const containerRef = useRef<HTMLDivElement>(null);

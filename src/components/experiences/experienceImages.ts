@@ -1,4 +1,4 @@
-import { optimizedUrl, storageUrl, IMAGE_PRESETS } from "@/lib/storage";
+import { optimizedUrl, IMAGE_PRESETS } from "@/lib/storage";
 import { useStorageImages } from "@/hooks/useStorageImages";
 
 /** 
@@ -43,14 +43,17 @@ export function useExperienceGallery(imageKey: string, namePt?: string, id?: str
   const nameQuery = useStorageImages("produtos/experiencias", namePt || "", !!namePt);
 
   const allImages = [...(query.data || []), ...(nameQuery.data || [])];
-  const uniqueImages = Array.from(new Set(allImages));
+  // Ensure all fetched images are optimized
+  const uniqueImages = Array.from(new Set(allImages)).map(img => 
+    optimizedUrl(img, IMAGE_PRESETS.card)
+  );
 
-  const primaryFallback = experienceSpecifics[id] 
-    ? [optimizedUrl(experienceSpecifics[id], { width: 500, quality: 75 })]
+  const primaryFallback = experienceSpecifics[id || ""] 
+    ? [optimizedUrl(experienceSpecifics[id || ""], IMAGE_PRESETS.card)]
     : [];
 
   const genericFallback = [1, 2, 3].map((n) =>
-    optimizedUrl(`produtos/experiencias/${id}/${id}-${n}.jpg`, { width: 500, quality: 75 })
+    optimizedUrl(`produtos/experiencias/${id}/${id}-${n}.jpg`, IMAGE_PRESETS.card)
   );
 
   const fallback = [...primaryFallback, ...genericFallback];
@@ -65,12 +68,12 @@ export function getCardImage(id: string, imageKey?: string): string {
   if (!id) return "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=500&q=75";
   
   if (experienceSpecifics[id]) {
-    return optimizedUrl(experienceSpecifics[id], { width: 500, quality: 75 });
+    return optimizedUrl(experienceSpecifics[id], IMAGE_PRESETS.card);
   }
   
   const key = imageKey || id;
   if (key.startsWith('http')) return key;
-  return optimizedUrl(`produtos/experiencias/${key}/${key}-1.jpg`, { width: 500, quality: 75 });
+  return optimizedUrl(`produtos/experiencias/${key}/${key}-1.jpg`, IMAGE_PRESETS.card);
 }
 
 export function getGalleryImages(key: string): string[] {

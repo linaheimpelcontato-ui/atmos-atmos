@@ -78,33 +78,16 @@ const CURATION_CATEGORIES_DATA = {
   ]
 };
 
+// Image optimization helper using our unified storage utility
+const getOptimizedImage = (path: string, size = IMAGE_PRESETS.card) => {
+  if (!path) return "";
+  return optimizedUrl(path, size);
+};
+
 export default function FeatureShowcase() {
   const [step, setStep] = useState(0);
   const [subStep, setSubStep] = useState(0);
   const [progress, setProgress] = useState(0);
-
-  // Helper to force production URL for uploaded assets, ensuring sync with Admin Panel
-  const getProductionUrl = (path: string) => {
-    if (!path) return "";
-    if (path.startsWith("http")) return path;
-    const cleanPath = path.replace(/^\//, "");
-    
-    const productionFolders = ["produtos/", "destaques-categorias/", "experiencias/"];
-    if (productionFolders.some(folder => cleanPath.startsWith(folder))) {
-      return `https://assets.atmos.tur.br/${encodeURI(cleanPath)}`;
-    }
-    
-    return storageUrl(cleanPath);
-  };
-
-  // Image optimization helper using our unified storage utility
-  const getOptimizedImage = (path: string, size = IMAGE_PRESETS.card) => {
-    return optimizedUrl(path, size);
-  };
-
-  const [startTime, setStartTime] = useState(Date.now());
-  const totalTime = 50000;
-  const stepDuration = totalTime / JOURNEY_STEPS.length;
 
   const resetTimer = (targetStep: number) => {
     const newStartTime = Date.now() - (targetStep * stepDuration);
@@ -496,6 +479,7 @@ export default function FeatureShowcase() {
                                       className="bg-white rounded-2xl overflow-hidden shadow-sm border border-black/5 flex flex-col"
                                     >
                                       <div className="relative w-full overflow-hidden" style={{ aspectRatio: '1/1' }}>
+                                        <img 
                                           src={getOptimizedImage(item.img, IMAGE_PRESETS.card)} 
                                           className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
                                         />
@@ -719,7 +703,7 @@ export default function FeatureShowcase() {
                                     initial={{ scale: 1.1 }}
                                     animate={{ scale: 1 }}
                                     transition={{ duration: 10, repeat: Infinity, repeatType: "reverse" }}
-                                    src={getOptimizedImage("destaques-categorias/Cachoeira-Destaque-1.jpg", IMAGE_PRESETS.medium)} 
+                                    src={getOptimizedImage("destaques-categorias/Cachoeira-Destaque-1.jpg", IMAGE_PRESETS.card)} 
                                     className="w-full h-full object-cover" 
                                   />
                                   <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-[#FAF9F6]" />

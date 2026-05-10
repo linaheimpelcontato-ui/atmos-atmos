@@ -58,6 +58,7 @@ const labels = {
     about: "Sobre a cachoeira",
     location: "Localização",
     requires4x4: "Necessário 4x4",
+    gallery: "Galeria",
   },
   en: {
     trail: "Trail",
@@ -76,6 +77,7 @@ const labels = {
     about: "About the waterfall",
     location: "Location",
     requires4x4: "4x4 Required",
+    gallery: "Gallery",
   },
   es: {
     trail: "Sendero",
@@ -94,6 +96,7 @@ const labels = {
     about: "Sobre la cascada",
     location: "Ubicación",
     requires4x4: "Necesario 4x4",
+    gallery: "Galería",
   },
 };
 
@@ -345,7 +348,6 @@ export default function WaterfallDetailDialog({
                   src={img} 
                   className="w-full h-auto object-cover transition-transform duration-1000 group-hover:scale-105" 
                   alt={`${waterfall.name[language]} gallery ${index + 1}`}
-                  loading="lazy"
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-500" />
               </motion.div>

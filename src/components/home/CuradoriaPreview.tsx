@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
-import { storageUrl } from "@/lib/storage";
+import { optimizedUrl, IMAGE_PRESETS } from "@/lib/storage";
 
 const CATEGORIES = [
   {
@@ -72,12 +72,12 @@ const CategoryCard = ({ item, isLast }: { item: typeof CATEGORIES[0], isLast: bo
 
   return (
     <div className={`relative aspect-[4/5] md:aspect-[3/4] lg:aspect-[9/16] overflow-hidden bg-[#2C3E2D] ${!isLast ? 'border-r border-white/10' : ''}`}>
-      {/* Image Slideshow using storageUrl helper */}
+      {/* Image Slideshow using optimizedUrl helper */}
       <div className="absolute inset-0">
         <AnimatePresence mode="popLayout">
           <motion.img
             key={imgIndex}
-            src={storageUrl(item.images[imgIndex])}
+            src={optimizedUrl(item.images[imgIndex], IMAGE_PRESETS.card)}
             alt={item.title}
             className="absolute inset-0 w-full h-full object-cover"
             initial={{ opacity: 0, scale: 1.05 }}

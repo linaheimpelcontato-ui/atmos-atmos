@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { storageUrl } from "@/lib/storage";
+import { storageUrl, optimizedUrl, IMAGE_PRESETS } from "@/lib/storage";
 import { fetchStorageImages } from "@/hooks/useStorageImages";
 import { trackProposalView } from "@/lib/analytics";
 import {
@@ -18,11 +18,11 @@ import { CSS } from "@dnd-kit/utilities";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import ProposalFeedbackDialog from "@/components/proposal/ProposalFeedbackDialog";
 /* dnd-kit reordering */
-const logoAtmos = storageUrl("home/logo-atmos.png");
-const heroImage = storageUrl("proposta-visual-cliente/propostavisualbg.jpg");
-const dividerImage = storageUrl("home/nature-divider.jpg");
-const leafTexture = storageUrl("proposta-visual-cliente/leaf-texture - horizontal.jpg");
-const leafTextureAlt = storageUrl("proposta-visual-cliente/leaf-texture.jpg");
+const logoAtmos = optimizedUrl("home/logo-atmos.png", IMAGE_PRESETS.card);
+const heroImage = optimizedUrl("proposta-visual-cliente/propostavisualbg.jpg", IMAGE_PRESETS.large);
+const dividerImage = optimizedUrl("home/nature-divider.jpg", IMAGE_PRESETS.large);
+const leafTexture = optimizedUrl("proposta-visual-cliente/leaf-texture - horizontal.jpg", IMAGE_PRESETS.large);
+const leafTextureAlt = optimizedUrl("proposta-visual-cliente/leaf-texture.jpg", IMAGE_PRESETS.large);
 
 
 /* ───── types ───── */
@@ -720,16 +720,18 @@ export default function ProposalPublic() {
             : (EXP_STORAGE_KEY[product.source_id] || product.source_id);
             
           const imgs = await fetchStorageImages(folder as any, key);
-          urls.push(...imgs);
+          const optimizedImgs = imgs.map(url => optimizedUrl(url, IMAGE_PRESETS.card));
+          urls.push(...optimizedImgs);
         }
         dayGalleries[dayNum] = urls;
       }
       setDynamicDayGalleries(dayGalleries);
 
-      // Set first day's first image as hero if available
+      // Set first day's first image as hero if available — use LARGE preset
       const firstDay = days[0];
       if (firstDay && dayGalleries[firstDay]?.length > 0) {
-        setHeroImageUrl(dayGalleries[firstDay][0]);
+        // Need to re-optimize for LARGE since it's the hero
+        setHeroImageUrl(optimizedUrl(dayGalleries[firstDay][0], IMAGE_PRESETS.large));
       }
 
       const accImgs: Record<string, string[]> = {};
@@ -744,10 +746,10 @@ export default function ProposalPublic() {
         seen.add(sourceId);
         const imgs = await fetchStorageImages("HOSPEDAGENS", sourceId);
         accImgs[sourceId] = imgs.length > 0
-          ? imgs
+          ? imgs.map(url => optimizedUrl(url, IMAGE_PRESETS.card))
           : Array.from({ length: 6 }, (_, i) => {
               const folderName = product?.name || sourceId;
-              return storageUrl(`HOSPEDAGENS/${folderName}/${folderName}-${i + 1}.jpg`);
+              return optimizedUrl(`HOSPEDAGENS/${folderName}/${folderName}-${i + 1}.jpg`, IMAGE_PRESETS.card);
             });
       }
 
@@ -760,10 +762,10 @@ export default function ProposalPublic() {
           seen.add(sourceId);
           const imgs = await fetchStorageImages("HOSPEDAGENS", sourceId);
           accImgs[sourceId] = imgs.length > 0
-            ? imgs
+            ? imgs.map(url => optimizedUrl(url, IMAGE_PRESETS.card))
             : Array.from({ length: 6 }, (_, i) => {
                 const folderName = product?.name || sourceId;
-                return storageUrl(`HOSPEDAGENS/${folderName}/${folderName}-${i + 1}.jpg`);
+                return optimizedUrl(`HOSPEDAGENS/${folderName}/${folderName}-${i + 1}.jpg`, IMAGE_PRESETS.card);
               });
         }
       }
