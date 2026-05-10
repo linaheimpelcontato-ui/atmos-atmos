@@ -15,7 +15,7 @@ import {
   Users,
   Search
 } from 'lucide-react';
-import { storageUrl } from '@/lib/storage';
+import { storageUrl, optimizedUrl, IMAGE_PRESETS } from '@/lib/storage';
 
 const logoAtmos = storageUrl("home/logo-atmos.png");
 
