@@ -58,7 +58,7 @@ const pillars = [
   {
     id: "acao",
     title: "AÇÃO",
-    description: "Vivências participativas que convidam o turista a agir, interagir e se integrar à cultura e à comunidade.",
+    description: "Vivências participativas que convidam o turista a agir, interagir com a natureza e se integrar à cultura e à comunidade local",
     image: "/assets/home/Acao.png",
     scale: 1.4,
     bg: "bg-[#744404]",
