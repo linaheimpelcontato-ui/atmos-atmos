@@ -16,18 +16,30 @@ export default function HeroMain({
   const [authMode, setAuthMode] = useState<"login" | "signup">("signup");
   const { user } = useAuth();
   const [videoActive, setVideoActive] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
-  // Defer video loading to prioritize LCP (the poster image)
   useEffect(() => {
-    const timer = setTimeout(() => setVideoActive(true), 2000);
-    return () => clearTimeout(timer);
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    // Only activate video on non-mobile devices to save massive bandwidth
+    if (window.innerWidth >= 768) {
+      const timer = setTimeout(() => setVideoActive(true), 2000);
+      return () => {
+        clearTimeout(timer);
+        window.removeEventListener('resize', checkMobile);
+      };
+    }
+    
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   return (
     <section className="relative min-h-[calc(100vh-80px)] lg:min-h-[calc(100vh-120px)] w-full flex flex-col items-center justify-center bg-black px-6 overflow-hidden">
       {/* EXCLUSIVE VIVID VIDEO BACKGROUND */}
       <div className="absolute inset-0 z-0">
-        {videoActive ? (
+        {!isMobile && videoActive ? (
           <video
             autoPlay
             loop
