@@ -226,15 +226,13 @@ export default function FounderShowcase() {
           {[...GUIDE_IMAGES, ...GUIDE_IMAGES].map((src, i) => (
             <div
               key={i}
-              className="w-32 md:w-40 aspect-[3/4] rounded-xl overflow-hidden flex-shrink-0 shadow-lg grayscale-[0.3] hover:grayscale-0 transition-all duration-700"
+              className="w-32 md:w-40 aspect-[3/4] rounded-xl overflow-hidden flex-shrink-0 shadow-lg grayscale-[0.3] hover:grayscale-0 transition-all duration-700 bg-muted"
             >
               <img
                 loading="lazy"
-                src={`${src}?w=200&h=267&auto=format&fit=crop&q=60`}
+                src={`${src}?w=400&h=533&auto=format&fit=crop&crop=faces&q=70`}
                 alt="Equipe de Guias Atmos"
                 className="w-full h-full object-cover"
-                width="160"
-                height="213"
               />
             </div>
           ))}

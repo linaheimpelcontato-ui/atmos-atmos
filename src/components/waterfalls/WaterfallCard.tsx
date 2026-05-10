@@ -64,11 +64,8 @@ export default function WaterfallCard({ waterfall, onClick }: WaterfallCardProps
       {/* Background Image Carousel - Multi-layer for fluid transitions */}
       <div className="absolute inset-0 w-full h-full bg-[#1A261B]">
         {cardImages.map((src, idx) => {
-          // Optimization: only render the active image or the next one to prepare
-          // This saves massive bandwidth on mobile as detected by PageSpeed
           const isActive = idx === currentIndex;
-          if (!isActive && !isHovering) return null;
-
+          
           return (
             <motion.img
               key={src}
@@ -76,15 +73,20 @@ export default function WaterfallCard({ waterfall, onClick }: WaterfallCardProps
               initial={false}
               animate={{ 
                 opacity: isActive ? 1 : 0,
-                scale: isHovering ? 1.15 : 1.1 
+                scale: isHovering ? 1.05 : 1.0 
               }}
-              transition={{ duration: 0.5, ease: "easeInOut" }}
+              transition={{ 
+                opacity: { duration: 0.8, ease: "easeInOut" },
+                scale: { duration: 0.8, ease: "easeOut" }
+              }}
               className="absolute inset-0 w-full h-full object-cover"
-              style={{ zIndex: isActive ? 1 : 0 }}
+              style={{ 
+                zIndex: isActive ? 2 : 1,
+                visibility: isActive || (idx === (currentIndex - 1 + cardImages.length) % cardImages.length) ? 'visible' : 'hidden'
+              }}
               loading={idx === 0 ? "eager" : "lazy"}
               width="400"
               height="533"
-              {...(idx === 0 ? { "fetchPriority": "high" } as any : {})}
             />
           );
         })}
