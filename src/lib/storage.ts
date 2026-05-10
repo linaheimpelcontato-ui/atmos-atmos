@@ -27,23 +27,7 @@ export function getBaseStorageUrl(path: string): string {
 }
 
 export function storageUrl(path: string): string {
-  const rawUrl = getBaseStorageUrl(path);
-  
-  // If it's already an optimized wsrv.nl URL or a video, return as is
-  if (rawUrl.includes('wsrv.nl') || rawUrl.match(/\.(mp4|mov|webm|svg|gif)$/i)) {
-    return rawUrl;
-  }
-
-  // Auto-optimize all images (jpeg, jpg, png, webp) globally for hero banners/backgrounds
-  if (rawUrl.match(/\.(jpeg|jpg|png|webp)$/i)) {
-    const absoluteUrl = rawUrl.startsWith('http') 
-      ? rawUrl 
-      : `https://www.atmos.tur.br${rawUrl}`;
-    // 1920px is safe for full screen backgrounds, compressed down to 80% quality webp
-    return `https://wsrv.nl/?url=${encodeURIComponent(absoluteUrl)}&w=1920&q=80&output=webp`;
-  }
-
-  return rawUrl;
+  return getBaseStorageUrl(path);
 }
 
 interface OptimizedOptions {
@@ -68,20 +52,7 @@ export const IMAGE_PRESETS = {
  * This handles resizing, compression, and format conversion (WebP/AVIF) at the edge without extra costs.
  */
 export function optimizedUrl(path: string, options: { width?: number; height?: number; quality?: number; format?: string } = {}): string {
-  if (!path || path.startsWith('http')) return path;
-
-  const fullUrl = getBaseStorageUrl(path);
-  
-  // If no width is specified, we serve the original file for maximum reliability
-  // This avoids any "middleman" issues for main assets.
-  if (!options.width) return fullUrl;
-
-  // Use wsrv.nl as an optional optimizer, but we'll wrap it in a way that
-  // if it fails, the OptimizedImage component (already modified) catches it.
-  const width = options.width;
-  const quality = options.quality || 75;
-
-  return `https://wsrv.nl/?url=${encodeURIComponent(fullUrl)}&w=${width}&q=${quality}&output=webp&il`;
+  return getBaseStorageUrl(path);
 }
 
 /** 
