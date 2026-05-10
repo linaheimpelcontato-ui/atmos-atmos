@@ -16,49 +16,16 @@
     <link rel="preload" href="https://fonts.gstatic.com/s/poppins/v22/pxiByp8kv8JHgFVrLCz7Z1xlFd2JQEk.woff2" as="font" type="font/woff2" crossorigin />
     
     <link rel="preload" href="/fonts/MadInk.woff2" as="font" type="font/woff2" crossorigin />
-    
-    <!-- Hero Background Preload (Mobile First) -->
-    <link rel="preload" as="image" href="https://assets.atmos.tur.br/home/hero-bg-poster.jpg?width=600&height=800&fit=cover" media="(max-width: 768px)" fetchpriority="high" />
-    
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
-    <!-- GTM & Analytics Logic (Respects LGPD Consent) -->
-    <!-- Performance Script Loader -->
-    <script>
-      (function() {
-        var initialized = false;
-        function initScripts() {
-          if (initialized) return;
-          initialized = true;
-          
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', 'G-73ZWZ7GJN1');
 
-          // GTM
-          (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-          new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-          j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-          'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-          })(window,document,'script','dataLayer','GTM-WWJFVZCX');
-        }
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-WWJFVZCX');</script>
+    <!-- End Google Tag Manager -->
 
-        // Initialize after 5s or on interaction (Idle Callback for performance)
-        const idleInit = () => {
-          if ('requestIdleCallback' in window) {
-            requestIdleCallback(() => initScripts());
-          } else {
-            setTimeout(initScripts, 5000);
-          }
-        };
-
-        window.addEventListener('load', idleInit, { once: true });
-        window.addEventListener('scroll', initScripts, { passive: true, once: true });
-        window.addEventListener('mousemove', initScripts, { passive: true, once: true });
-        window.addEventListener('click', initScripts, { passive: true, once: true });
-        window.addEventListener('touchstart', initScripts, { passive: true, once: true });
-      })();
-    </script>
     <title>ATMOS — Experiências na Chapada dos Veadeiros</title>
     <meta name="description" content="Roteiros personalizados, cachoeiras, experiências e hospedagens na Chapada dos Veadeiros. Planeje sua viagem com a ATMOS." />
     <meta name="author" content="ATMOS Turismo" />
@@ -80,9 +47,6 @@
     <meta property="twitter:description" content="Roteiros personalizados, cachoeiras, experiências e hospedagens na Chapada dos Veadeiros." />
     <meta property="twitter:image" content="https://atmos.tur.br/og-image.jpg" />
     
-    <!-- Critical Preloads for LCP -->
-    <link rel="preload" as="image" href="https://assets.atmos.tur.br/home/hero-bg-poster.jpg" fetchpriority="high" />
-    <link rel="preload" as="image" href="https://assets.atmos.tur.br/home/logo-atmos.png" fetchpriority="high" />
   </head>
 
   <body>
