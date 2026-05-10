@@ -19,7 +19,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Outfit", "system-ui", "sans-serif"],
+        sans: ["Poppins", "system-ui", "sans-serif"],
         display: ["MadInk", "serif"],
         outfit: ["Outfit", "sans-serif"],
       },
