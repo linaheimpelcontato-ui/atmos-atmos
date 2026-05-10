@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import AuthModal from "@/components/auth/AuthModal";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { storageUrl, optimizedUrl } from "@/lib/storage";
+import { storageUrl, optimizedUrl, IMAGE_PRESETS } from "@/lib/storage";
 
 export default function HeroMain({ 
   tagline = "O seu espaço para explorar a", 
@@ -25,9 +25,8 @@ export default function HeroMain({
     
     // Only activate video on non-mobile devices to save massive bandwidth
     if (window.innerWidth >= 768) {
-      const timer = setTimeout(() => setVideoActive(true), 2000);
+      setVideoActive(true);
       return () => {
-        clearTimeout(timer);
         window.removeEventListener('resize', checkMobile);
       };
     }
@@ -47,7 +46,7 @@ export default function HeroMain({
             playsInline
             preload="auto"
             title="Atmos Chapada dos Veadeiros Cinematic"
-            poster={storageUrl("home/hero-bg-poster.jpg")}
+            poster={optimizedUrl("home/hero-bg-poster.jpg", IMAGE_PRESETS.large)}
             className="w-full h-full object-cover object-bottom opacity-70"
           >
             <source
@@ -57,7 +56,7 @@ export default function HeroMain({
           </video>
         ) : (
           <img 
-            src={storageUrl("home/hero-bg-poster.jpg")}
+            src={optimizedUrl("home/hero-bg-poster.jpg", IMAGE_PRESETS.large)}
             className="w-full h-full object-cover object-bottom opacity-70"
             alt="Atmos Chapada dos Veadeiros Hero"
             fetchPriority="high"
