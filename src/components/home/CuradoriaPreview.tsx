@@ -36,7 +36,7 @@ const CATEGORIES = [
     title: "HOSPEDAGENS",
     bigNumber: "+25",
     unit: "hospedagens",
-    description: "Curadoria das melhores Hospedagens da Chapada dos Veadeiros",
+    description: "Curadoria de Hospedagens da Chapada dos Veadeiros",
     images: [
       "destaques-categorias/Hospedagens-Destaque-1.jpeg",
       "destaques-categorias/Hospedagens-Destaque-2.avif",

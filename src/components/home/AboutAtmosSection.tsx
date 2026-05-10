@@ -14,7 +14,7 @@ export default function AboutAtmosSection() {
     offset: ["start end", "end start"]
   });
 
-  const fullText = "Não somos apenas uma agência\nde viagem, somos referência em\nexperiências guiadas na\nChapada dos Veadeiros.";
+  const fullText = "Não somos apenas uma agência\nde viagem, somos referência em\nexperiências guiadas na\nChapada dos Veadeiros. Criamos\natmosferas exclusivas que conectam\npessoas a experiências memoráveis.";
 
   const count = motionValue(0);
   const rounded = useTransform(count, (latest) => Math.round(latest));
@@ -84,7 +84,7 @@ export default function AboutAtmosSection() {
             className="md:col-span-6 md:col-start-7"
             onViewportEnter={() => setStarted(true)}
           >
-            <div className="text-[#FAF9F6] text-xl md:text-2xl lg:text-[32px] font-display font-bold leading-[1.3] tracking-tight whitespace-pre-wrap">
+            <div className="text-[#FAF9F6] text-lg md:text-xl lg:text-[26px] font-display font-bold leading-[1.4] tracking-tight whitespace-pre-wrap">
               <motion.span>{displayText}</motion.span>
               <motion.span
                 animate={{ opacity: [1, 0, 1] }}
@@ -93,100 +93,6 @@ export default function AboutAtmosSection() {
               />
             </div>
           </motion.div>
-        </div>
-
-        {/* Full-width Impact Marquee with Background Watermark */}
-        <div className="relative w-screen py-32 overflow-hidden left-1/2 -translate-x-1/2 mt-12 bg-transparent flex items-center">
-
-          {/* Background Watermark (Static/Rotating behind the text) */}
-          <div className="absolute inset-0 flex items-center justify-center opacity-[0.05] pointer-events-none z-0">
-            <motion.img
-              src={flowerSymbol}
-              alt="ATMOS Symbol"
-              className="w-[220px] md:w-[320px] h-auto aspect-square object-contain invert"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 150, repeat: Infinity, ease: "linear" }}
-            />
-          </div>
-
-          <style>{`
-            @keyframes marqueeScrollAbout {
-              0% { transform: translateX(0); }
-              100% { transform: translateX(-50%); }
-            }
-            .animate-marquee-about {
-              animation: marqueeScrollAbout 45s linear infinite;
-              animation-play-state: paused;
-            }
-            .animate-marquee-about.playing {
-              animation-play-state: running;
-            }
-          `}</style>
-
-          <div className={`relative z-10 flex flex-none w-max animate-marquee-about ${isInView ? 'playing' : ''}`}>
-            {/* First set of phrases */}
-            <div className="flex items-center">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="flex items-center">
-                  <span className="text-[#FAF9F6] font-display italic text-4xl md:text-6xl lg:text-7xl opacity-95 tracking-tight whitespace-nowrap px-8">
-                    Criamos atmosferas exclusivas que conectam pessoas a experiências memoráveis
-                  </span>
-                  {/* Dynamic Flower Divider (Mask Technique) */}
-                <div className="mx-8 md:mx-16 flex-shrink-0">
-                  <motion.div
-                    style={{
-                      maskImage: `url(${flowerSymbol})`,
-                      WebkitMaskImage: `url(${flowerSymbol})`,
-                      maskSize: 'contain',
-                      WebkitMaskSize: 'contain',
-                      maskRepeat: 'no-repeat',
-                      WebkitMaskRepeat: 'no-repeat',
-                      maskPosition: 'center',
-                      WebkitMaskPosition: 'center',
-                      backgroundColor: '#FAF9F6',
-                      width: 'clamp(40px, 4vw, 64px)',
-                      height: 'clamp(40px, 4vw, 64px)'
-                    }}
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-                    className="opacity-90"
-                  />
-                </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Identical second set for seamless loop */}
-            <div className="flex items-center">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="flex items-center">
-                  <span className="text-[#FAF9F6] font-display italic text-4xl md:text-6xl lg:text-7xl opacity-95 tracking-tight whitespace-nowrap px-8">
-                    Criamos atmosferas exclusivas que conectam pessoas a experiências memoráveis
-                  </span>
-                <div className="mx-8 md:mx-16 flex-shrink-0">
-                  <motion.div
-                    style={{
-                      maskImage: `url(${flowerSymbol})`,
-                      WebkitMaskImage: `url(${flowerSymbol})`,
-                      maskSize: 'contain',
-                      WebkitMaskSize: 'contain',
-                      maskRepeat: 'no-repeat',
-                      WebkitMaskRepeat: 'no-repeat',
-                      maskPosition: 'center',
-                      WebkitMaskPosition: 'center',
-                      backgroundColor: '#FAF9F6',
-                      width: 'clamp(40px, 4vw, 64px)',
-                      height: 'clamp(40px, 4vw, 64px)'
-                    }}
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-                    className="opacity-90"
-                  />
-                </div>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
 
         {/* Professional Values Ticker - Compact, Clear & Magnetic */}
