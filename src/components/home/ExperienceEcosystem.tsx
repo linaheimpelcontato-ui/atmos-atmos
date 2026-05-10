@@ -35,7 +35,7 @@ const differentials = [
     color: "bg-[#2C3E2D]/10 text-[#2C3E2D]"
   },
   {
-    title: "Atendimento",
+    title: "Conexões",
     description: "Atendimento bilíngue com suporte real e presente do início ao fim da viagem.",
     image: optimizedUrl("home/Atendimentoatmos.png", IMAGE_PRESETS.thumbnail),
     color: "bg-[#8d7b63]/10 text-[#8d7b63]"
@@ -83,8 +83,8 @@ const pillars = [
     textColor: "text-white"
   },
   {
-    id: "atendimento",
-    title: "ATENDIMENTO",
+    id: "conexoes",
+    title: "CONEXÕES",
     description: "Atividades que despertam afeto e empatia, criando laços entre o visitante, o destino e as pessoas locais.",
     image: "/assets/home/Atendimentoatmos.png",
     scale: 0.7,
