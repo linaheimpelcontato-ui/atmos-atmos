@@ -1,9 +1,9 @@
 import { Helmet } from "react-helmet-async";
-import { storageUrl } from "@/lib/storage";
+import { optimizedUrl, IMAGE_PRESETS } from "@/lib/storage";
 
 const SITE_NAME = "ATMOS";
 const BASE_URL = "https://atmos.tur.br";
-const DEFAULT_OG_IMAGE = storageUrl("home/hero-home-1.jpg");
+const DEFAULT_OG_IMAGE = optimizedUrl("home/hero-home-1.jpg", IMAGE_PRESETS.large);
 
 interface PageSEOProps {
   title: string;
