@@ -34,6 +34,7 @@ export default function HeroMain({
             muted
             playsInline
             preload="auto"
+            title="Atmos Chapada dos Veadeiros Cinematic"
             poster="https://assets.atmos.tur.br/home/hero-bg-poster.jpg"
             className="w-full h-full object-cover object-bottom opacity-70"
           >
@@ -48,6 +49,8 @@ export default function HeroMain({
             className="w-full h-full object-cover object-bottom opacity-70"
             alt="Atmos Chapada dos Veadeiros Hero"
             fetchPriority="high"
+            width="1920"
+            height="1080"
           />
         )}
         

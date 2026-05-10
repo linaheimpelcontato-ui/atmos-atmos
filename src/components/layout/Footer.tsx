@@ -14,9 +14,12 @@ export default function Footer() {
       {/* MONUMENTAL LOGO WATERMARK */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03] overflow-hidden z-0">
         <img
+          loading="lazy"
           src={logoAtmos}
-          alt=""
+          alt="ATMOS Watermark"
           className="w-[180vw] max-w-none opacity-80 brightness-0 invert"
+          width="1200"
+          height="400"
         />
       </div>
 
@@ -30,7 +33,9 @@ export default function Footer() {
               <img
                 src={logoAtmos}
                 alt="ATMOS"
-                className="h-full brightness-0 invert opacity-90"
+                className="h-full w-auto brightness-0 invert opacity-90"
+                width="120"
+                height="32"
               />
             </div>
             <div className="flex items-start">

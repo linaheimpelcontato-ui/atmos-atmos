@@ -30,10 +30,10 @@
           })(window,document,'script','dataLayer','GTM-WWJFVZCX');
         }
 
-        // Initialize after delay or on interaction
-        setTimeout(initScripts, 3500);
+        // Initialize after 5s or on interaction
+        setTimeout(initScripts, 5000);
         window.addEventListener('scroll', initScripts, { passive: true, once: true });
-        window.addEventListener('mousemove', initScripts, { passive: true, once: true });
+        window.addEventListener('click', initScripts, { passive: true, once: true });
         window.addEventListener('touchstart', initScripts, { passive: true, once: true });
       })();
     </script>

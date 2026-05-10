@@ -118,6 +118,8 @@ export default function FounderShowcase() {
                     src={JOAO_IMAGES[imgIndex]}
                     alt="João Accioly"
                     className="w-full h-full object-cover"
+                    width="600"
+                    height="750"
                   />
                 </motion.div>
               </AnimatePresence>
@@ -207,12 +209,12 @@ export default function FounderShowcase() {
         </div>
       </div>
 
-      {/* Full-width Marquee of Guide Photos - Now in the Middle */}
+      {/* Full-width Marquee of Guide Photos - Optimized */}
       <div className="relative w-full py-8 overflow-hidden">
         <style>{`
           .guides-marquee-inner {
             animation: marqueeScrollSide linear infinite;
-            animation-duration: 40s;
+            animation-duration: 60s;
           }
           @keyframes marqueeScrollSide {
             0% { transform: translateX(0); }
@@ -221,15 +223,18 @@ export default function FounderShowcase() {
         `}</style>
 
         <div className="guides-marquee-inner flex w-fit gap-6 px-6">
-          {[...Array(20)].map((_, i) => (
+          {[...GUIDE_IMAGES, ...GUIDE_IMAGES].map((src, i) => (
             <div
               key={i}
-              className="w-32 md:w-40 aspect-[3/4] rounded-xl overflow-hidden flex-shrink-0 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.1)] grayscale-[0.3] hover:grayscale-0 transition-all duration-700"
+              className="w-32 md:w-40 aspect-[3/4] rounded-xl overflow-hidden flex-shrink-0 shadow-lg grayscale-[0.3] hover:grayscale-0 transition-all duration-700"
             >
               <img
-                src={`${GUIDE_IMAGES[i % GUIDE_IMAGES.length]}?w=400&h=600&auto=format&fit=crop&q=70`}
+                loading="lazy"
+                src={`${src}?w=200&h=267&auto=format&fit=crop&q=60`}
                 alt="Equipe de Guias Atmos"
                 className="w-full h-full object-cover"
+                width="160"
+                height="213"
               />
             </div>
           ))}

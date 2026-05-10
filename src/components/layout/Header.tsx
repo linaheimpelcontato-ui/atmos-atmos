@@ -85,6 +85,8 @@ export default function Header() {
                 src={storageUrl("home/simboloatmos.png")}
                 alt="ATMOS Symbol"
                 className="h-8 w-8 object-contain"
+                width="32"
+                height="32"
               />
             </div>
           </Link>
@@ -93,7 +95,13 @@ export default function Header() {
         {/* Center: Atmos Logo */}
         <div className="w-1/3 flex justify-center items-center">
           <Link to="/" className="flex items-center transition-opacity hover:opacity-80">
-            <img src={storageUrl("home/logo-atmos.png")} alt="ATMOS" className="h-14 sm:h-16" />
+            <img 
+              src={storageUrl("home/logo-atmos.png")} 
+              alt="ATMOS Logo" 
+              className="h-14 sm:h-16 w-auto object-contain" 
+              width="160"
+              height="64"
+            />
           </Link>
         </div>
 
