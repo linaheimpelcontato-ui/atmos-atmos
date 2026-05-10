@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { storageUrl, optimizedUrl, IMAGE_PRESETS } from '@/lib/storage';
 
-const logoAtmos = storageUrl("home/logo-atmos.png");
+const logoAtmos = optimizedUrl("home/logo-atmos.png", IMAGE_PRESETS.thumbnail);
 
 const JOURNEY_STEPS = [
   {
@@ -282,7 +282,7 @@ export default function FeatureShowcase() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         className="absolute inset-0 pt-14 bg-cover bg-center flex items-center justify-center p-6"
-                        style={{ backgroundImage: `url(${storageUrl("home/about-bg.jpg")})` }}
+                        style={{ backgroundImage: `url(${getOptimizedImage("home/about-bg.jpg", IMAGE_PRESETS.large)})` }}
                       >
                         <div className="absolute inset-0 bg-black/20" />
                         <div className="bg-white/95 backdrop-blur-md p-8 rounded-[2.5rem] shadow-2xl w-full relative z-10 text-center">
@@ -496,8 +496,7 @@ export default function FeatureShowcase() {
                                       className="bg-white rounded-2xl overflow-hidden shadow-sm border border-black/5 flex flex-col"
                                     >
                                       <div className="relative w-full overflow-hidden" style={{ aspectRatio: '1/1' }}>
-                                        <img loading="lazy" 
-                                          src={getProductionUrl(item.img)} 
+                                          src={getOptimizedImage(item.img, IMAGE_PRESETS.card)} 
                                           className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
                                         />
                                         <div className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/60 backdrop-blur-md flex items-center justify-center">
@@ -618,7 +617,7 @@ export default function FeatureShowcase() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         className="absolute inset-0 pt-14 bg-cover bg-center"
-                        style={{ backgroundImage: `url(${getProductionUrl("produtos/cachoeiras/bocaina-do-farias/bocaina-do-farias-1.jpg")})` }}
+                        style={{ backgroundImage: `url(${getOptimizedImage("produtos/cachoeiras/bocaina-do-farias/bocaina-do-farias-1.jpg", IMAGE_PRESETS.large)})` }}
                       >
                         <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
                         <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
@@ -720,7 +719,7 @@ export default function FeatureShowcase() {
                                     initial={{ scale: 1.1 }}
                                     animate={{ scale: 1 }}
                                     transition={{ duration: 10, repeat: Infinity, repeatType: "reverse" }}
-                                    src={getProductionUrl("destaques-categorias/Cachoeira-Destaque-1.jpg")} 
+                                    src={getOptimizedImage("destaques-categorias/Cachoeira-Destaque-1.jpg", IMAGE_PRESETS.medium)} 
                                     className="w-full h-full object-cover" 
                                   />
                                   <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-[#FAF9F6]" />
