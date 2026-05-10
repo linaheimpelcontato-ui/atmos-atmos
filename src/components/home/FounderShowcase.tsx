@@ -58,9 +58,10 @@ const StatItem = ({ number, label, suffix = "" }: { number: number, label: strin
         setCount(end);
         clearInterval(timer);
       } else {
-        setCount(Math.floor(start));
+        const nextValue = Math.floor(start);
+        setCount(nextValue);
       }
-    }, 16);
+    }, 32); // Lower frequency to prevent forced reflows during paint
 
     return () => clearInterval(timer);
   }, [number, isInView]);
@@ -215,6 +216,7 @@ export default function FounderShowcase() {
           .guides-marquee-inner {
             animation: marqueeScrollSide linear infinite;
             animation-duration: 60s;
+            will-change: transform;
           }
           @keyframes marqueeScrollSide {
             0% { transform: translateX(0); }
