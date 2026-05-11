@@ -284,7 +284,13 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
       trackSignup();
       setTimeout(() => { onSuccess(); onClose(); }, 1000);
     } catch (err: any) { 
-      setError(err.message || "Ocorreu um erro ao finalizar seu cadastro."); 
+      console.error("Onboarding error:", err);
+      if (err.message?.includes("User not found") || err.message?.includes("invalid_grant")) {
+        setError("Sessão expirada. Por favor, faça login novamente.");
+        setTimeout(() => { signOut(); onClose(); }, 2000);
+      } else {
+        setError(err.message || "Ocorreu um erro ao finalizar seu cadastro."); 
+      }
     } finally { 
       setLoading(false); 
     }
@@ -309,7 +315,12 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
         
         {/* Clear Close Button on the image side */}
         <button 
-          onClick={onClose}
+          onClick={() => {
+            if (user) {
+              signOut();
+            }
+            onClose();
+          }}
           className="absolute top-10 right-10 w-14 h-14 bg-white/90 backdrop-blur-md rounded-full shadow-2xl flex items-center justify-center group hover:bg-white transition-all z-[80] !rounded-full"
         >
           <X className="h-6 w-6 text-black group-hover:scale-110 transition-transform" />
@@ -585,9 +596,21 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
                           )}
 
                           {error && <p className="text-[10px] font-bold text-red-500 uppercase tracking-widest">{error}</p>}
+
                           <Button type="submit" disabled={loading} className="w-full h-16 rounded-2xl bg-[#1A261B] text-white hover:bg-black font-bold uppercase tracking-widest text-[11px] flex items-center justify-center gap-3">
                             {loading ? <span className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <>Avançar <ChevronRight className="h-4 w-4" /></>}
                           </Button>
+
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              signOut();
+                              setStep("welcome");
+                            }}
+                            className="w-full text-[10px] uppercase tracking-[0.2em] font-bold text-black/40 hover:text-black transition-colors py-2"
+                          >
+                            Usar outra conta
+                          </button>
                         </form>
                       </div>
                     )}
