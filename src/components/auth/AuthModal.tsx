@@ -75,6 +75,9 @@ const ddiToCountry: Record<string, string> = {
 
 const loginImage = storageUrl("home/foto-login.jpg");
 
+const normalizeString = (str: string) => 
+  str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
 export default function AuthModal({ open, onClose, onSuccess, defaultMode = "signup" }: AuthModalProps) {
   const { signIn, signUp, signInWithGoogle, updateProfile, profile, user, session, resetPassword, signOut } = useAuth();
   
@@ -265,15 +268,6 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
           alt="Atmos Landscape"
         />
         <div className="absolute inset-0 bg-black/5" />
-        <button 
-          onClick={() => {
-            if (user) signOut();
-            onClose();
-          }}
-          className="absolute top-10 right-10 w-14 h-14 bg-white/90 backdrop-blur-md rounded-full shadow-2xl flex items-center justify-center group hover:bg-white transition-all z-[80]"
-        >
-          <X className="h-6 w-6 text-black group-hover:scale-110 transition-transform" />
-        </button>
       </div>
     );
   };
@@ -281,6 +275,15 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-none w-screen h-[calc(100vh-80px)] top-[80px] p-0 border-none shadow-none !rounded-none bg-white z-[50] translate-y-0 [&>button]:hidden overflow-y-auto">
+        <button 
+          onClick={() => {
+            if (user) signOut();
+            onClose();
+          }}
+          className="absolute top-8 right-10 w-14 h-14 bg-white/90 backdrop-blur-md rounded-full shadow-2xl flex items-center justify-center group hover:bg-white transition-all z-[100] border border-black/5"
+        >
+          <X className="h-6 w-6 text-black group-hover:scale-110 transition-transform" />
+        </button>
         <div className="flex flex-col lg:flex-row h-full w-full">
           
           <div className="w-full lg:w-1/2 flex flex-col relative min-h-full">
@@ -484,7 +487,13 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
                                     </Button>
                                   </PopoverTrigger>
                                   <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 rounded-2xl border-black/5 shadow-2xl z-[100]">
-                                    <Command className="rounded-2xl">
+                                    <Command 
+                                      className="rounded-2xl"
+                                      filter={(value, search) => {
+                                        if (normalizeString(value).includes(normalizeString(search))) return 1;
+                                        return 0;
+                                      }}
+                                    >
                                       <CommandInput placeholder="Procurar país..." className="h-14" />
                                       <CommandEmpty>País não encontrado.</CommandEmpty>
                                       <CommandGroup className="max-h-60 overflow-y-auto">
@@ -520,7 +529,13 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
                                       </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 rounded-2xl border-black/5 shadow-2xl z-[100]">
-                                      <Command className="rounded-2xl">
+                                      <Command 
+                                        className="rounded-2xl"
+                                        filter={(value, search) => {
+                                          if (normalizeString(value).includes(normalizeString(search))) return 1;
+                                          return 0;
+                                        }}
+                                      >
                                         <CommandInput placeholder="Procurar estado..." className="h-14" />
                                         <CommandEmpty>Estado não encontrado.</CommandEmpty>
                                         <CommandGroup className="max-h-60 overflow-y-auto">
@@ -556,7 +571,13 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
                                       </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 rounded-2xl border-black/5 shadow-2xl z-[100]">
-                                      <Command className="rounded-2xl">
+                                      <Command 
+                                        className="rounded-2xl"
+                                        filter={(value, search) => {
+                                          if (normalizeString(value).includes(normalizeString(search))) return 1;
+                                          return 0;
+                                        }}
+                                      >
                                         <CommandInput placeholder="Procurar cidade..." className="h-14" />
                                         <CommandEmpty>Cidade não encontrada.</CommandEmpty>
                                         <CommandGroup className="max-h-60 overflow-y-auto">
