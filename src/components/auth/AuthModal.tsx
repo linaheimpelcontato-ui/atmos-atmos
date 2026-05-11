@@ -225,7 +225,7 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
         setLoading(true);
         const { error: signUpError } = await signUp(checkedEmail, password, {});
         if (signUpError) {
-          const msg = signUpError.message || "";
+          const msg = (signUpError as any)?.message || String(signUpError) || "";
           if (msg.toLowerCase().includes("user already registered")) {
             setError("Este e-mail já possui cadastro. Que tal fazer login?");
             setAuthMode("login");
