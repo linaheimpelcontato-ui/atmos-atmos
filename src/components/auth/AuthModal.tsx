@@ -81,6 +81,22 @@ const ddiToCountry: Record<string, string> = {
   "+972": "IL", "+971": "AE", "+27": "ZA"
 };
 
+const countries = [
+  { code: "BR", name: "Brasil" }, { code: "US", name: "Estados Unidos" }, { code: "AR", name: "Argentina" },
+  { code: "PY", name: "Paraguai" }, { code: "UY", name: "Uruguai" }, { code: "CL", name: "Chile" },
+  { code: "PE", name: "Peru" }, { code: "CO", name: "Colômbia" }, { code: "VE", name: "Venezuela" },
+  { code: "BO", name: "Bolívia" }, { code: "EC", name: "Equador" }, { code: "MX", name: "México" },
+  { code: "PT", name: "Portugal" }, { code: "ES", name: "Espanha" }, { code: "FR", name: "França" },
+  { code: "IT", name: "Itália" }, { code: "DE", name: "Alemanha" }, { code: "GB", name: "Reino Unido" },
+  { code: "CH", name: "Suíça" }, { code: "NL", name: "Holanda" }, { code: "BE", name: "Bélgica" },
+  { code: "IE", name: "Irlanda" }, { code: "SE", name: "Suécia" }, { code: "NO", name: "Noruega" },
+  { code: "DK", name: "Dinamarca" }, { code: "FI", name: "Finlândia" }, { code: "PL", name: "Polônia" },
+  { code: "AT", name: "Áustria" }, { code: "GR", name: "Grécia" }, { code: "RU", name: "Rússia" },
+  { code: "JP", name: "Japão" }, { code: "KR", name: "Coreia do Sul" }, { code: "CN", name: "China" },
+  { code: "IN", name: "Índia" }, { code: "AU", name: "Austrália" }, { code: "NZ", name: "Nova Zelândia" },
+  { code: "IL", name: "Israel" }, { code: "AE", name: "Emirados Árabes" }, { code: "ZA", name: "África do Sul" },
+];
+
 const loginImage = storageUrl("home/foto-login.jpg");
 
 export default function AuthModal({ open, onClose, onSuccess, defaultMode = "signup" }: AuthModalProps) {
@@ -161,7 +177,6 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
       }
     }
     if (step === "location" && (!city.trim() || (country === "BR" && !state))) { setError("Conte-nos de onde você vê a Atmos."); return; }
-    setLoading(true);
 
     if (step === "welcome") { 
       setMethod("email"); 
@@ -171,12 +186,14 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
           setLoading(false);
           return; 
         }
+        setLoading(true);
         const { error: loginError } = await handleEmailLogin();
         if (loginError) {
-          if (loginError.includes("Invalid login credentials") || loginError.includes("User not found")) {
-            setError("E-mail ou senha incorretos. Verifique seus dados.");
+          if (loginError.toLowerCase().includes("invalid login credentials") || loginError.toLowerCase().includes("not found")) {
+            setError("E-mail não encontrado. Deseja criar uma conta?");
+            setAuthMode("signup");
           } else {
-            setError(loginError);
+            setError("Senha incorreta. Verifique seus dados ou redefina sua senha.");
           }
           setLoading(false);
         }
@@ -197,9 +214,10 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
           setLoading(false);
           return;
         }
+        setLoading(true);
         const { error: signUpError } = await signUp(email, password, {});
         if (signUpError) {
-          if (signUpError.includes("User already registered")) {
+          if (signUpError.toLowerCase().includes("user already registered")) {
             setError("Este e-mail já possui cadastro. Que tal fazer login?");
             setAuthMode("login");
           } else {
@@ -213,12 +231,11 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
       }
     }
     else if (step === "name") {
-      if (!fullName) { setError("Conte-nos seu nome."); setLoading(false); return; }
+      if (!fullName) { setError("Conte-nos seu nome."); return; }
       setStep("phone");
-      setLoading(false);
     }
     else if (step === "phone") {
-      if (!phone) { setError("Precisamos do seu telefone."); setLoading(false); return; }
+      if (!phone) { setError("Precisamos do seu telefone."); return; }
       setStep("birthdate");
       const sortedDdis = Object.keys(ddiToCountry).sort((a, b) => b.length - a.length);
       for (const ddi of sortedDdis) {
@@ -232,9 +249,14 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
         }
       }
     }
-    else if (step === "birthdate") setStep("location");
+    else if (step === "birthdate") {
+      if (!birthDay || !birthMonth || !birthYear) { setError("Sua data de nascimento é importante."); return; }
+      setStep("location");
+    }
     else if (step === "location") {
+      setLoading(true);
       await finishOnboarding();
+      setLoading(false);
     }
   };
 
@@ -242,12 +264,13 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
     setLoading(true);
     try {
       const { error } = await signIn(email, password);
-      if (error) throw new Error("E-mail ou senha incorretos.");
+      if (error) return { error };
       setStep("success");
       trackLogin();
-      setTimeout(() => { onSuccess(); onClose(); }, 2000);
+      setTimeout(() => { onSuccess(); onClose(); }, 1000);
+      return { error: null };
     } catch (err: any) {
-      setError(err.message);
+      return { error: err.message };
     } finally {
       setLoading(false);
     }
@@ -270,7 +293,7 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
       }
       setStep("success");
       trackSignup();
-      setTimeout(() => { onSuccess(); onClose(); }, 3000);
+      setTimeout(() => { onSuccess(); onClose(); }, 1000);
     } catch (err: any) { setError(err.message); } finally { setLoading(false); }
   };
 
