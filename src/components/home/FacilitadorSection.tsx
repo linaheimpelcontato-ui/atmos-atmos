@@ -39,11 +39,11 @@ export default function FacilitadorSection() {
             {[
               { 
                 title: "Facilitadores e Professores", 
-                desc: "Instrutores e educadores que promovem retiros e imersões com propósito." 
+                desc: "Você traz o grupo, a ATMOS cuida de tudo. Roteiro, guias, hospedagem, refeições e registros — para que você foque apenas na sua facilitação." 
               },
               { 
                 title: "Agências de Viagem", 
-                desc: "Parcerias para roteiros integrados e experiências sob curadoria ATMOS." 
+                desc: "Seja o parceiro local que seus clientes merecem. Oferecemos operação completa na Chapada dos Veadeiros com curadoria e suporte do início ao fim." 
               }
             ].map((item, idx) => (
               <motion.div 
@@ -68,11 +68,11 @@ export default function FacilitadorSection() {
             {[
               { 
                 title: "Projetos e Marcas", 
-                desc: "Ativações, eventos corporativos, lançamento de produtos e experiências de turismo regenerativo." 
+                desc: "Ativações corporativas, lançamentos e imersões transformadoras no Cerrado. Criamos experiências sob medida para conectar sua marca ao território." 
               },
               { 
                 title: "Grupos Corporativos", 
-                desc: "Parcerias para roteiros integrados e experiências sob curadoria ATMOS." 
+                desc: "Retiros, team buildings e eventos que vão além do convencional. A Chapada dos Veadeiros como cenário para experiências que transformam equipes." 
               }
             ].map((item, idx) => (
               <motion.div 
