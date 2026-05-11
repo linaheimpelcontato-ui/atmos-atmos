@@ -194,9 +194,10 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
           setLoading(false);
           return;
         }
-        const { error: loginError } = await handleEmailLogin(checkedEmail);
-        if (loginError) {
-          if (loginError.toLowerCase().includes("invalid login credentials") || loginError.toLowerCase().includes("not found")) {
+        const result = await handleEmailLogin(checkedEmail);
+        if (result?.error) {
+          const msg = result.error.message || "";
+          if (msg.toLowerCase().includes("invalid login credentials") || msg.toLowerCase().includes("not found")) {
             setError("E-mail não encontrado. Deseja criar uma conta?");
             setAuthMode("signup");
           } else {
@@ -224,11 +225,12 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
         setLoading(true);
         const { error: signUpError } = await signUp(checkedEmail, password, {});
         if (signUpError) {
-          if (signUpError.toLowerCase().includes("user already registered")) {
+          const msg = signUpError.message || "";
+          if (msg.toLowerCase().includes("user already registered")) {
             setError("Este e-mail já possui cadastro. Que tal fazer login?");
             setAuthMode("login");
           } else {
-            setError(signUpError);
+            setError(msg);
           }
           setLoading(false);
           return;
