@@ -306,14 +306,15 @@ export default function ExperienceEcosystem() {
             <div className="flex items-center">
               {[...Array(3)].map((_, i) => (
                 <div key={i} className="flex items-center">
-                  <span className="text-[#141C15] font-display italic text-4xl md:text-6xl mx-16 opacity-90 tracking-tight leading-none">
+                  <span className="text-[#2C3E2D] font-display italic text-4xl md:text-6xl mx-16 opacity-90 tracking-tight leading-none">
                     A verdadeira viagem de descoberta não consiste em procurar novas paisagens, mas em ter novos olhos.
                   </span>
                   <motion.img
                     src={optimizedUrl("home/simboloatmos.png", IMAGE_PRESETS.thumbnail)}
                     animate={{ rotate: 360 }}
                     transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                    className="w-8 h-8 opacity-60 mx-10 flex-shrink-0 grayscale brightness-0"
+                    className="w-14 h-14 opacity-90 mx-10 flex-shrink-0"
+                    style={{ filter: 'invert(21%) sepia(21%) saturate(542%) hue-rotate(80deg) brightness(96%) contrast(87%)' }}
                     alt="ATMOS Symbol"
                   />
                 </div>
@@ -323,23 +324,16 @@ export default function ExperienceEcosystem() {
             <div className="flex items-center">
               {[...Array(3)].map((_, i) => (
                 <div key={i} className="flex items-center">
-                  <span className="text-[#141C15] font-display italic text-4xl md:text-6xl mx-16 opacity-90 tracking-tight leading-none">
+                  <span className="text-[#2C3E2D] font-display italic text-4xl md:text-6xl mx-16 opacity-90 tracking-tight leading-none">
                     A verdadeira viagem de descoberta não consiste em procurar novas paisagens, mas em ter novos olhos.
                   </span>
-                  <motion.div
+                  <motion.img
+                    src={optimizedUrl("home/simboloatmos.png", IMAGE_PRESETS.thumbnail)}
                     animate={{ rotate: 360 }}
-                    transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-                    className="w-10 h-10 bg-[#141C15] opacity-80 mx-8 flex-shrink-0"
-                    style={{
-                      maskImage: `url(${optimizedUrl("home/simboloatmos.png", IMAGE_PRESETS.thumbnail)})`,
-                      WebkitMaskImage: `url(${optimizedUrl("home/simboloatmos.png", IMAGE_PRESETS.thumbnail)})`,
-                      maskSize: 'contain',
-                      WebkitMaskSize: 'contain',
-                      maskRepeat: 'no-repeat',
-                      WebkitMaskRepeat: 'no-repeat',
-                      maskPosition: 'center',
-                      WebkitMaskPosition: 'center'
-                    }}
+                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                    className="w-14 h-14 opacity-90 mx-10 flex-shrink-0"
+                    style={{ filter: 'invert(21%) sepia(21%) saturate(542%) hue-rotate(80deg) brightness(96%) contrast(87%)' }}
+                    alt="ATMOS Symbol"
                   />
                 </div>
               ))}
