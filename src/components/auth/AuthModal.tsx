@@ -282,9 +282,9 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
             if (user) signOut();
             onClose();
           }}
-          className="absolute top-4 right-10 w-14 h-14 bg-white/90 backdrop-blur-md rounded-full shadow-2xl flex items-center justify-center group hover:bg-white transition-all z-[100] border border-black/5 cursor-pointer"
+          className="absolute top-6 right-10 w-12 h-12 bg-white/90 backdrop-blur-md rounded-full shadow-2xl flex items-center justify-center group hover:bg-white transition-all z-[100] border border-black/5 cursor-pointer"
         >
-          <X className="h-6 w-6 text-black group-hover:scale-110 transition-transform" />
+          <X className="h-5 w-5 text-black group-hover:scale-110 transition-transform" />
         </div>
 
         <div className="w-full h-full overflow-y-auto">
