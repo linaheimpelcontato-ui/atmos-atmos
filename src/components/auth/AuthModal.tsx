@@ -180,20 +180,13 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
 
     if (step === "welcome") { 
       setMethod("email"); 
-      
-      // Apenas correção de typos comuns no domínio para ajudar o usuário
-      let checkedEmail = email.trim().toLowerCase();
-      if (checkedEmail.includes("@gmil.com")) checkedEmail = checkedEmail.replace("@gmil.com", "@gmail.com");
-      if (checkedEmail.includes("@gmai.com")) checkedEmail = checkedEmail.replace("@gmai.com", "@gmail.com");
-      
-      setEmail(checkedEmail);
+      const checkedEmail = email.trim().toLowerCase();
+      if (checkedEmail.includes("@gmil.com")) setEmail(checkedEmail.replace("@gmil.com", "@gmail.com"));
+      else if (checkedEmail.includes("@gmai.com")) setEmail(checkedEmail.replace("@gmai.com", "@gmail.com"));
+      else setEmail(checkedEmail);
 
       if (authMode === "login") {
-        if (!email || !password) { 
-          setError("Preencha e-mail e senha."); 
-          setLoading(false);
-          return;
-        }
+        if (!email || !password) { setError("Preencha e-mail e senha."); return; }
         const result = await handleEmailLogin(checkedEmail);
         if (result?.error) {
           const msg = result.error.message || "";
@@ -207,36 +200,12 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
         }
       }
       else {
-        if (!email || !password) { 
-          setError("Defina e-mail e senha para começar."); 
-          setLoading(false);
-          return; 
-        }
-        if (password.length < 6) {
-          setError("A senha deve ter no mínimo 6 caracteres.");
-          setLoading(false);
-          return;
-        }
-        if (password !== confirmPassword) {
-          setError("As senhas não coincidem.");
-          setLoading(false);
-          return;
-        }
-        setLoading(true);
-        const { error: signUpError } = await signUp(checkedEmail, password, {});
-        if (signUpError) {
-          const msg = (signUpError as any)?.message || String(signUpError) || "";
-          if (msg.toLowerCase().includes("user already registered")) {
-            setError("Este e-mail já possui cadastro. Que tal fazer login?");
-            setAuthMode("login");
-          } else {
-            setError(msg);
-          }
-          setLoading(false);
-          return;
-        }
+        if (!email || !password) { setError("Defina e-mail e senha."); return; }
+        if (password.length < 6) { setError("A senha deve ter no mínimo 6 caracteres."); return; }
+        if (password !== confirmPassword) { setError("As senhas não coincidem."); return; }
+        
+        // AVANÇO INSTANTÂNEO - Sem chamada ao servidor aqui para ser rápido
         setStep("name"); 
-        setLoading(false);
       }
     }
     else if (step === "name") {
@@ -290,20 +259,35 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
     try {
       const bDate = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`;
       const loc = country === "BR" ? `${city}, ${state}` : `${city}, ${country}`;
+      const profileData = { full_name: fullName, phone, birth_date: bDate, city: loc };
+
       if (method === "email") {
-        const { error: signUpError } = await signUp(email, password, { full_name: fullName, phone, birth_date: bDate, city: loc });
+        // Tenta criar a conta com todos os metadados de uma vez
+        const { error: signUpError } = await signUp(email, password, profileData);
+        
         if (signUpError) {
+          // Se já existe, apenas tenta logar e atualizar o perfil
           const { error: signInError } = await signIn(email, password);
-          if (signInError) throw new Error("Verifique suas credenciais.");
+          if (!signInError) {
+            await updateProfile(profileData);
+          } else {
+            throw new Error("E-mail já cadastrado. Verifique sua senha.");
+          }
         }
-      } else if (user) {
-        const { error } = await updateProfile({ full_name: fullName, phone, birth_date: bDate, city: loc });
+      } else {
+        // Para Google/Social, apenas atualiza o perfil já existente
+        const { error } = await updateProfile(profileData);
         if (error) throw new Error(error);
       }
+      
       setStep("success");
       trackSignup();
       setTimeout(() => { onSuccess(); onClose(); }, 1000);
-    } catch (err: any) { setError(err.message); } finally { setLoading(false); }
+    } catch (err: any) { 
+      setError(err.message || "Ocorreu um erro ao finalizar seu cadastro."); 
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   const handleGoogleSignIn = async () => {
