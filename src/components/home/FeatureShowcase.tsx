@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { 
   User, 
   MapPin, 
@@ -88,7 +88,15 @@ export default function FeatureShowcase() {
   const [step, setStep] = useState(0);
   const [subStep, setSubStep] = useState(0);
   const [progress, setProgress] = useState(0);
-  const [startTime, setStartTime] = useState(Date.now());
+  const [startTime, setStartTime] = useState<number | null>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+  const isInView = useInView(sectionRef, { once: true, amount: 0.3 });
+
+  useEffect(() => {
+    if (isInView && startTime === null) {
+      setStartTime(Date.now());
+    }
+  }, [isInView, startTime]);
 
   const stepDuration = 8000;
   const totalTime = stepDuration * JOURNEY_STEPS.length;
@@ -102,6 +110,8 @@ export default function FeatureShowcase() {
   };
 
   useEffect(() => {
+    if (startTime === null) return;
+
     const interval = setInterval(() => {
       const elapsed = Date.now() - startTime;
       const time = elapsed % totalTime;
@@ -125,7 +135,11 @@ export default function FeatureShowcase() {
   const Icon = currentStep.icon;
 
   return (
-    <section id="feature-showcase" className="min-h-screen bg-white flex items-center relative overflow-hidden py-24 lg:py-32 scroll-mt-32 lg:scroll-mt-44">
+    <section 
+      ref={sectionRef}
+      id="feature-showcase" 
+      className="min-h-screen bg-white flex items-center relative overflow-hidden py-24 lg:py-32 scroll-mt-32 lg:scroll-mt-44"
+    >
       <div className="max-w-7xl mx-auto px-6 w-full relative z-20 h-full">
         
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-24 items-start">
