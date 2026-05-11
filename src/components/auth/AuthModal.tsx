@@ -180,14 +180,21 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
 
     if (step === "welcome") { 
       setMethod("email"); 
+      
+      // Apenas correção de typos comuns no domínio para ajudar o usuário
+      let checkedEmail = email.trim().toLowerCase();
+      if (checkedEmail.includes("@gmil.com")) checkedEmail = checkedEmail.replace("@gmil.com", "@gmail.com");
+      if (checkedEmail.includes("@gmai.com")) checkedEmail = checkedEmail.replace("@gmai.com", "@gmail.com");
+      
+      setEmail(checkedEmail);
+
       if (authMode === "login") {
         if (!email || !password) { 
           setError("Preencha e-mail e senha."); 
           setLoading(false);
-          return; 
+          return;
         }
-        setLoading(true);
-        const { error: loginError } = await handleEmailLogin();
+        const { error: loginError } = await handleEmailLogin(checkedEmail);
         if (loginError) {
           if (loginError.toLowerCase().includes("invalid login credentials") || loginError.toLowerCase().includes("not found")) {
             setError("E-mail não encontrado. Deseja criar uma conta?");
@@ -215,7 +222,7 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
           return;
         }
         setLoading(true);
-        const { error: signUpError } = await signUp(email, password, {});
+        const { error: signUpError } = await signUp(checkedEmail, password, {});
         if (signUpError) {
           if (signUpError.toLowerCase().includes("user already registered")) {
             setError("Este e-mail já possui cadastro. Que tal fazer login?");
@@ -260,10 +267,10 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
     }
   };
 
-  const handleEmailLogin = async () => {
+  const handleEmailLogin = async (loginEmail?: string) => {
     setLoading(true);
     try {
-      const { error } = await signIn(email, password);
+      const { error } = await signIn(loginEmail || email, password);
       if (error) return { error };
       setStep("success");
       trackLogin();
