@@ -45,7 +45,7 @@ export default function Header() {
   const location = useLocation();
   const navigate = useNavigate();
   const { count } = useWishlist();
-  const { user, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const isAdmin = useIsAdmin();
   const isGuide = useIsGuide();
 
@@ -77,6 +77,16 @@ export default function Header() {
       setAuthModalOpen(true);
     }
   }, [user, location.state]);
+
+  // Force onboarding for incomplete profiles (Google Login)
+  useEffect(() => {
+    if (user && profile) {
+      const isIncomplete = !profile.full_name || !profile.phone;
+      if (isIncomplete && !authModalOpen) {
+        setAuthModalOpen(true);
+      }
+    }
+  }, [user, profile, authModalOpen]);
 
   const userInitial = user?.user_metadata?.full_name
     ? user.user_metadata.full_name.charAt(0).toUpperCase()
