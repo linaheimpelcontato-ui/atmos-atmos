@@ -309,21 +309,16 @@ export default function ExperienceEcosystem() {
                   <span className="text-[#2C3E2D] font-display italic text-4xl md:text-6xl mx-16 opacity-90 tracking-tight leading-none">
                     A verdadeira viagem de descoberta não consiste em procurar novas paisagens, mas em ter novos olhos.
                   </span>
-                  <motion.div
+                  <motion.img
+                    src={optimizedUrl("home/simboloatmos.png", IMAGE_PRESETS.thumbnail)}
                     animate={{ rotate: 360 }}
                     transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
                     className="w-14 h-14 mx-10 flex-shrink-0"
-                    style={{
-                      backgroundColor: '#2C3E2D',
-                      maskImage: `url(${optimizedUrl("home/simboloatmos.png", IMAGE_PRESETS.thumbnail)})`,
-                      WebkitMaskImage: `url(${optimizedUrl("home/simboloatmos.png", IMAGE_PRESETS.thumbnail)})`,
-                      maskSize: 'contain',
-                      WebkitMaskSize: 'contain',
-                      maskRepeat: 'no-repeat',
-                      WebkitMaskRepeat: 'no-repeat',
-                      maskPosition: 'center',
-                      WebkitMaskPosition: 'center'
+                    style={{ 
+                      filter: 'brightness(0) saturate(100%) invert(18%) sepia(11%) saturate(1450%) hue-rotate(65deg) brightness(95%) contrast(87%)',
+                      display: 'block'
                     }}
+                    alt=""
                   />
                 </div>
               ))}
