@@ -81,51 +81,7 @@ const ddiToCountry: Record<string, string> = {
   "+972": "IL", "+971": "AE", "+27": "ZA"
 };
 
-const brazilianCities: Record<string, string[]> = {
-  "AC": ["Rio Branco", "Cruzeiro do Sul", "Sena Madureira"],
-  "AL": ["Maceió", "Arapiraca", "Rio Largo"],
-  "AP": ["Macapá", "Santana", "Laranjal do Jari"],
-  "AM": ["Manaus", "Parintins", "Itacoatiara"],
-  "BA": ["Salvador", "Feira de Santana", "Vitória da Conquista", "Porto Seguro", "Trancoso"],
-  "CE": ["Fortaleza", "Caucaia", "Juazeiro do Norte", "Jericoacoara"],
-  "DF": ["Brasília", "Taguatinga", "Ceilândia"],
-  "ES": ["Vitória", "Vila Velha", "Serra", "Guarapari"],
-  "GO": ["Goiânia", "Aparecida de Goiânia", "Anápolis", "Alto Paraíso", "Pirenópolis"],
-  "MA": ["São Luís", "Imperatriz", "Timon"],
-  "MT": ["Cuiabá", "Várzea Grande", "Rondonópolis"],
-  "MS": ["Campo Grande", "Dourados", "Três Lagoas", "Bonito"],
-  "MG": ["Belo Horizonte", "Uberlândia", "Contagem", "Juiz de Fora", "Tiradentes"],
-  "PA": ["Belém", "Ananindeua", "Santarém"],
-  "PB": ["João Pessoa", "Campina Grande", "Santa Rita"],
-  "PR": ["Curitiba", "Londrina", "Maringá", "Foz do Iguaçu"],
-  "PE": ["Recife", "Jaboatão dos Guararapes", "Olinda", "Fernando de Noronha"],
-  "PI": ["Teresina", "Parnaíba", "Picos"],
-  "RJ": ["Rio de Janeiro", "Niterói", "Búzios", "Angra dos Reis", "Petrópolis"],
-  "RN": ["Natal", "Mossoró", "Parnamirim", "Pipa"],
-  "RS": ["Porto Alegre", "Caxias do Sul", "Gramado", "Bento Gonçalves"],
-  "RO": ["Porto Velho", "Ji-Paraná", "Ariquemes"],
-  "RR": ["Boa Vista", "Rorainópolis", "Caracaraí"],
-  "SC": ["Florianópolis", "Joinville", "Blumenau", "Balneário Camboriú"],
-  "SP": ["São Paulo", "Campinas", "Santos", "Ribeirão Preto", "São José dos Campos"],
-  "SE": ["Aracaju", "Nossa Senhora do Socorro", "Lagarto"],
-  "TO": ["Palmas", "Araguaína", "Gurupi"]
-};
-
-const countries = [
-  { code: "BR", name: "Brasil" }, { code: "US", name: "Estados Unidos" }, { code: "AR", name: "Argentina" },
-  { code: "PY", name: "Paraguai" }, { code: "UY", name: "Uruguai" }, { code: "CL", name: "Chile" },
-  { code: "PE", name: "Peru" }, { code: "CO", name: "Colômbia" }, { code: "VE", name: "Venezuela" },
-  { code: "BO", name: "Bolívia" }, { code: "EC", name: "Equador" }, { code: "MX", name: "México" },
-  { code: "PT", name: "Portugal" }, { code: "ES", name: "Espanha" }, { code: "FR", name: "França" },
-  { code: "IT", name: "Itália" }, { code: "DE", name: "Alemanha" }, { code: "GB", name: "Reino Unido" },
-  { code: "CH", name: "Suíça" }, { code: "NL", name: "Holanda" }, { code: "BE", name: "Bélgica" },
-  { code: "IE", name: "Irlanda" }, { code: "SE", name: "Suécia" }, { code: "NO", name: "Noruega" },
-  { code: "DK", name: "Dinamarca" }, { code: "FI", name: "Finlândia" }, { code: "PL", name: "Polônia" },
-  { code: "AT", name: "Áustria" }, { code: "GR", name: "Grécia" }, { code: "RU", name: "Rússia" },
-  { code: "JP", name: "Japão" }, { code: "KR", name: "Coreia do Sul" }, { code: "CN", name: "China" },
-  { code: "IN", name: "Índia" }, { code: "AU", name: "Austrália" }, { code: "NZ", name: "Nova Zelândia" },
-  { code: "IL", name: "Israel" }, { code: "AE", name: "Emirados Árabes" }, { code: "ZA", name: "África do Sul" },
-];
+import { Country, State, City } from 'country-state-city';
 
 const loginImage = storageUrl("home/foto-login.jpg");
 
@@ -148,6 +104,10 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
   const [country, setCountry] = useState("BR");
   const [state, setState] = useState("");
   const [city, setCity] = useState("");
+
+  const allCountries = Country.getAllCountries();
+  const statesOfCountry = country ? State.getStatesOfCountry(country) : [];
+  const citiesOfState = (country && state) ? City.getCitiesOfState(country, state) : [];
   const [authMode, setAuthMode] = useState<"login" | "signup">(defaultMode);
   const [showPassword, setShowPassword] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -604,21 +564,38 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
                             <div className="space-y-4">
                               <div className="space-y-1">
                                 <label className="text-[10px] uppercase tracking-widest font-bold text-black/40 pl-2">País</label>
-                                <Select onValueChange={setCountry} value={country}>
-                                  <SelectTrigger className="h-16 rounded-2xl border-black/5 bg-[#FDFCFB] shadow-sm text-lg px-6"><SelectValue placeholder="País" /></SelectTrigger>
+                                <Select 
+                                  onValueChange={(val) => {
+                                    setCountry(val);
+                                    setState("");
+                                    setCity("");
+                                  }} 
+                                  value={country}
+                                >
+                                  <SelectTrigger className="h-16 rounded-2xl border-black/5 bg-[#FDFCFB] shadow-sm text-lg px-6">
+                                    <SelectValue placeholder="Selecione o País" />
+                                  </SelectTrigger>
                                   <SelectContent className="max-h-60">
-                                    {countries.map(c => <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>)}
+                                    {allCountries.map(c => <SelectItem key={c.isoCode} value={c.isoCode}>{c.name}</SelectItem>)}
                                   </SelectContent>
                                 </Select>
                               </div>
 
-                              {country === "BR" && (
+                              {statesOfCountry.length > 0 && (
                                 <div className="space-y-1 animate-in fade-in slide-in-from-top-2">
-                                  <label className="text-[10px] uppercase tracking-widest font-bold text-black/40 pl-2">Estado</label>
-                                  <Select onValueChange={setState} value={state}>
-                                    <SelectTrigger className="h-16 rounded-2xl border-black/5 bg-[#FDFCFB] shadow-sm text-lg px-6"><SelectValue placeholder="Estado" /></SelectTrigger>
+                                  <label className="text-[10px] uppercase tracking-widest font-bold text-black/40 pl-2">Estado / Província</label>
+                                  <Select 
+                                    onValueChange={(val) => {
+                                      setState(val);
+                                      setCity("");
+                                    }} 
+                                    value={state}
+                                  >
+                                    <SelectTrigger className="h-16 rounded-2xl border-black/5 bg-[#FDFCFB] shadow-sm text-lg px-6">
+                                      <SelectValue placeholder="Selecione o Estado" />
+                                    </SelectTrigger>
                                     <SelectContent className="max-h-60">
-                                      {brazilianStates.map(s => <SelectItem key={s.code} value={s.code}>{s.name}</SelectItem>)}
+                                      {statesOfCountry.map(s => <SelectItem key={s.isoCode} value={s.isoCode}>{s.name}</SelectItem>)}
                                     </SelectContent>
                                   </Select>
                                 </div>
@@ -626,28 +603,21 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
 
                               <div className="space-y-1">
                                 <label className="text-[10px] uppercase tracking-widest font-bold text-black/40 pl-2">Cidade</label>
-                                {country === "BR" && state && brazilianCities[state] ? (
+                                {citiesOfState.length > 0 ? (
                                   <Select onValueChange={setCity} value={city}>
-                                    <SelectTrigger className="h-16 rounded-2xl border-black/5 bg-[#FDFCFB] shadow-sm text-lg px-6"><SelectValue placeholder="Selecione sua cidade" /></SelectTrigger>
+                                    <SelectTrigger className="h-16 rounded-2xl border-black/5 bg-[#FDFCFB] shadow-sm text-lg px-6">
+                                      <SelectValue placeholder="Selecione a Cidade" />
+                                    </SelectTrigger>
                                     <SelectContent className="max-h-60">
-                                      {brazilianCities[state].map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                                      <SelectItem value="OUTRA">Outra cidade...</SelectItem>
+                                      {citiesOfState.map(c => <SelectItem key={c.name} value={c.name}>{c.name}</SelectItem>)}
                                     </SelectContent>
                                   </Select>
                                 ) : (
                                   <Input 
-                                    placeholder="Nome da sua cidade" 
-                                    value={city === "OUTRA" ? "" : city} 
+                                    placeholder="Digite o nome da sua cidade" 
+                                    value={city} 
                                     onChange={(e) => setCity(e.target.value)} 
                                     className="h-16 rounded-2xl border-black/5 bg-[#FDFCFB] text-lg shadow-sm px-6" 
-                                  />
-                                )}
-                                {city === "OUTRA" && (
-                                  <Input 
-                                    autoFocus
-                                    placeholder="Digite o nome da sua cidade" 
-                                    onChange={(e) => setCity(e.target.value)} 
-                                    className="h-16 rounded-2xl border-black/5 bg-[#FDFCFB] text-lg shadow-sm px-6 mt-2 animate-in fade-in" 
                                   />
                                 )}
                               </div>
