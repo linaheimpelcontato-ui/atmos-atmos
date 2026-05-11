@@ -11,6 +11,7 @@ import { trackSignup, trackLogin } from "@/lib/analytics";
 import { storageUrl } from "@/lib/storage";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 import {
   Select,
@@ -291,14 +292,14 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-none w-screen h-[calc(100vh-80px)] top-[80px] p-0 border-none shadow-none !rounded-none bg-white z-[50] translate-y-0 [&>button]:hidden overflow-hidden">
+      <DialogContent className="max-w-none w-screen h-screen p-0 border-none shadow-none !rounded-none bg-white z-[50] [&>button]:hidden overflow-hidden">
         <div 
           role="button"
           onClick={() => {
             if (user) signOut();
             onClose();
           }}
-          className="absolute top-8 right-8 w-10 h-10 bg-white/90 backdrop-blur-md rounded-full shadow-xl flex items-center justify-center group hover:bg-white transition-all z-[100] border border-black/5 cursor-pointer"
+          className="absolute top-12 right-8 w-10 h-10 bg-white/90 backdrop-blur-md rounded-full shadow-xl flex items-center justify-center group hover:bg-white transition-all z-[100] border border-black/5 cursor-pointer"
         >
           <X className="h-4 w-4 text-black group-hover:scale-110 transition-transform" />
         </div>
@@ -313,7 +314,7 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
                 </div>
               )}
 
-              <div className="flex-1 flex flex-col items-start justify-center px-10 md:px-24 pt-8 pb-16">
+              <div className="flex-1 flex flex-col items-start justify-center px-10 md:px-24 pt-24 pb-16">
                 <div className="w-full max-w-lg">
                   <AnimatePresence mode="wait">
                     <motion.div
