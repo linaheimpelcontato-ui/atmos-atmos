@@ -39,7 +39,7 @@ export default function FacilitadorSection() {
             {[
               { 
                 title: "Facilitadores e Professores", 
-                desc: "Você traz o grupo, a ATMOS cuida de tudo. Roteiro, guias, hospedagem, refeições e registros — para que você foque apenas na sua facilitação." 
+                desc: "Você traz o grupo, a ATMOS cuida de tudo. Roteiro, guias especializados, hospedagem, refeições, registros e logística, para que você foque apenas na sua facilitação." 
               },
               { 
                 title: "Agências de Viagem", 
