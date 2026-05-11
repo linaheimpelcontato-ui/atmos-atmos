@@ -140,11 +140,8 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
       if (profile.full_name && !fullName) setFullName(profile.full_name);
       if (profile.phone && !phone) setPhone(profile.phone);
       
-      // Define o passo inicial baseado no que falta
-      if (!profile.full_name) setStep("name");
-      else if (!profile.phone) setStep("phone");
-      else if (!profile.birth_date) setStep("birthdate");
-      else if (!profile.city) setStep("location");
+      // Sempre começa pelo Nome para o usuário dar o "Ok" e confirmar
+      setStep("name");
     }
   }, [user, profile, step]);
 
@@ -327,12 +324,7 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
             )}
 
             <div className="absolute top-12 left-8 md:left-24 z-[70]">
-              {step !== "welcome" && step !== "success" && (
-                <button onClick={() => setStep("welcome")} className="group flex items-center gap-2 text-black/20 hover:text-black transition-all">
-                  <ArrowLeft className="h-5 w-5" />
-                  <span className="text-[10px] uppercase tracking-[0.2em] font-bold">Início</span>
-                </button>
-              )}
+              {/* Botão Início Removido para layout mais limpo */}
             </div>
 
             <div className="flex-1 flex flex-col items-start justify-center px-10 md:px-24 pt-16">
@@ -433,13 +425,19 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
                             {authMode === "signup" && password.length > 0 && (
                               <div className="relative group animate-in fade-in slide-in-from-top-2 duration-300">
                                 <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none text-black/20 group-focus-within:text-[#A88B4C] transition-colors">
-                                  <Check className="h-5 w-5" />
+                                  {confirmPassword && password === confirmPassword ? (
+                                    <Check className="h-5 w-5 text-green-500" />
+                                  ) : (
+                                    <Lock className="h-5 w-5" />
+                                  )}
                                 </div>
                                 <Input 
                                   placeholder="Confirme sua senha"
                                   type={showPassword ? "text" : "password"} 
                                   autoComplete="new-password"
-                                  className="h-16 rounded-2xl border-black/5 bg-[#FDFCFB] text-lg pl-14 pr-6 focus:ring-[#A88B4C] transition-all" 
+                                  className={`h-16 rounded-2xl border-black/5 bg-[#FDFCFB] text-lg pl-14 pr-6 focus:ring-[#A88B4C] transition-all ${
+                                    confirmPassword && password !== confirmPassword ? "border-red-300" : ""
+                                  }`} 
                                   value={confirmPassword} 
                                   onChange={(e) => setConfirmPassword(e.target.value)} 
                                 />
@@ -586,16 +584,30 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
                             {loading ? <span className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <>Avançar <ChevronRight className="h-4 w-4" /></>}
                           </Button>
 
-                          <button 
-                            type="button"
-                            onClick={() => {
-                              signOut();
-                              setStep("welcome");
-                            }}
-                            className="w-full text-[10px] uppercase tracking-[0.2em] font-bold text-black/40 hover:text-black transition-colors py-2"
-                          >
-                            Usar outra conta
-                          </button>
+                          <div className="flex flex-col items-center gap-2">
+                            <button 
+                              type="button"
+                              onClick={() => {
+                                const steps: Step[] = ["welcome", "name", "phone", "birthdate", "location"];
+                                const idx = steps.indexOf(step);
+                                if (idx > 0) setStep(steps[idx - 1]);
+                              }}
+                              className="w-full text-[10px] uppercase tracking-[0.2em] font-bold text-black/20 hover:text-black transition-colors py-2"
+                            >
+                              Voltar
+                            </button>
+
+                            <button 
+                              type="button"
+                              onClick={() => {
+                                signOut();
+                                setStep("welcome");
+                              }}
+                              className="w-full text-[10px] uppercase tracking-[0.2em] font-bold text-black/10 hover:text-black/40 transition-colors py-2"
+                            >
+                              Sair da conta
+                            </button>
+                          </div>
                         </form>
                       </div>
                     )}
