@@ -25,10 +25,10 @@ export default function FacilitadorSection() {
               className="text-[#E4DBCC] text-2xl md:text-4xl lg:text-[52px] font-display tracking-tight max-w-none"
               style={{ lineHeight: 1.2 }}
             >
-              Construa conosco projetos que fortalecem o território <span className="font-light italic text-[#A88B4C]">e elevam o padrão das experiências dos seus clientes.</span>
+              A ATMOS é o parceiro local que o seu negócio precisa na <span className="font-light italic text-[#A88B4C]">Chapada dos Veadeiros.</span>
             </h2>
-            <p className="text-[#E4DBCC]/60 text-lg md:text-xl font-sans font-light leading-relaxed max-w-4xl">
-              Este espaço é para quem conduz grupos e busca um parceiro local para planejar, operar e elevar experiências na Chapada dos Veadeiros com curadoria e precisão.
+            <p className="text-[#E4DBCC]/60 text-lg md:text-xl font-sans font-light leading-relaxed max-w-5xl">
+              Construa conosco projetos que fortalecem o território e elevam o padrão das experiências dos seus clientes. Este espaço é para facilitadores, agências e empresas que buscam um parceiro local para planejar, operar e elevar cada experiência na Chapada dos Veadeiros.
             </p>
           </motion.div>
         </div>
