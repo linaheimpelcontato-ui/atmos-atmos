@@ -100,7 +100,7 @@ const countries = [
 const loginImage = storageUrl("home/foto-login.jpg");
 
 export default function AuthModal({ open, onClose, onSuccess, defaultMode = "signup" }: AuthModalProps) {
-  const { signIn, signUp, signInWithGoogle, updateProfile, profile, user, session, resetPassword } = useAuth();
+  const { signIn, signUp, signInWithGoogle, updateProfile, profile, user, session, resetPassword, signOut } = useAuth();
   
   const [step, setStep] = useState<Step>("welcome");
   const [loading, setLoading] = useState(false);
