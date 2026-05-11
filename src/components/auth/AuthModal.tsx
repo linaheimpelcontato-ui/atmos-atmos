@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ArrowLeft, Mail, User, Phone, MapPin, Calendar, Lock, Check, ChevronRight, Globe, Eye, EyeOff } from "lucide-react";
+import { X, ArrowLeft, Mail, User, Phone, MapPin, Calendar, Lock, Check, ChevronRight, Globe, Eye, EyeOff, ChevronsUpDown } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { trackSignup, trackLogin } from "@/lib/analytics";
 import { storageUrl } from "@/lib/storage";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 import {
   Select,
@@ -19,6 +20,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Country, State, City } from 'country-state-city';
 
 interface AuthModalProps {
   open: boolean;
@@ -28,18 +32,6 @@ interface AuthModalProps {
 }
 
 type Step = "welcome" | "login" | "name" | "phone" | "birthdate" | "location" | "password" | "success" | "reset";
-
-const brazilianStates = [
-  { code: "AC", name: "Acre" }, { code: "AL", name: "Alagoas" }, { code: "AP", name: "Amapá" },
-  { code: "AM", name: "Amazonas" }, { code: "BA", name: "Bahia" }, { code: "CE", name: "Ceará" },
-  { code: "DF", name: "Distrito Federal" }, { code: "ES", name: "Espírito Santo" }, { code: "GO", name: "Goiás" },
-  { code: "MA", name: "Maranhão" }, { code: "MT", name: "Mato Grosso" }, { code: "MS", name: "Mato Grosso do Sul" },
-  { code: "MG", name: "Minas Gerais" }, { code: "PA", name: "Pará" }, { code: "PB", name: "Paraíba" },
-  { code: "PR", name: "Paraná" }, { code: "PE", name: "Pernambuco" }, { code: "PI", name: "Piauí" },
-  { code: "RJ", name: "Rio de Janeiro" }, { code: "RN", name: "Rio Grande do Norte" }, { code: "RS", name: "Rio Grande do Sul" },
-  { code: "RO", name: "Rondônia" }, { code: "RR", name: "Roraima" }, { code: "SC", name: "Santa Catarina" },
-  { code: "SP", name: "São Paulo" }, { code: "SE", name: "Sergipe" }, { code: "TO", name: "Tocantins" }
-];
 
 const dddToState: Record<string, string> = {
   "11": "SP", "12": "SP", "13": "SP", "14": "SP", "15": "SP", "16": "SP", "17": "SP", "18": "SP", "19": "SP",
@@ -81,8 +73,6 @@ const ddiToCountry: Record<string, string> = {
   "+972": "IL", "+971": "AE", "+27": "ZA"
 };
 
-import { Country, State, City } from 'country-state-city';
-
 const loginImage = storageUrl("home/foto-login.jpg");
 
 export default function AuthModal({ open, onClose, onSuccess, defaultMode = "signup" }: AuthModalProps) {
@@ -97,11 +87,12 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [birthDay, setBirthDay] = useState("");
   const [birthMonth, setBirthMonth] = useState("");
   const [birthYear, setBirthYear] = useState("");
-  const [country, setCountry] = useState("BR");
+  const [country, setCountry] = useState("");
   const [state, setState] = useState("");
   const [city, setCity] = useState("");
 
@@ -110,7 +101,6 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
   const citiesOfState = (country && state) ? City.getCitiesOfState(country, state) : [];
   const [authMode, setAuthMode] = useState<"login" | "signup">(defaultMode);
   const [showPassword, setShowPassword] = useState(false);
-  const [confirmPassword, setConfirmPassword] = useState("");
 
   useEffect(() => {
     if (open) {
@@ -126,11 +116,8 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
 
   useEffect(() => {
     if (user && profile && step === "welcome") {
-      // Preenche dados já existentes para não precisar digitar de novo
       if (profile.full_name && !fullName) setFullName(profile.full_name);
       if (profile.phone && !phone) setPhone(profile.phone);
-      
-      // Sempre começa pelo Nome para o usuário dar o "Ok" e confirmar
       setStep("name");
     }
   }, [user, profile, step]);
@@ -187,7 +174,6 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
     }
     else if (step === "birthdate") {
       if (!birthDay || !birthMonth || !birthYear) { setError("Sua data de nascimento é importante."); return; }
-      
       const bDay = parseInt(birthDay);
       const bMonth = parseInt(birthMonth);
       const bYear = parseInt(birthYear);
@@ -196,7 +182,6 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
         setError("Data de nascimento inválida."); 
         return;
       }
-      
       setStep("location");
     }
     else if (step === "location") {
@@ -234,11 +219,8 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
       const profileData = { full_name: fullName, phone, birth_date: bDate, city: loc };
 
       if (method === "email") {
-        // Tenta criar a conta com todos os metadados de uma vez
         const { error: signUpError } = await signUp(email, password, profileData);
-        
         if (signUpError) {
-          // Se já existe, apenas tenta logar e atualizar o perfil
           const { error: signInError } = await signIn(email, password);
           if (!signInError) {
             await updateProfile(profileData);
@@ -247,7 +229,6 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
           }
         }
       } else {
-        // Para Google/Social, apenas atualiza o perfil já existente
         const { error } = await updateProfile(profileData);
         if (error) throw new Error(error);
       }
@@ -284,16 +265,12 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
           alt="Atmos Landscape"
         />
         <div className="absolute inset-0 bg-black/5" />
-        
-        {/* Clear Close Button on the image side */}
         <button 
           onClick={() => {
-            if (user) {
-              signOut();
-            }
+            if (user) signOut();
             onClose();
           }}
-          className="absolute top-10 right-10 w-14 h-14 bg-white/90 backdrop-blur-md rounded-full shadow-2xl flex items-center justify-center group hover:bg-white transition-all z-[80] !rounded-full"
+          className="absolute top-10 right-10 w-14 h-14 bg-white/90 backdrop-blur-md rounded-full shadow-2xl flex items-center justify-center group hover:bg-white transition-all z-[80]"
         >
           <X className="h-6 w-6 text-black group-hover:scale-110 transition-transform" />
         </button>
@@ -313,11 +290,7 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
               </div>
             )}
 
-            <div className="absolute top-12 left-8 md:left-24 z-[70]">
-              {/* Botão Início Removido para layout mais limpo */}
-            </div>
-
-            <div className="flex-1 flex flex-col items-start justify-center px-10 md:px-24 pt-16">
+            <div className="flex-1 flex flex-col items-start justify-center px-10 md:px-24 pt-32 pb-16">
               <div className="w-full max-w-lg">
                 <AnimatePresence mode="wait">
                   <motion.div
@@ -329,7 +302,7 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
                     className="space-y-12"
                   >
                     {step === "welcome" && (
-                      <div className="space-y-12">
+                      <div className="space-y-12 animate-in fade-in duration-700">
                         <div className="space-y-6">
                           <Tabs value={authMode} onValueChange={(v) => setAuthMode(v as "login" | "signup")} className="w-full">
                             <TabsList className="grid w-full grid-cols-2 h-14 bg-black/[0.03] p-1 rounded-2xl">
@@ -363,104 +336,48 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
                         </div>
                         <div className="space-y-6 max-w-sm">
                           <Button onClick={handleGoogleSignIn} className="w-full h-16 rounded-2xl bg-white border border-black/5 text-black hover:bg-[#F8F8F8] flex items-center justify-center gap-4 font-semibold shadow-xl shadow-black/5">
-                            <svg className="h-6 w-6" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/></svg>
+                            <svg className="h-6 w-6" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/></svg>
                             Continuar com Google
                           </Button>
                           <div className="flex items-center gap-4">
                             <div className="flex-grow h-px bg-black/5"></div>
-                            <span className="text-[10px] uppercase tracking-widest font-bold text-black/20 italic">Ou e-mail</span>
+                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-black/20">ou e-mail</span>
                             <div className="flex-grow h-px bg-black/5"></div>
                           </div>
                           <form 
                             onSubmit={(e) => { e.preventDefault(); handleNext(); }}
                             className="space-y-4"
                           >
-                            <div className="relative group">
-                              <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none text-black/20 group-focus-within:text-[#A88B4C] transition-colors">
-                                <Mail className="h-5 w-5" />
-                              </div>
-                              <Input 
-                                placeholder="seu@email.com" 
-                                type="email" 
-                                autoComplete="email"
-                                className="h-16 rounded-2xl border-black/5 bg-[#FDFCFB] text-lg pl-14 pr-6 focus:ring-[#A88B4C] transition-all" 
-                                value={email} 
-                                onChange={(e) => setEmail(e.target.value)} 
-                              />
-                            </div>
-
-                            {(authMode === "login" || authMode === "signup") && (
-                              <div className="relative group">
-                                <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none text-black/20 group-focus-within:text-[#A88B4C] transition-colors">
-                                  <Lock className="h-5 w-5" />
-                                </div>
+                            <Input placeholder="E-mail" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className="h-16 rounded-2xl border-black/5 bg-[#FDFCFB] text-lg shadow-sm px-6" />
+                            {authMode === "signup" && <Input placeholder="Senha" type={showPassword ? "text" : "password"} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} className="h-16 rounded-2xl border-black/5 bg-[#FDFCFB] text-lg shadow-sm px-6" />}
+                            {authMode === "signup" && (
+                              <div className="relative">
                                 <Input 
-                                  placeholder={authMode === "login" ? "Sua senha" : "Crie sua senha (mínimo 6)"}
+                                  placeholder="Confirme sua senha" 
                                   type={showPassword ? "text" : "password"} 
-                                  autoComplete={authMode === "login" ? "current-password" : "new-password"}
-                                  className="h-16 rounded-2xl border-black/5 bg-[#FDFCFB] text-lg pl-14 pr-14 focus:ring-[#A88B4C] transition-all" 
-                                  value={password} 
-                                  onChange={(e) => setPassword(e.target.value)} 
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => setShowPassword(!showPassword)}
-                                  className="absolute inset-y-0 right-6 flex items-center text-black/20 hover:text-black transition-colors"
-                                >
-                                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                                </button>
-                              </div>
-                            )}
-
-                            {authMode === "signup" && password.length > 0 && (
-                              <div className="relative group animate-in fade-in slide-in-from-top-2 duration-300">
-                                <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none text-black/20 group-focus-within:text-[#A88B4C] transition-colors">
-                                  {confirmPassword && password === confirmPassword ? (
-                                    <Check className="h-5 w-5 text-green-500" />
-                                  ) : (
-                                    <Lock className="h-5 w-5" />
-                                  )}
-                                </div>
-                                <Input 
-                                  placeholder="Confirme sua senha"
-                                  type={showPassword ? "text" : "password"} 
-                                  autoComplete="new-password"
-                                  className={`h-16 rounded-2xl border-black/5 bg-[#FDFCFB] text-lg pl-14 pr-6 focus:ring-[#A88B4C] transition-all ${
-                                    confirmPassword && password !== confirmPassword ? "border-red-300" : ""
-                                  }`} 
+                                  autoComplete="new-password" 
                                   value={confirmPassword} 
                                   onChange={(e) => setConfirmPassword(e.target.value)} 
+                                  className={cn(
+                                    "h-16 rounded-2xl border-black/5 bg-[#FDFCFB] text-lg shadow-sm px-6 transition-all",
+                                    confirmPassword && password && confirmPassword !== password && "border-red-500 focus:ring-red-500",
+                                    confirmPassword && password && confirmPassword === password && "border-green-500 focus:ring-green-500"
+                                  )} 
                                 />
+                                {confirmPassword && password && confirmPassword === password && (
+                                  <Check className="absolute right-6 top-1/2 -translate-y-1/2 h-5 w-5 text-green-500" />
+                                )}
                               </div>
                             )}
-
                             {authMode === "login" && (
-                              <div className="flex justify-end">
-                                <button
-                                  type="button"
-                                  onClick={async () => {
-                                    if (!email) { toast.error("Digite seu e-mail primeiro"); return; }
-                                    setResetLoading(true);
-                                    const { error } = await resetPassword(email);
-                                    setResetLoading(false);
-                                    if (error) toast.error(error);
-                                    else toast.success("E-mail de recuperação enviado!");
-                                  }}
-                                  className="text-[10px] font-bold text-[#A88B4C] uppercase tracking-widest hover:underline"
-                                >
-                                  {resetLoading ? "Enviando..." : "Esqueci minha senha"}
-                                </button>
+                              <div className="relative">
+                                <Input placeholder="Senha" type={showPassword ? "text" : "password"} autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} className="h-16 rounded-2xl border-black/5 bg-[#FDFCFB] text-lg shadow-sm px-6" />
+                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-6 top-1/2 -translate-y-1/2 text-black/20 hover:text-black transition-colors">{showPassword ? "Ocultar" : "Mostrar"}</button>
                               </div>
                             )}
-
                             {error && <p className="text-[10px] font-bold text-red-500 uppercase tracking-widest">{error}</p>}
-
-                            <Button type="submit" disabled={loading} className="w-full h-16 rounded-2xl bg-[#1A261B] text-white hover:bg-black font-bold tracking-widest uppercase text-[11px] shadow-lg shadow-black/10 flex items-center justify-center gap-3">
-                              {loading ? (
-                                <span className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                              ) : (
-                                authMode === "login" ? "Entrar na Conta" : "Começar Jornada"
-                              )}
+                            <Button type="submit" disabled={loading} className="w-full h-16 rounded-2xl bg-[#1A261B] text-white hover:bg-black font-bold uppercase tracking-widest text-[11px] flex items-center justify-center gap-3">
+                              {loading ? <span className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <>{authMode === "signup" ? "Criar conta" : "Acessar portal"} <ChevronRight className="h-4 w-4" /></>}
                             </Button>
                           </form>
                         </div>
@@ -468,14 +385,13 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
                     )}
 
                     {step === "login" && (
-                      <div className="space-y-12">
+                      <div className="space-y-12 animate-in fade-in duration-700">
                         <div className="space-y-4">
                           <h2 className="text-4xl font-display text-[#1A261B] leading-tight">
                             Boas-vindas de volta.
                           </h2>
                           <p className="text-black/40 font-light">Insira sua senha para acessar sua conta.</p>
                         </div>
-                        
                         <form 
                           onSubmit={(e) => { e.preventDefault(); handleNext(); }}
                           className="space-y-6 max-w-sm"
@@ -505,13 +421,10 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
                               </button>
                             </div>
                           </div>
-
                           {error && <p className="text-[10px] font-bold text-red-500 uppercase tracking-widest">{error}</p>}
-
                           <Button type="submit" disabled={loading} className="w-full h-16 rounded-2xl bg-[#1A261B] text-white hover:bg-black font-bold uppercase tracking-widest text-[11px] flex items-center justify-center gap-3">
                             {loading ? <span className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <>Entrar <ChevronRight className="h-4 w-4" /></>}
                           </Button>
-
                           <button 
                             type="button"
                             onClick={() => setStep("welcome")}
@@ -523,14 +436,13 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
                       </div>
                     )}
 
-                    {(step === "name" || step === "phone" || step === "birthdate" || step === "location" || step === "password") && (
-                      <div className="space-y-12">
+                    {(step === "name" || step === "phone" || step === "birthdate" || step === "location") && (
+                      <div className="space-y-12 animate-in fade-in duration-700">
                         <h3 className="text-4xl font-display text-[#1A261B] leading-tight">
                           {step === "name" && <>Nome Completo</>}
                           {step === "phone" && <>Insira seu numero de celular</>}
                           {step === "birthdate" && <>Data de nascimento</>}
                           {step === "location" && <>Onde você mora?</>}
-                          {step === "password" && <>Criar sua senha</>}
                         </h3>
                         <form 
                           onSubmit={(e) => { e.preventDefault(); handleNext(); }}
@@ -561,57 +473,108 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
                             </div>
                           )}
                           {step === "location" && (
-                            <div className="space-y-4">
-                              <div className="space-y-1">
-                                <label className="text-[10px] uppercase tracking-widest font-bold text-black/40 pl-2">País</label>
-                                <Select 
-                                  onValueChange={(val) => {
-                                    setCountry(val);
-                                    setState("");
-                                    setCity("");
-                                  }} 
-                                  value={country}
-                                >
-                                  <SelectTrigger className="h-16 rounded-2xl border-black/5 bg-[#FDFCFB] shadow-sm text-lg px-6">
-                                    <SelectValue placeholder="Selecione o País" />
-                                  </SelectTrigger>
-                                  <SelectContent className="max-h-60">
-                                    {allCountries.map(c => <SelectItem key={c.isoCode} value={c.isoCode}>{c.name}</SelectItem>)}
-                                  </SelectContent>
-                                </Select>
+                            <div className="space-y-6">
+                              <div className="space-y-2">
+                                <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-black/40 pl-1">País</label>
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <Button variant="outline" role="combobox" className="w-full h-16 rounded-2xl border-black/5 bg-[#FDFCFB] justify-between px-6 text-lg font-normal hover:bg-white hover:border-[#A88B4C]/30 transition-all">
+                                      <span className="truncate">{country ? allCountries.find(c => c.isoCode === country)?.name : "Selecione o País"}</span>
+                                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 rounded-2xl border-black/5 shadow-2xl z-[100]">
+                                    <Command className="rounded-2xl">
+                                      <CommandInput placeholder="Procurar país..." className="h-14" />
+                                      <CommandEmpty>País não encontrado.</CommandEmpty>
+                                      <CommandGroup className="max-h-60 overflow-y-auto">
+                                        {allCountries.map((c) => (
+                                          <CommandItem
+                                            key={c.isoCode}
+                                            value={c.name}
+                                            onSelect={() => {
+                                              setCountry(c.isoCode);
+                                              setState("");
+                                              setCity("");
+                                            }}
+                                            className="h-12 px-4 cursor-pointer hover:bg-black/5"
+                                          >
+                                            <Check className={cn("mr-2 h-4 w-4", country === c.isoCode ? "opacity-100" : "opacity-0")} />
+                                            {c.name}
+                                          </CommandItem>
+                                        ))}
+                                      </CommandGroup>
+                                    </Command>
+                                  </PopoverContent>
+                                </Popover>
                               </div>
 
                               {statesOfCountry.length > 0 && (
-                                <div className="space-y-1 animate-in fade-in slide-in-from-top-2">
-                                  <label className="text-[10px] uppercase tracking-widest font-bold text-black/40 pl-2">Estado / Província</label>
-                                  <Select 
-                                    onValueChange={(val) => {
-                                      setState(val);
-                                      setCity("");
-                                    }} 
-                                    value={state}
-                                  >
-                                    <SelectTrigger className="h-16 rounded-2xl border-black/5 bg-[#FDFCFB] shadow-sm text-lg px-6">
-                                      <SelectValue placeholder="Selecione o Estado" />
-                                    </SelectTrigger>
-                                    <SelectContent className="max-h-60">
-                                      {statesOfCountry.map(s => <SelectItem key={s.isoCode} value={s.isoCode}>{s.name}</SelectItem>)}
-                                    </SelectContent>
-                                  </Select>
+                                <div className="space-y-2 animate-in fade-in slide-in-from-top-4 duration-500">
+                                  <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-black/40 pl-1">Estado / Província</label>
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <Button variant="outline" role="combobox" className="w-full h-16 rounded-2xl border-black/5 bg-[#FDFCFB] justify-between px-6 text-lg font-normal hover:bg-white hover:border-[#A88B4C]/30 transition-all">
+                                        <span className="truncate">{state ? statesOfCountry.find(s => s.isoCode === state)?.name : "Selecione o Estado"}</span>
+                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 rounded-2xl border-black/5 shadow-2xl z-[100]">
+                                      <Command className="rounded-2xl">
+                                        <CommandInput placeholder="Procurar estado..." className="h-14" />
+                                        <CommandEmpty>Estado não encontrado.</CommandEmpty>
+                                        <CommandGroup className="max-h-60 overflow-y-auto">
+                                          {statesOfCountry.map((s) => (
+                                            <CommandItem
+                                              key={s.isoCode}
+                                              value={s.name}
+                                              onSelect={() => {
+                                                setState(s.isoCode);
+                                                setCity("");
+                                              }}
+                                              className="h-12 px-4 cursor-pointer hover:bg-black/5"
+                                            >
+                                              <Check className={cn("mr-2 h-4 w-4", state === s.isoCode ? "opacity-100" : "opacity-0")} />
+                                              {s.name}
+                                            </CommandItem>
+                                          ))}
+                                        </CommandGroup>
+                                      </Command>
+                                    </PopoverContent>
+                                  </Popover>
                                 </div>
                               )}
 
-                              <div className="space-y-1">
-                                <label className="text-[10px] uppercase tracking-widest font-bold text-black/40 pl-2">Cidade</label>
+                              <div className="space-y-2">
+                                <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-black/40 pl-1">Cidade</label>
                                 {citiesOfState.length > 0 ? (
-                                  <Select onValueChange={setCity} value={city}>
-                                    <SelectTrigger className="h-16 rounded-2xl border-black/5 bg-[#FDFCFB] shadow-sm text-lg px-6">
-                                      <SelectValue placeholder="Selecione a Cidade" />
-                                    </SelectTrigger>
-                                    <SelectContent className="max-h-60">
-                                      {citiesOfState.map(c => <SelectItem key={c.name} value={c.name}>{c.name}</SelectItem>)}
-                                    </SelectContent>
-                                  </Select>
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <Button variant="outline" role="combobox" className="w-full h-16 rounded-2xl border-black/5 bg-[#FDFCFB] justify-between px-6 text-lg font-normal hover:bg-white hover:border-[#A88B4C]/30 transition-all">
+                                        <span className="truncate">{city || "Selecione a Cidade"}</span>
+                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 rounded-2xl border-black/5 shadow-2xl z-[100]">
+                                      <Command className="rounded-2xl">
+                                        <CommandInput placeholder="Procurar cidade..." className="h-14" />
+                                        <CommandEmpty>Cidade não encontrada.</CommandEmpty>
+                                        <CommandGroup className="max-h-60 overflow-y-auto">
+                                          {citiesOfState.map((c) => (
+                                            <CommandItem
+                                              key={c.name}
+                                              value={c.name}
+                                              onSelect={() => setCity(c.name)}
+                                              className="h-12 px-4 cursor-pointer hover:bg-black/5"
+                                            >
+                                              <Check className={cn("mr-2 h-4 w-4", city === c.name ? "opacity-100" : "opacity-0")} />
+                                              {c.name}
+                                            </CommandItem>
+                                          ))}
+                                        </CommandGroup>
+                                      </Command>
+                                    </PopoverContent>
+                                  </Popover>
                                 ) : (
                                   <Input 
                                     placeholder="Digite o nome da sua cidade" 
@@ -625,11 +588,9 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
                           )}
 
                           {error && <p className="text-[10px] font-bold text-red-500 uppercase tracking-widest">{error}</p>}
-
                           <Button type="submit" disabled={loading} className="w-full h-16 rounded-2xl bg-[#1A261B] text-white hover:bg-black font-bold uppercase tracking-widest text-[11px] flex items-center justify-center gap-3">
                             {loading ? <span className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <>Avançar <ChevronRight className="h-4 w-4" /></>}
                           </Button>
-
                           <div className="flex flex-col items-center gap-2">
                             <button 
                               type="button"
@@ -642,7 +603,6 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
                             >
                               Voltar
                             </button>
-
                             <button 
                               type="button"
                               onClick={() => {
