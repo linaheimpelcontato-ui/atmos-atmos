@@ -121,6 +121,7 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
     if (user && profile && step === "welcome") {
       if (profile.full_name && !fullName) setFullName(profile.full_name);
       if (profile.phone && !phone) setPhone(profile.phone);
+      if (!method) setMethod("google");
       setStep("name");
     }
   }, [user, profile, step]);
@@ -275,15 +276,16 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-none w-screen h-[calc(100vh-80px)] top-[80px] p-0 border-none shadow-none !rounded-none bg-white z-[50] translate-y-0 [&>button]:hidden overflow-y-auto">
-        <button 
+        <div 
+          role="button"
           onClick={() => {
             if (user) signOut();
             onClose();
           }}
-          className="absolute top-8 right-10 w-14 h-14 bg-white/90 backdrop-blur-md rounded-full shadow-2xl flex items-center justify-center group hover:bg-white transition-all z-[100] border border-black/5"
+          className="fixed top-28 right-10 w-14 h-14 bg-white/90 backdrop-blur-md rounded-full shadow-2xl flex items-center justify-center group hover:bg-white transition-all z-[100] border border-black/5 cursor-pointer"
         >
           <X className="h-6 w-6 text-black group-hover:scale-110 transition-transform" />
-        </button>
+        </div>
         <div className="flex flex-col lg:flex-row h-full w-full">
           
           <div className="w-full lg:w-1/2 flex flex-col relative min-h-full">
