@@ -135,48 +135,21 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
   const progress = ((currentStepIndex + 1) / stepsList.length) * 100;
 
   useEffect(() => {
-    if (user && step !== "success") {
-      // Se temos o usuário mas o perfil ainda não carregou, esperamos
-      if (!profile) return;
-
-      const needsOnboarding = !profile.full_name || !profile.phone;
+    if (user && profile && step === "welcome") {
+      // Preenche dados já existentes para não precisar digitar de novo
+      if (profile.full_name && !fullName) setFullName(profile.full_name);
+      if (profile.phone && !phone) setPhone(profile.phone);
       
-      if (needsOnboarding) {
-        if (!profile.full_name) setStep("name");
-        else if (!profile.phone) setStep("phone");
-        // ... outros campos se necessário
-      } else if (step !== "welcome") {
-        // Se já completou tudo, podemos fechar
-        onSuccess();
-        onClose();
-      }
+      // Define o passo inicial baseado no que falta
+      if (!profile.full_name) setStep("name");
+      else if (!profile.phone) setStep("phone");
+      else if (!profile.birth_date) setStep("birthdate");
+      else if (!profile.city) setStep("location");
     }
   }, [user, profile, step]);
 
   const handleNext = async () => {
     setError(null);
-    if (step === "name" && !fullName.trim()) { setError("Seu nome é essencial."); return; }
-    if (step === "phone") {
-      if (phone.startsWith("+55")) {
-        const ddd = phone.substring(3, 5);
-        if (!dddToState[ddd]) { setError("DDD brasileiro inválido."); return; }
-        const number = phone.substring(5);
-        if (number.length < 8 || number.length > 9) { setError("Número de celular inválido."); return; }
-      } else if (phone.length < 10) { 
-        setError("O celular é nossa conexão."); return; 
-      }
-    }
-    if (step === "birthdate") {
-      if (!birthDay || !birthMonth || !birthYear) { setError("Data de nascimento completa é necessária."); return; }
-      const bDay = parseInt(birthDay);
-      const bMonth = parseInt(birthMonth);
-      const bYear = parseInt(birthYear);
-      const date = new Date(bYear, bMonth - 1, bDay);
-      if (date.getFullYear() !== bYear || date.getMonth() !== bMonth - 1 || date.getDate() !== bDay) {
-        setError("Data de nascimento inválida."); return;
-      }
-    }
-    if (step === "location" && (!city.trim() || (country === "BR" && !state))) { setError("Conte-nos de onde você vê a Atmos."); return; }
 
     if (step === "welcome") { 
       setMethod("email"); 
@@ -198,23 +171,20 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
           }
           setLoading(false);
         }
-      }
-      else {
+      } else {
         if (!email || !password) { setError("Defina e-mail e senha."); return; }
         if (password.length < 6) { setError("A senha deve ter no mínimo 6 caracteres."); return; }
         if (password !== confirmPassword) { setError("As senhas não coincidem."); return; }
-        
-        // AVANÇO INSTANTÂNEO - Sem chamada ao servidor aqui para ser rápido
         setStep("name"); 
       }
     }
     else if (step === "name") {
-      if (!fullName) { setError("Conte-nos seu nome."); return; }
+      if (!fullName || fullName.trim().length < 3) { setError("Conte-nos seu nome completo."); return; }
       setStep("phone");
     }
     else if (step === "phone") {
-      if (!phone) { setError("Precisamos do seu telefone."); return; }
-      setStep("birthdate");
+      if (!phone || phone.length < 10) { setError("Precisamos do seu telefone para contato."); return; }
+      
       const sortedDdis = Object.keys(ddiToCountry).sort((a, b) => b.length - a.length);
       for (const ddi of sortedDdis) {
         if (phone.startsWith(ddi)) {
@@ -226,12 +196,27 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
           break;
         }
       }
+      setStep("birthdate");
     }
     else if (step === "birthdate") {
       if (!birthDay || !birthMonth || !birthYear) { setError("Sua data de nascimento é importante."); return; }
+      
+      const bDay = parseInt(birthDay);
+      const bMonth = parseInt(birthMonth);
+      const bYear = parseInt(birthYear);
+      const date = new Date(bYear, bMonth - 1, bDay);
+      if (date.getFullYear() !== bYear || date.getMonth() !== bMonth - 1 || date.getDate() !== bDay) {
+        setError("Data de nascimento inválida."); 
+        return;
+      }
+      
       setStep("location");
     }
     else if (step === "location") {
+      if (!city.trim() || (country === "BR" && !state)) { 
+        setError("Conte-nos de onde você vê a Atmos."); 
+        return; 
+      }
       setLoading(true);
       await finishOnboarding();
       setLoading(false);
