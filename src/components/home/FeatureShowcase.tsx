@@ -13,7 +13,8 @@ import {
   ArrowRight,
   ChevronLeft,
   Users,
-  Search
+  Search,
+  Camera
 } from 'lucide-react';
 import { storageUrl, optimizedUrl, IMAGE_PRESETS } from '@/lib/storage';
 
@@ -618,28 +619,85 @@ export default function FeatureShowcase() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="absolute inset-0 pt-14 bg-cover bg-center"
-                        style={{ backgroundImage: `url(${getOptimizedImage("produtos/cachoeiras/bocaina-do-farias/bocaina-do-farias-1.jpg", IMAGE_PRESETS.large)})` }}
+                        className="absolute inset-0 pt-14 bg-[#1A1612] flex items-center justify-center overflow-hidden"
                       >
-                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-                        <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
-                          <motion.div 
-                            animate={{ scale: [1, 1.1, 1] }}
-                            transition={{ duration: 2, repeat: Infinity }}
-                            className="relative mb-6"
+                        <div className="absolute inset-0 bg-gradient-to-b from-[#A88B4C]/10 to-transparent" />
+                        
+                        {/* Floating decorative icons */}
+                        {[MapPin, Heart, Camera, Sparkles].map((Icon, i) => (
+                          <motion.div
+                            key={i}
+                            initial={{ opacity: 0, scale: 0 }}
+                            animate={{ 
+                              opacity: [0, 0.4, 0],
+                              scale: [0.5, 1.2, 0.5],
+                              x: [Math.random() * 200 - 100, Math.random() * 200 - 100],
+                              y: [Math.random() * 200 - 100, Math.random() * 200 - 100]
+                            }}
+                            transition={{ 
+                              duration: 4, 
+                              repeat: Infinity, 
+                              delay: i * 0.8,
+                              ease: "easeInOut"
+                            }}
+                            className="absolute"
                           >
-                            <div className="w-20 h-20 rounded-full border-2 border-white/20 p-1">
-                              <img loading="lazy" src={getOptimizedImage("home/about-bg.jpg", IMAGE_PRESETS.thumbnail)} alt="Equipe Atmos — Especialista em Chapada" className="w-full h-full rounded-full object-cover grayscale" />
+                            <Icon className="w-8 h-8 text-[#A88B4C]/30" />
+                          </motion.div>
+                        ))}
+
+                        <div className="relative z-10 flex flex-col items-center p-8 text-center">
+                          <motion.div 
+                            animate={{ 
+                              scale: [1, 1.05, 1],
+                              rotate: [0, 5, -5, 0]
+                            }}
+                            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                            className="relative mb-10"
+                          >
+                            <div className="w-24 h-24 rounded-full border-2 border-[#A88B4C]/30 p-1.5 bg-[#1A1612] shadow-[0_0_50px_rgba(168,139,76,0.1)]">
+                              <div className="w-full h-full rounded-full overflow-hidden border border-[#A88B4C]/20">
+                                <img 
+                                  loading="lazy" 
+                                  src={getOptimizedImage("home/about-bg.jpg", IMAGE_PRESETS.thumbnail)} 
+                                  alt="Expert Atmos" 
+                                  className="w-full h-full object-cover grayscale brightness-110" 
+                                />
+                              </div>
                             </div>
-                            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-[#2C3E2D] rounded-full flex items-center justify-center border-2 border-white">
-                              <Sparkles className="w-3 h-3 text-white" />
-                            </div>
+                            <motion.div 
+                              animate={{ scale: [1, 1.2, 1] }}
+                              transition={{ duration: 2, repeat: Infinity }}
+                              className="absolute -bottom-1 -right-1 w-8 h-8 bg-[#A88B4C] rounded-full flex items-center justify-center border-2 border-[#1A1612] shadow-lg"
+                            >
+                              <Sparkles className="w-4 h-4 text-[#1A1612]" />
+                            </motion.div>
                           </motion.div>
                           
-                          <div className="space-y-2">
-                             <span className="text-[8px] font-bold text-white/60 tracking-[0.3em] uppercase">Curadoria Atmos</span>
-                             <h4 className="text-xl font-display text-white uppercase tracking-widest leading-tight">Desenhando sua Jornada</h4>
-                             <p className="text-[9px] text-white/50 max-w-[180px] mx-auto leading-relaxed italic">"Nossa equipe está cuidando de cada detalhe da sua logística..."</p>
+                          <div className="space-y-4">
+                             <motion.span 
+                               initial={{ opacity: 0, y: 10 }}
+                               animate={{ opacity: 1, y: 0 }}
+                               className="text-[10px] font-bold text-[#A88B4C] tracking-[0.5em] uppercase block"
+                             >
+                               Curadoria em Tempo Real
+                             </motion.span>
+                             <motion.h4 
+                               initial={{ opacity: 0, y: 10 }}
+                               animate={{ opacity: 1, y: 0 }}
+                               transition={{ delay: 0.1 }}
+                               className="text-2xl md:text-3xl font-display text-[#E4DBCC] uppercase tracking-[0.1em] leading-tight"
+                             >
+                               Desenhando<br/>sua Jornada
+                             </motion.h4>
+                             <motion.p 
+                               initial={{ opacity: 0 }}
+                               animate={{ opacity: 1 }}
+                               transition={{ delay: 0.3 }}
+                               className="text-[11px] text-[#E4DBCC]/50 max-w-[200px] mx-auto leading-relaxed font-light italic"
+                             >
+                               "Nossa equipe está cuidando de cada detalhe da sua logística e vivência..."
+                             </motion.p>
                           </div>
                         </div>
                       </motion.div>
@@ -656,67 +714,12 @@ export default function FeatureShowcase() {
                               initial={{ opacity: 0 }}
                               animate={{ opacity: 1 }}
                               exit={{ opacity: 0 }}
-                              className="absolute inset-0 pt-14 bg-[#FAF9F6] flex overflow-hidden"
+                              className="absolute inset-0 pt-14 bg-[#FAF9F6] flex flex-col overflow-hidden"
                             >
-                              {/* Sidebar: Consultoria */}
-                              <div className="w-[130px] bg-[#1B291C] h-full flex flex-col shrink-0 border-r border-white/5 relative overflow-hidden">
-                                 <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-white/5 to-transparent" />
-                                 
-                                 <div className="flex-1 p-5 pt-12 relative z-10">
-                                   <div className="mb-10">
-                                     <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 p-1 mb-4 shadow-2xl">
-                                       <img loading="lazy" src={getOptimizedImage("produtos/cachoeiras/bocaina-do-farias/bocaina-do-farias-1.jpg", IMAGE_PRESETS.thumbnail)} alt="Expedição 4x4 — Bocaina do Farias" className="w-full h-full object-cover rounded-xl grayscale opacity-60" />
-                                     </div>
-                                     <span className="text-[7px] text-white/40 tracking-[0.4em] uppercase block leading-tight mb-1">Itinerário Atmos</span>
-                                   </div>
-
-                                   <div className="space-y-8">
-                                     <div className="flex items-center gap-3">
-                                       <div className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
-                                         <Users className="w-3.5 h-3.5 text-[#A88B4C]" />
-                                       </div>
-                                       <div>
-                                         <p className="text-[7px] text-white font-bold uppercase tracking-wider">Lina & Família</p>
-                                         <p className="text-[5px] text-white/30 uppercase tracking-widest">Viajantes</p>
-                                       </div>
-                                     </div>
-
-                                     <div className="flex items-center gap-3">
-                                       <div className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
-                                         <Calendar className="w-3.5 h-3.5 text-[#A88B4C]" />
-                                       </div>
-                                       <div>
-                                         <p className="text-[7px] text-white font-bold uppercase tracking-wider">7 Dias</p>
-                                         <p className="text-[5px] text-white/30 uppercase tracking-widest">Duração Total</p>
-                                       </div>
-                                     </div>
-
-                                     <div className="flex items-center gap-3 pt-4 border-t border-white/5">
-                                       <div className="w-8 h-8 rounded-full bg-[#A88B4C]/20 border border-[#A88B4C]/30 flex items-center justify-center shrink-0">
-                                         <User className="w-3.5 h-3.5 text-[#A88B4C]" />
-                                       </div>
-                                       <div>
-                                         <p className="text-[7px] text-white font-bold uppercase tracking-wider">Especialista Atmos</p>
-                                         <p className="text-[5px] text-white/30 uppercase tracking-widest">Consultoria Humana</p>
-                                       </div>
-                                     </div>
-                                   </div>
-                                 </div>
-
-                                 <div className="p-5 pb-10 relative z-10">
-                                    <div className="bg-[#FAF9F6]/5 backdrop-blur-md p-4 rounded-2xl border border-white/10 mb-6">
-                                      <p className="text-[6px] text-white/70 leading-relaxed font-medium italic">
-                                        "Desenhamos este roteiro com o cuidado de quem conhece cada segredo da Chapada."
-                                      </p>
-                                    </div>
-                                    <img loading="lazy" src={logoAtmos} alt="ATMOS Interface" className="h-4 opacity-30 grayscale brightness-200 ml-1" />
-                                 </div>
-                              </div>
-
                               {/* Main Itinerary Content */}
-                              <div className="flex-1 flex flex-col relative overflow-hidden bg-[#FAF9F6]">
-                                {/* Header */}
-                                <div className="relative h-44 shrink-0 overflow-hidden">
+                              <div className="flex-1 flex flex-col relative overflow-hidden">
+                                {/* Header Image Section */}
+                                <div className="relative h-48 shrink-0 overflow-hidden">
                                   <motion.img 
                                     initial={{ scale: 1.1 }}
                                     animate={{ scale: 1 }}
@@ -724,47 +727,67 @@ export default function FeatureShowcase() {
                                     src={getOptimizedImage("destaques-categorias/Cachoeira-Destaque-1.jpg", IMAGE_PRESETS.card)} 
                                     className="w-full h-full object-cover" 
                                   />
-                                  <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-[#FAF9F6]" />
-                                  <div className="absolute inset-0 p-8 flex flex-col justify-end">
-                                     <span className="text-[8px] font-bold text-white/70 tracking-[0.4em] uppercase mb-1">Seu Roteiro Exclusivo</span>
-                                     <h4 className="text-3xl font-display text-white uppercase tracking-[0.1em] leading-none">Chapada dos<br/>Veadeiros</h4>
+                                  <div className="absolute inset-0 bg-gradient-to-t from-[#FAF9F6] via-black/20 to-black/40" />
+                                  <div className="absolute inset-0 p-6 flex flex-col justify-end">
+                                     <span className="text-[9px] font-bold text-white/80 tracking-[0.4em] uppercase mb-1">Seu Roteiro Exclusivo</span>
+                                     <h4 className="text-3xl font-display text-white uppercase tracking-[0.05em] leading-none">Chapada dos<br/>Veadeiros</h4>
+                                  </div>
+                                </div>
+
+                                {/* Quick Info Bar */}
+                                <div className="bg-white border-b border-black/5 px-6 py-4 flex items-center justify-between shrink-0">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-[#2C3E2D]/5 flex items-center justify-center">
+                                      <Users className="w-3.5 h-3.5 text-[#2C3E2D]" />
+                                    </div>
+                                    <div>
+                                      <p className="text-[8px] font-bold text-[#2C3E2D] uppercase tracking-wider">Lina & Família</p>
+                                      <p className="text-[6px] text-black/30 uppercase tracking-widest">Viajantes</p>
+                                    </div>
+                                  </div>
+                                  <div className="h-8 w-[1px] bg-black/5" />
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-[#2C3E2D]/5 flex items-center justify-center">
+                                      <Calendar className="w-3.5 h-3.5 text-[#2C3E2D]" />
+                                    </div>
+                                    <div>
+                                      <p className="text-[8px] font-bold text-[#2C3E2D] uppercase tracking-wider">7 Dias</p>
+                                      <p className="text-[6px] text-black/30 uppercase tracking-widest">Duração</p>
+                                    </div>
                                   </div>
                                 </div>
 
                                 {/* Days List */}
-                                <div className="flex-1 overflow-y-auto px-4 py-6 no-scrollbar relative">
-                                  <div className="absolute left-8 top-8 bottom-8 w-[1px] bg-black/5" />
+                                <div className="flex-1 overflow-y-auto px-5 py-6 no-scrollbar relative bg-[#FAF9F6]">
+                                  <div className="absolute left-9 top-8 bottom-8 w-[1px] bg-black/5" />
                                   
-                                  <div className="space-y-4 relative">
+                                  <div className="space-y-5 relative">
                                     {[
-                                      { day: "DIA 01", title: "Bocaina do Farias", desc: "A mística das águas cristalinas em meio ao cânion.", img: "produtos/cachoeiras/bocaina-do-farias/bocaina-do-farias-1.jpg" },
-                                      { day: "DIA 02", title: "Cachoeira dos Couros", desc: "A grandiosidade das quedas e a energia do Rio Preto.", img: "produtos/cachoeiras/couros/couros-1.jpg" },
-                                      { day: "DIA 03", title: "Voo de Balão", desc: "O amanhecer sobre o Cerrado em uma vista 360º.", img: "produtos/experiencias/voo-de-balao/voo-de-balao-1.jpg" },
-                                      { day: "DIA 04", title: "Passeio a Cavalo", desc: "Conexão e tranquilidade pelas trilhas da Fazenda.", img: "produtos/experiencias/passeio-a-cavalo/passeio-a-cavalo-6.png" }
+                                      { day: "DIA 01", title: "Bocaina do Farias", desc: "A mística das águas cristalinas.", img: "produtos/cachoeiras/bocaina-do-farias/bocaina-do-farias-1.jpg" },
+                                      { day: "DIA 02", title: "Cachoeira dos Couros", desc: "A grandiosidade das quedas d'água.", img: "produtos/cachoeiras/couros/couros-1.jpg" },
+                                      { day: "DIA 03", title: "Voo de Balão", desc: "O amanhecer sobre o Cerrado.", img: "produtos/experiencias/voo-de-balao/voo-de-balao-1.jpg" },
+                                      { day: "DIA 04", title: "Passeio a Cavalo", desc: "Tranquilidade pelas trilhas.", img: "produtos/experiencias/passeio-a-cavalo/passeio-a-cavalo-6.png" }
                                     ].map((item, i) => (
                                       <motion.div 
                                         key={i}
-                                        initial={{ opacity: 0, y: 15 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: i * 0.3 }}
-                                        className="flex gap-4 relative"
+                                        initial={{ opacity: 0, x: -10 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: i * 0.2 }}
+                                        className="flex gap-5 relative"
                                       >
                                         {/* Timeline Dot */}
                                         <div className="w-8 shrink-0 flex flex-col items-center pt-2 relative z-10">
-                                          <div className="w-2.5 h-2.5 rounded-full bg-[#A88B4C] border-4 border-[#FAF9F6] shadow-sm" />
+                                          <div className="w-3 h-3 rounded-full bg-[#A88B4C] border-4 border-[#FAF9F6] shadow-sm" />
                                         </div>
 
-                                        <div className="flex-1 bg-white rounded-3xl p-4 shadow-[0_4px_20px_-5px_rgba(0,0,0,0.05)] border border-black/5 flex gap-4 items-center group hover:border-[#A88B4C]/20 transition-colors">
-                                          <div className="w-16 h-16 rounded-2xl overflow-hidden shrink-0 shadow-inner">
-                                            <img loading="lazy" src={getOptimizedImage(item.img, IMAGE_PRESETS.thumbnail)} alt={`ATMOS — ${item.title}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                                        <div className="flex-1 bg-white rounded-[1.5rem] p-3 shadow-sm border border-black/5 flex gap-3 items-center group transition-all hover:shadow-md hover:border-[#A88B4C]/20">
+                                          <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0">
+                                            <img loading="lazy" src={getOptimizedImage(item.img, IMAGE_PRESETS.thumbnail)} alt={item.title} className="w-full h-full object-cover" />
                                           </div>
-                                          <div className="flex-1">
-                                            <div className="flex items-center justify-between mb-1">
-                                              <span className="text-[7px] font-bold text-[#A88B4C] tracking-[0.2em] uppercase">{item.day}</span>
-                                              <div className="h-[1px] flex-1 bg-black/5 mx-3" />
-                                            </div>
-                                            <h6 className="text-[11px] font-bold text-[#2C3E2D] uppercase tracking-wider">{item.title}</h6>
-                                            <p className="text-[8px] text-black/50 mt-1 leading-tight line-clamp-1">{item.desc}</p>
+                                          <div className="flex-1 min-w-0">
+                                            <span className="text-[7px] font-bold text-[#A88B4C] tracking-[0.2em] uppercase block mb-0.5">{item.day}</span>
+                                            <h6 className="text-[10px] font-bold text-[#2C3E2D] uppercase tracking-wide truncate">{item.title}</h6>
+                                            <p className="text-[7px] text-black/40 leading-tight mt-0.5 line-clamp-1">{item.desc}</p>
                                           </div>
                                         </div>
                                       </motion.div>
@@ -773,15 +796,12 @@ export default function FeatureShowcase() {
                                     <motion.div 
                                       initial={{ opacity: 0 }}
                                       animate={{ opacity: 1 }}
-                                      transition={{ delay: 2 }}
-                                      className="pt-6 px-4"
+                                      transition={{ delay: 1.5 }}
+                                      className="pt-4"
                                     >
-                                      <button className="w-full py-4 bg-[#2C3E2D] text-white rounded-2xl text-[9px] font-bold uppercase tracking-[0.2em] shadow-xl hover:bg-[#1B291C] transition-all transform hover:-translate-y-1">
+                                      <button className="w-full py-4 bg-[#2C3E2D] text-white rounded-2xl text-[10px] font-bold uppercase tracking-[0.2em] shadow-lg">
                                         Baixar PDF Completo
                                       </button>
-                                      <p className="text-[6px] text-black/30 mt-4 uppercase tracking-widest text-center">
-                                        Itinerário desenhado com carinho pela Equipe Atmos
-                                      </p>
                                     </motion.div>
                                   </div>
                                 </div>
@@ -793,7 +813,7 @@ export default function FeatureShowcase() {
                               initial={{ opacity: 0, scale: 0.95 }}
                               animate={{ opacity: 1, scale: 1 }}
                               exit={{ opacity: 0, scale: 1.05 }}
-                              className="absolute inset-0 pt-14 bg-[#1B291C] flex items-center justify-center p-8 text-center"
+                              className="absolute inset-0 pt-14 bg-[#1A1612] flex items-center justify-center p-8 text-center"
                             >
                               <div className="space-y-10 relative z-10">
                                 <motion.div 
@@ -812,7 +832,7 @@ export default function FeatureShowcase() {
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.4 }}
-                                    className="text-2xl font-display text-white uppercase tracking-widest leading-tight"
+                                    className="text-2xl font-display text-[#E4DBCC] uppercase tracking-widest leading-tight"
                                   >
                                     Seu Sonho está<br/>Pronto para ser Vivido.
                                   </motion.h4>
@@ -820,7 +840,7 @@ export default function FeatureShowcase() {
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.6 }}
-                                    className="text-[10px] text-white/50 max-w-[200px] mx-auto leading-relaxed"
+                                    className="text-[11px] text-[#E4DBCC]/50 max-w-[200px] mx-auto leading-relaxed"
                                   >
                                     Transformamos suas escolhas em uma jornada real e inesquecível.
                                   </motion.p>
@@ -832,10 +852,10 @@ export default function FeatureShowcase() {
                                   transition={{ delay: 0.8 }}
                                   className="pt-4"
                                 >
-                                  <button className="px-10 py-4 bg-[#A88B4C] text-[#1B291C] rounded-2xl text-[10px] font-bold uppercase tracking-[0.2em] shadow-2xl hover:bg-white hover:text-[#1B291C] transition-all transform hover:-translate-y-1">
+                                  <button className="px-10 py-4 bg-[#A88B4C] text-[#1A1612] rounded-2xl text-[10px] font-bold uppercase tracking-[0.2em] shadow-2xl transition-all">
                                     Explorar Atmos
                                   </button>
-                                  <p className="text-[6px] text-white/20 mt-6 uppercase tracking-[0.3em]">
+                                  <p className="text-[6px] text-[#E4DBCC]/20 mt-6 uppercase tracking-[0.3em]">
                                     atmos.com.br / exclusive
                                   </p>
                                 </motion.div>

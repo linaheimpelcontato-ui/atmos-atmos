@@ -1,8 +1,10 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Users, Settings, Globe } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { storageUrl } from "@/lib/storage";
 
 export default function FacilitadorSection() {
+  const navigate = useNavigate();
   return (
     <section id="b2b-facilitadores" className="py-20 bg-[#1A1612] overflow-hidden relative border-none">
       <div className="max-w-7xl mx-auto px-6 relative z-10">
@@ -143,6 +145,25 @@ export default function FacilitadorSection() {
             ))}
           </div>
         </div>
+
+        {/* CTA Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mt-24 text-center border-t border-white/5 pt-16"
+        >
+          <p className="text-[#E4DBCC]/60 text-lg md:text-xl font-sans font-light mb-8">
+            Pronto para elevar o nível das suas experiências na Chapada?
+          </p>
+          <button
+            onClick={() => navigate("/grupos-e-imersoes")}
+            className="bg-[#A88B4C] hover:bg-[#C5A96A] text-[#1A1612] px-8 py-4 rounded-full font-sans font-bold transition-all transform hover:scale-105 active:scale-95 flex items-center gap-3 mx-auto"
+          >
+            Acessar área de parceiros
+            <ArrowRight className="w-5 h-5" />
+          </button>
+        </motion.div>
 
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full opacity-[0.03] pointer-events-none flex items-center justify-center">
           <img 

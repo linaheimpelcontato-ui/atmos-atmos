@@ -33,6 +33,7 @@ const navLinks = [
   { key: "nav.home", path: "/" },
   { key: "nav.buildItinerary", path: "/monte-seu-roteiro" },
   { key: "nav.itineraries", path: "/roteiros" },
+  { key: "nav.immersions", path: "/grupos-e-imersoes" },
   { key: "nav.faq", path: "/duvidas" },
 ];
 
@@ -69,6 +70,13 @@ export default function Header() {
       setMyProposalSlug(proposal ? (proposal.slug || proposal.share_token) : null);
     })();
   }, [user]);
+  
+  // Auto-open login if redirected from a protected route
+  useEffect(() => {
+    if (!user && location.state?.from) {
+      setAuthModalOpen(true);
+    }
+  }, [user, location.state]);
 
   const userInitial = user?.user_metadata?.full_name
     ? user.user_metadata.full_name.charAt(0).toUpperCase()
@@ -238,11 +246,11 @@ export default function Header() {
               </Link>
             ))}
             <Link
-              to="/immersoes"
+              to="/grupos-e-imersoes"
               className="block py-3 text-xs uppercase font-bold text-accent/70"
               onClick={() => setMobileOpen(false)}
             >
-              {language === 'pt' ? 'Para Facilitadores →' : 'For Facilitators →'}
+              {language === 'pt' ? 'Para Parceiros →' : language === 'en' ? 'For Partners →' : 'Para Socios →'}
             </Link>
           </div>
         </nav>
@@ -254,7 +262,8 @@ export default function Header() {
         onClose={() => setAuthModalOpen(false)}
         onSuccess={() => {
           setAuthModalOpen(false);
-          navigate("/monte-seu-roteiro");
+          const from = location.state?.from?.pathname || "/monte-seu-roteiro";
+          navigate(from);
         }}
       />
     </header>

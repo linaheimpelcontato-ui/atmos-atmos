@@ -23,8 +23,8 @@ const Waterfalls = lazy(() => import("./pages/Waterfalls"));
 const Experiences = lazy(() => import("./pages/Experiences"));
 const Accommodations = lazy(() => import("./pages/Accommodations"));
 const Services = lazy(() => import("./pages/Services"));
-const Immersions = lazy(() => import("./pages/Immersions"));
 const FAQ = lazy(() => import("./pages/FAQ"));
+const GruposImersoes = lazy(() => import("./pages/GruposImersoes"));
 const Wishlist = lazy(() => import("./pages/Wishlist"));
 const Profile = lazy(() => import("./pages/Profile"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
@@ -128,7 +128,7 @@ const App = () => (
                   <Route path="/experiencias" element={<Navigate to="/monte-seu-roteiro/experiencias" replace />} />
                   <Route path="/hospedagens" element={<Navigate to="/monte-seu-roteiro/hospedagens" replace />} />
                   <Route path="/servicos" element={<Navigate to="/monte-seu-roteiro/servicos" replace />} />
-                  <Route path="/imersoes" element={<Immersions />} />
+                  <Route path="/grupos-e-imersoes" element={<ProtectedRoute><GruposImersoes /></ProtectedRoute>} />
                   
                   {/* Private User Pages */}
                   <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
