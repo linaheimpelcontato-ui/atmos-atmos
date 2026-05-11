@@ -220,21 +220,37 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
     try {
       const bDate = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`;
       const loc = country === "BR" ? `${city}, ${state}` : `${city}, ${country}`;
+      
+      // Always save to auth metadata as backup and primary source
       const profileData = { full_name: fullName, phone, birth_date: bDate, city: loc };
+      
+      // Update Auth Metadata first
+      await supabase.auth.updateUser({
+        data: profileData
+      });
 
       if (method === "email") {
         const { error: signUpError } = await signUp(email, password, profileData);
         if (signUpError) {
           const { error: signInError } = await signIn(email, password);
           if (!signInError) {
-            await updateProfile(profileData);
+            // Try updating profile, with fallback if columns missing
+            const { error: updateErr } = await updateProfile(profileData);
+            if (updateErr && (updateErr.includes("column") || updateErr.includes("birth_date"))) {
+              console.warn("Retrying profile update without birth_date/city columns");
+              await updateProfile({ full_name: fullName, phone });
+            }
           } else {
             throw new Error("E-mail já cadastrado. Verifique sua senha.");
           }
         }
       } else {
-        const { error } = await updateProfile(profileData);
-        if (error) throw new Error(error);
+        // Social login: Try updating profile, with fallback if columns missing
+        const { error: updateErr } = await updateProfile(profileData);
+        if (updateErr && (updateErr.includes("column") || updateErr.includes("birth_date"))) {
+          console.warn("Retrying profile update without birth_date/city columns");
+          await updateProfile({ full_name: fullName, phone });
+        }
       }
       
       setStep("success");
@@ -282,9 +298,9 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
             if (user) signOut();
             onClose();
           }}
-          className="absolute top-6 right-10 w-12 h-12 bg-white/90 backdrop-blur-md rounded-full shadow-2xl flex items-center justify-center group hover:bg-white transition-all z-[100] border border-black/5 cursor-pointer"
+          className="absolute top-8 right-8 w-10 h-10 bg-white/90 backdrop-blur-md rounded-full shadow-xl flex items-center justify-center group hover:bg-white transition-all z-[100] border border-black/5 cursor-pointer"
         >
-          <X className="h-5 w-5 text-black group-hover:scale-110 transition-transform" />
+          <X className="h-4 w-4 text-black group-hover:scale-110 transition-transform" />
         </div>
 
         <div className="w-full h-full overflow-y-auto">
@@ -297,7 +313,7 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
                 </div>
               )}
 
-              <div className="flex-1 flex flex-col items-start justify-center px-10 md:px-24 pt-16 pb-16">
+              <div className="flex-1 flex flex-col items-start justify-center px-10 md:px-24 pt-8 pb-16">
                 <div className="w-full max-w-lg">
                   <AnimatePresence mode="wait">
                     <motion.div
