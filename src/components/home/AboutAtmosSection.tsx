@@ -14,7 +14,7 @@ export default function AboutAtmosSection() {
     offset: ["start end", "end start"]
   });
 
-  const fullText = "Não somos apenas uma agência\nde viagem, somos referência em\nexperiências guiadas na\nChapada dos Veadeiros. Criamos\natmosferas exclusivas que conectam\npessoas a experiências memoráveis.";
+  const fullText = "Conheça a Chapada dos Veadeiros\ndo jeito certo. A ATMOS cuida de tudo:\nroteiros sob medida, guias\nexperientes, hospedagens únicas,\nserviços pensados em cada detalhe\ne experiências que ficam para sempre.";
 
   const count = motionValue(0);
   const rounded = useTransform(count, (latest) => Math.round(latest));
