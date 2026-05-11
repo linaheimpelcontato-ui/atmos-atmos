@@ -107,19 +107,19 @@ export default function FacilitadorSection() {
             {[
               { 
                 step: "01", 
-                text: "Você como facilitador é responsável pela venda das vagas para o seu público." 
+                text: "Você traz o grupo e define a proposta. A ATMOS assume todo o planejamento operacional." 
               },
               { 
                 step: "02", 
-                text: "Nós fornecemos toda a infraestrutura: roteiro, equipe local, transporte, hospedagens, refeições, ingressos e registros." 
+                text: "Montamos o roteiro completo: guias, transporte, hospedagem, refeições, ingressos e registros profissionais." 
               },
               { 
                 step: "03", 
-                text: "Roteiro estruturado e testado, com flexibilidade para inserção de outras preferências do grupo." 
+                text: "Adaptamos cada detalhe ao perfil do seu grupo — do nível de dificuldade às necessidades específicas de cada participante." 
               },
               { 
                 step: "04", 
-                text: "O valor do pacote é fixado por pessoa, e você pode aplicar sua margem sobre esse valor na venda final ao seu grupo." 
+                text: "Você entrega uma experiência impecável. Seu grupo vive algo inesquecível na Chapada dos Veadeiros." 
               }
             ].map((item, idx) => (
               <motion.div
