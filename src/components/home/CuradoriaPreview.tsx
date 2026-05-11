@@ -1,5 +1,11 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import AuthModal from "@/components/auth/AuthModal";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { X, Lock, Sparkles, LogIn } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { optimizedUrl, IMAGE_PRESETS } from "@/lib/storage";
 
 const CATEGORIES = [
@@ -60,7 +66,7 @@ const CATEGORIES = [
   }
 ];
 
-const CategoryCard = ({ item, isLast }: { item: typeof CATEGORIES[0], isLast: boolean }) => {
+const CategoryCard = ({ item, isLast, onClick }: { item: typeof CATEGORIES[0], isLast: boolean, onClick: () => void }) => {
   const [imgIndex, setImgIndex] = useState(0);
 
   useEffect(() => {
@@ -73,7 +79,10 @@ const CategoryCard = ({ item, isLast }: { item: typeof CATEGORIES[0], isLast: bo
   }, [item.images.length]);
 
   return (
-    <div className={`relative aspect-[4/5] md:aspect-[3/4] lg:aspect-[9/16] overflow-hidden bg-[#2C3E2D] ${!isLast ? 'border-r border-white/10' : ''}`}>
+    <div 
+      onClick={onClick}
+      className={`relative aspect-[4/5] md:aspect-[3/4] lg:aspect-[9/16] overflow-hidden bg-[#2C3E2D] cursor-pointer group ${!isLast ? 'border-r border-white/10' : ''}`}
+    >
       {/* Image Slideshow using optimizedUrl helper */}
       <div className="absolute inset-0">
         <AnimatePresence mode="popLayout">
@@ -125,6 +134,26 @@ const CategoryCard = ({ item, isLast }: { item: typeof CATEGORIES[0], isLast: bo
 };
 
 export default function CuradoriaPreview() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [isPromptOpen, setIsPromptOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "signup">("signup");
+
+  const handleCardClick = (categoryId: string) => {
+    if (user) {
+      navigate(`/catalogo/${categoryId}`);
+    } else {
+      setIsPromptOpen(true);
+    }
+  };
+
+  const handleStartLogin = (mode: "login" | "signup") => {
+    setAuthMode(mode);
+    setIsPromptOpen(false);
+    setIsAuthModalOpen(true);
+  };
+
   return (
     <section className="bg-[#FAF9F6] pt-32">
       {/* Narrative Header */}
@@ -164,10 +193,71 @@ export default function CuradoriaPreview() {
             key={index} 
             item={item} 
             isLast={index === CATEGORIES.length - 1} 
+            onClick={() => handleCardClick(item.id)}
           />
         ))}
       </div>
 
+
+      {/* Login Prompt Dialog - Premium Design */}
+      <Dialog open={isPromptOpen} onOpenChange={setIsPromptOpen}>
+        <DialogContent className="max-w-md p-0 overflow-hidden border-none bg-white rounded-3xl shadow-2xl">
+          <div className="relative">
+            {/* Background Accent */}
+            <div className="absolute top-0 left-0 w-full h-32 bg-[#2C3E2D]" />
+            
+            <div className="relative pt-12 px-8 pb-10 text-center">
+              {/* Icon Circle */}
+              <div className="mx-auto w-16 h-16 bg-[#FAF9F6] rounded-full flex items-center justify-center shadow-lg mb-6 border-4 border-white">
+                <Lock className="w-6 h-6 text-[#2C3E2D]" />
+              </div>
+
+              <h3 className="text-2xl font-display text-[#1A1A1A] mb-4">
+                Acesso à Curadoria <span className="italic font-light">Atmos</span>
+              </h3>
+              
+              <p className="text-[#4A4A4A] font-sans font-light leading-relaxed mb-8">
+                Para explorar nosso catálogo de cachoeiras, hospedagens e experiências exclusivas, é necessário possuir uma conta Atmos.
+              </p>
+
+              <div className="bg-[#F3F4F1] p-4 rounded-2xl mb-8 flex items-center gap-3">
+                <Sparkles className="w-5 h-5 text-[#566952]" />
+                <span className="text-[12px] font-bold text-[#566952] uppercase tracking-wider">Cadastro totalmente gratuito</span>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <Button 
+                  onClick={() => handleStartLogin("signup")}
+                  className="w-full h-14 bg-[#2C3E2D] hover:bg-[#1A261B] text-white rounded-xl font-bold uppercase tracking-widest text-[11px]"
+                >
+                  Criar Conta Gratuita
+                </Button>
+                
+                <button 
+                  onClick={() => handleStartLogin("login")}
+                  className="py-3 text-[11px] uppercase tracking-widest font-bold text-[#2C3E2D]/50 hover:text-[#2C3E2D] transition-colors flex items-center justify-center gap-2"
+                >
+                  <LogIn className="w-4 h-4" />
+                  Já tenho uma conta
+                </button>
+              </div>
+            </div>
+
+            {/* Close trigger is handled by DialogContent, but we can add a custom X if needed */}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Actual Auth Flow */}
+      <AuthModal 
+        open={isAuthModalOpen}
+        defaultMode={authMode}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={() => {
+          setIsAuthModalOpen(false);
+          // Optional: redirect or just stay
+        }}
+      />
     </section>
   );
 }
