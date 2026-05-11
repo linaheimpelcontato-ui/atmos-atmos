@@ -309,8 +309,10 @@ export default function ExperienceEcosystem() {
                   <span className="text-[#141C15] font-display italic text-4xl md:text-6xl mx-16 opacity-90 tracking-tight leading-none">
                     A verdadeira viagem de descoberta não consiste em procurar novas paisagens, mas em ter novos olhos.
                   </span>
-                  <div
-                    className="w-12 h-12 bg-[#141C15] opacity-80 mx-8"
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                    className="w-10 h-10 bg-[#141C15] opacity-80 mx-8 flex-shrink-0"
                     style={{
                       maskImage: `url(${optimizedUrl("home/simboloatmos.png", IMAGE_PRESETS.thumbnail)})`,
                       WebkitMaskImage: `url(${optimizedUrl("home/simboloatmos.png", IMAGE_PRESETS.thumbnail)})`,
@@ -332,8 +334,10 @@ export default function ExperienceEcosystem() {
                   <span className="text-[#141C15] font-display italic text-4xl md:text-6xl mx-16 opacity-90 tracking-tight leading-none">
                     A verdadeira viagem de descoberta não consiste em procurar novas paisagens, mas em ter novos olhos.
                   </span>
-                  <div
-                    className="w-12 h-12 bg-[#141C15] opacity-80 mx-8"
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                    className="w-10 h-10 bg-[#141C15] opacity-80 mx-8 flex-shrink-0"
                     style={{
                       maskImage: `url(${optimizedUrl("home/simboloatmos.png", IMAGE_PRESETS.thumbnail)})`,
                       WebkitMaskImage: `url(${optimizedUrl("home/simboloatmos.png", IMAGE_PRESETS.thumbnail)})`,
