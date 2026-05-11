@@ -282,7 +282,7 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
             if (user) signOut();
             onClose();
           }}
-          className="fixed top-28 right-10 w-14 h-14 bg-white/90 backdrop-blur-md rounded-full shadow-2xl flex items-center justify-center group hover:bg-white transition-all z-[100] border border-black/5 cursor-pointer"
+          className="fixed top-24 right-10 w-14 h-14 bg-white/90 backdrop-blur-md rounded-full shadow-2xl flex items-center justify-center group hover:bg-white transition-all z-[100] border border-black/5 cursor-pointer"
         >
           <X className="h-6 w-6 text-black group-hover:scale-110 transition-transform" />
         </div>
@@ -295,7 +295,7 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
               </div>
             )}
 
-            <div className="flex-1 flex flex-col items-start justify-center px-10 md:px-24 pt-32 pb-16">
+            <div className="flex-1 flex flex-col items-start justify-center px-10 md:px-24 pt-16 pb-16">
               <div className="w-full max-w-lg">
                 <AnimatePresence mode="wait">
                   <motion.div
