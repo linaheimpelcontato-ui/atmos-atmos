@@ -73,7 +73,7 @@ const ddiToCountry: Record<string, string> = {
   "+972": "IL", "+971": "AE", "+27": "ZA"
 };
 
-const loginImage = storageUrl("home/foto-login.jpg");
+const loginImage = `${storageUrl("home/foto-login.jpg")}?v=2`;
 
 const normalizeString = (str: string) => 
   str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
