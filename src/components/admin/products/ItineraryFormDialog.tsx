@@ -103,6 +103,7 @@ type ItineraryVars = {
     entranceFees: number;
     equipmentFees: number;
   };
+  guideSaleValue?: number;
   guide_id?: string | null;
   // Standard fields (for generic product compatibility)
   pricingType?: "total" | "per_person";
