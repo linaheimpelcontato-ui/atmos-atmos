@@ -135,10 +135,11 @@ export default function AdminProspects({ segment: initialSegment }: AdminProspec
     setIsSyncing(true);
     try {
       // 1. Fetch from all potential lead sources
-      const [quotesRes, imersaoRes, contactsRes, prospectsRes] = await Promise.all([
+      const [quotesRes, imersaoRes, contactsRes, profilesRes, prospectsRes] = await Promise.all([
         db.from("quote_requests").select("*"),
         db.from("imersao_leads").select("*"),
         db.from("contacts").select("*"),
+        db.from("profiles").select("*"),
         db.from("prospects").select("id, email")
       ]);
 
@@ -147,7 +148,27 @@ export default function AdminProspects({ segment: initialSegment }: AdminProspec
       let newCount = 0;
       let updatedCount = 0;
 
-      // 2. Process B2C Quotes
+      // 2. Process Profiles (Signups)
+      // Since profiles don't always have email in the table, we'll try to match by name/phone if needed
+      // but usually the email is the key. Note: profiles table might need a join or manual sync.
+      for (const prof of (profilesRes.data ?? [])) {
+        // If we have an email in profile (added in some migrations) or can infer it
+        const email = (prof as any).email?.toLowerCase();
+        if (email && !existingEmailsMap.has(email)) {
+          await db.from("prospects").insert({
+            name: prof.full_name || "Usuário Registrado",
+            email: email,
+            phone: prof.phone,
+            segment: "b2c",
+            source: "site",
+            notes: "Usuário cadastrado via login/senha."
+          });
+          newCount++;
+          existingEmailsMap.set(email, "temp-id");
+        }
+      }
+
+      // 3. Process B2C Quotes
       for (const q of (quotesRes.data ?? [])) {
         const email = q.user_email?.toLowerCase();
         if (!email) continue;
