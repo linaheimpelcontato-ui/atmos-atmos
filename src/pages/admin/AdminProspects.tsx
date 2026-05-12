@@ -134,10 +134,11 @@ export default function AdminProspects({ segment: initialSegment }: AdminProspec
   const handleSync = useCallback(async () => {
     setIsSyncing(true);
     try {
-      // 1. Fetch only NEW quotes and NEW imersao leads
-      const [quotesRes, imersaoRes, prospectsRes] = await Promise.all([
-        db.from("quote_requests").select("*").eq("status", "pending"),
-        db.from("imersao_leads").select("*").eq("status", "novo"),
+      // 1. Fetch from all potential lead sources
+      const [quotesRes, imersaoRes, contactsRes, prospectsRes] = await Promise.all([
+        db.from("quote_requests").select("*"),
+        db.from("imersao_leads").select("*"),
+        db.from("contacts").select("*"),
         db.from("prospects").select("id, email")
       ]);
 
@@ -149,6 +150,8 @@ export default function AdminProspects({ segment: initialSegment }: AdminProspec
       // 2. Process B2C Quotes
       for (const q of (quotesRes.data ?? [])) {
         const email = q.user_email?.toLowerCase();
+        if (!email) continue;
+        
         const answers = typeof q.answers === 'string' ? JSON.parse(q.answers) : q.answers;
         const prospectData = {
           name: q.user_name || "Cliente Site",
@@ -156,23 +159,28 @@ export default function AdminProspects({ segment: initialSegment }: AdminProspec
           phone: q.user_phone,
           segment: "b2c",
           source: "site",
-          notes: `Solicitação via site. Grupo: ${answers?.groupSize || '?'}. Período: ${answers?.startDate || '?'}.`
+          notes: `Solicitação via site. Status original: ${q.status}.`
         };
 
-        if (email && existingEmailsMap.has(email)) {
-          await db.from("prospects").update(prospectData).eq("id", existingEmailsMap.get(email));
-          updatedCount++;
+        if (existingEmailsMap.has(email)) {
+          // If it exists, we only update if it was a 'pending' one to avoid overwriting manual edits
+          if (q.status === "pending") {
+            await db.from("prospects").update(prospectData).eq("id", existingEmailsMap.get(email));
+            updatedCount++;
+          }
         } else {
           await db.from("prospects").insert(prospectData);
           newCount++;
+          existingEmailsMap.set(email, "temp-id"); // Prevent double insert in same loop
         }
-        // Mark as processed so it doesn't come back if deleted from CRM
-        await db.from("quote_requests").update({ status: "contacted" }).eq("id", q.id);
+        if (q.status === "pending") await db.from("quote_requests").update({ status: "contacted" }).eq("id", q.id);
       }
 
       // 3. Process B2B Imersao Leads
       for (const i of (imersaoRes.data ?? [])) {
         const email = i.email?.toLowerCase();
+        if (!email) continue;
+
         const prospectData = {
           name: i.nome || "Lead Imersão",
           email: i.email,
@@ -180,18 +188,39 @@ export default function AdminProspects({ segment: initialSegment }: AdminProspec
           segment: "b2b",
           source: "site",
           company_name: i.empresa,
-          notes: `Interesse em imersão. Empresa: ${i.empresa}. Participantes: ${i.num_participantes || '?'}.`
+          notes: `Interesse em imersão. Empresa: ${i.empresa}.`
         };
 
-        if (email && existingEmailsMap.has(email)) {
-          await db.from("prospects").update(prospectData).eq("id", existingEmailsMap.get(email));
-          updatedCount++;
+        if (existingEmailsMap.has(email)) {
+          if (i.status === "novo") {
+            await db.from("prospects").update(prospectData).eq("id", existingEmailsMap.get(email));
+            updatedCount++;
+          }
         } else {
           await db.from("prospects").insert(prospectData);
           newCount++;
+          existingEmailsMap.set(email, "temp-id");
         }
-        // Mark as processed
-        await db.from("imersao_leads").update({ status: "processado" }).eq("id", i.id);
+        if (i.status === "novo") await db.from("imersao_leads").update({ status: "processado" }).eq("id", i.id);
+      }
+
+      // 4. Process Generic Contacts
+      for (const c of (contactsRes.data ?? [])) {
+        const email = c.email?.toLowerCase();
+        if (!email) continue;
+
+        if (!existingEmailsMap.has(email)) {
+          await db.from("prospects").insert({
+            name: c.name || "Contato Site",
+            email: c.email,
+            phone: c.phone,
+            segment: "b2c",
+            source: "site",
+            notes: `Contato genérico via site: ${c.subject || ""}`
+          });
+          newCount++;
+          existingEmailsMap.set(email, "temp-id");
+        }
       }
 
       if (newCount > 0 || updatedCount > 0) {
@@ -201,7 +230,7 @@ export default function AdminProspects({ segment: initialSegment }: AdminProspec
         });
         fetchProspects();
       } else {
-        toast({ title: "Sincronização", description: "Nenhum novo lead pendente no site." });
+        toast({ title: "Sincronização", description: "Todos os dados do site já estão sincronizados." });
       }
     } catch (error: any) {
       console.error("Sync error:", error);
