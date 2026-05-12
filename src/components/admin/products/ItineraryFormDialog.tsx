@@ -469,14 +469,24 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
     const defaultVariation = variations[0];
     const category = isGuide ? "Guia ATMOS" : (LEGACY_CATEGORY_MAP[catalogItem.category] || catalogItem.category || "Serviços");
     
+    const getPrice = (item: any) => {
+      if (isGuide) return item.daily_rate || 0;
+      return Number(defaultVariation?.unit_price || item.unit_price || item.variables?.unit_price || 0);
+    };
+
+    const getCost = (item: any) => {
+      if (isGuide) return item.daily_rate || 0;
+      return Number(defaultVariation?.cost_price || item.cost_price || item.variables?.cost_price || 0);
+    };
+
     const newItem: DayItem = {
       _uid: Math.random().toString(36).substr(2, 9),
       day_number: dayIdx + 1,
       day_label: `Dia ${dayIdx + 1}`,
       category,
       item_name: catalogItem.name,
-      value: isGuide ? catalogItem.daily_rate : (defaultVariation?.unit_price || 0),
-      cost: isGuide ? catalogItem.daily_rate : (defaultVariation?.cost_price || 0),
+      value: getPrice(catalogItem),
+      cost: getCost(catalogItem),
       comissao: 0,
       value_text: "",
       description: catalogItem.description || "",
@@ -618,9 +628,10 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
     const revPerPax = data.itemRevenue / (pax || 1);
     const atmosRevPerPax = atmosRevenue / (pax || 1);
     
-    // Simple markup logic: (Base Cost + Atmos Service) / (1 - Tax - PartnerComm - TargetMargin)
-    // But since this is a static product, we usually just want a reference.
-    const nfBase = baseCost + atmosRevPerPax;
+    // The total value is the sum of item revenues + atmos service
+    // If we want a suggested price based on costs and markup, we can do it differently,
+    // but usually in itineraries, the items have their own sale prices.
+    const nfBase = revPerPax + atmosRevPerPax;
     const total = taxPercent > 0 ? nfBase / (1 - taxPercent / 100) : nfBase;
     
     return total * (1 + markupPercent / 100);
@@ -927,6 +938,14 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                                                   <NumericCell value={item.qty} onCommit={(v) => updateItem(dIdx, item._uid, { qty: v })} className="w-12 h-7 text-center text-xs font-bold rounded-lg border-none bg-muted/40 p-0" />
                                                 </div>
                                                 <div className="flex flex-col items-end">
+                                                  <span className="text-[8px] font-black text-muted-foreground/40 uppercase mb-0.5 tracking-tighter">Venda</span>
+                                                  <NumericCell 
+                                                    value={item.value} 
+                                                    onCommit={(v) => updateItem(dIdx, item._uid, { value: v })} 
+                                                    className="w-20 h-7 text-right text-xs font-mono font-bold text-[#C5A267] bg-[#C5A267]/5 border-none rounded-lg p-0 pr-2" 
+                                                  />
+                                                </div>
+                                                <div className="flex flex-col items-end">
                                                   <span className="text-[8px] font-black text-muted-foreground/40 uppercase mb-0.5 tracking-tighter">Custo</span>
                                                   <NumericCell 
                                                     value={item.cost} 
@@ -1036,11 +1055,15 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                         <h4 className="font-display text-xl text-primary">Análise 4x4</h4>
                       </div>
                       
-                      <div className="space-y-3">
-                        <div className="flex justify-between text-xs font-medium text-muted-foreground">
-                          <span>Custo de Itens (Total)</span>
-                          <span>{fmtBRL(financialAnalysis.atmos4x4.totalCost)}</span>
-                        </div>
+                        <div className="space-y-3">
+                          <div className="flex justify-between text-xs font-medium text-muted-foreground">
+                            <span>Venda de Itens (Total)</span>
+                            <span className="text-[#C5A267]">{fmtBRL(financialAnalysis.atmos4x4.itemRevenue)}</span>
+                          </div>
+                          <div className="flex justify-between text-xs font-medium text-muted-foreground">
+                            <span>Custo de Itens (Total)</span>
+                            <span>{fmtBRL(financialAnalysis.atmos4x4.totalCost)}</span>
+                          </div>
                         <div className="flex justify-between text-xs font-medium text-emerald-600">
                           <span>Comissões Fornecedores (+)</span>
                           <span>{fmtBRL(financialAnalysis.atmos4x4.totalCommission)}</span>
@@ -1070,11 +1093,15 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                         <h4 className="font-display text-xl text-orange-600">Análise Carro Próprio</h4>
                       </div>
                       
-                      <div className="space-y-3">
-                        <div className="flex justify-between text-xs font-medium text-muted-foreground">
-                          <span>Custo de Itens (Total)</span>
-                          <span>{fmtBRL(financialAnalysis.carroProprio.totalCost)}</span>
-                        </div>
+                        <div className="space-y-3">
+                          <div className="flex justify-between text-xs font-medium text-muted-foreground">
+                            <span>Venda de Itens (Total)</span>
+                            <span className="text-[#C5A267]">{fmtBRL(financialAnalysis.carroProprio.itemRevenue)}</span>
+                          </div>
+                          <div className="flex justify-between text-xs font-medium text-muted-foreground">
+                            <span>Custo de Itens (Total)</span>
+                            <span>{fmtBRL(financialAnalysis.carroProprio.totalCost)}</span>
+                          </div>
                         <div className="flex justify-between text-xs font-medium text-emerald-600">
                           <span>Comissões Fornecedores (+)</span>
                           <span>{fmtBRL(financialAnalysis.carroProprio.totalCommission)}</span>
