@@ -324,7 +324,15 @@ export default function AdminProducts() {
               </Button>
             )}
             <Button
-              onClick={() => { setEditingProduct(null); setDialogOpen(true); }}
+              onClick={() => { 
+                setEditingProduct(null); 
+                // Use case-insensitive check and ensure it's exactly the itinerary type
+                if (activeTab.toLowerCase() === "itinerary") {
+                  setItinDialogOpen(true);
+                } else {
+                  setDialogOpen(true);
+                }
+              }}
               className="bg-admin-primary hover:bg-black text-white px-6 h-11 rounded-xl shadow-lg shadow-admin-primary/20 font-bold uppercase tracking-widest text-xs transition-all active:scale-95 flex gap-2"
             >
               <Plus className="h-4 w-4" />

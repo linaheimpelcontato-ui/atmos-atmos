@@ -348,15 +348,23 @@ export function ProductMediaTab({
       
       const matching = (data || [])
         .filter((f: any) => isImageMatch(f.Key, info.prefix, info.rawName))
-        .map((f: any) => f.Key)
-        .sort((a, b) => {
+        .map((f: any) => f.Key);
+
+      // Include external favorites (those that contain a path separator and aren't in current folder)
+      const externalFavorites = favorites.filter((f: string) => f.includes('/') && !matching.includes(f));
+      const allMedia = [...matching, ...externalFavorites];
+      
+      allMedia.sort((a, b) => {
           const nameA = a.toLowerCase();
           const nameB = b.toLowerCase();
           
           // 1. If we have a saved order, respect it
           if (savedOrder.length > 0) {
-            const idxA = savedOrder.indexOf(nameA.split('/').pop() || "");
-            const idxB = savedOrder.indexOf(nameB.split('/').pop() || "");
+            const partA = nameA.includes('/') ? nameA : nameA.split('/').pop() || "";
+            const partB = nameB.includes('/') ? nameB : nameB.split('/').pop() || "";
+            
+            const idxA = savedOrder.indexOf(partA);
+            const idxB = savedOrder.indexOf(partB);
             
             if (idxA !== -1 && idxB !== -1) return idxA - idxB;
             if (idxA !== -1) return -1;
@@ -364,8 +372,8 @@ export function ProductMediaTab({
           }
 
           // 2. Fallback to legacy sorting (Favorite first, then numerical)
-          const isFavA = nameA.includes('_capa');
-          const isFavB = nameB.includes('_capa');
+          const isFavA = nameA.includes('_capa') || favorites.includes(nameA.split('/').pop() || "") || favorites.includes(nameA);
+          const isFavB = nameB.includes('_capa') || favorites.includes(nameB.split('/').pop() || "") || favorites.includes(nameB);
           if (isFavA && !isFavB) return -1;
           if (!isFavA && isFavB) return 1;
 
@@ -373,7 +381,7 @@ export function ProductMediaTab({
           const numB = parseInt(nameB.match(/-(\d+)\./)?.[1] || "0");
           return numA - numB;
         });
-      setMedia(matching);
+      setMedia(allMedia);
     } catch (err) {
       console.error(err);
       setMedia([]);
@@ -497,9 +505,8 @@ export function ProductMediaTab({
   };
 
   const toggleFavorite = (fullKey: string) => {
-    const fileName = fullKey.split('/').pop() || "";
     if (onFavoriteToggle) {
-      onFavoriteToggle(fileName);
+      onFavoriteToggle(fullKey);
       toast.success("Destaque atualizado", {
         icon: <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />,
         duration: 2000
@@ -642,7 +649,7 @@ export function ProductMediaTab({
             >
               {media.map((fullKey, idx) => {
                 const fileName = fullKey.split('/').pop() || "";
-                const isFav = fullKey.includes('_capa') || favorites.includes(fileName);
+                const isFav = fullKey.includes('_capa') || favorites.includes(fileName) || favorites.includes(fullKey);
                 return (
                   <SortableItem
                     key={fullKey}
