@@ -168,8 +168,7 @@ const Wishlist = () => {
   const handleOnboardingConfirm = async () => {
     if (!pendingAnswers) return;
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any).from("quote_requests").insert({
+      const quoteData = {
         user_id: user?.id ?? null,
         user_name: user?.user_metadata?.full_name ?? null,
         user_email: user?.email ?? null,
@@ -178,11 +177,32 @@ const Wishlist = () => {
         answers: pendingAnswers,
         status: "pending",
         language,
-      });
+      };
+
+      const { error } = await (supabase as any).from("quote_requests").insert(quoteData);
 
       if (error) {
         console.error("Error saving quote request:", error);
-        // We still proceed to WhatsApp but alert the developer
+      } else if (user?.email) {
+        // Instant sync with prospects table using lookup-then-action
+        const normalizedEmail = user.email.toLowerCase();
+        const { data: existing } = await (supabase as any).from("prospects").select("id").eq("email", normalizedEmail).maybeSingle();
+        
+        const prospectData = {
+          name: user.user_metadata?.full_name || "Cliente Site",
+          email: normalizedEmail,
+          phone: user.user_metadata?.phone,
+          segment: "b2c",
+          source: "site",
+          notes: `Solicitação via Wishlist. Itens: ${items.length}.`,
+          updated_at: new Date().toISOString(),
+        };
+
+        if (existing) {
+          await (supabase as any).from("prospects").update(prospectData).eq("id", existing.id);
+        } else {
+          await (supabase as any).from("prospects").insert(prospectData);
+        }
       }
     } catch (e) {
       console.error("Exception in onboarding confirm:", e);

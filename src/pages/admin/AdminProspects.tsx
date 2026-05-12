@@ -134,60 +134,74 @@ export default function AdminProspects({ segment: initialSegment }: AdminProspec
   const handleSync = useCallback(async () => {
     setIsSyncing(true);
     try {
-      // 1. Fetch all quotes and imersao leads
+      // 1. Fetch only NEW quotes and NEW imersao leads
       const [quotesRes, imersaoRes, prospectsRes] = await Promise.all([
-        db.from("quote_requests").select("*"),
-        db.from("imersao_leads").select("*"),
-        db.from("prospects").select("email")
+        db.from("quote_requests").select("*").eq("status", "pending"),
+        db.from("imersao_leads").select("*").eq("status", "novo"),
+        db.from("prospects").select("id, email")
       ]);
 
-      const existingEmails = new Set((prospectsRes.data ?? []).map(p => p.email?.toLowerCase()).filter(Boolean));
-      const prospectsToInsert: any[] = [];
+      const existingEmailsMap = new Map((prospectsRes.data ?? []).map((p: any) => [p.email?.toLowerCase(), p.id]).filter(([email]) => !!email));
+      
+      let newCount = 0;
+      let updatedCount = 0;
 
       // 2. Process B2C Quotes
-      (quotesRes.data ?? []).forEach(q => {
+      for (const q of (quotesRes.data ?? [])) {
         const email = q.user_email?.toLowerCase();
-        if (email && !existingEmails.has(email)) {
-          const answers = typeof q.answers === 'string' ? JSON.parse(q.answers) : q.answers;
-          prospectsToInsert.push({
-            name: q.user_name || "Cliente Site",
-            email: q.user_email,
-            phone: q.user_phone,
-            segment: "b2c",
-            source: "site",
-            notes: `Solicitação via site. Grupo: ${answers?.groupSize || '?'}. Período: ${answers?.startDate || '?'}.`
-          });
-          existingEmails.add(email);
+        const answers = typeof q.answers === 'string' ? JSON.parse(q.answers) : q.answers;
+        const prospectData = {
+          name: q.user_name || "Cliente Site",
+          email: q.user_email,
+          phone: q.user_phone,
+          segment: "b2c",
+          source: "site",
+          notes: `Solicitação via site. Grupo: ${answers?.groupSize || '?'}. Período: ${answers?.startDate || '?'}.`
+        };
+
+        if (email && existingEmailsMap.has(email)) {
+          await db.from("prospects").update(prospectData).eq("id", existingEmailsMap.get(email));
+          updatedCount++;
+        } else {
+          await db.from("prospects").insert(prospectData);
+          newCount++;
         }
-      });
+        // Mark as processed so it doesn't come back if deleted from CRM
+        await db.from("quote_requests").update({ status: "contacted" }).eq("id", q.id);
+      }
 
       // 3. Process B2B Imersao Leads
-      (imersaoRes.data ?? []).forEach(i => {
+      for (const i of (imersaoRes.data ?? [])) {
         const email = i.email?.toLowerCase();
-        if (email && !existingEmails.has(email)) {
-          prospectsToInsert.push({
-            name: i.nome || "Lead Imersão",
-            email: i.email,
-            phone: i.telefone,
-            segment: "b2b",
-            source: "site",
-            company_name: i.empresa,
-            notes: `Interesse em imersão. Empresa: ${i.empresa}. Participantes: ${i.num_participantes || '?'}.`
-          });
-          existingEmails.add(email);
-        }
-      });
+        const prospectData = {
+          name: i.nome || "Lead Imersão",
+          email: i.email,
+          phone: i.telefone,
+          segment: "b2b",
+          source: "site",
+          company_name: i.empresa,
+          notes: `Interesse em imersão. Empresa: ${i.empresa}. Participantes: ${i.num_participantes || '?'}.`
+        };
 
-      if (prospectsToInsert.length > 0) {
-        const { error } = await db.from("prospects").insert(prospectsToInsert);
-        if (error) throw error;
+        if (email && existingEmailsMap.has(email)) {
+          await db.from("prospects").update(prospectData).eq("id", existingEmailsMap.get(email));
+          updatedCount++;
+        } else {
+          await db.from("prospects").insert(prospectData);
+          newCount++;
+        }
+        // Mark as processed
+        await db.from("imersao_leads").update({ status: "processado" }).eq("id", i.id);
+      }
+
+      if (newCount > 0 || updatedCount > 0) {
         toast({ 
           title: "Sincronização concluída", 
-          description: `${prospectsToInsert.length} novos clientes integrados do site.` 
+          description: `${newCount} novos clientes e ${updatedCount} atualizados.` 
         });
         fetchProspects();
       } else {
-        toast({ title: "Sincronização", description: "Todos os dados do site já estão na base." });
+        toast({ title: "Sincronização", description: "Nenhum novo lead pendente no site." });
       }
     } catch (error: any) {
       console.error("Sync error:", error);
@@ -230,15 +244,22 @@ export default function AdminProspects({ segment: initialSegment }: AdminProspec
   }, [prospects, search, filterState, valueExtractors]);
 
   const handleCreateProspect = async () => {
-    const defaultSegment = activeTab === "geral" ? "b2c" : activeTab;
+    const defaultSegment = activeTab === "geral" ? "b2c" : activeTab as "b2c" | "b2b";
+    
     const { data, error } = await db.from("prospects")
-      .insert({ name: "Novo Cliente", segment: defaultSegment })
+      .insert({ 
+        name: "Novo Cliente", 
+        segment: defaultSegment,
+        source: "manual"
+      })
       .select("id")
       .single();
     
     if (error) {
+      console.error("Error creating prospect:", error);
       toast({ title: "Erro ao criar cliente", description: error.message, variant: "destructive" });
     } else if (data) {
+      toast({ title: "Cliente criado com sucesso" });
       setSelectedProspectId(data.id);
       fetchProspects();
     }

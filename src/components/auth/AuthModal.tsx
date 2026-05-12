@@ -254,19 +254,28 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
         }
       }
       
-      // Sync with prospects table
+      // Sync with prospects table using a robust lookup-then-action pattern
       try {
-        await supabase.from("prospects").upsert({
+        const normalizedEmail = email.toLowerCase();
+        const { data: existing } = await supabase.from("prospects").select("id").eq("email", normalizedEmail).maybeSingle();
+        
+        const prospectData = {
           name: fullName,
-          email: email.toLowerCase(),
+          email: normalizedEmail,
           phone: phone,
           birth_date: bDate,
           city: city,
           country: country === "BR" ? "Brasil" : country,
           source: "site",
-          segment: "b2c", // Default for site signups
+          segment: "b2c",
           updated_at: new Date().toISOString(),
-        }, { onConflict: "email" });
+        };
+
+        if (existing) {
+          await supabase.from("prospects").update(prospectData).eq("id", existing.id);
+        } else {
+          await supabase.from("prospects").insert(prospectData);
+        }
       } catch (prospectErr) {
         console.error("Error syncing with prospects table:", prospectErr);
       }
