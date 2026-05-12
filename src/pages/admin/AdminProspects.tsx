@@ -123,8 +123,85 @@ export default function AdminProspects({ segment: initialSegment }: AdminProspec
     setLoading(false);
   }, [activeTab]);
 
-  useEffect(() => { fetchStages(); }, [fetchStages]);
-  useEffect(() => { fetchProspects(); }, [fetchProspects]);
+  const counts = useMemo(() => ({
+    geral: prospects.length,
+    b2c: prospects.filter(p => p.segment === "b2c").length,
+    b2b: prospects.filter(p => p.segment === "b2b").length,
+  }), [prospects]);
+
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const handleSync = useCallback(async () => {
+    setIsSyncing(true);
+    try {
+      // 1. Fetch all quotes and imersao leads
+      const [quotesRes, imersaoRes, prospectsRes] = await Promise.all([
+        db.from("quote_requests").select("*"),
+        db.from("imersao_leads").select("*"),
+        db.from("prospects").select("email")
+      ]);
+
+      const existingEmails = new Set((prospectsRes.data ?? []).map(p => p.email?.toLowerCase()).filter(Boolean));
+      const prospectsToInsert: any[] = [];
+
+      // 2. Process B2C Quotes
+      (quotesRes.data ?? []).forEach(q => {
+        const email = q.user_email?.toLowerCase();
+        if (email && !existingEmails.has(email)) {
+          const answers = typeof q.answers === 'string' ? JSON.parse(q.answers) : q.answers;
+          prospectsToInsert.push({
+            name: q.user_name || "Cliente Site",
+            email: q.user_email,
+            phone: q.user_phone,
+            segment: "b2c",
+            source: "site",
+            notes: `Solicitação via site. Grupo: ${answers?.groupSize || '?'}. Período: ${answers?.startDate || '?'}.`
+          });
+          existingEmails.add(email);
+        }
+      });
+
+      // 3. Process B2B Imersao Leads
+      (imersaoRes.data ?? []).forEach(i => {
+        const email = i.email?.toLowerCase();
+        if (email && !existingEmails.has(email)) {
+          prospectsToInsert.push({
+            name: i.nome || "Lead Imersão",
+            email: i.email,
+            phone: i.telefone,
+            segment: "b2b",
+            source: "site",
+            company_name: i.empresa,
+            notes: `Interesse em imersão. Empresa: ${i.empresa}. Participantes: ${i.num_participantes || '?'}.`
+          });
+          existingEmails.add(email);
+        }
+      });
+
+      if (prospectsToInsert.length > 0) {
+        const { error } = await db.from("prospects").insert(prospectsToInsert);
+        if (error) throw error;
+        toast({ 
+          title: "Sincronização concluída", 
+          description: `${prospectsToInsert.length} novos clientes integrados do site.` 
+        });
+        fetchProspects();
+      } else {
+        toast({ title: "Sincronização", description: "Todos os dados do site já estão na base." });
+      }
+    } catch (error: any) {
+      console.error("Sync error:", error);
+      toast({ title: "Erro na sincronização", description: error.message, variant: "destructive" });
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [fetchProspects, toast]);
+
+  useEffect(() => {
+    fetchStages();
+    fetchProspects();
+    handleSync();
+  }, [fetchStages, fetchProspects, handleSync]);
 
   const valueExtractors = useMemo(() => {
     const extractors: Record<string, (row: any) => unknown> = {};
@@ -246,11 +323,6 @@ export default function AdminProspects({ segment: initialSegment }: AdminProspec
     }
   };
 
-  const counts = useMemo(() => ({
-    geral: prospects.length,
-    b2c: prospects.filter(p => p.segment === "b2c").length,
-    b2b: prospects.filter(p => p.segment === "b2b").length,
-  }), [prospects]);
 
   return (
     <motion.div 
@@ -299,8 +371,8 @@ export default function AdminProspects({ segment: initialSegment }: AdminProspec
           onTabChange={setActiveTab}
           counts={counts}
           onNewProspect={handleCreateProspect}
-          onSync={fetchProspects}
-          isSyncing={loading}
+          onSync={handleSync}
+          isSyncing={isSyncing}
           onExport={handleExport}
           onImport={handleImport}
           visibleColumns={visibleColumns}
