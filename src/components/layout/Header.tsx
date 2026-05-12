@@ -23,11 +23,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 
-const languages: { code: Language; label: string }[] = [
-  { code: "pt", label: "PT" },
-  { code: "en", label: "EN" },
-  { code: "es", label: "ES" },
-];
+
 
 const navLinks = [
   { key: "nav.home", path: "/" },
@@ -125,26 +121,7 @@ export default function Header() {
 
         {/* Right Actions */}
         <div className="w-1/3 flex justify-end items-center gap-4">
-          {/* Language Selector */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="gap-1.5 text-nav-foreground hover:bg-muted font-poppins">
-                <Globe className="h-4 w-4" />
-                <span className="text-xs font-semibold">{language.toUpperCase()}</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {languages.map((lang) => (
-                <DropdownMenuItem
-                  key={lang.code}
-                  onClick={() => setLanguage(lang.code)}
-                  className={language === lang.code ? "bg-secondary font-semibold" : ""}
-                >
-                  {lang.label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Language Selector removed as requested */}
 
           {/* User Auth / Profile */}
           {user ? (
@@ -260,7 +237,7 @@ export default function Header() {
               className="block py-3 text-xs uppercase font-bold text-accent/70"
               onClick={() => setMobileOpen(false)}
             >
-              {language === 'pt' ? 'Para Parceiros →' : language === 'en' ? 'For Partners →' : 'Para Socios →'}
+              Para Parceiros →
             </Link>
           </div>
         </nav>
