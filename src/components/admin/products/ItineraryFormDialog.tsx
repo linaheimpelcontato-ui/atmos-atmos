@@ -385,6 +385,7 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
   const [atmosRevenue, setAtmosRevenue] = useState(0);
   const [partnerCommission, setPartnerCommission] = useState(0);
   const [extraCosts, setExtraCosts] = useState({ entranceFees: 0, equipmentFees: 0 });
+  const [guideSaleValue, setGuideSaleValue] = useState(0);
   const [guideId, setGuideId] = useState<string | null>(null);
   const [pricing, setPricing] = useState<Pricing>({
     atmos4x4: { individual: 0, dupla: 0, trio: 0 },
@@ -403,9 +404,9 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
     
     setName(product?.name || "");
     setIsActive(product?.is_active ?? true);
-    setCategory(product?.category || "classico");
-    setSubcategory(vars?.subcategory || "");
-    setRegion((product as any)?.region || "");
+    setCategory(product?.category || "roteiro");
+    setSubcategory("");
+    setRegion("");
     setDuration((product as any)?.duration_days || 1);
     setDescription(product?.description || "");
     
@@ -418,6 +419,7 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
     setMarkupPercent(vars?.markupPercent || 20);
     setPartnerCommission(vars?.partnerCommission || 0);
     setExtraCosts(vars?.extraCosts || { entranceFees: 0, equipmentFees: 0 });
+    setGuideSaleValue(vars?.guideSaleValue || 0);
     setGuideId(vars?.guide_id || null);
 
     if (vars?.pricing) {
@@ -593,8 +595,8 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
 
   const financialAnalysis = useMemo(() => {
     const analysis = {
-      atmos4x4: { totalCost: 0, totalCommission: 0, itemRevenue: 0 },
-      carroProprio: { totalCost: 0, totalCommission: 0, itemRevenue: 0 }
+      atmos4x4: { totalCost: 0, totalCommission: 0, itemRevenue: guideSaleValue * days.length },
+      carroProprio: { totalCost: 0, totalCommission: 0, itemRevenue: guideSaleValue * days.length }
     };
 
     days.forEach(day => {
@@ -664,6 +666,7 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
         markupPercent,
         partnerCommission,
         extraCosts,
+        guideSaleValue,
         guide_id: guideId
       },
     });
@@ -730,48 +733,6 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                           <Label className="text-xs font-bold uppercase tracking-tight ml-1">Título do Roteiro</Label>
                           <Input value={name} onChange={(e) => setName(e.target.value)} required className="h-12 text-lg font-display rounded-2xl bg-muted/30 border-none focus-visible:ring-primary/20" placeholder="Ex: Chapada das Águas" />
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-1.5">
-                            <Label className="text-xs font-bold uppercase tracking-tight ml-1">Região</Label>
-                            <Select value={region} onValueChange={setRegion}>
-                              <SelectTrigger className="h-11 rounded-2xl bg-muted/30 border-none font-medium text-xs">
-                                <SelectValue placeholder="Escolher" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {Object.entries(regionLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="space-y-1.5">
-                            <Label className="text-xs font-bold uppercase tracking-tight ml-1">Categoria</Label>
-                            <Select value={category} onValueChange={setCategory}>
-                              <SelectTrigger className="h-11 rounded-2xl bg-muted/30 border-none font-medium text-xs">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="classico">Clássico</SelectItem>
-                                <SelectItem value="jurassico">Jurássico</SelectItem>
-                                <SelectItem value="expedicao">Expedição</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-
-                        <div className="space-y-1.5 pt-2">
-                          <Label className="text-xs font-bold uppercase tracking-tight ml-1">Guia Sugerido</Label>
-                          <Select value={guideId || "none"} onValueChange={(v) => setGuideId(v === "none" ? null : v)}>
-                            <SelectTrigger className="h-11 rounded-2xl bg-muted/30 border-none font-medium text-xs text-primary">
-                              <SelectValue placeholder="Selecione um guia..." />
-                            </SelectTrigger>
-                            <SelectContent className="rounded-xl border-none shadow-xl">
-                              <SelectItem value="none" className="text-muted-foreground italic">Nenhum selecionado</SelectItem>
-                              {guides.map(g => (
-                                <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
                         <div className="flex items-center justify-between p-4 bg-primary/[0.02] rounded-2xl border border-primary/5">
                           <div className="space-y-0.5">
                             <Label className="text-[10px] font-black uppercase tracking-widest text-primary">Ativo no Site</Label>
@@ -1013,7 +974,11 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 relative z-10">
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4 relative z-10">
+                      <div className="space-y-2 p-4 bg-primary/[0.03] rounded-2xl border border-primary/10">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-primary">Venda Diária Guia (R$)</Label>
+                        <NumericCell value={guideSaleValue} onCommit={setGuideSaleValue} className="h-10 text-lg font-display bg-white border-primary/10 rounded-xl" />
+                      </div>
                       <div className="space-y-2 p-4 bg-muted/20 rounded-2xl border border-black/5">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Serviço ATMOS (R$)</Label>
                         <NumericCell value={atmosRevenue} onCommit={setAtmosRevenue} className="h-10 text-lg font-display bg-white border-black/5 rounded-xl" />
@@ -1041,6 +1006,55 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                         <Label className="text-[10px] font-black uppercase tracking-widest text-amber-700/60">Equipamentos (Custo Total R$)</Label>
                         <NumericCell value={extraCosts.equipmentFees} onCommit={(v) => setExtraCosts(prev => ({ ...prev, equipmentFees: v }))} className="h-10 text-lg font-display bg-white border-amber-100 rounded-xl" />
                       </div>
+                    </div>
+                  </section>
+
+                  {/* ── SEÇÃO NOVA: DESCRITIVO DE ITENS ── */}
+                  <section className="bg-white p-8 rounded-[3rem] border border-black/5 shadow-sm space-y-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-muted flex items-center justify-center text-muted-foreground">
+                        <List className="h-5 w-5" />
+                      </div>
+                      <div className="space-y-0.5">
+                        <h4 className="font-display text-xl text-primary leading-tight">Resumo de Itens do Roteiro</h4>
+                        <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/40">Detalhamento para conferência de valores</p>
+                      </div>
+                    </div>
+
+                    <div className="overflow-hidden rounded-2xl border border-black/5">
+                      <table className="w-full text-[10px]">
+                        <thead>
+                          <tr className="bg-muted/30 border-b border-black/5">
+                            <th className="text-left p-3 font-black uppercase tracking-tighter">Item</th>
+                            <th className="text-center p-3 font-black uppercase tracking-tighter">Dia</th>
+                            <th className="text-right p-3 font-black uppercase tracking-tighter">Custo</th>
+                            <th className="text-right p-3 font-black uppercase tracking-tighter">Venda</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-black/5">
+                          {guideSaleValue > 0 && (
+                            <tr className="bg-primary/[0.02]">
+                              <td className="p-3 font-bold text-primary">Diária de Guia (Fixo)</td>
+                              <td className="text-center p-3">{days.length} Dias</td>
+                              <td className="text-right p-3 text-muted-foreground">-</td>
+                              <td className="text-right p-3 font-bold text-[#C5A267]">{fmtBRL(guideSaleValue * days.length)}</td>
+                            </tr>
+                          )}
+                          {days.flatMap(d => d.items).map((it, idx) => (
+                            <tr key={it._uid || idx} className="hover:bg-muted/10 transition-colors">
+                              <td className="p-3 font-medium">{it.item_name}</td>
+                              <td className="text-center p-3 font-mono opacity-40">{it.day_number}</td>
+                              <td className="text-right p-3 font-mono text-primary">{fmtBRL(it.cost || 0)}</td>
+                              <td className="text-right p-3 font-mono text-[#C5A267]">{fmtBRL(it.value || 0)}</td>
+                            </tr>
+                          ))}
+                          <tr className="bg-muted/5 font-black">
+                            <td colSpan={2} className="p-3 text-right uppercase tracking-widest opacity-40">Totais</td>
+                            <td className="text-right p-3 text-primary">{fmtBRL(financialAnalysis.atmos4x4.totalCost)}</td>
+                            <td className="text-right p-3 text-[#C5A267]">{fmtBRL(financialAnalysis.atmos4x4.itemRevenue)}</td>
+                          </tr>
+                        </tbody>
+                      </table>
                     </div>
                   </section>
 
