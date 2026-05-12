@@ -70,6 +70,8 @@ export default function ProspectTabGeneral({ prospect, stages, segment, onUpdate
     document: "", document_type: "cpf",
     custom_company_type: "", custom_company_segment: "",
     seller_id: "",
+    segment: "b2c",
+    city: "",
   });
   const [priorityScore, setPriorityScore] = useState(3);
   const [sellers, setSellers] = useState<{ id: string; name: string }[]>([]);
@@ -113,6 +115,8 @@ export default function ProspectTabGeneral({ prospect, stages, segment, onUpdate
         custom_company_type: isCustomType ? companyTypeVal : "",
         custom_company_segment: isCustomSegment ? companySegmentVal : "",
         seller_id: prospect.seller_id ?? "",
+        segment: prospect.segment ?? "b2c",
+        city: prospect.city ?? "",
       });
       setPriorityScore(priorityToScore(prospect.priority));
     }
@@ -147,6 +151,8 @@ export default function ProspectTabGeneral({ prospect, stages, segment, onUpdate
       document: form.document || null,
       document_type: form.document ? form.document_type : null,
       seller_id: form.seller_id || null,
+      segment: form.segment,
+      city: form.city || null,
     });
   };
 
@@ -154,30 +160,60 @@ export default function ProspectTabGeneral({ prospect, stages, segment, onUpdate
   const isB2B = segment === "b2b";
 
   return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="space-y-1.5">
-          <Label>{isB2B ? "Nome Empresa *" : "Nome *"}</Label>
-          <Input value={form.name} onChange={e => set("name", e.target.value)} />
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
+        <div className="space-y-2">
+          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">
+            {isB2B ? "Nome Empresa *" : "Nome *"}
+          </Label>
+          <Input 
+            value={form.name} 
+            onChange={e => set("name", e.target.value)} 
+            className="h-12 rounded-xl border-admin-border/60 bg-white focus:ring-admin-primary/20 transition-all font-medium"
+          />
         </div>
-        <div className="space-y-1.5">
-          <Label>Email</Label>
-          <Input type="email" value={form.email} onChange={e => set("email", e.target.value)} />
+        <div className="space-y-2">
+          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">Email</Label>
+          <Input 
+            type="email" 
+            value={form.email} 
+            onChange={e => set("email", e.target.value)} 
+            className="h-12 rounded-xl border-admin-border/60 bg-white focus:ring-admin-primary/20 transition-all font-medium"
+          />
         </div>
-        <div className="space-y-1.5">
-          <Label>Telefone</Label>
+        <div className="space-y-2">
+          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">Classificação (Segmento)</Label>
+          <Select value={form.segment} onValueChange={v => set("segment", v)}>
+            <SelectTrigger className="h-12 rounded-xl border-admin-border/60 bg-white font-medium">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl border-admin-border/60">
+              <SelectItem value="b2c">B2C (Turista)</SelectItem>
+              <SelectItem value="b2b">B2B (Empresa)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">Telefone</Label>
           <div className="flex items-center gap-2">
             <PhoneInput value={form.phone} onChange={v => set("phone", v)} className="flex-1" />
-            {form.phone && <WhatsAppPhone phone={form.phone} className="shrink-0" />}
+            {form.phone && (
+              <div className="h-12 px-4 rounded-xl border border-admin-border/60 flex items-center justify-center bg-white">
+                <WhatsAppPhone phone={form.phone} className="shrink-0" />
+              </div>
+            )}
           </div>
         </div>
+
         {isB2B && (
           <>
-            <div className="space-y-1.5">
-              <Label>Tipo Empresa</Label>
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">Tipo Empresa</Label>
               <Select value={form.company_type || "none"} onValueChange={v => set("company_type", v === "none" ? "" : v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
+                <SelectTrigger className="h-12 rounded-xl border-admin-border/60 bg-white font-medium">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-admin-border/60">
                   <SelectItem value="none">Nenhum</SelectItem>
                   {COMPANY_TYPES.map(t => <SelectItem key={t} value={t}>{t === "Outro" ? "Outro..." : t}</SelectItem>)}
                 </SelectContent>
@@ -187,15 +223,17 @@ export default function ProspectTabGeneral({ prospect, stages, segment, onUpdate
                   value={form.custom_company_type} 
                   onChange={e => set("custom_company_type", e.target.value)} 
                   placeholder="Digite o tipo de empresa"
-                  className="mt-2"
+                  className="mt-2 h-12 rounded-xl border-admin-border/60"
                 />
               )}
             </div>
-            <div className="space-y-1.5">
-              <Label>Segmento</Label>
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">Segmento</Label>
               <Select value={form.company_segment || "none"} onValueChange={v => set("company_segment", v === "none" ? "" : v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
+                <SelectTrigger className="h-12 rounded-xl border-admin-border/60 bg-white font-medium">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-admin-border/60">
                   <SelectItem value="none">Nenhum</SelectItem>
                   {COMPANY_SEGMENTS_LIST.map(s => <SelectItem key={s} value={s}>{s === "Outro" ? "Outro..." : s}</SelectItem>)}
                 </SelectContent>
@@ -205,34 +243,37 @@ export default function ProspectTabGeneral({ prospect, stages, segment, onUpdate
                   value={form.custom_company_segment} 
                   onChange={e => set("custom_company_segment", e.target.value)} 
                   placeholder="Digite o segmento"
-                  className="mt-2"
+                  className="mt-2 h-12 rounded-xl border-admin-border/60"
                 />
               )}
             </div>
           </>
         )}
         {!isB2B && (
-          <div className="space-y-1.5">
-            <Label>Empresa</Label>
-            <Input value={form.company_name} onChange={e => set("company_name", e.target.value)} />
+          <div className="space-y-2">
+            <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">Empresa</Label>
+            <Input value={form.company_name} onChange={e => set("company_name", e.target.value)} className="h-12 rounded-xl border-admin-border/60 bg-white font-medium" />
           </div>
         )}
-        <div className="space-y-1.5">
-          <Label className="flex items-center gap-1"><Cake className="h-3.5 w-3.5" />Data de Nascimento</Label>
-          <DatePicker value={form.birth_date} onChange={v => set("birth_date", v)} />
+        
+        <div className="space-y-2">
+          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1 flex items-center gap-1.5"><Cake className="h-3.5 w-3.5 text-admin-primary/40" />Data de Nascimento</Label>
+          <DatePicker value={form.birth_date} onChange={v => set("birth_date", v)} className="h-12 rounded-xl border-admin-border/60 bg-white font-medium" />
         </div>
-        <div className="space-y-1.5">
-          <Label>CPF / CNPJ</Label>
+
+        <div className="space-y-2">
+          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">CPF / CNPJ</Label>
           <div className="flex gap-2">
             <Select value={form.document_type} onValueChange={v => set("document_type", v)}>
-              <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
-              <SelectContent>
+              <SelectTrigger className="w-32 h-12 rounded-xl border-admin-border/60 bg-white font-medium"><SelectValue /></SelectTrigger>
+              <SelectContent className="rounded-xl">
                 <SelectItem value="cpf">CPF</SelectItem>
                 <SelectItem value="cnpj">CNPJ</SelectItem>
               </SelectContent>
             </Select>
             <Input
               value={form.document}
+              className="h-12 rounded-xl border-admin-border/60 bg-white font-medium"
               onChange={e => {
                 const raw = e.target.value.replace(/\D/g, "");
                 const max = form.document_type === "cnpj" ? 14 : 11;
@@ -242,96 +283,139 @@ export default function ProspectTabGeneral({ prospect, stages, segment, onUpdate
             />
           </div>
         </div>
-        <div className="space-y-1.5">
-          <Label>Etapa</Label>
+
+        <div className="space-y-2">
+          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">Etapa no Funil</Label>
           <Select value={form.stage_id || "none"} onValueChange={v => set("stage_id", v === "none" ? "" : v)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
+            <SelectTrigger className="h-12 rounded-xl border-admin-border/60 bg-white font-medium">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl">
               <SelectItem value="none">Nenhuma</SelectItem>
               {stages.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-1.5">
-          <Label>Origem</Label>
+
+        <div className="space-y-2">
+          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">Origem do Lead</Label>
           <Select value={form.source} onValueChange={v => set("source", v)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
+            <SelectTrigger className="h-12 rounded-xl border-admin-border/60 bg-white font-medium">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl">
               {SOURCES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-1.5">
-          <Label className="flex items-center gap-1"><UserCheck className="h-3.5 w-3.5" />Vendedor</Label>
+
+        <div className="space-y-2">
+          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1 flex items-center gap-1.5"><UserCheck className="h-3.5 w-3.5 text-admin-primary/40" />Vendedor Responsável</Label>
           <Select value={form.seller_id || "none"} onValueChange={v => set("seller_id", v === "none" ? "" : v)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
+            <SelectTrigger className="h-12 rounded-xl border-admin-border/60 bg-white font-medium">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl">
               <SelectItem value="none">Nenhum</SelectItem>
               {sellers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-1.5">
-          <Label>Prioridade</Label>
-          <StarRating value={priorityScore} onChange={setPriorityScore} />
+
+        <div className="space-y-2">
+          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">Prioridade</Label>
+          <div className="h-12 px-4 rounded-xl border border-admin-border/60 bg-white flex items-center">
+            <StarRating value={priorityScore} onChange={setPriorityScore} />
+          </div>
         </div>
-        <div className="space-y-1.5">
-          <Label>Potencial</Label>
+
+        <div className="space-y-2">
+          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">Potencial de Venda</Label>
           <Select value={form.potential} onValueChange={v => set("potential", v)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
+            <SelectTrigger className="h-12 rounded-xl border-admin-border/60 bg-white font-medium">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl">
               {POTENTIALS.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-1.5">
-          <Label>País</Label>
-          <Input value={form.country} onChange={e => set("country", e.target.value)} placeholder="Brasil, EUA, UK..." />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Mercado-alvo</Label>
-          <Input value={form.target_market} onChange={e => set("target_market", e.target.value)} placeholder="Aventura, Wellness..." />
-        </div>
-      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="space-y-1.5">
-          <Label className="flex items-center gap-1"><Globe className="h-3.5 w-3.5" />Website</Label>
-          <Input value={form.website} onChange={e => set("website", e.target.value)} placeholder="https://..." />
+        <div className="space-y-2">
+          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">Localização (Cidade)</Label>
+          <Input value={form.city} onChange={e => set("city", e.target.value)} placeholder="Ex: São Paulo" className="h-12 rounded-xl border-admin-border/60 bg-white font-medium" />
         </div>
-        <div className="space-y-1.5">
-          <Label className="flex items-center gap-1"><Linkedin className="h-3.5 w-3.5" />LinkedIn</Label>
-          <Input value={form.linkedin} onChange={e => set("linkedin", e.target.value)} />
+
+        <div className="space-y-2">
+          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">País</Label>
+          <Input value={form.country} onChange={e => set("country", e.target.value)} placeholder="Brasil, EUA, UK..." className="h-12 rounded-xl border-admin-border/60 bg-white font-medium" />
         </div>
-        <div className="space-y-1.5">
-          <Label className="flex items-center gap-1"><Instagram className="h-3.5 w-3.5" />Instagram</Label>
-          <Input value={form.instagram} onChange={e => set("instagram", e.target.value)} />
+
+        <div className="space-y-2">
+          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">Mercado-alvo Preferencial</Label>
+          <Input value={form.target_market} onChange={e => set("target_market", e.target.value)} placeholder="Aventura, Wellness..." className="h-12 rounded-xl border-admin-border/60 bg-white font-medium" />
         </div>
       </div>
 
-      <div className="space-y-1.5">
-        <Label>Tags (separar por vírgula)</Label>
-        <Input value={form.tags} onChange={e => set("tags", e.target.value)} placeholder="vip, retorno, grupo" />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-4 border-t border-admin-border/30">
+        <div className="space-y-2">
+          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1 flex items-center gap-1.5"><Globe className="h-3.5 w-3.5 text-admin-primary/40" />Website</Label>
+          <Input value={form.website} onChange={e => set("website", e.target.value)} placeholder="https://..." className="h-12 rounded-xl border-admin-border/60 bg-white font-medium" />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1 flex items-center gap-1.5"><Linkedin className="h-3.5 w-3.5 text-admin-primary/40" />LinkedIn</Label>
+          <Input value={form.linkedin} onChange={e => set("linkedin", e.target.value)} placeholder="linkedin.com/in/..." className="h-12 rounded-xl border-admin-border/60 bg-white font-medium" />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1 flex items-center gap-1.5"><Instagram className="h-3.5 w-3.5 text-admin-primary/40" />Instagram</Label>
+          <Input value={form.instagram} onChange={e => set("instagram", e.target.value)} placeholder="@perfil" className="h-12 rounded-xl border-admin-border/60 bg-white font-medium" />
+        </div>
       </div>
 
-      <div className="space-y-1.5">
-        <Label>Descrição</Label>
-        <Textarea value={form.description} onChange={e => set("description", e.target.value)} rows={3} />
+      <div className="space-y-6 pt-4 border-t border-admin-border/30">
+        <div className="space-y-2">
+          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">Tags (separar por vírgula)</Label>
+          <Input value={form.tags} onChange={e => set("tags", e.target.value)} placeholder="vip, retorno, grupo" className="h-12 rounded-xl border-admin-border/60 bg-white font-medium" />
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">Descrição do Perfil</Label>
+          <Textarea 
+            value={form.description} 
+            onChange={e => set("description", e.target.value)} 
+            rows={4} 
+            className="rounded-2xl border-admin-border/60 bg-white font-medium p-4 resize-none"
+            placeholder="Informações relevantes sobre o perfil e preferências do cliente..."
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">Notas Internas</Label>
+          <Textarea 
+            value={form.notes} 
+            onChange={e => set("notes", e.target.value)} 
+            rows={3} 
+            className="rounded-2xl border-admin-border/60 bg-white font-medium p-4 resize-none"
+            placeholder="Observações administrativas..."
+          />
+        </div>
+
+        <div className="space-y-2 max-w-xs">
+          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1 flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5 text-admin-primary/40" />Agendar Próximo Follow-up</Label>
+          <Input 
+            type="datetime-local" 
+            value={form.next_followup_at} 
+            onChange={e => set("next_followup_at", e.target.value)} 
+            className="h-12 rounded-xl border-admin-border/60 bg-white font-medium"
+          />
+        </div>
       </div>
 
-      <div className="space-y-1.5">
-        <Label>Notas</Label>
-        <Textarea value={form.notes} onChange={e => set("notes", e.target.value)} rows={2} />
+      <div className="pt-6">
+        <Button onClick={handleSave} className="h-14 px-10 rounded-2xl font-black text-xs uppercase tracking-[0.2em] gap-3 shadow-xl shadow-admin-primary/20 bg-admin-primary hover:bg-admin-primary/90 transition-all hover:scale-[1.02] active:scale-95">
+          <Save className="h-4 w-4" /> Salvar alterações
+        </Button>
       </div>
-
-      <div className="space-y-1.5">
-        <Label className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />Próximo follow-up</Label>
-        <Input type="datetime-local" value={form.next_followup_at} onChange={e => set("next_followup_at", e.target.value)} />
-      </div>
-
-      <Button onClick={handleSave} className="w-full">
-        <Save className="h-4 w-4 mr-1" /> Salvar alterações
-      </Button>
     </div>
   );
 }

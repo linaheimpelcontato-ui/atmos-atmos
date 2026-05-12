@@ -254,6 +254,23 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
         }
       }
       
+      // Sync with prospects table
+      try {
+        await supabase.from("prospects").upsert({
+          name: fullName,
+          email: email.toLowerCase(),
+          phone: phone,
+          birth_date: bDate,
+          city: city,
+          country: country === "BR" ? "Brasil" : country,
+          source: "site",
+          segment: "b2c", // Default for site signups
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "email" });
+      } catch (prospectErr) {
+        console.error("Error syncing with prospects table:", prospectErr);
+      }
+      
       setStep("success");
       trackSignup();
       setTimeout(() => { onSuccess(); onClose(); }, 1000);

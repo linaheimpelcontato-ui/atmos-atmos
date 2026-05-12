@@ -30,6 +30,7 @@ const adminNavSections = [
     module: "cadastros",
     links: [
       { path: "/admin/produtos", label: "Produtos", icon: Package, exact: false },
+      { path: "/admin/clientes", label: "Clientes", icon: Users, exact: false },
       { path: "/admin/guias", label: "Guias Parceiros", icon: UsersRound, exact: false },
       { path: "/admin/vendedores", label: "Vendedores", icon: UserCheck, exact: false },
       { path: "/admin/fornecedores", label: "Fornecedores", icon: Truck, exact: false },
@@ -49,7 +50,6 @@ const adminNavSections = [
     links: [
       { path: "/admin/b2c/dashboard", label: "Dashboard B2C", icon: LayoutDashboard, exact: false },
       { path: "/admin/b2c/solicitacoes", label: "Solicitações", icon: FileText, exact: false },
-      { path: "/admin/b2c/prospects", label: "Clientes", icon: UserCheck, exact: false },
       { path: "/admin/b2c/pipeline", label: "Pipeline", icon: Kanban, exact: false },
       { path: "/admin/b2c/propostas", label: "Propostas", icon: FileText, exact: false },
     ],
@@ -60,7 +60,6 @@ const adminNavSections = [
     links: [
       { path: "/admin/b2b/dashboard", label: "Dashboard B2B", icon: LayoutDashboard, exact: false },
       { path: "/admin/b2b/solicitacoes", label: "Solicitações", icon: FileText, exact: false },
-      { path: "/admin/b2b/prospects", label: "Clientes", icon: Building2, exact: false },
       { path: "/admin/b2b/pipeline", label: "Pipeline", icon: Kanban, exact: false },
       { path: "/admin/b2b/propostas", label: "Propostas", icon: FileText, exact: false },
       { path: "/admin/b2b/reunioes", label: "Calendário Reuniões", icon: CalendarDays, exact: false },
@@ -232,7 +231,7 @@ export default function AdminLayout() {
       {/* Main content */}
       <main ref={mainRef} className="flex-1 flex flex-col overflow-hidden md:pt-0 pt-16 min-w-0 bg-admin-bg relative">
         {/* Glassmorphism Header */}
-        <header className="hidden md:flex sticky top-0 z-20 h-24 px-8 items-center justify-between bg-white/40 backdrop-blur-md border-b border-admin-border/40">
+        <header className="hidden md:flex sticky top-0 z-30 h-20 px-8 items-center justify-between bg-white border-b border-admin-border/40 shadow-sm">
           <div className="flex items-center gap-4 flex-1">
             <div className="relative group max-w-md w-full">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-admin-primary" />
@@ -255,7 +254,7 @@ export default function AdminLayout() {
           </div>
         </header>
 
-        <div className="flex-1 flex flex-col relative overflow-y-auto custom-scrollbar">
+        <div className="flex-1 flex flex-col relative overflow-y-auto custom-scrollbar md:pt-6 pt-6">
           {/* Subtle background decoration */}
           <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-admin-primary/[0.02] rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
           

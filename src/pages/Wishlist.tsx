@@ -169,7 +169,7 @@ const Wishlist = () => {
     if (!pendingAnswers) return;
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase as any).from("quote_requests").insert({
+      const { error } = await (supabase as any).from("quote_requests").insert({
         user_id: user?.id ?? null,
         user_name: user?.user_metadata?.full_name ?? null,
         user_email: user?.email ?? null,
@@ -179,7 +179,14 @@ const Wishlist = () => {
         status: "pending",
         language,
       });
-    } catch (e) {}
+
+      if (error) {
+        console.error("Error saving quote request:", error);
+        // We still proceed to WhatsApp but alert the developer
+      }
+    } catch (e) {
+      console.error("Exception in onboarding confirm:", e);
+    }
 
     const message = buildWhatsAppMessage(items, pendingAnswers, language);
     const encoded = encodeURIComponent(message);

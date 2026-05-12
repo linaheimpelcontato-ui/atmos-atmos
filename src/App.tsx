@@ -148,15 +148,15 @@ const App = () => (
                     <Route path="b2c/solicitacoes" element={<AdminQuotes segment="b2c" />} />
                     <Route path="b2b/solicitacoes" element={<AdminQuotes segment="b2b" />} />
                     <Route path="produtos" element={<AdminProducts />} />
+                    <Route path="pipeline" element={<Navigate to="/admin/b2c/pipeline" replace />} />
+                    <Route path="clientes" element={<AdminProspects segment="all" />} />
                     <Route path="guias" element={<AdminGuides />} />
                     <Route path="vendedores" element={<AdminSellers />} />
                     <Route path="fornecedores" element={<AdminSuppliers />} />
                     <Route path="b2c/dashboard" element={<AdminDashboardB2C />} />
-                    <Route path="b2c/prospects" element={<AdminProspects segment="b2c" />} />
                     <Route path="b2c/pipeline" element={<AdminPipeline segment="b2c" />} />
                     <Route path="b2c/propostas" element={<AdminProposals segment="b2c" />} />
                     <Route path="b2b/dashboard" element={<AdminDashboardB2B />} />
-                    <Route path="b2b/prospects" element={<AdminProspects segment="b2b" />} />
                     <Route path="b2b/pipeline" element={<AdminPipeline segment="b2b" />} />
                     <Route path="b2b/propostas" element={<AdminProposals segment="b2b" />} />
                     <Route path="b2b/descobrir" element={<AdminDiscover />} />
