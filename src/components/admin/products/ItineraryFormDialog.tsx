@@ -634,7 +634,6 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
         const rev = (it.value || 0) * qty;
         const comm = cost * ((it.comissao || 0) / 100);
 
-        // For itineraries, we typically sum costs for both modes unless specified
         analysis.atmos4x4.totalCost += cost;
         analysis.atmos4x4.totalCommission += comm;
         analysis.atmos4x4.itemRevenue += rev;
@@ -645,12 +644,11 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
       });
     });
 
-    // Add extra costs
     analysis.atmos4x4.totalCost += (extraCosts.entranceFees || 0) + (extraCosts.equipmentFees || 0);
     analysis.carroProprio.totalCost += (extraCosts.entranceFees || 0) + (extraCosts.equipmentFees || 0);
 
-    return analysis;
-  }, [days, extraCosts]);
+    return { ...analysis, guideTotalRevenue };
+  }, [days, extraCosts, numPeople, guidePricingTiers, atmosRevenue, taxPercent, markupPercent]);
 
   const calculateSuggestedPrice = (modality: 'atmos4x4' | 'carroProprio', pax: number) => {
     const data = financialAnalysis[modality];
@@ -995,7 +993,7 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                             <td className="p-3 font-bold text-primary">Faturamento Guia ({numPeople} PAX)</td>
                             <td className="text-center p-3">{days.length} Dias</td>
                             <td className="text-right p-3 text-muted-foreground">-</td>
-                            <td className="text-right p-3 font-bold text-[#C5A267]">{fmtBRL(financialAnalysis.atmos4x4.itemRevenue - days.flatMap(d => d.items).reduce((acc, it) => acc + (it.value || 0) * (it.qty || 1), 0))}</td>
+                            <td className="text-right p-3 font-bold text-[#C5A267]">{fmtBRL((financialAnalysis as any).guideTotalRevenue || 0)}</td>
                           </tr>
                           <tr className="bg-muted/5 font-black">
                             <td colSpan={2} className="p-3 text-right uppercase tracking-widest opacity-40">Totais (Itens + Guia)</td>
