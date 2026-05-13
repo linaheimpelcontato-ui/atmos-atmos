@@ -103,7 +103,8 @@ type ItineraryVars = {
     entranceFees: number;
     equipmentFees: number;
   };
-  guideSaleValue?: number;
+  guidePricingTiers?: { p1: number; p2: number; p3plus: number };
+  activeModalities?: { atmos4x4: boolean; carroProprio: boolean };
   guide_id?: string | null;
   // Standard fields (for generic product compatibility)
   pricingType?: "total" | "per_person";
@@ -215,6 +216,27 @@ function SearchableCatalogCombobox({ value, onSelect, options, placeholder, clas
   const selected = options.find(o => o.id === value);
   const h = size === "xs" ? "h-7" : "h-8";
   const textSize = size === "xs" ? "text-xs" : "text-xs";
+
+  const groupedOptions = useMemo(() => {
+    const sorted = [...options].sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'));
+    const groups: Record<string, typeof options> = {};
+    sorted.forEach(o => {
+      const type = o.type || 'outros';
+      if (!groups[type]) groups[type] = [];
+      groups[type].push(o);
+    });
+    return groups;
+  }, [options]);
+
+  const typeLabels: Record<string, string> = {
+    waterfall: "Cachoeiras",
+    experience: "Experiências",
+    accommodation: "Hospedagens",
+    logistics: "Logística",
+    service: "Serviços",
+    outros: "Outros"
+  };
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -226,31 +248,27 @@ function SearchableCatalogCombobox({ value, onSelect, options, placeholder, clas
       <PopoverContent className="w-[380px] p-0 z-[9999] max-h-[400px] overflow-hidden" align="start" onWheel={(e) => e.stopPropagation()}>
         <Command className="flex flex-col">
           <CommandInput placeholder="Buscar no catálogo..." className="h-8 text-xs" />
-          <CommandList className="max-h-[350px] overflow-y-auto">
+          <CommandList className="max-h-[350px] overflow-y-auto custom-scrollbar">
             <CommandEmpty className="py-3 text-xs text-center">Nenhum produto encontrado</CommandEmpty>
-            <CommandGroup>
-              {options.map(o => (
-                <CommandItem key={o.id} value={`${o.label} ${o.id}`} onSelect={() => { onSelect(o.id); setOpen(false); }} className="text-xs">
-                  <div className="flex items-center justify-between w-full">
-                    <div className="flex items-center gap-2">
-                      {value === o.id && <Check className="h-3 w-3 shrink-0 text-primary" />}
-                      <div className={cn("px-1.5 py-0.5 rounded-[4px] text-[8px] font-black uppercase tracking-tighter", 
-                        o.type === 'waterfall' ? 'bg-blue-100 text-blue-700' : 
-                        o.type === 'experience' ? 'bg-teal-100 text-teal-700' : 'bg-muted text-muted-foreground'
-                      )}>
-                        {o.type}
+            {Object.entries(groupedOptions).map(([type, group]) => (
+              <CommandGroup key={type} heading={typeLabels[type] || type.toUpperCase()}>
+                {group.map(o => (
+                  <CommandItem key={o.id} value={`${o.label} ${o.id}`} onSelect={() => { onSelect(o.id); setOpen(false); }} className="text-xs">
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center gap-2">
+                        {value === o.id && <Check className="h-3 w-3 shrink-0 text-primary" />}
+                        <span className={cn("font-medium", value === o.id ? "text-primary" : "")}>{o.label}</span>
                       </div>
-                      <span className={cn("font-medium", value === o.id ? "text-primary" : "")}>{o.label}</span>
+                      {o.price !== undefined && (
+                        <span className="text-[10px] font-bold text-muted-foreground ml-2">
+                          R$ {typeof o.price === 'number' ? o.price.toFixed(0) : o.price}
+                        </span>
+                      )}
                     </div>
-                    {o.price !== undefined && (
-                      <span className="text-[10px] font-bold text-muted-foreground ml-2">
-                        R$ {typeof o.price === 'number' ? o.price.toFixed(0) : o.price}
-                      </span>
-                    )}
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            ))}
           </CommandList>
         </Command>
       </PopoverContent>
@@ -386,7 +404,8 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
   const [atmosRevenue, setAtmosRevenue] = useState(0);
   const [partnerCommission, setPartnerCommission] = useState(0);
   const [extraCosts, setExtraCosts] = useState({ entranceFees: 0, equipmentFees: 0 });
-  const [guideSaleValue, setGuideSaleValue] = useState(0);
+  const [guidePricingTiers, setGuidePricingTiers] = useState({ p1: 0, p2: 0, p3plus: 0 });
+  const [activeModalities, setActiveModalities] = useState({ atmos4x4: true, carroProprio: true });
   const [guideId, setGuideId] = useState<string | null>(null);
   const [pricing, setPricing] = useState<Pricing>({
     atmos4x4: { individual: 0, dupla: 0, trio: 0 },
@@ -420,7 +439,8 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
     setMarkupPercent(vars?.markupPercent || 20);
     setPartnerCommission(vars?.partnerCommission || 0);
     setExtraCosts(vars?.extraCosts || { entranceFees: 0, equipmentFees: 0 });
-    setGuideSaleValue(vars?.guideSaleValue || 0);
+    setGuidePricingTiers(vars?.guidePricingTiers || { p1: 0, p2: 0, p3plus: 0 });
+    setActiveModalities(vars?.activeModalities || { atmos4x4: true, carroProprio: true });
     setGuideId(vars?.guide_id || null);
 
     if (vars?.pricing) {
@@ -595,9 +615,16 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
   };
 
   const financialAnalysis = useMemo(() => {
+    // Determine guide daily sale value (per person) based on numPeople
+    let currentGuideDaily = guidePricingTiers.p1;
+    if (numPeople === 2) currentGuideDaily = guidePricingTiers.p2;
+    if (numPeople >= 3) currentGuideDaily = guidePricingTiers.p3plus;
+
+    const guideTotalRevenue = currentGuideDaily * numPeople * days.length;
+
     const analysis = {
-      atmos4x4: { totalCost: 0, totalCommission: 0, itemRevenue: guideSaleValue * days.length },
-      carroProprio: { totalCost: 0, totalCommission: 0, itemRevenue: guideSaleValue * days.length }
+      atmos4x4: { totalCost: 0, totalCommission: 0, itemRevenue: guideTotalRevenue },
+      carroProprio: { totalCost: 0, totalCommission: 0, itemRevenue: guideTotalRevenue }
     };
 
     days.forEach(day => {
@@ -667,7 +694,8 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
         markupPercent,
         partnerCommission,
         extraCosts,
-        guideSaleValue,
+        guidePricingTiers,
+        activeModalities,
         guide_id: guideId
       },
     });
@@ -776,15 +804,9 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                                   <h4 className="text-xl font-sans text-primary leading-tight">
                                     {day.attractions.pt?.[0] || "Dia Vazio"}
                                   </h4>
-                                  <div className="flex items-center gap-3">
                                     <Badge variant="outline" className="text-[8px] font-black uppercase border-black/10 text-muted-foreground/60 tracking-widest">
                                       {day.items.length} Itens
                                     </Badge>
-                                    <div className="flex items-center gap-1.5 text-[9px] font-bold text-muted-foreground/40 uppercase tracking-widest">
-                                      {day.vehicle_type === 'atmos4x4' ? <Truck className="h-3 w-3" /> : <Car className="h-3 w-3" />}
-                                      {day.vehicle_type === 'atmos4x4' ? 'Atmos 4x4' : 'Veículo Próprio'}
-                                    </div>
-                                  </div>
                                 </div>
                               </div>
                               <div className="flex items-center gap-3">
@@ -797,8 +819,7 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                           </CollapsibleTrigger>
                           <CollapsibleContent>
                             <div className="p-8 pt-2 space-y-8 animate-in slide-in-from-top-4 duration-500">
-                              <div className="grid grid-cols-2 gap-6">
-                                <div className="space-y-2">
+                                <div className="space-y-2 col-span-2">
                                   <Label className="text-[10px] font-black uppercase tracking-[0.1em] text-muted-foreground/60 ml-1">Título do Dia</Label>
                                   <Input value={day.attractions.pt?.[0] || ""} onChange={(e) => {
                                     const newDays = [...days];
@@ -806,23 +827,6 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                                     setDays(newDays);
                                   }} className="h-11 rounded-xl bg-muted/20 border-none font-medium" placeholder="Ex: Complexo do Macacão" />
                                 </div>
-                                <div className="space-y-2">
-                                  <Label className="text-[10px] font-black uppercase tracking-[0.1em] text-muted-foreground/60 ml-1">Logística do Dia</Label>
-                                  <Select value={day.vehicle_type} onValueChange={(v) => {
-                                    const newDays = [...days];
-                                    newDays[dIdx].vehicle_type = v;
-                                    setDays(newDays);
-                                  }}>
-                                    <SelectTrigger className="h-11 rounded-xl bg-muted/20 border-none font-semibold text-xs">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="atmos4x4">ATMOS 4x4 (Expedição)</SelectItem>
-                                      <SelectItem value="carroProprio">Carro Próprio (Turista)</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              </div>
                               <div className="space-y-2">
                                 <Label className="text-[10px] font-black uppercase tracking-[0.1em] text-muted-foreground/60 ml-1">Descrição Detalhada do Dia</Label>
                                 <Textarea 
@@ -956,61 +960,7 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
               </TabsContent>
               <TabsContent value="pricing" className="mt-0 p-8 space-y-12 animate-in fade-in slide-in-from-right-4 duration-500">
                 <div className="max-w-4xl mx-auto space-y-8">
-                  {/* ── SEÇÃO 1: SIMULADOR DE VENDA ── */}
-                  <section className="bg-white p-10 rounded-[3rem] border border-black/5 shadow-sm space-y-8 relative overflow-hidden">
-                    <div className="absolute -right-20 -top-20 w-64 h-64 bg-primary/5 blur-[100px] rounded-full" />
-                    <div className="flex items-center justify-between relative z-10">
-                      <div className="space-y-1">
-                        <h3 className="text-3xl font-sans text-primary leading-tight italic">Simulador de Venda</h3>
-                        <p className="text-xs text-muted-foreground font-medium uppercase tracking-[0.2em] opacity-60">Ajuste as margens para calcular o preço final</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="bg-muted/30 p-1 rounded-xl flex">
-                          {[1, 2, 4, 6].map(n => (
-                            <button key={n} type="button" onClick={() => setNumPeople(n)} className={cn("px-3 py-1.5 rounded-lg text-[10px] font-black transition-all", numPeople === n ? "bg-white text-primary shadow-sm" : "text-muted-foreground/60 hover:text-primary")}>
-                              {n}P
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4 relative z-10">
-                      <div className="space-y-2 p-4 bg-primary/[0.03] rounded-2xl border border-primary/10">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-primary">Venda Diária Guia (R$)</Label>
-                        <NumericCell value={guideSaleValue} onCommit={setGuideSaleValue} className="h-10 text-lg font-sans bg-white border-primary/10 rounded-xl" />
-                      </div>
-                      <div className="space-y-2 p-4 bg-muted/20 rounded-2xl border border-black/5">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Serviço ATMOS (R$)</Label>
-                        <NumericCell value={atmosRevenue} onCommit={setAtmosRevenue} className="h-10 text-lg font-sans bg-white border-black/5 rounded-xl" />
-                      </div>
-                      <div className="space-y-2 p-4 bg-muted/20 rounded-2xl border border-black/5">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Imposto (%)</Label>
-                        <NumericCell value={taxPercent} onCommit={setTaxPercent} className="h-10 text-lg font-sans bg-white border-black/5 rounded-xl" />
-                      </div>
-                      <div className="space-y-2 p-4 bg-muted/20 rounded-2xl border border-black/5">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Margem Alvo (%)</Label>
-                        <NumericCell value={markupPercent} onCommit={setMarkupPercent} className="h-10 text-lg font-sans bg-white border-black/5 rounded-xl" />
-                      </div>
-                      <div className="space-y-2 p-4 bg-muted/20 rounded-2xl border border-black/5">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Comissão Parceiro (%)</Label>
-                        <NumericCell value={partnerCommission} onCommit={setPartnerCommission} className="h-10 text-lg font-sans bg-white border-black/5 rounded-xl" />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4 relative z-10">
-                      <div className="space-y-2 p-4 bg-amber-50/50 rounded-2xl border border-amber-100">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-amber-700/60">Ingressos (Custo Total R$)</Label>
-                        <NumericCell value={extraCosts.entranceFees} onCommit={(v) => setExtraCosts(prev => ({ ...prev, entranceFees: v }))} className="h-10 text-lg font-sans bg-white border-amber-100 rounded-xl" />
-                      </div>
-                      <div className="space-y-2 p-4 bg-amber-50/50 rounded-2xl border border-amber-100">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-amber-700/60">Equipamentos (Custo Total R$)</Label>
-                        <NumericCell value={extraCosts.equipmentFees} onCommit={(v) => setExtraCosts(prev => ({ ...prev, equipmentFees: v }))} className="h-10 text-lg font-sans bg-white border-amber-100 rounded-xl" />
-                      </div>
-                    </div>
-                  </section>
-
-                  {/* ── SEÇÃO NOVA: DESCRITIVO DE ITENS ── */}
+                  {/* ── SEÇÃO 1: DESCRITIVO DE ITENS ── */}
                   <section className="bg-white p-8 rounded-[3rem] border border-black/5 shadow-sm space-y-6">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-2xl bg-muted flex items-center justify-center text-muted-foreground">
@@ -1033,14 +983,6 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-black/5">
-                          {guideSaleValue > 0 && (
-                            <tr className="bg-primary/[0.02]">
-                              <td className="p-3 font-bold text-primary">Diária de Guia (Fixo)</td>
-                              <td className="text-center p-3">{days.length} Dias</td>
-                              <td className="text-right p-3 text-muted-foreground">-</td>
-                              <td className="text-right p-3 font-bold text-[#C5A267]">{fmtBRL(guideSaleValue * days.length)}</td>
-                            </tr>
-                          )}
                           {days.flatMap(d => d.items).map((it, idx) => (
                             <tr key={it._uid || idx} className="hover:bg-muted/10 transition-colors">
                               <td className="p-3 font-medium">{it.item_name}</td>
@@ -1049,8 +991,14 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                               <td className="text-right p-3 font-mono text-[#C5A267]">{fmtBRL(it.value || 0)}</td>
                             </tr>
                           ))}
+                          <tr className="bg-primary/[0.01]">
+                            <td className="p-3 font-bold text-primary">Faturamento Guia ({numPeople} PAX)</td>
+                            <td className="text-center p-3">{days.length} Dias</td>
+                            <td className="text-right p-3 text-muted-foreground">-</td>
+                            <td className="text-right p-3 font-bold text-[#C5A267]">{fmtBRL(financialAnalysis.atmos4x4.itemRevenue - days.flatMap(d => d.items).reduce((acc, it) => acc + (it.value || 0) * (it.qty || 1), 0))}</td>
+                          </tr>
                           <tr className="bg-muted/5 font-black">
-                            <td colSpan={2} className="p-3 text-right uppercase tracking-widest opacity-40">Totais</td>
+                            <td colSpan={2} className="p-3 text-right uppercase tracking-widest opacity-40">Totais (Itens + Guia)</td>
                             <td className="text-right p-3 text-primary">{fmtBRL(financialAnalysis.atmos4x4.totalCost)}</td>
                             <td className="text-right p-3 text-[#C5A267]">{fmtBRL(financialAnalysis.atmos4x4.itemRevenue)}</td>
                           </tr>
@@ -1059,83 +1007,164 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                     </div>
                   </section>
 
-                  {/* ── SEÇÃO 2: DRE / ANÁLISE FINANCEIRA ── */}
+                  {/* ── SEÇÃO 2: SIMULADOR DE VENDA ── */}
+                  <section className="bg-white p-10 rounded-[3rem] border border-black/5 shadow-sm space-y-8 relative overflow-hidden">
+                    <div className="absolute -right-20 -top-20 w-64 h-64 bg-primary/5 blur-[100px] rounded-full" />
+                    <div className="flex items-center justify-between relative z-10">
+                      <div className="space-y-1">
+                        <h3 className="text-3xl font-sans text-primary leading-tight italic">Simulador de Venda</h3>
+                        <p className="text-xs text-muted-foreground font-medium uppercase tracking-[0.2em] opacity-60">Ajuste as margens para calcular o preço final</p>
+                      </div>
+                      <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-4 bg-muted/10 p-2 rounded-2xl border border-black/5">
+                           <div className="flex items-center gap-2">
+                             <Switch checked={activeModalities.atmos4x4} onCheckedChange={(v) => setActiveModalities(prev => ({ ...prev, atmos4x4: v }))} />
+                             <span className="text-[10px] font-black uppercase tracking-tighter text-primary">Atmos 4x4</span>
+                           </div>
+                           <div className="flex items-center gap-2">
+                             <Switch checked={activeModalities.carroProprio} onCheckedChange={(v) => setActiveModalities(prev => ({ ...prev, carroProprio: v }))} />
+                             <span className="text-[10px] font-black uppercase tracking-tighter text-orange-600">Carro Próprio</span>
+                           </div>
+                        </div>
+                        <div className="bg-muted/30 p-1 rounded-xl flex">
+                          {[1, 2, 4, 6].map(n => (
+                            <button key={n} type="button" onClick={() => setNumPeople(n)} className={cn("px-3 py-1.5 rounded-lg text-[10px] font-black transition-all", numPeople === n ? "bg-white text-primary shadow-sm" : "text-muted-foreground/60 hover:text-primary")}>
+                              {n}P
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+                      <div className="col-span-3 p-6 bg-primary/[0.02] rounded-[2rem] border border-primary/5 space-y-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <UsersRound className="h-4 w-4 text-primary" />
+                          <h4 className="text-[10px] font-black uppercase tracking-widest text-primary">Diária Guia (Venda por PAX)</h4>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4">
+                          <div className="space-y-1.5">
+                            <Label className="text-[9px] font-bold uppercase tracking-tight ml-1">1 Pessoa (R$)</Label>
+                            <NumericCell value={guidePricingTiers.p1} onCommit={(v) => setGuidePricingTiers(prev => ({ ...prev, p1: v }))} className="h-10 text-lg font-sans bg-white border-primary/10 rounded-xl" />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-[9px] font-bold uppercase tracking-tight ml-1">2 Pessoas (R$)</Label>
+                            <NumericCell value={guidePricingTiers.p2} onCommit={(v) => setGuidePricingTiers(prev => ({ ...prev, p2: v }))} className="h-10 text-lg font-sans bg-white border-primary/10 rounded-xl" />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-[9px] font-bold uppercase tracking-tight ml-1">3 ou + Pessoas (R$)</Label>
+                            <NumericCell value={guidePricingTiers.p3plus} onCommit={(v) => setGuidePricingTiers(prev => ({ ...prev, p3plus: v }))} className="h-10 text-lg font-sans bg-white border-primary/10 rounded-xl" />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 p-4 bg-muted/20 rounded-2xl border border-black/5">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Serviço ATMOS (R$)</Label>
+                        <NumericCell value={atmosRevenue} onCommit={setAtmosRevenue} className="h-10 text-lg font-sans bg-white border-black/5 rounded-xl" />
+                      </div>
+                      <div className="space-y-2 p-4 bg-muted/20 rounded-2xl border border-black/5">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Imposto (%)</Label>
+                        <NumericCell value={taxPercent} onCommit={setTaxPercent} className="h-10 text-lg font-sans bg-white border-black/5 rounded-xl" />
+                      </div>
+                      <div className="space-y-2 p-4 bg-muted/20 rounded-2xl border border-black/5">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Margem Alvo (%)</Label>
+                        <NumericCell value={markupPercent} onCommit={setMarkupPercent} className="h-10 text-lg font-sans bg-white border-black/5 rounded-xl" />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 relative z-10">
+                      <div className="space-y-2 p-4 bg-amber-50/50 rounded-2xl border border-amber-100">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-amber-700/60">Ingressos (Custo Total R$)</Label>
+                        <NumericCell value={extraCosts.entranceFees} onCommit={(v) => setExtraCosts(prev => ({ ...prev, entranceFees: v }))} className="h-10 text-lg font-sans bg-white border-amber-100 rounded-xl" />
+                      </div>
+                      <div className="space-y-2 p-4 bg-amber-50/50 rounded-2xl border border-amber-100">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-amber-700/60">Equipamentos (Custo Total R$)</Label>
+                        <NumericCell value={extraCosts.equipmentFees} onCommit={(v) => setExtraCosts(prev => ({ ...prev, equipmentFees: v }))} className="h-10 text-lg font-sans bg-white border-amber-100 rounded-xl" />
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* ── SEÇÃO 3: DRE / ANÁLISE FINANCEIRA ── */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {/* Atmos 4x4 Analysis */}
-                    <section className="bg-white p-8 rounded-[3rem] border border-black/5 shadow-sm space-y-6">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center text-white">
-                          <Truck className="h-5 w-5" />
+                    {activeModalities.atmos4x4 && (
+                      <section className="bg-white p-8 rounded-[3rem] border border-black/5 shadow-sm space-y-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center text-white">
+                            <Truck className="h-5 w-5" />
+                          </div>
+                          <h4 className="font-sans text-xl text-primary">Análise 4x4</h4>
                         </div>
-                        <h4 className="font-sans text-xl text-primary">Análise 4x4</h4>
-                      </div>
-                      
-                        <div className="space-y-3">
-                          <div className="flex justify-between text-xs font-medium text-muted-foreground">
-                            <span>Venda de Itens (Total)</span>
-                            <span className="text-[#C5A267]">{fmtBRL(financialAnalysis.atmos4x4.itemRevenue)}</span>
+                        
+                          <div className="space-y-3">
+                            <div className="flex justify-between text-xs font-medium text-muted-foreground">
+                              <span>Venda de Itens + Guia (Total)</span>
+                              <span className="text-[#C5A267]">{fmtBRL(financialAnalysis.atmos4x4.itemRevenue)}</span>
+                            </div>
+                            <div className="flex justify-between text-xs font-medium text-muted-foreground">
+                              <span>Custo de Itens (Total)</span>
+                              <span>{fmtBRL(financialAnalysis.atmos4x4.totalCost)}</span>
+                            </div>
+                          <div className="flex justify-between text-xs font-medium text-emerald-600">
+                            <span>Comissões Fornecedores (+)</span>
+                            <span>{fmtBRL(financialAnalysis.atmos4x4.totalCommission)}</span>
                           </div>
                           <div className="flex justify-between text-xs font-medium text-muted-foreground">
-                            <span>Custo de Itens (Total)</span>
-                            <span>{fmtBRL(financialAnalysis.atmos4x4.totalCost)}</span>
+                            <span>Imposto ({taxPercent}%)</span>
+                            <span className="text-rose-500">- {fmtBRL((calculateSuggestedPrice('atmos4x4', numPeople) * (taxPercent/100)))}</span>
                           </div>
-                        <div className="flex justify-between text-xs font-medium text-emerald-600">
-                          <span>Comissões Fornecedores (+)</span>
-                          <span>{fmtBRL(financialAnalysis.atmos4x4.totalCommission)}</span>
-                        </div>
-                        <div className="flex justify-between text-xs font-medium text-muted-foreground">
-                          <span>Imposto ({taxPercent}%)</span>
-                          <span className="text-rose-500">- {fmtBRL((calculateSuggestedPrice('atmos4x4', numPeople) * (taxPercent/100)))}</span>
-                        </div>
-                        <div className="pt-3 border-t border-black/5 flex justify-between items-end">
-                          <div>
-                            <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/40 block">Sugestão de Venda /pax</span>
-                            <div className="text-2xl font-sans text-primary">{fmtBRL(calculateSuggestedPrice('atmos4x4', numPeople))}</div>
+                          <div className="pt-3 border-t border-black/5 flex justify-between items-end">
+                            <div>
+                              <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/40 block">Sugestão de Venda /pax</span>
+                              <div className="text-2xl font-sans text-primary">{fmtBRL(calculateSuggestedPrice('atmos4x4', numPeople))}</div>
+                            </div>
+                            <Badge className="bg-primary/10 text-primary border-none text-[10px] h-6 px-3">
+                              Lucro: {markupPercent}%
+                            </Badge>
                           </div>
-                          <Badge className="bg-primary/10 text-primary border-none text-[10px] h-6 px-3">
-                            Lucro: {markupPercent}%
-                          </Badge>
                         </div>
-                      </div>
-                    </section>
+                      </section>
+                    )}
 
                     {/* Carro Próprio Analysis */}
-                    <section className="bg-white p-8 rounded-[3rem] border border-black/5 shadow-sm space-y-6">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-orange-500 flex items-center justify-center text-white">
-                          <Car className="h-5 w-5" />
+                    {activeModalities.carroProprio && (
+                      <section className="bg-white p-8 rounded-[3rem] border border-black/5 shadow-sm space-y-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-2xl bg-orange-500 flex items-center justify-center text-white">
+                            <Car className="h-5 w-5" />
+                          </div>
+                          <h4 className="font-sans text-xl text-orange-600">Análise Carro Próprio</h4>
                         </div>
-                        <h4 className="font-sans text-xl text-orange-600">Análise Carro Próprio</h4>
-                      </div>
-                      
-                        <div className="space-y-3">
-                          <div className="flex justify-between text-xs font-medium text-muted-foreground">
-                            <span>Venda de Itens (Total)</span>
-                            <span className="text-[#C5A267]">{fmtBRL(financialAnalysis.carroProprio.itemRevenue)}</span>
+                        
+                          <div className="space-y-3">
+                            <div className="flex justify-between text-xs font-medium text-muted-foreground">
+                              <span>Venda de Itens + Guia (Total)</span>
+                              <span className="text-[#C5A267]">{fmtBRL(financialAnalysis.carroProprio.itemRevenue)}</span>
+                            </div>
+                            <div className="flex justify-between text-xs font-medium text-muted-foreground">
+                              <span>Custo de Itens (Total)</span>
+                              <span>{fmtBRL(financialAnalysis.carroProprio.totalCost)}</span>
+                            </div>
+                          <div className="flex justify-between text-xs font-medium text-emerald-600">
+                            <span>Comissões Fornecedores (+)</span>
+                            <span>{fmtBRL(financialAnalysis.carroProprio.totalCommission)}</span>
                           </div>
                           <div className="flex justify-between text-xs font-medium text-muted-foreground">
-                            <span>Custo de Itens (Total)</span>
-                            <span>{fmtBRL(financialAnalysis.carroProprio.totalCost)}</span>
+                            <span>Imposto ({taxPercent}%)</span>
+                            <span className="text-rose-500">- {fmtBRL((calculateSuggestedPrice('carroProprio', numPeople) * (taxPercent/100)))}</span>
                           </div>
-                        <div className="flex justify-between text-xs font-medium text-emerald-600">
-                          <span>Comissões Fornecedores (+)</span>
-                          <span>{fmtBRL(financialAnalysis.carroProprio.totalCommission)}</span>
-                        </div>
-                        <div className="flex justify-between text-xs font-medium text-muted-foreground">
-                          <span>Imposto ({taxPercent}%)</span>
-                          <span className="text-rose-500">- {fmtBRL((calculateSuggestedPrice('carroProprio', numPeople) * (taxPercent/100)))}</span>
-                        </div>
-                        <div className="pt-3 border-t border-black/5 flex justify-between items-end">
-                          <div>
-                            <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/40 block">Sugestão de Venda /pax</span>
-                            <div className="text-2xl font-sans text-orange-600">{fmtBRL(calculateSuggestedPrice('carroProprio', numPeople))}</div>
+                          <div className="pt-3 border-t border-black/5 flex justify-between items-end">
+                            <div>
+                              <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/40 block">Sugestão de Venda /pax</span>
+                              <div className="text-2xl font-sans text-orange-600">{fmtBRL(calculateSuggestedPrice('carroProprio', numPeople))}</div>
+                            </div>
+                            <Badge className="bg-orange-50 text-orange-600 border-none text-[10px] h-6 px-3">
+                              Lucro: {markupPercent}%
+                            </Badge>
                           </div>
-                          <Badge className="bg-orange-50 text-orange-600 border-none text-[10px] h-6 px-3">
-                            Lucro: {markupPercent}%
-                          </Badge>
                         </div>
-                      </div>
-                    </section>
+                      </section>
+                    )}
                   </div>
 
                   {/* ── SEÇÃO 3: TABELA FINAL DE PREÇOS ── */}
@@ -1162,54 +1191,58 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-black/5">
-                          <tr className="hover:bg-primary/[0.02] transition-colors">
-                            <td className="p-6">
-                              <div className="flex items-center gap-3">
-                                <div className="w-2 h-2 rounded-full bg-primary" />
-                                <span className="font-sans text-lg text-primary leading-none uppercase tracking-tighter">Expedição 4x4</span>
-                              </div>
-                            </td>
-                            {(['individual', 'dupla', 'trio'] as const).map((type, idx) => {
-                              const pax = idx === 0 ? 1 : idx === 1 ? 2 : 4;
-                              const suggested = calculateSuggestedPrice('atmos4x4', pax);
-                              return (
-                                <td key={type} className="p-4 text-center">
-                                  <div className="space-y-1.5">
-                                    <NumericCell 
-                                      value={pricing.atmos4x4?.[type] || 0} 
-                                      onCommit={(v) => setPricing(prev => ({ ...prev, atmos4x4: { ...prev.atmos4x4, [type]: v } }))}
-                                      className="w-28 mx-auto h-12 text-center text-lg font-sans bg-white border-black/5 rounded-2xl focus:ring-primary/20 shadow-sm" 
-                                    />
-                                    <div className="text-[10px] font-medium text-muted-foreground/40">Sugerido: {fmtBRL(suggested, 0)}</div>
-                                  </div>
-                                </td>
-                              );
-                            })}
-                          </tr>
-                          <tr className="hover:bg-orange-50/30 transition-colors">
-                            <td className="p-6">
-                              <div className="flex items-center gap-3">
-                                <div className="w-2 h-2 rounded-full bg-orange-500" />
-                                <span className="font-sans text-lg text-orange-600 leading-none uppercase tracking-tighter">Carro Próprio</span>
-                              </div>
-                            </td>
-                            {(['individual', 'dupla', 'trio'] as const).map((type, idx) => {
-                              const pax = idx === 0 ? 1 : idx === 1 ? 2 : 4;
-                              const suggested = calculateSuggestedPrice('carroProprio', pax);
-                              return (
-                                <td key={type} className="p-4 text-center">
-                                  <div className="space-y-1.5">
-                                    <NumericCell 
-                                      value={pricing.carroProprio?.[type] || 0} 
-                                      onCommit={(v) => setPricing(prev => ({ ...prev, carroProprio: { ...prev.carroProprio, [type]: v } }))}
-                                      className="w-28 mx-auto h-12 text-center text-lg font-sans bg-white border-black/5 rounded-2xl focus:ring-orange-500/20 shadow-sm" 
-                                    />
-                                    <div className="text-[10px] font-medium text-muted-foreground/40">Sugerido: {fmtBRL(suggested, 0)}</div>
-                                  </div>
-                                </td>
-                              );
-                            })}
-                          </tr>
+                          {activeModalities.atmos4x4 && (
+                            <tr className="hover:bg-primary/[0.02] transition-colors">
+                              <td className="p-6">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-2 h-2 rounded-full bg-primary" />
+                                  <span className="font-sans text-lg text-primary leading-none uppercase tracking-tighter">Expedição 4x4</span>
+                                </div>
+                              </td>
+                              {(['individual', 'dupla', 'trio'] as const).map((type, idx) => {
+                                const pax = idx === 0 ? 1 : idx === 1 ? 2 : 4;
+                                const suggested = calculateSuggestedPrice('atmos4x4', pax);
+                                return (
+                                  <td key={type} className="p-4 text-center">
+                                    <div className="space-y-1.5">
+                                      <NumericCell 
+                                        value={pricing.atmos4x4?.[type] || 0} 
+                                        onCommit={(v) => setPricing(prev => ({ ...prev, atmos4x4: { ...prev.atmos4x4, [type]: v } }))}
+                                        className="w-28 mx-auto h-12 text-center text-lg font-sans bg-white border-black/5 rounded-2xl focus:ring-primary/20 shadow-sm" 
+                                      />
+                                      <div className="text-[10px] font-medium text-muted-foreground/40">Sugerido: {fmtBRL(suggested, 0)}</div>
+                                    </div>
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          )}
+                          {activeModalities.carroProprio && (
+                            <tr className="hover:bg-orange-50/30 transition-colors">
+                              <td className="p-6">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-2 h-2 rounded-full bg-orange-500" />
+                                  <span className="font-sans text-lg text-orange-600 leading-none uppercase tracking-tighter">Carro Próprio</span>
+                                </div>
+                              </td>
+                              {(['individual', 'dupla', 'trio'] as const).map((type, idx) => {
+                                const pax = idx === 0 ? 1 : idx === 1 ? 2 : 4;
+                                const suggested = calculateSuggestedPrice('carroProprio', pax);
+                                return (
+                                  <td key={type} className="p-4 text-center">
+                                    <div className="space-y-1.5">
+                                      <NumericCell 
+                                        value={pricing.carroProprio?.[type] || 0} 
+                                        onCommit={(v) => setPricing(prev => ({ ...prev, carroProprio: { ...prev.carroProprio, [type]: v } }))}
+                                        className="w-28 mx-auto h-12 text-center text-lg font-sans bg-white border-black/5 rounded-2xl focus:ring-orange-500/20 shadow-sm" 
+                                      />
+                                      <div className="text-[10px] font-medium text-muted-foreground/40">Sugerido: {fmtBRL(suggested, 0)}</div>
+                                    </div>
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          )}
                         </tbody>
                       </table>
                     </div>
