@@ -732,7 +732,7 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                       <div className="space-y-4">
                         <div className="space-y-1.5">
                           <Label className="text-xs font-bold uppercase tracking-tight ml-1">Título do Roteiro</Label>
-                          <Input value={name} onChange={(e) => setName(e.target.value)} required className="h-12 text-lg font-display rounded-2xl bg-muted/30 border-none focus-visible:ring-primary/20" placeholder="Ex: Chapada das Águas" />
+                          <Input value={name} onChange={(e) => setName(e.target.value)} required className="h-12 text-lg font-sans rounded-2xl bg-muted/30 border-none focus-visible:ring-primary/20" placeholder="Ex: Chapada das Águas" />
                         </div>
                         <div className="flex items-center justify-between p-4 bg-primary/[0.02] rounded-2xl border border-primary/5">
                           <div className="space-y-0.5">
@@ -752,10 +752,10 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                         <CalendarDays className="h-8 w-8" />
                       </div>
                       <div>
-                        <h4 className="text-lg font-display text-primary">Duração da Jornada</h4>
+                        <h4 className="text-lg font-sans text-primary">Duração da Jornada</h4>
                         <p className="text-xs text-muted-foreground font-medium">Atualmente configurado para</p>
                       </div>
-                      <div className="text-5xl font-display text-primary leading-none">{days.length} <span className="text-sm font-black uppercase tracking-widest opacity-40">Dias</span></div>
+                      <div className="text-5xl font-sans text-primary leading-none">{days.length} <span className="text-sm font-black uppercase tracking-widest opacity-40">Dias</span></div>
                       <Button type="button" onClick={addDay} className="w-full h-12 rounded-2xl font-bold uppercase tracking-widest text-xs shadow-md">
                         Adicionar Novo Dia
                       </Button>
@@ -770,10 +770,10 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                               <div className="flex items-center gap-6">
                                 <div className="w-14 h-14 rounded-2xl bg-muted/50 flex flex-col items-center justify-center text-[#1A261B] group-hover:bg-primary group-hover:text-white transition-all duration-300">
                                   <span className="text-[10px] font-black uppercase tracking-tighter opacity-40">DIA</span>
-                                  <span className="text-2xl font-display leading-none">{day.dayNumber}</span>
+                                  <span className="text-2xl font-sans leading-none">{day.dayNumber}</span>
                                 </div>
                                 <div className="space-y-1">
-                                  <h4 className="text-xl font-display text-primary leading-tight">
+                                  <h4 className="text-xl font-sans text-primary leading-tight">
                                     {day.attractions.pt?.[0] || "Dia Vazio"}
                                   </h4>
                                   <div className="flex items-center gap-3">
@@ -948,7 +948,7 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                         </div>
                       </Collapsible>
                     ))}
-                    <Button type="button" variant="outline" onClick={addDay} className="w-full h-16 rounded-[2.5rem] border-dashed border-2 border-black/5 hover:border-primary/20 hover:bg-primary/5 transition-all text-muted-foreground font-display text-lg">
+                    <Button type="button" variant="outline" onClick={addDay} className="w-full h-16 rounded-[2.5rem] border-dashed border-2 border-black/5 hover:border-primary/20 hover:bg-primary/5 transition-all text-muted-foreground font-sans text-lg">
                       <Plus className="h-5 w-5 mr-3" /> Clique para expandir a jornada
                     </Button>
                   </div>
@@ -961,7 +961,7 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                     <div className="absolute -right-20 -top-20 w-64 h-64 bg-primary/5 blur-[100px] rounded-full" />
                     <div className="flex items-center justify-between relative z-10">
                       <div className="space-y-1">
-                        <h3 className="text-3xl font-display text-primary leading-tight italic">Simulador de Venda</h3>
+                        <h3 className="text-3xl font-sans text-primary leading-tight italic">Simulador de Venda</h3>
                         <p className="text-xs text-muted-foreground font-medium uppercase tracking-[0.2em] opacity-60">Ajuste as margens para calcular o preço final</p>
                       </div>
                       <div className="flex items-center gap-2">
@@ -978,34 +978,34 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-4 relative z-10">
                       <div className="space-y-2 p-4 bg-primary/[0.03] rounded-2xl border border-primary/10">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-primary">Venda Diária Guia (R$)</Label>
-                        <NumericCell value={guideSaleValue} onCommit={setGuideSaleValue} className="h-10 text-lg font-display bg-white border-primary/10 rounded-xl" />
+                        <NumericCell value={guideSaleValue} onCommit={setGuideSaleValue} className="h-10 text-lg font-sans bg-white border-primary/10 rounded-xl" />
                       </div>
                       <div className="space-y-2 p-4 bg-muted/20 rounded-2xl border border-black/5">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Serviço ATMOS (R$)</Label>
-                        <NumericCell value={atmosRevenue} onCommit={setAtmosRevenue} className="h-10 text-lg font-display bg-white border-black/5 rounded-xl" />
+                        <NumericCell value={atmosRevenue} onCommit={setAtmosRevenue} className="h-10 text-lg font-sans bg-white border-black/5 rounded-xl" />
                       </div>
                       <div className="space-y-2 p-4 bg-muted/20 rounded-2xl border border-black/5">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Imposto (%)</Label>
-                        <NumericCell value={taxPercent} onCommit={setTaxPercent} className="h-10 text-lg font-display bg-white border-black/5 rounded-xl" />
+                        <NumericCell value={taxPercent} onCommit={setTaxPercent} className="h-10 text-lg font-sans bg-white border-black/5 rounded-xl" />
                       </div>
                       <div className="space-y-2 p-4 bg-muted/20 rounded-2xl border border-black/5">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Margem Alvo (%)</Label>
-                        <NumericCell value={markupPercent} onCommit={setMarkupPercent} className="h-10 text-lg font-display bg-white border-black/5 rounded-xl" />
+                        <NumericCell value={markupPercent} onCommit={setMarkupPercent} className="h-10 text-lg font-sans bg-white border-black/5 rounded-xl" />
                       </div>
                       <div className="space-y-2 p-4 bg-muted/20 rounded-2xl border border-black/5">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Comissão Parceiro (%)</Label>
-                        <NumericCell value={partnerCommission} onCommit={setPartnerCommission} className="h-10 text-lg font-display bg-white border-black/5 rounded-xl" />
+                        <NumericCell value={partnerCommission} onCommit={setPartnerCommission} className="h-10 text-lg font-sans bg-white border-black/5 rounded-xl" />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 relative z-10">
                       <div className="space-y-2 p-4 bg-amber-50/50 rounded-2xl border border-amber-100">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-amber-700/60">Ingressos (Custo Total R$)</Label>
-                        <NumericCell value={extraCosts.entranceFees} onCommit={(v) => setExtraCosts(prev => ({ ...prev, entranceFees: v }))} className="h-10 text-lg font-display bg-white border-amber-100 rounded-xl" />
+                        <NumericCell value={extraCosts.entranceFees} onCommit={(v) => setExtraCosts(prev => ({ ...prev, entranceFees: v }))} className="h-10 text-lg font-sans bg-white border-amber-100 rounded-xl" />
                       </div>
                       <div className="space-y-2 p-4 bg-amber-50/50 rounded-2xl border border-amber-100">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-amber-700/60">Equipamentos (Custo Total R$)</Label>
-                        <NumericCell value={extraCosts.equipmentFees} onCommit={(v) => setExtraCosts(prev => ({ ...prev, equipmentFees: v }))} className="h-10 text-lg font-display bg-white border-amber-100 rounded-xl" />
+                        <NumericCell value={extraCosts.equipmentFees} onCommit={(v) => setExtraCosts(prev => ({ ...prev, equipmentFees: v }))} className="h-10 text-lg font-sans bg-white border-amber-100 rounded-xl" />
                       </div>
                     </div>
                   </section>
@@ -1017,7 +1017,7 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                         <List className="h-5 w-5" />
                       </div>
                       <div className="space-y-0.5">
-                        <h4 className="font-display text-xl text-primary leading-tight">Resumo de Itens do Roteiro</h4>
+                        <h4 className="font-sans text-xl text-primary leading-tight">Resumo de Itens do Roteiro</h4>
                         <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/40">Detalhamento para conferência de valores</p>
                       </div>
                     </div>
@@ -1067,7 +1067,7 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                         <div className="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center text-white">
                           <Truck className="h-5 w-5" />
                         </div>
-                        <h4 className="font-display text-xl text-primary">Análise 4x4</h4>
+                        <h4 className="font-sans text-xl text-primary">Análise 4x4</h4>
                       </div>
                       
                         <div className="space-y-3">
@@ -1090,7 +1090,7 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                         <div className="pt-3 border-t border-black/5 flex justify-between items-end">
                           <div>
                             <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/40 block">Sugestão de Venda /pax</span>
-                            <div className="text-2xl font-display text-primary">{fmtBRL(calculateSuggestedPrice('atmos4x4', numPeople))}</div>
+                            <div className="text-2xl font-sans text-primary">{fmtBRL(calculateSuggestedPrice('atmos4x4', numPeople))}</div>
                           </div>
                           <Badge className="bg-primary/10 text-primary border-none text-[10px] h-6 px-3">
                             Lucro: {markupPercent}%
@@ -1105,7 +1105,7 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                         <div className="w-10 h-10 rounded-2xl bg-orange-500 flex items-center justify-center text-white">
                           <Car className="h-5 w-5" />
                         </div>
-                        <h4 className="font-display text-xl text-orange-600">Análise Carro Próprio</h4>
+                        <h4 className="font-sans text-xl text-orange-600">Análise Carro Próprio</h4>
                       </div>
                       
                         <div className="space-y-3">
@@ -1128,7 +1128,7 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                         <div className="pt-3 border-t border-black/5 flex justify-between items-end">
                           <div>
                             <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/40 block">Sugestão de Venda /pax</span>
-                            <div className="text-2xl font-display text-orange-600">{fmtBRL(calculateSuggestedPrice('carroProprio', numPeople))}</div>
+                            <div className="text-2xl font-sans text-orange-600">{fmtBRL(calculateSuggestedPrice('carroProprio', numPeople))}</div>
                           </div>
                           <Badge className="bg-orange-50 text-orange-600 border-none text-[10px] h-6 px-3">
                             Lucro: {markupPercent}%
@@ -1142,7 +1142,7 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                   <section className="bg-white p-10 rounded-[3rem] border border-black/5 shadow-sm space-y-8">
                     <div className="flex items-center justify-between">
                       <div className="space-y-1">
-                        <h3 className="text-3xl font-display text-primary">Preço de Venda Final</h3>
+                        <h3 className="text-3xl font-sans text-primary">Preço de Venda Final</h3>
                         <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest italic">Ajuste os valores finais que aparecerão no site</p>
                       </div>
                       <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 rounded-2xl border border-emerald-100">
@@ -1166,7 +1166,7 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                             <td className="p-6">
                               <div className="flex items-center gap-3">
                                 <div className="w-2 h-2 rounded-full bg-primary" />
-                                <span className="font-display text-lg text-primary leading-none uppercase tracking-tighter">Expedição 4x4</span>
+                                <span className="font-sans text-lg text-primary leading-none uppercase tracking-tighter">Expedição 4x4</span>
                               </div>
                             </td>
                             {(['individual', 'dupla', 'trio'] as const).map((type, idx) => {
@@ -1178,7 +1178,7 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                                     <NumericCell 
                                       value={pricing.atmos4x4?.[type] || 0} 
                                       onCommit={(v) => setPricing(prev => ({ ...prev, atmos4x4: { ...prev.atmos4x4, [type]: v } }))}
-                                      className="w-28 mx-auto h-12 text-center text-lg font-display bg-white border-black/5 rounded-2xl focus:ring-primary/20 shadow-sm" 
+                                      className="w-28 mx-auto h-12 text-center text-lg font-sans bg-white border-black/5 rounded-2xl focus:ring-primary/20 shadow-sm" 
                                     />
                                     <div className="text-[10px] font-medium text-muted-foreground/40">Sugerido: {fmtBRL(suggested, 0)}</div>
                                   </div>
@@ -1190,7 +1190,7 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                             <td className="p-6">
                               <div className="flex items-center gap-3">
                                 <div className="w-2 h-2 rounded-full bg-orange-500" />
-                                <span className="font-display text-lg text-orange-600 leading-none uppercase tracking-tighter">Carro Próprio</span>
+                                <span className="font-sans text-lg text-orange-600 leading-none uppercase tracking-tighter">Carro Próprio</span>
                               </div>
                             </td>
                             {(['individual', 'dupla', 'trio'] as const).map((type, idx) => {
@@ -1202,7 +1202,7 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                                     <NumericCell 
                                       value={pricing.carroProprio?.[type] || 0} 
                                       onCommit={(v) => setPricing(prev => ({ ...prev, carroProprio: { ...prev.carroProprio, [type]: v } }))}
-                                      className="w-28 mx-auto h-12 text-center text-lg font-display bg-white border-black/5 rounded-2xl focus:ring-orange-500/20 shadow-sm" 
+                                      className="w-28 mx-auto h-12 text-center text-lg font-sans bg-white border-black/5 rounded-2xl focus:ring-orange-500/20 shadow-sm" 
                                     />
                                     <div className="text-[10px] font-medium text-muted-foreground/40">Sugerido: {fmtBRL(suggested, 0)}</div>
                                   </div>
@@ -1227,7 +1227,7 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                 ) : (
                   <div className="flex flex-col items-center justify-center py-24 text-muted-foreground bg-muted/5 rounded-[3rem] border-2 border-dashed border-black/5 text-center">
                     <ImageIcon className="h-16 w-16 mb-6 opacity-10" />
-                    <h4 className="text-xl font-display text-primary">Identidade Visual do Roteiro</h4>
+                    <h4 className="text-xl font-sans text-primary">Identidade Visual do Roteiro</h4>
                   </div>
                 )}
               </TabsContent>
