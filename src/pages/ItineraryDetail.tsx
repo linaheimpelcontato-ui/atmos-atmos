@@ -34,17 +34,55 @@ import {
   CalendarDays,
   Clock,
   ExternalLink,
-  Camera
+  Camera,
+  Leaf,
+  Footprints,
+  Home,
+  Sunrise
 } from "lucide-react";
 import HelmetIcon from "@/components/icons/HelmetIcon";
 import { toast } from "@/hooks/use-toast";
 import PageSEO from "@/components/seo/PageSEO";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+const leafTexture = optimizedUrl("proposta-visual-cliente/leaf-texture - horizontal.jpg", IMAGE_PRESETS.large);
+const leafTextureAlt = optimizedUrl("proposta-visual-cliente/leaf-texture.jpg", IMAGE_PRESETS.large);
 
 const difficultyConfig = {
-  facil: { pt: "Fácil", en: "Easy", es: "Fácil", color: "bg-emerald-500/10 text-emerald-600" },
-  moderado: { pt: "Moderado", en: "Moderate", es: "Moderado", color: "bg-amber-500/10 text-amber-600" },
-  dificil: { pt: "Difícil", en: "Hard", es: "Difícil", color: "bg-rose-500/10 text-rose-600" },
+  facil: { pt: "Fácil", en: "Easy", es: "Fácil", color: "text-[#166534] bg-[#dcfce7]" },
+  moderado: { pt: "Moderado", en: "Moderate", es: "Moderado", color: "text-[#92400e] bg-[#fef3c7]" },
+  dificil: { pt: "Difícil", en: "Hard", es: "Difícil", color: "text-[#991b1b] bg-[#fee2e2]" },
+  muito_facil: { pt: "Muito Fácil", en: "Very Easy", es: "Muy Fácil", color: "text-[#166534] bg-[#dcfce7]" },
+  moderado_dificil: { pt: "Moderado/Difícil", en: "Moderate/Hard", es: "Moderado/Difícil", color: "text-[#991b1b] bg-[#fee2e2]" },
+};
+
+const CATEGORY_ICONS: Record<string, any> = {
+  Cachoeira: Mountain, 
+  Ingresso: Mountain, 
+  "Cachoeira / Ingresso": Mountain,
+  Guia: Compass, 
+  "Diária Guia ATMOS": Compass, 
+  Hospedagem: MapPin,
+  Lanche: Leaf, 
+  "Lanche Trilha": Leaf, 
+  Transfer: Sunrise, 
+  "Refeição": Leaf,
+  "Experiência": Sparkles,
+};
+
+const CATEGORY_LABELS: Record<string, Record<string, string>> = {
+  Cachoeira: { pt: "Cachoeira / Ingresso", en: "Waterfall / Entrance", es: "Cascada / Entrada" },
+  Ingresso: { pt: "Cachoeira / Ingresso", en: "Waterfall / Entrance", es: "Cascada / Entrada" },
+  "Cachoeira / Ingresso": { pt: "Cachoeira / Ingresso", en: "Waterfall / Entrance", es: "Cascada / Entrada" },
+  Guia: { pt: "Guia", en: "Guide", es: "Guía" },
+  "Diária Guia ATMOS": { pt: "Diária Guia ATMOS", en: "ATMOS Guide Fee", es: "Tarifa Guía ATMOS" },
+  Hospedagem: { pt: "Hospedagem", en: "Lodging", es: "Hospedaje" },
+  Lanche: { pt: "Lanche de Trilha", en: "Trail Snack", es: "Snack de Sendero" },
+  "Lanche Trilha": { pt: "Lanche de Trilha", en: "Trail Snack", es: "Snack de Sendero" },
+  Transfer: { pt: "Transfer", en: "Transfer", es: "Transfer" },
+  "Refeição": { pt: "Refeição", en: "Meal", es: "Comida" },
+  "Experiência": { pt: "Experiência", en: "Experience", es: "Experiencia" },
 };
 
 const labels = {
@@ -207,27 +245,48 @@ function ImageCarousel({ images, alt }: { images: string[], alt: string }) {
   );
 }
 
-function DayBanner({ number, title }: { number: number, title: string }) {
+function DayBanner({ number, title, bgImage, children }: { number: number, title: string, bgImage?: string, children?: React.ReactNode }) {
   return (
-    <div className="relative py-12 px-8 overflow-hidden rounded-[2rem] bg-[#1A261B] text-white">
-      {/* Background Leaf Texture */}
+    <div className="relative w-full px-6 md:px-12 py-20 md:py-32 overflow-hidden bg-[#2e2019]">
+      {/* Base layer: the leaf pattern pattern */}
       <div 
-        className="absolute inset-0 opacity-[0.03] pointer-events-none"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 0C50 0 70 30 70 50C70 70 50 100 50 100C50 100 30 70 30 50C30 30 50 0 50 0Z' fill='%23ffffff'/%3E%3C/svg%3E")`,
-          backgroundSize: '120px 120px',
+        className={`absolute inset-0 z-0 transition-opacity duration-1000 ${bgImage ? 'opacity-25 mix-blend-overlay' : 'opacity-100'}`}
+        style={{ 
+          backgroundImage: `url("${leafTexture}"), url("${leafTextureAlt}")`, 
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
         }}
       />
       
-      <div className="relative flex items-center gap-8">
-        <div className="flex flex-col">
-          <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[#C5A267] mb-2">Dia</span>
-          <span className="text-8xl font-display leading-none text-white/10 absolute -left-4 -top-4 pointer-events-none">
-            {number.toString().padStart(2, '0')}
-          </span>
-          <span className="text-4xl md:text-5xl font-display relative z-10 leading-[0.9]">
-            {title}
-          </span>
+      {/* Overlay layer: destination photo if available */}
+      {bgImage && (
+        <motion.div 
+          initial={{ scale: 1.1, opacity: 0 }}
+          animate={{ scale: 1, opacity: 0.6 }}
+          transition={{ duration: 1.5 }}
+          className="absolute inset-0 z-0"
+        >
+          <img loading="lazy" src={bgImage} alt="" className="w-full h-full object-cover grayscale-[20%]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#2e2019]/60 via-transparent to-[#2e2019]/80" />
+        </motion.div>
+      )}
+      
+      <div className="relative z-10">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+          <div className="flex items-end gap-6 md:gap-10">
+            <span className="text-8xl md:text-[12rem] font-black leading-[0.7] flex-shrink-0 text-white/10 font-outfit">
+              {String(number).padStart(2, "0")}
+            </span>
+            <div className="min-w-0 pb-2">
+              <p className="text-[12px] uppercase tracking-[0.4em] font-bold mb-3" style={{ color: "#c4a97d" }}>
+                Dia {number}
+              </p>
+              <h3 className="text-3xl md:text-6xl font-black text-white leading-[0.9] font-outfit uppercase tracking-tighter">
+                {title}
+              </h3>
+            </div>
+          </div>
+          {children}
         </div>
       </div>
     </div>
@@ -535,12 +594,12 @@ export default function ItineraryDetail() {
         path={`/roteiros/${itinerary.id}`}
       />
 
-      <div className="bg-[#FDFCFB]">
+      <div className="bg-[#fcfaf7]">
         {/* Cinematic Hero */}
-        <section className="relative h-[95vh] overflow-hidden bg-[#0A0F0A]">
+        <section className="relative h-[95vh] overflow-hidden bg-[#2e2019]">
           <div className="absolute inset-0">
             <ImageCarousel images={heroImages} alt={itinerary.name.pt} />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0A0F0A] via-transparent to-black/20" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#2e2019] via-transparent to-black/20" />
           </div>
           
           <div className="absolute top-32 left-0 right-0 z-10">
@@ -565,19 +624,17 @@ export default function ItineraryDetail() {
               >
                 <div className="flex items-center gap-4 mb-8">
                   {itinerary.category && (
-                    <span className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] backdrop-blur-xl border ${
-                      isJurassico ? "bg-red-500/20 border-red-500/30 text-red-200" : "bg-[#C5A267]/20 border-[#C5A267]/30 text-[#C5A267]"
-                    }`}>
+                    <span className="px-5 py-2 text-[10px] font-black uppercase tracking-[0.2em] backdrop-blur-xl border border-[#c4a97d]/30 bg-[#c4a97d]/20 text-[#c4a97d]">
                       {isJurassico ? <Flame className="h-3 w-3 inline mr-2" /> : <Mountain className="h-3 w-3 inline mr-2" />}
                       {itinerary.category}
                     </span>
                   )}
-                  <span className="flex items-center gap-2 text-white/80 text-[10px] font-black uppercase tracking-[0.2em] bg-white/10 backdrop-blur-xl px-5 py-2 rounded-full border border-white/10">
+                  <span className="flex items-center gap-2 text-white/80 text-[10px] font-black uppercase tracking-[0.2em] bg-white/10 backdrop-blur-xl px-5 py-2 border border-white/10">
                     <Calendar className="h-3 w-3" />
                     {itinerary.duration} {l.days}
                   </span>
                 </div>
-                <h1 className="text-6xl md:text-[11rem] font-display text-white mb-8 tracking-tighter leading-[0.8] drop-shadow-2xl">
+                <h1 className="text-6xl md:text-[8rem] lg:text-[10rem] font-display text-white mb-8 tracking-tighter leading-[0.8] drop-shadow-2xl font-outfit uppercase">
                   {itinerary.name[language as keyof typeof itinerary.name]}
                 </h1>
                 <p className="text-xl md:text-3xl text-white/80 max-w-2xl font-light leading-relaxed">
@@ -589,32 +646,33 @@ export default function ItineraryDetail() {
         </section>
 
         {/* Quick Stats Bar */}
-        <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-2xl border-b border-[#1A261B]/5 py-6">
+        <div className="sticky top-0 z-40 bg-[#fcfaf7]/90 backdrop-blur-2xl border-b border-[#e4dbcc] py-6">
           <div className="container px-4">
             <div className="flex items-center justify-between gap-8 overflow-x-auto no-scrollbar">
               <div className="flex items-center gap-12 whitespace-nowrap">
                 <div className="flex flex-col gap-1">
-                  <span className="text-[9px] uppercase font-black tracking-widest text-[#1A261B]/40">Destino</span>
-                  <span className="text-sm font-bold text-[#1A261B]">Chapada dos Veadeiros</span>
+                  <span className="text-[9px] uppercase font-black tracking-widest text-[#2e2019]/40">Destino</span>
+                  <span className="text-sm font-bold text-[#2e2019]">Chapada dos Veadeiros</span>
                 </div>
                 {itinerary.category && (
                   <div className="flex flex-col gap-1">
-                    <span className="text-[10px] uppercase font-black tracking-widest text-[#1A261B]/40">Estilo</span>
-                    <span className="text-sm font-bold text-[#1A261B]">{itinerary.category}</span>
+                    <span className="text-[10px] uppercase font-black tracking-widest text-[#2e2019]/40">Estilo</span>
+                    <span className="text-sm font-bold text-[#2e2019]">{itinerary.category}</span>
                   </div>
                 )}
                 {itinerary.guidedDays !== undefined && (
                   <div className="flex flex-col gap-1">
-                    <span className="text-[9px] uppercase font-black tracking-widest text-[#C5A267]">Suporte Local</span>
-                    <span className="text-sm font-bold text-[#1A261B]">{itinerary.guidedDays} Dias Guiados</span>
+                    <span className="text-[9px] uppercase font-black tracking-widest text-[#c4a97d]">Suporte Local</span>
+                    <span className="text-sm font-bold text-[#2e2019]">{itinerary.guidedDays} Dias Guiados</span>
                   </div>
                 )}
               </div>
               <Button
                 onClick={toggleWishlist}
-                className={`rounded-full px-8 py-6 gap-3 text-xs font-black uppercase tracking-widest transition-all ${
-                  inWishlist ? "bg-[#1A261B] text-white" : "bg-[#C5A267] text-[#1A261B] hover:scale-105"
+                className={`rounded-none px-8 py-6 gap-3 text-xs font-black uppercase tracking-widest transition-all ${
+                  inWishlist ? "bg-[#2e2019] text-white" : "bg-[#c4a97d] text-white hover:scale-105 shadow-lg"
                 }`}
+                style={{ boxShadow: inWishlist ? "none" : "0 4px 20px rgba(196,169,125,0.3)" }}
               >
                 <Heart className="h-4 w-4" fill={inWishlist ? "currentColor" : "none"} />
                 {inWishlist ? l.removeWishlist : l.addWishlist}
@@ -625,12 +683,12 @@ export default function ItineraryDetail() {
 
         {/* Experience Gallery */}
         {itinerary.favorites && itinerary.favorites.length > 1 && (
-          <section className="py-24 bg-[#FDFCFB] border-t border-[#1A261B]/5">
+          <section className="py-32 md:py-40 bg-white border-b border-[#e4dbcc]">
             <div className="container px-4">
               <div className="max-w-xl mb-16">
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[#C5A267] block mb-4">Curadoria Atmos</span>
-                <h2 className="text-4xl md:text-5xl font-display text-[#1A261B] tracking-tight">Experiências que compõem sua jornada</h2>
-                <p className="text-[#1A261B]/60 mt-4 font-light text-lg">Uma seleção cuidadosa de cenários e vivências que garantem a autenticidade da sua expedição.</p>
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[#c4a97d] block mb-4">Curadoria Atmos</span>
+                <h2 className="text-4xl md:text-5xl font-display text-[#2e2019] tracking-tight">Experiências que compõem sua jornada</h2>
+                <p className="text-[#2e2019]/60 mt-4 font-light text-lg">Uma seleção cuidadosa de cenários e vivências que garantem a autenticidade da sua expedição.</p>
               </div>
               
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
@@ -641,7 +699,7 @@ export default function ItineraryDetail() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.5, delay: i * 0.1 }}
-                    className="group relative aspect-[4/5] rounded-[2px] overflow-hidden shadow-2xl bg-[#1A261B]/5"
+                    className="group relative aspect-[4/5] rounded-[4px] overflow-hidden shadow-xl bg-[#2e2019]/5 border border-[#e4dbcc]"
                   >
                     <OptimizedImage 
                       src={getDayImage(imgKey, itinerary.name.pt)} 
@@ -663,12 +721,12 @@ export default function ItineraryDetail() {
         )}
 
         {/* Timeline Summary */}
-        <section className="py-12 bg-white border-b border-[#1A261B]/5 sticky top-0 z-40 backdrop-blur-xl bg-white/80">
+        <section className="py-8 bg-[#fcfaf7]/90 border-b border-[#e4dbcc] sticky top-[76px] z-30 backdrop-blur-xl">
           <div className="container px-4">
             <div className="flex flex-wrap gap-4 justify-center">
               {itinerary.days.map((day, idx) => (
                 <div key={idx} className="flex flex-col items-center gap-2 group cursor-pointer" onClick={() => document.getElementById(`day-${idx + 1}`)?.scrollIntoView({ behavior: 'smooth' })}>
-                  <div className="w-10 h-10 rounded-full border border-[#1A261B]/10 flex items-center justify-center text-[10px] font-bold text-[#1A261B]/40 group-hover:bg-[#1A261B] group-hover:text-white transition-all">
+                  <div className="w-10 h-10 rounded-full border border-[#2e2019]/10 flex items-center justify-center text-[10px] font-bold text-[#2e2019]/40 group-hover:bg-[#2e2019] group-hover:text-white transition-all">
                     {idx + 1}
                   </div>
                 </div>
@@ -677,134 +735,173 @@ export default function ItineraryDetail() {
           </div>
         </section>
 
-        {/* Detailed Itinerary Sections */}
-        <section className="py-24 md:py-40 bg-white relative overflow-hidden">
-          {/* Subtle pattern background */}
-          <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M54 48L30 24L6 48' fill='none' stroke='%23000' stroke-width='2'/%3E%3C/svg%3E")` }} />
-          
-          <div className="container px-4 relative z-10">
-            <div className="max-w-6xl mx-auto space-y-32 md:space-y-48">
-              {itinerary.days.map((day, idx) => {
-                const diff = difficultyConfig[day.difficulty as keyof typeof difficultyConfig] || difficultyConfig.moderado;
-                const resolvedTitle = day.title?.[language] || ((day as any).items?.[0]?.product_name ? (day as any).items[0].product_name : `Dia ${idx + 1}`);
-                const guideItem = (day as any).items?.find((it: any) => it.product_type === "guide");
-                
-                return (
-                  <div key={idx} id={`day-${idx + 1}`} className="space-y-12 scroll-mt-32">
-                    <DayBanner number={idx + 1} title={resolvedTitle} />
-                    
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20">
-                      <div className="lg:col-span-7 space-y-8">
-                        <div className="aspect-[16/9] md:aspect-[21/9] rounded-[2rem] overflow-hidden shadow-2xl border border-black/5 group">
-                          <OptimizedImage
-                            src={getDayImage(day.images?.[0] || "", resolvedTitle)}
-                            fallbackSrcs={day.images?.map((img: string) => getDayImage(img, resolvedTitle))}
-                            alt={resolvedTitle}
-                            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
-                          />
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                          <div className="space-y-4">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-[#C5A267] flex items-center gap-2">
-                              <Compass className="w-3 h-3" /> Jornada
-                            </p>
-                            <p className="text-[#1A261B]/70 text-lg font-light leading-relaxed">
-                              {typeof day.description === 'string' ? day.description : day.description?.[language] || ""}
-                            </p>
-                          </div>
-                          
-                          <div className="space-y-6">
-                            <div className="p-6 bg-[#F8F7F4] rounded-3xl border border-black/5 space-y-4">
-                              <p className="text-[10px] font-black uppercase tracking-widest text-[#1A261B]/40">Especificações Técnicas</p>
-                              <div className="flex flex-wrap gap-4">
-                                <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-xl border border-black/5 shadow-sm">
-                                  <div className={`w-1.5 h-1.5 rounded-full ${diff.color.split(' ')[0]}`} />
-                                  <span className="text-[10px] font-bold uppercase tracking-wider">{diff[language as keyof typeof diff] || diff.pt}</span>
-                                </div>
-                                <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-xl border border-black/5 shadow-sm text-[#1A261B]/60">
-                                  <Map className="w-3.5 h-3.5" />
-                                  <span className="text-[10px] font-bold uppercase tracking-wider">{day.trailDistanceKm || "—"}km Trilha</span>
-                                </div>
-                                {day.hasGuide && (
-                                  <div className="px-4 py-1.5 bg-[#C5A267]/10 rounded-full border border-[#C5A267]/20 flex items-center gap-2">
-                                    <Sparkles className="w-3.5 h-3.5 text-[#C5A267]" />
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-[#C5A267]">Com Guia</span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-
-                            <div className="space-y-3">
-                              <p className="text-[10px] font-black uppercase tracking-widest text-[#C5A267]">{l.highlights}</p>
-                              <div className="flex flex-wrap gap-2">
-                                {(() => {
-                                  const rawAttrs = (day.attractions as any)?.[language] || day.attractions || [];
-                                  const attrs = Array.isArray(rawAttrs) 
-                                    ? rawAttrs 
-                                    : (typeof rawAttrs === 'string' ? rawAttrs.split(/[,\n]/).map((s: string) => s.trim()).filter(Boolean) : []);
-                                  
-                                  const items = (day as any).items ? (day as any).items.filter((it: any) => it.product_type !== 'guide').map((it: any) => it.product_name) : [];
-                                  const allAttrs = attrs.length > 0 ? attrs : items;
-                                  
-                                  return allAttrs.map((attr: string, i: number) => (
-                                    <div key={i} className="px-4 py-2 bg-white border border-black/5 rounded-full text-xs font-medium text-[#1A261B]/60 shadow-sm hover:border-[#C5A267]/30 transition-colors">
-                                      {attr}
-                                    </div>
-                                  ));
-                                })()}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="lg:col-span-5 space-y-10">
-                        <div className="relative group rounded-[3rem] overflow-hidden aspect-square shadow-2xl">
-                          <OptimizedImage
-                            src={getDayImage(day.images?.[0] || "", day.resolvedTitle || resolvedTitle)}
-                            fallbackSrcs={day.images?.map((img: string) => getDayImage(img, day.resolvedTitle || resolvedTitle))}
-                            alt={resolvedTitle}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
-                            containerClassName="absolute inset-0"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#1A261B]/80 opacity-60" />
-                          <div className="absolute bottom-10 left-10 right-10">
-                            <h4 className="text-white font-display text-2xl mb-4">A essência do {idx + 1}º Dia</h4>
-                            <p className="text-white/60 text-sm font-light">Uma jornada curada para conectar você com a alma da Chapada.</p>
-                          </div>
-                        </div>
-
-                        {guideItem && (
-                          <div className="p-8 bg-[#F8F7F4] rounded-[2.5rem] border border-[#C5A267]/10 relative overflow-hidden">
-                            <div className="absolute -right-10 -top-10 w-40 h-40 bg-[#C5A267]/5 rounded-full blur-3xl" />
-                            <div className="relative z-10 flex flex-col gap-6">
-                              <div className="flex items-center gap-4">
-                                <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center text-[#C5A267] shadow-sm border border-[#C5A267]/10">
-                                  <Compass className="w-8 h-8" />
-                                </div>
-                                <div>
-                                  <p className="text-[10px] font-black uppercase tracking-widest text-[#C5A267]">{l.guideSuggested}</p>
-                                  <p className="text-2xl font-display text-[#1A261B]">{guideItem.product_name}</p>
-                                </div>
-                              </div>
-                              <p className="text-sm text-[#1A261B]/50 font-light leading-relaxed">
-                                Este dia conta com a condução de {guideItem.product_name}, especialista local que garantirá segurança e histórias fascinantes sobre a região.
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+        {/* ══════════════════════ ITINERARY SECTION TITLE ══════════════════════ */}
+        <section className="py-24 md:py-32 text-center" style={{ background: "#2e2019" }}>
+          <div className="inline-flex items-center gap-4 mb-6">
+            <div className="w-12 h-[1px] bg-[#c4a97d]/40" />
+            <p className="text-[12px] uppercase tracking-[0.5em] font-bold" style={{ color: "#c4a97d" }}>
+              {language === "pt" ? "Cronograma" : language === "es" ? "Cronograma" : "Schedule"}
+            </p>
+            <div className="w-12 h-[1px] bg-[#c4a97d]/40" />
           </div>
+          <h2 className="text-5xl md:text-8xl font-black text-white font-outfit uppercase tracking-tighter leading-none">
+            {language === "pt" ? "Sua Viagem" : language === "es" ? "Tu Viaje" : "Your Trip"}
+          </h2>
         </section>
 
+        {/* ══════════════════════ DAY SECTIONS ══════════════════════ */}
+        <div
+          style={{
+            backgroundImage: `url(${optimizedUrl("home/day-banner-bg.jpg", IMAGE_PRESETS.large)})`,
+            backgroundAttachment: "fixed",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        >
+          {itinerary.days.map((day, idx) => {
+            const diff = difficultyConfig[day.difficulty as keyof typeof difficultyConfig] || difficultyConfig.moderado;
+            const resolvedTitle = day.title?.[language] || ((day as any).items?.[0]?.product_name ? (day as any).items[0].product_name : `Dia ${idx + 1}`);
+            
+            const productTypeToCategory: Record<string, string> = {
+              waterfall: "Cachoeira",
+              experience: "Experiência",
+              accommodation: "Hospedagem",
+              service: "Serviço",
+              transfer: "Transfer",
+              meal: "Refeição",
+              guide: "Guia"
+            };
+
+            const guideNames = ((day as any).items || [])
+              .filter((i: any) => i.product_type === 'guide')
+              .map((i: any) => i.product_name);
+
+            const visibleItems = ((day as any).items || []).filter((item: any) => item.product_type !== 'guide');
+            const isEven = idx % 2 === 0;
+
+            return (
+              <motion.section 
+                key={idx} 
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+                id={`day-${idx + 1}`}
+                className="relative scroll-mt-32"
+              >
+                {/* ══════ FULL-WIDTH DAY BANNER (parallax photo) ══════ */}
+                <DayBanner 
+                  number={idx + 1} 
+                  title={resolvedTitle} 
+                  bgImage={day.images && day.images.length > 0 ? getDayImage(day.images[0], resolvedTitle) : undefined}
+                >
+                  <div className="flex flex-col gap-2 items-end justify-end">
+                    {guideNames.length > 0 && (
+                      <div className="flex flex-wrap gap-1 justify-end">
+                        {guideNames.map((name: string, gi: number) => (
+                          <span key={gi} className="inline-flex items-center gap-2 px-4 py-2 text-[10px] uppercase tracking-widest font-black"
+                            style={{ background: "#744404", color: "#fff" }}>
+                            <Compass className="w-3.5 h-3.5" />
+                            {name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <div className="flex flex-wrap gap-1 justify-end">
+                      {day.difficulty && (
+                        <span className="inline-flex items-center gap-2 px-4 py-2 text-[10px] uppercase tracking-widest font-black bg-[#556952] text-white">
+                          <Mountain className="w-3.5 h-3.5" />
+                          {diff[language as keyof typeof diff] || diff.pt}
+                        </span>
+                      )}
+                      {day.trailDistanceKm && day.trailDistanceKm !== "0" && (
+                        <span className="inline-flex items-center gap-2 px-4 py-2 text-[10px] uppercase tracking-widest font-black bg-[#556952] text-white">
+                          <Footprints className="w-3.5 h-3.5" />
+                          {day.trailDistanceKm}km Trilha
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </DayBanner>
+
+                {/* ══════ TWO-COLUMN BODY: items left, carousel right ══════ */}
+                <div style={{ background: isEven ? "#fff" : "#fcfaf7" }} className="border-b border-[#e4dbcc]">
+                  <div className="max-w-7xl mx-auto px-6 py-16 md:py-24">
+                    <div className="flex flex-col lg:flex-row gap-12 lg:gap-20">
+                      {/* LEFT — scrollable items */}
+                      <div className="flex-1 min-w-0">
+                        <ScrollArea type="always" className="proposal-itinerary-scroll md:h-[600px]">
+                          <div className="md:pr-10 space-y-12">
+                            {day.description && (
+                              <div className="mb-12">
+                                <p className="text-xl md:text-2xl font-light leading-relaxed text-[#5c4a32] italic border-l-4 border-[#c4a97d] pl-8 py-2">
+                                  {typeof day.description === 'string' ? day.description : day.description?.[language] || ""}
+                                </p>
+                              </div>
+                            )}
+
+                            <div className="space-y-8">
+                              {visibleItems.map((item: any, localIdx: number) => {
+                                const catKey = productTypeToCategory[item.product_type] || "Experiência";
+                                const Icon = CATEGORY_ICONS[catKey] || MapPin;
+                                const catLabel = CATEGORY_LABELS[catKey]?.[language] || catKey;
+                                const itemTitle = item.product_name || item.name?.[language] || item.title?.[language] || "";
+                                const itemDesc = item.product_description || item.description?.[language] || "";
+                                
+                                return (
+                                  <div key={localIdx} className="flex items-start gap-4">
+                                    <div className="w-10 h-10 flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: "#2e2019" }}>
+                                      <Icon className="w-5 h-5 text-white" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-[10px] uppercase tracking-[0.3em] font-black mb-1" style={{ color: "#c4a97d" }}>
+                                        {catLabel}
+                                      </p>
+                                      <span className="text-xl font-black font-outfit uppercase tracking-tight text-[#2e2019]">
+                                        {itemTitle}
+                                      </span>
+                                      {itemDesc && (
+                                        <div className="mt-2 pl-4 py-2 pr-2 text-base italic border-l-2 border-[#c4a97d] text-[#5c4a32] leading-relaxed">
+                                          {itemDesc}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </ScrollArea>
+                      </div>
+
+                      {/* RIGHT — sticky image gallery */}
+                      {day.images && day.images.length > 0 && (
+                        <div className="w-full lg:w-[40%] flex-shrink-0">
+                          <div className="lg:sticky lg:top-28 self-start">
+                            <div className="aspect-square lg:aspect-auto lg:h-[700px] overflow-hidden shadow-2xl rounded-2xl relative group">
+                              <ImageCarousel 
+                                images={day.images.map((img: string) => getDayImage(img, resolvedTitle))} 
+                                alt={resolvedTitle} 
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#2e2019]/80 opacity-60 pointer-events-none" />
+                              <div className="absolute bottom-10 left-10 right-10 pointer-events-none">
+                                <h4 className="text-white font-display text-2xl mb-2 uppercase font-outfit tracking-tighter">A essência do {idx + 1}º Dia</h4>
+                                <p className="text-white/60 text-xs font-light">Uma jornada curada para conectar você com a alma da Chapada.</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </motion.section>
+            );
+          })}
+        </div>
+
         {/* Pricing Cards - Premium Style */}
-        <section className="py-32 md:py-48 bg-[#1A261B] text-[#FDFCFB] relative overflow-hidden">
+        <section className="py-32 md:py-48 bg-[#2e2019] text-[#FDFCFB] relative overflow-hidden">
           {/* Background Leaf Pattern */}
           <div 
             className="absolute inset-0 opacity-[0.03] pointer-events-none"
@@ -817,8 +914,8 @@ export default function ItineraryDetail() {
           <div className="container px-4 relative z-10">
             <div className="max-w-6xl mx-auto">
               <div className="text-center space-y-6 mb-24">
-                <span className="text-[10px] uppercase font-black tracking-[0.6em] text-[#C5A267]">Investimento</span>
-                <h2 className="text-6xl md:text-9xl font-display tracking-tight leading-[0.8]">{l.pricing}</h2>
+                <span className="text-[10px] uppercase font-black tracking-[0.6em] text-[#c4a97d]">Investimento</span>
+                <h2 className="text-6xl md:text-9xl font-display font-outfit uppercase tracking-tight leading-[0.8]">{l.pricing}</h2>
                 <p className="text-white/40 text-sm font-light uppercase tracking-widest pt-4">{l.priceNote}</p>
               </div>
 
@@ -826,32 +923,32 @@ export default function ItineraryDetail() {
                 {/* 4x4 Option */}
                 <motion.div 
                   whileHover={{ y: -15 }}
-                  className="bg-white/5 border border-white/10 rounded-[3rem] p-10 md:p-16 relative overflow-hidden group backdrop-blur-sm"
+                  className="bg-white/5 border border-white/10 rounded-lg p-10 md:p-16 relative overflow-hidden group backdrop-blur-sm"
                 >
-                  <div className="absolute -right-20 -top-20 w-64 h-64 bg-[#C5A267]/10 blur-[100px] rounded-full group-hover:bg-[#C5A267]/20 transition-colors duration-700" />
+                  <div className="absolute -right-20 -top-20 w-64 h-64 bg-[#c4a97d]/10 blur-[100px] rounded-full group-hover:bg-[#c4a97d]/20 transition-colors duration-700" />
                   
                   <div className="flex items-center gap-6 mb-16">
-                    <div className="w-20 h-20 rounded-3xl bg-[#C5A267]/20 flex items-center justify-center text-[#C5A267] border border-[#C5A267]/20">
+                    <div className="w-20 h-20 rounded-lg bg-[#c4a97d]/20 flex items-center justify-center text-[#c4a97d] border border-[#c4a97d]/20">
                       <Truck className="h-10 w-10" />
                     </div>
                     <div>
-                      <h3 className="text-3xl font-display text-white">{l.atmos4x4}</h3>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-[#C5A267]/60">{l.guideIncluded}</p>
+                      <h3 className="text-3xl font-display text-white font-outfit uppercase tracking-tight">{l.atmos4x4}</h3>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-[#c4a97d]/60">{l.guideIncluded}</p>
                     </div>
                   </div>
 
                   <div className="space-y-10">
                     <div className="flex justify-between items-end pb-8 border-b border-white/10 group-hover:border-white/20 transition-colors">
                       <span className="text-white/30 uppercase text-[10px] font-black tracking-widest">{l.individual}</span>
-                      <span className="text-5xl font-display text-white">{formatPrice(itinerary.pricing.atmos4x4.individual)}</span>
+                      <span className="text-5xl font-display text-white font-outfit">{formatPrice(itinerary.pricing.atmos4x4.individual)}</span>
                     </div>
                     <div className="flex justify-between items-end pb-8 border-b border-white/10 group-hover:border-white/20 transition-colors">
                       <span className="text-white/30 uppercase text-[10px] font-black tracking-widest">{l.dupla}</span>
-                      <span className="text-5xl font-display text-white">{formatPrice(itinerary.pricing.atmos4x4.dupla)}</span>
+                      <span className="text-5xl font-display text-white font-outfit">{formatPrice(itinerary.pricing.atmos4x4.dupla)}</span>
                     </div>
                     <div className="flex justify-between items-end">
                       <span className="text-white/30 uppercase text-[10px] font-black tracking-widest">{l.trioPlus}</span>
-                      <span className="text-5xl font-display text-[#C5A267]">{formatPrice(itinerary.pricing.atmos4x4.trio)}</span>
+                      <span className="text-5xl font-display text-[#c4a97d] font-outfit">{formatPrice(itinerary.pricing.atmos4x4.trio)}</span>
                     </div>
                   </div>
                 </motion.div>
@@ -859,14 +956,14 @@ export default function ItineraryDetail() {
                 {/* Own Vehicle Option */}
                 <motion.div 
                   whileHover={{ y: -15 }}
-                  className="bg-white/5 border border-white/10 rounded-[3rem] p-10 md:p-16 relative overflow-hidden backdrop-blur-sm"
+                  className="bg-white/5 border border-white/10 rounded-lg p-10 md:p-16 relative overflow-hidden backdrop-blur-sm"
                 >
                   <div className="flex items-center gap-6 mb-16">
-                    <div className="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center text-white/40 border border-white/10">
+                    <div className="w-20 h-20 rounded-lg bg-white/5 flex items-center justify-center text-white/40 border border-white/10">
                       <Car className="h-10 w-10" />
                     </div>
                     <div>
-                      <h3 className="text-3xl font-display text-white">{l.carroProprio}</h3>
+                      <h3 className="text-3xl font-display text-white font-outfit uppercase tracking-tight">{l.carroProprio}</h3>
                       <p className="text-[10px] font-black uppercase tracking-widest text-white/20">Seu ritmo, sua jornada</p>
                     </div>
                   </div>
@@ -874,15 +971,15 @@ export default function ItineraryDetail() {
                   <div className="space-y-10">
                     <div className="flex justify-between items-end pb-8 border-b border-white/10">
                       <span className="text-white/20 uppercase text-[10px] font-black tracking-widest">{l.individual}</span>
-                      <span className="text-5xl font-display text-white/80">{formatPrice(itinerary.pricing.carroProprio.individual)}</span>
+                      <span className="text-5xl font-display text-white/80 font-outfit">{formatPrice(itinerary.pricing.carroProprio.individual)}</span>
                     </div>
                     <div className="flex justify-between items-end pb-8 border-b border-white/10">
                       <span className="text-white/20 uppercase text-[10px] font-black tracking-widest">{l.dupla}</span>
-                      <span className="text-5xl font-display text-white/80">{formatPrice(itinerary.pricing.carroProprio.dupla)}</span>
+                      <span className="text-5xl font-display text-white/80 font-outfit">{formatPrice(itinerary.pricing.carroProprio.dupla)}</span>
                     </div>
                     <div className="flex justify-between items-end">
                       <span className="text-white/20 uppercase text-[10px] font-black tracking-widest">{l.trioPlus}</span>
-                      <span className="text-5xl font-display text-white/80">{formatPrice(itinerary.pricing.carroProprio.trio)}</span>
+                      <span className="text-5xl font-display text-white/80 font-outfit">{formatPrice(itinerary.pricing.carroProprio.trio)}</span>
                     </div>
                   </div>
                 </motion.div>
@@ -892,36 +989,36 @@ export default function ItineraryDetail() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-20 lg:gap-32 pt-24 border-t border-white/10">
                 <div className="space-y-12">
                   <div className="flex items-center gap-4">
-                    <div className="w-2 h-2 rounded-full bg-[#C5A267]" />
+                    <div className="w-2 h-2 rounded-full bg-[#c4a97d]" />
                     <h4 className="text-[12px] font-black uppercase tracking-[0.4em] text-white/60">{l.extraCosts}</h4>
                   </div>
                   <div className="space-y-6">
-                    <div className="flex items-center justify-between p-8 bg-white/5 rounded-[2rem] border border-white/5 hover:bg-white/10 transition-colors">
+                    <div className="flex items-center justify-between p-8 bg-white/5 rounded-lg border border-white/5 hover:bg-white/10 transition-colors">
                       <div className="flex items-center gap-6">
-                        <div className="w-12 h-12 rounded-2xl bg-[#C5A267]/10 flex items-center justify-center text-[#C5A267]">
+                        <div className="w-12 h-12 rounded-lg bg-[#c4a97d]/10 flex items-center justify-center text-[#c4a97d]">
                           <Ticket className="h-6 w-6" />
                         </div>
                         <div>
-                          <p className="text-lg font-display">{l.entranceFees}</p>
+                          <p className="text-lg font-display font-outfit uppercase tracking-tight">{l.entranceFees}</p>
                           <p className="text-[10px] text-white/30 uppercase tracking-widest">{l.chargedSeparately}</p>
                         </div>
                       </div>
-                      <span className="text-3xl font-display text-[#C5A267]">{formatPrice(itinerary.extraCosts.entranceFees)}</span>
+                      <span className="text-3xl font-display text-[#c4a97d] font-outfit">{formatPrice(itinerary.extraCosts.entranceFees)}</span>
                     </div>
                     {itinerary.extraCosts.equipmentFees && (
-                      <div className="flex items-center justify-between p-8 bg-white/5 rounded-[2rem] border border-white/5 hover:bg-white/10 transition-colors">
+                      <div className="flex items-center justify-between p-8 bg-white/5 rounded-lg border border-white/5 hover:bg-white/10 transition-colors">
                         <div className="flex items-center gap-6">
-                          <div className="w-12 h-12 rounded-2xl bg-[#C5A267]/10 flex items-center justify-center text-[#C5A267]">
+                          <div className="w-12 h-12 rounded-lg bg-[#c4a97d]/10 flex items-center justify-center text-[#c4a97d]">
                             <HelmetIcon size={24} />
                           </div>
                           <div>
-                            <p className="text-lg font-display">{l.equipmentFees}</p>
+                            <p className="text-lg font-display font-outfit uppercase tracking-tight">{l.equipmentFees}</p>
                             <p className="text-[10px] text-white/30 uppercase tracking-widest">
                               {typeof itinerary.extraCosts.equipmentItems === 'string' ? itinerary.extraCosts.equipmentItems : itinerary.extraCosts.equipmentItems?.[language as keyof typeof itinerary.extraCosts.equipmentItems] || ""}
                             </p>
                           </div>
                         </div>
-                        <span className="text-3xl font-display text-[#C5A267]">{formatPrice(itinerary.extraCosts.equipmentFees)}</span>
+                        <span className="text-3xl font-display text-[#c4a97d] font-outfit">{formatPrice(itinerary.extraCosts.equipmentFees)}</span>
                       </div>
                     )}
                   </div>
@@ -929,14 +1026,14 @@ export default function ItineraryDetail() {
 
                 <div className="space-y-12">
                   <div className="flex items-center gap-4">
-                    <div className="w-2 h-2 rounded-full bg-[#C5A267]" />
+                    <div className="w-2 h-2 rounded-full bg-[#c4a97d]" />
                     <h4 className="text-[12px] font-black uppercase tracking-[0.4em] text-white/60">{l.inclusiveExp}</h4>
                   </div>
                   <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-6">
                     {(itinerary.inclusions[language as keyof typeof itinerary.inclusions] || []).map((inc, i) => (
                       <li key={i} className="flex items-start gap-6 text-white/70 group">
-                        <div className="w-8 h-8 rounded-full bg-[#C5A267]/10 flex items-center justify-center flex-shrink-0 border border-[#C5A267]/20 group-hover:bg-[#C5A267]/30 transition-colors">
-                          <Check className="h-4 w-4 text-[#C5A267]" />
+                        <div className="w-8 h-8 rounded-full bg-[#c4a97d]/10 flex items-center justify-center flex-shrink-0 border border-[#c4a97d]/20 group-hover:bg-[#c4a97d]/30 transition-colors">
+                          <Check className="h-4 w-4 text-[#c4a97d]" />
                         </div>
                         <span className="text-xl font-light leading-snug">{inc}</span>
                       </li>
@@ -949,16 +1046,16 @@ export default function ItineraryDetail() {
         </section>
 
         {/* Call to Action */}
-        <section className="py-32 bg-white text-center">
+        <section className="py-32 bg-[#fcfaf7] text-center border-t border-[#e4dbcc]">
           <div className="container px-4">
             <div className="max-w-2xl mx-auto space-y-10">
-              <h2 className="text-4xl md:text-5xl font-display text-[#1A261B] tracking-tight">{l.bespokeTitle}</h2>
-              <p className="text-[#1A261B]/60 text-lg font-light leading-relaxed">
+              <h2 className="text-4xl md:text-5xl font-display text-[#2e2019] font-outfit uppercase tracking-tight">{l.bespokeTitle}</h2>
+              <p className="text-[#2e2019]/60 text-lg font-light leading-relaxed">
                 {l.bespokeDesc}
               </p>
               <Button 
                 onClick={() => navigate("/monte-seu-roteiro")}
-                className="rounded-full px-12 py-8 bg-[#C5A267] text-[#1A261B] text-sm font-black uppercase tracking-[0.3em] hover:scale-105 transition-all shadow-2xl shadow-[#C5A267]/20"
+                className="rounded-none px-12 py-8 bg-[#c4a97d] hover:bg-[#b09366] text-white text-sm font-black uppercase tracking-[0.3em] transition-all shadow-2xl shadow-[#c4a97d]/20"
               >
                 {l.bespokeBtn}
                 <ArrowRight className="h-4 w-4 ml-3" />
