@@ -48,6 +48,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 const leafTexture = optimizedUrl("proposta-visual-cliente/leaf-texture - horizontal.jpg", IMAGE_PRESETS.large);
 const leafTextureAlt = optimizedUrl("proposta-visual-cliente/leaf-texture.jpg", IMAGE_PRESETS.large);
+const logoAtmos = optimizedUrl("home/logo-atmos.png", IMAGE_PRESETS.card);
+const dividerImage = optimizedUrl("home/nature-divider.jpg", IMAGE_PRESETS.large);
 
 const difficultyConfig = {
   facil: { pt: "Fácil", en: "Easy", es: "Fácil", color: "text-[#166534] bg-[#dcfce7]" },
@@ -594,12 +596,12 @@ export default function ItineraryDetail() {
         path={`/roteiros/${itinerary.id}`}
       />
 
-      <div className="bg-[#fcfaf7]">
         {/* Cinematic Hero */}
-        <section className="relative h-[95vh] overflow-hidden bg-[#2e2019]">
+        <section className="relative h-screen min-h-[650px] overflow-hidden bg-[#2e2019]">
           <div className="absolute inset-0">
             <ImageCarousel images={heroImages} alt={itinerary.name.pt} />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#2e2019] via-transparent to-black/20" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#2e2019] via-[#2e2019]/40 to-transparent" />
+            <div className="absolute inset-0 bg-black/20" />
           </div>
           
           <div className="absolute top-32 left-0 right-0 z-10">
@@ -614,114 +616,96 @@ export default function ItineraryDetail() {
             </div>
           </div>
 
-          <div className="absolute bottom-20 left-0 right-0 z-10">
-            <div className="container px-4">
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.5 }}
-                className="max-w-4xl"
-              >
-                <div className="flex items-center gap-4 mb-8">
+          <div className="absolute bottom-0 left-0 right-0 px-6 pb-20 md:px-16 md:pb-24 z-10">
+            <div className="max-w-7xl mx-auto">
+              <div className="inline-flex items-center gap-3 mb-6">
+                <div className="w-8 h-[1px] bg-white/60" />
+                <span className="text-white/80 text-[10px] md:text-xs uppercase tracking-[0.5em] font-bold">
+                  {language === "pt" ? "Roteiro Atmos" : language === "es" ? "Itinerario Atmos" : "Atmos Itinerary"}
+                </span>
+              </div>
+              
+              <h1 className="text-white text-5xl md:text-8xl lg:text-[10rem] font-black leading-[0.85] tracking-tighter drop-shadow-2xl mb-10 max-w-5xl font-outfit uppercase">
+                {itinerary.name[language as keyof typeof itinerary.name]}
+              </h1>
+
+              <p className="text-xl md:text-3xl text-white/80 max-w-3xl font-light leading-relaxed mb-12">
+                {itinerary.description[language as keyof typeof itinerary.description]}
+              </p>
+
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-t border-white/10 pt-8">
+                <div className="flex flex-wrap gap-8 md:gap-12 items-center">
+                  <div className="flex flex-col">
+                    <span className="text-white/40 text-[10px] uppercase tracking-widest mb-1 font-bold">Destino</span>
+                    <span className="text-white text-lg font-medium">Chapada dos Veadeiros</span>
+                  </div>
                   {itinerary.category && (
-                    <span className="px-5 py-2 text-[10px] font-black uppercase tracking-[0.2em] backdrop-blur-xl border border-[#c4a97d]/30 bg-[#c4a97d]/20 text-[#c4a97d]">
-                      {isJurassico ? <Flame className="h-3 w-3 inline mr-2" /> : <Mountain className="h-3 w-3 inline mr-2" />}
-                      {itinerary.category}
-                    </span>
+                    <div className="flex flex-col">
+                      <span className="text-white/40 text-[10px] uppercase tracking-widest mb-1 font-bold">Estilo</span>
+                      <span className="text-white text-lg font-medium uppercase tracking-widest font-black text-[#c4a97d]">
+                        {isJurassico ? l.jurassico : l.classico}
+                      </span>
+                    </div>
                   )}
-                  <span className="flex items-center gap-2 text-white/80 text-[10px] font-black uppercase tracking-[0.2em] bg-white/10 backdrop-blur-xl px-5 py-2 border border-white/10">
-                    <Calendar className="h-3 w-3" />
-                    {itinerary.duration} {l.days}
-                  </span>
+                  <div className="flex flex-col">
+                    <span className="text-white/40 text-[10px] uppercase tracking-widest mb-1 font-bold">Duração</span>
+                    <span className="text-white text-lg font-medium">{itinerary.duration} {l.days}</span>
+                  </div>
                 </div>
-                <h1 className="text-6xl md:text-[8rem] lg:text-[10rem] font-display text-white mb-8 tracking-tighter leading-[0.8] drop-shadow-2xl font-outfit uppercase">
-                  {itinerary.name[language as keyof typeof itinerary.name]}
-                </h1>
-                <p className="text-xl md:text-3xl text-white/80 max-w-2xl font-light leading-relaxed">
-                  {itinerary.description[language as keyof typeof itinerary.description]}
-                </p>
-              </motion.div>
+
+                <Button
+                  onClick={toggleWishlist}
+                  className={`rounded-none px-8 py-6 gap-3 text-xs font-black uppercase tracking-widest transition-all ${
+                    inWishlist ? "bg-white text-[#2e2019]" : "bg-[#c4a97d] text-white hover:scale-105"
+                  }`}
+                  style={{ boxShadow: inWishlist ? "none" : "0 4px 20px rgba(196,169,125,0.3)" }}
+                >
+                  <Heart className="h-4 w-4" fill={inWishlist ? "currentColor" : "none"} />
+                  {inWishlist ? l.removeWishlist : l.addWishlist}
+                </Button>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* Quick Stats Bar */}
-        <div className="sticky top-0 z-40 bg-[#fcfaf7]/90 backdrop-blur-2xl border-b border-[#e4dbcc] py-6">
-          <div className="container px-4">
-            <div className="flex items-center justify-between gap-8 overflow-x-auto no-scrollbar">
-              <div className="flex items-center gap-12 whitespace-nowrap">
-                <div className="flex flex-col gap-1">
-                  <span className="text-[9px] uppercase font-black tracking-widest text-[#2e2019]/40">Destino</span>
-                  <span className="text-sm font-bold text-[#2e2019]">Chapada dos Veadeiros</span>
-                </div>
-                {itinerary.category && (
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[10px] uppercase font-black tracking-widest text-[#2e2019]/40">Estilo</span>
-                    <span className="text-sm font-bold text-[#2e2019]">{itinerary.category}</span>
-                  </div>
-                )}
-                {itinerary.guidedDays !== undefined && (
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[9px] uppercase font-black tracking-widest text-[#c4a97d]">Suporte Local</span>
-                    <span className="text-sm font-bold text-[#2e2019]">{itinerary.guidedDays} Dias Guiados</span>
-                  </div>
-                )}
-              </div>
-              <Button
-                onClick={toggleWishlist}
-                className={`rounded-none px-8 py-6 gap-3 text-xs font-black uppercase tracking-widest transition-all ${
-                  inWishlist ? "bg-[#2e2019] text-white" : "bg-[#c4a97d] text-white hover:scale-105 shadow-lg"
-                }`}
-                style={{ boxShadow: inWishlist ? "none" : "0 4px 20px rgba(196,169,125,0.3)" }}
-              >
-                <Heart className="h-4 w-4" fill={inWishlist ? "currentColor" : "none"} />
-                {inWishlist ? l.removeWishlist : l.addWishlist}
-              </Button>
-            </div>
+        {/* ══════════════════════ BRAND INTRO ══════════════════════ */}
+        <motion.section 
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1.2 }}
+          className="py-32 md:py-48 px-6 bg-white border-y border-[#e4dbcc]"
+        >
+          <div className="max-w-4xl mx-auto text-center">
+            <img loading="lazy" src={logoAtmos} alt="ATMOS" className="h-20 mx-auto mb-12 opacity-80" />
+            <h2 className="text-3xl md:text-6xl font-black leading-none mb-10 font-outfit uppercase tracking-tighter" style={{ color: "#2e2019" }}>
+              {language === "pt" ? "A Experiência Atmos" : language === "es" ? "La Experiencia Atmos" : "The Atmos Experience"}
+            </h2>
+            <div className="w-16 h-[1px] bg-[#c4a97d] mx-auto mb-10" />
+            <p className="text-lg md:text-2xl leading-relaxed max-w-3xl mx-auto mb-6 font-light italic" style={{ color: "#2e2019" }}>
+              {language === "pt" 
+                ? "Desenhamos expedições singulares na Chapada dos Veadeiros, combinando o espírito de aventura selvagem com a sofisticação de serviços exclusivos."
+                : language === "es"
+                ? "Diseñamos expediciones singulares en la Chapada dos Veadeiros, combinando el espíritu de la aventura salvaje con la sofisticación de servicios exclusivos."
+                : "We design unique expeditions in Chapada dos Veadeiros, combining the spirit of wild adventure with the sophistication of exclusive services."}
+            </p>
+            <p className="text-base md:text-lg leading-relaxed max-w-2xl mx-auto uppercase tracking-widest font-bold" style={{ color: "#8d7b63" }}>
+              {language === "pt" 
+                ? "SUA EXPEDIÇÃO PERSONALIZADA COMEÇA AQUI" 
+                : language === "es"
+                ? "TU EXPEDICIÓN PERSONALIZADA COMIENZA AQUÍ"
+                : "YOUR CUSTOM EXPEDITION BEGINS HERE"}
+            </p>
           </div>
+        </motion.section>
+
+        {/* ══════════════════════ DIVIDER ══════════════════════ */}
+        <div className="h-[40vh] md:h-[50vh] overflow-hidden">
+          <img loading="lazy" src={dividerImage} alt="" className="w-full h-full object-cover" />
         </div>
 
-        {/* Experience Gallery */}
-        {itinerary.favorites && itinerary.favorites.length > 1 && (
-          <section className="py-32 md:py-40 bg-white border-b border-[#e4dbcc]">
-            <div className="container px-4">
-              <div className="max-w-xl mb-16">
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[#c4a97d] block mb-4">Curadoria Atmos</span>
-                <h2 className="text-4xl md:text-5xl font-display text-[#2e2019] tracking-tight">Experiências que compõem sua jornada</h2>
-                <p className="text-[#2e2019]/60 mt-4 font-light text-lg">Uma seleção cuidadosa de cenários e vivências que garantem a autenticidade da sua expedição.</p>
-              </div>
-              
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
-                {itinerary.favorites.slice(0, 5).map((imgKey: string, i: number) => (
-                  <motion.div 
-                    key={i}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.5, delay: i * 0.1 }}
-                    className="group relative aspect-[4/5] rounded-[4px] overflow-hidden shadow-xl bg-[#2e2019]/5 border border-[#e4dbcc]"
-                  >
-                    <OptimizedImage 
-                      src={getDayImage(imgKey, itinerary.name.pt)} 
-                      fallbackSrcs={[
-                        getDayImage(imgKey, itinerary.name.pt),
-                        optimizedUrl(`produtos/cachoeiras/${imgKey.toLowerCase()}/${imgKey.toLowerCase()}-1.jpg`, IMAGE_PRESETS.thumbnail),
-                        optimizedUrl(`produtos/experiencias/${imgKey.toLowerCase()}/${imgKey.toLowerCase()}-1.jpg`, IMAGE_PRESETS.thumbnail),
-                        optimizedUrl(`produtos/experiencias/${imgKey.toLowerCase()}/${imgKey.toLowerCase()}-1.png`, IMAGE_PRESETS.thumbnail)
-                      ]}
-                      alt="Atmos Experience" 
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* Timeline Summary */}
-        <section className="py-8 bg-[#fcfaf7]/90 border-b border-[#e4dbcc] sticky top-[76px] z-30 backdrop-blur-xl">
+        {/* Timeline Summary (sticky top above schedule title) */}
+        <section className="py-8 bg-[#fcfaf7]/90 border-b border-[#e4dbcc] sticky top-0 z-30 backdrop-blur-xl">
           <div className="container px-4">
             <div className="flex flex-wrap gap-4 justify-center">
               {itinerary.days.map((day, idx) => (
@@ -923,12 +907,12 @@ export default function ItineraryDetail() {
                 {/* 4x4 Option */}
                 <motion.div 
                   whileHover={{ y: -15 }}
-                  className="bg-white/5 border border-white/10 rounded-lg p-10 md:p-16 relative overflow-hidden group backdrop-blur-sm"
+                  className="bg-[#1a130f] border border-white/10 rounded-none p-10 md:p-16 relative overflow-hidden group backdrop-blur-sm"
                 >
                   <div className="absolute -right-20 -top-20 w-64 h-64 bg-[#c4a97d]/10 blur-[100px] rounded-full group-hover:bg-[#c4a97d]/20 transition-colors duration-700" />
                   
                   <div className="flex items-center gap-6 mb-16">
-                    <div className="w-20 h-20 rounded-lg bg-[#c4a97d]/20 flex items-center justify-center text-[#c4a97d] border border-[#c4a97d]/20">
+                    <div className="w-20 h-20 rounded-none bg-[#c4a97d]/10 flex items-center justify-center text-[#c4a97d] border border-[#c4a97d]/20">
                       <Truck className="h-10 w-10" />
                     </div>
                     <div>
@@ -956,10 +940,10 @@ export default function ItineraryDetail() {
                 {/* Own Vehicle Option */}
                 <motion.div 
                   whileHover={{ y: -15 }}
-                  className="bg-white/5 border border-white/10 rounded-lg p-10 md:p-16 relative overflow-hidden backdrop-blur-sm"
+                  className="bg-[#1a130f] border border-white/10 rounded-none p-10 md:p-16 relative overflow-hidden backdrop-blur-sm"
                 >
                   <div className="flex items-center gap-6 mb-16">
-                    <div className="w-20 h-20 rounded-lg bg-white/5 flex items-center justify-center text-white/40 border border-white/10">
+                    <div className="w-20 h-20 rounded-none bg-white/5 flex items-center justify-center text-white/40 border border-white/10">
                       <Car className="h-10 w-10" />
                     </div>
                     <div>
@@ -989,13 +973,13 @@ export default function ItineraryDetail() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-20 lg:gap-32 pt-24 border-t border-white/10">
                 <div className="space-y-12">
                   <div className="flex items-center gap-4">
-                    <div className="w-2 h-2 rounded-full bg-[#c4a97d]" />
+                    <div className="w-2 h-2 bg-[#c4a97d] rounded-none" />
                     <h4 className="text-[12px] font-black uppercase tracking-[0.4em] text-white/60">{l.extraCosts}</h4>
                   </div>
                   <div className="space-y-6">
-                    <div className="flex items-center justify-between p-8 bg-white/5 rounded-lg border border-white/5 hover:bg-white/10 transition-colors">
+                    <div className="flex items-center justify-between p-8 bg-[#1a130f] rounded-none border border-white/10 hover:bg-[#1a130f]/80 transition-colors">
                       <div className="flex items-center gap-6">
-                        <div className="w-12 h-12 rounded-lg bg-[#c4a97d]/10 flex items-center justify-center text-[#c4a97d]">
+                        <div className="w-12 h-12 rounded-none bg-[#c4a97d]/10 flex items-center justify-center text-[#c4a97d] border border-[#c4a97d]/20">
                           <Ticket className="h-6 w-6" />
                         </div>
                         <div>
@@ -1006,9 +990,9 @@ export default function ItineraryDetail() {
                       <span className="text-3xl font-display text-[#c4a97d] font-outfit">{formatPrice(itinerary.extraCosts.entranceFees)}</span>
                     </div>
                     {itinerary.extraCosts.equipmentFees && (
-                      <div className="flex items-center justify-between p-8 bg-white/5 rounded-lg border border-white/5 hover:bg-white/10 transition-colors">
+                      <div className="flex items-center justify-between p-8 bg-[#1a130f] rounded-none border border-white/10 hover:bg-[#1a130f]/80 transition-colors">
                         <div className="flex items-center gap-6">
-                          <div className="w-12 h-12 rounded-lg bg-[#c4a97d]/10 flex items-center justify-center text-[#c4a97d]">
+                          <div className="w-12 h-12 rounded-none bg-[#c4a97d]/10 flex items-center justify-center text-[#c4a97d] border border-[#c4a97d]/20">
                             <HelmetIcon size={24} />
                           </div>
                           <div>
@@ -1026,13 +1010,13 @@ export default function ItineraryDetail() {
 
                 <div className="space-y-12">
                   <div className="flex items-center gap-4">
-                    <div className="w-2 h-2 rounded-full bg-[#c4a97d]" />
+                    <div className="w-2 h-2 bg-[#c4a97d] rounded-none" />
                     <h4 className="text-[12px] font-black uppercase tracking-[0.4em] text-white/60">{l.inclusiveExp}</h4>
                   </div>
                   <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-6">
                     {(itinerary.inclusions[language as keyof typeof itinerary.inclusions] || []).map((inc, i) => (
                       <li key={i} className="flex items-start gap-6 text-white/70 group">
-                        <div className="w-8 h-8 rounded-full bg-[#c4a97d]/10 flex items-center justify-center flex-shrink-0 border border-[#c4a97d]/20 group-hover:bg-[#c4a97d]/30 transition-colors">
+                        <div className="w-8 h-8 rounded-none bg-[#c4a97d]/10 flex items-center justify-center flex-shrink-0 border border-[#c4a97d]/20 group-hover:bg-[#c4a97d]/30 transition-colors">
                           <Check className="h-4 w-4 text-[#c4a97d]" />
                         </div>
                         <span className="text-xl font-light leading-snug">{inc}</span>
