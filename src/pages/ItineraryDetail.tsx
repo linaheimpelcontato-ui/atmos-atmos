@@ -238,15 +238,17 @@ export default function ItineraryDetail() {
   const navigate = useNavigate();
   const { language = "pt" } = useLanguage();
   const { addItem, removeItem, isInWishlist } = useWishlist();
-  const { data: dbProducts = [] } = useProducts("itinerary");
+  const { data: allProducts = [] } = useProducts();
 
   const [heroImages, setHeroImages] = useState<string[]>([]);
 
   const mergedItineraries = useMemo(() => {
     // Se houver produtos no banco, eles são a fonte da verdade.
-    const merged = dbProducts.length > 0 ? [] : [...staticItineraries];
+    const itinerariesOnly = allProducts.filter(p => p.type === 'itinerary');
+    const merged = itinerariesOnly.length > 0 ? [] : [...staticItineraries];
+    
     // Transform into a flat list of items (one section per product)
-    return dbProducts.map(dbProduct => {
+    return itinerariesOnly.map(dbProduct => {
       const supabaseVars = (dbProduct.variables || {}) as any;
       const allItems: any[] = [];
       (supabaseVars.days || []).forEach((day: any) => {
@@ -261,7 +263,6 @@ export default function ItineraryDetail() {
               title: { pt: item.product_name, en: item.product_name, es: item.product_name },
               trailDistanceKm: item.product_variables?.trailDistanceKm,
               difficulty: (item.product_variables?.difficulty || "moderado") as any,
-              imageKey: item.product_storage_info?.prefix || "",
               resolvedTitle: item.product_name,
               attractions: { pt: [item.product_name], en: [item.product_name], es: [item.product_name] },
               description: { 
@@ -269,16 +270,49 @@ export default function ItineraryDetail() {
                 en: item.product_description || "",
                 es: item.product_description || ""
               },
-              hasGuide: day.items.some((it: any) => it.product_type === 'guide')
+              hasGuide: day.items.some((it: any) => it.product_type === 'guide'),
+              catalog_item_id: item.catalog_item_id,
+              product_id: item.product_id,
+              product_storage_info: item.product_storage_info
             });
           });
         }
       });
 
-      const favorites = allItems
-        .filter(it => it.imageKey)
-        .slice(0, 15)
-        .map(it => it.imageKey);
+      const allItineraryImages: string[] = [];
+
+      const enrichedItems = allItems.map(item => {
+        const childProduct = allProducts.find(p => p.id === (item.catalog_item_id || item.product_id));
+        let itemImages: string[] = [];
+
+        if (childProduct) {
+          const vars = childProduct.variables as any || {};
+          if (vars.gallery && Array.isArray(vars.gallery) && vars.gallery.length > 0) {
+            itemImages = vars.gallery;
+          } else {
+            const prefix = vars.storage_id || childProduct.id;
+            let folder = "experiencias";
+            if (childProduct.type === "waterfall") folder = "cachoeiras";
+            else if (childProduct.type === "accommodation") folder = "hospedagens";
+            else if (childProduct.type === "service") folder = "serviços";
+            
+            itemImages = [1, 2, 3, 4, 5].map(n => `produtos/${folder}/${prefix}/${prefix}-${n}.jpg`);
+          }
+        }
+
+        if (itemImages.length === 0) {
+          itemImages = [item.product_storage_info?.prefix || item.product_name];
+        }
+
+        allItineraryImages.push(...itemImages.slice(0, 5));
+
+        return {
+          ...item,
+          images: itemImages
+        };
+      });
+
+      const favorites = Array.from(new Set(allItineraryImages)).filter(Boolean).slice(0, 15);
 
       return {
         id: dbProduct.source_id || dbProduct.id,
@@ -286,7 +320,7 @@ export default function ItineraryDetail() {
         category: dbProduct.segment as any,
         name: { pt: dbProduct.name, en: dbProduct.name, es: dbProduct.name },
         description: { pt: dbProduct.description || "", en: dbProduct.description || "", es: dbProduct.description || "" },
-        days: allItems,
+        days: enrichedItems,
         favorites,
         pricing: supabaseVars.pricing || { 
           atmos4x4: { individual: 0, dupla: 0, trio: 0 }, 
@@ -510,7 +544,7 @@ export default function ItineraryDetail() {
                       <div className="lg:col-span-7 space-y-8">
                         <div className="aspect-[16/9] md:aspect-[21/9] rounded-[2rem] overflow-hidden shadow-2xl border border-black/5 group">
                           <OptimizedImage
-                            src={getDayImage(day.imageKey || "", resolvedTitle)}
+                            src={getDayImage(day.images?.[0] || "", resolvedTitle)}
                             alt={resolvedTitle}
                             className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
                           />
@@ -574,7 +608,7 @@ export default function ItineraryDetail() {
                       <div className="lg:col-span-5 space-y-10">
                         <div className="relative group rounded-[3rem] overflow-hidden aspect-square shadow-2xl">
                           <OptimizedImage
-                            src={getDayImage(day.imageKey || "", day.resolvedTitle || resolvedTitle)}
+                            src={getDayImage(day.images?.[0] || "", day.resolvedTitle || resolvedTitle)}
                             alt={resolvedTitle}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
                             containerClassName="absolute inset-0"

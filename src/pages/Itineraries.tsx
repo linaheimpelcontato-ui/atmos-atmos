@@ -162,7 +162,7 @@ const ItineraryRow = ({ itinerary, language, l, navigate }: any) => {
                 onClick={() => navigate(`/roteiros/${itinerary.id}`)}
               >
                 <OptimizedImage
-                  src={getDayImage(day.imageKey || "", day.resolvedTitle)}
+                  src={getDayImage(day.images?.[0] || "", day.resolvedTitle)}
                   alt={day.title?.[language] || "Atmos Itinerary"}
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-90 group-hover:opacity-100"
                   containerClassName="absolute inset-0"
@@ -221,10 +221,12 @@ const Itineraries = () => {
   const navigate = useNavigate();
   const [selectedDuration, setSelectedDuration] = useState<DurationDays>(3);
   
-  const { data: supabaseProducts = [] } = useProducts("itinerary");
+  const { data: allProducts = [] } = useProducts();
 
   const mergedItineraries = useMemo(() => {
-    return (supabaseProducts || []).map((it: any) => {
+    const itinerariesOnly = allProducts.filter(p => p.type === 'itinerary');
+
+    return itinerariesOnly.map((it: any) => {
       const supabaseVars = (it.variables || {}) as any;
       
       const allItems: any[] = [];
@@ -239,7 +241,33 @@ const Itineraries = () => {
         }
       });
 
+      const allItineraryImages: string[] = [];
+
       const enrichedItems = allItems.map((item: any, idx: number) => {
+        const childProduct = allProducts.find(p => p.id === (item.catalog_item_id || item.product_id));
+        let itemImages: string[] = [];
+
+        if (childProduct) {
+          const vars = childProduct.variables as any || {};
+          if (vars.gallery && Array.isArray(vars.gallery) && vars.gallery.length > 0) {
+            itemImages = vars.gallery;
+          } else {
+            const prefix = vars.storage_id || childProduct.id;
+            let folder = "experiencias";
+            if (childProduct.type === "waterfall") folder = "cachoeiras";
+            else if (childProduct.type === "accommodation") folder = "hospedagens";
+            else if (childProduct.type === "service") folder = "serviços";
+            
+            itemImages = [1, 2, 3, 4, 5].map(n => `produtos/${folder}/${prefix}/${prefix}-${n}.jpg`);
+          }
+        }
+
+        if (itemImages.length === 0) {
+          itemImages = [item.product_storage_info?.prefix || item.product_name];
+        }
+
+        allItineraryImages.push(...itemImages.slice(0, 5));
+
         return {
           id: `${it.id}-item-${idx}`,
           dayNumber: item.dayNumber,
@@ -248,15 +276,12 @@ const Itineraries = () => {
           attractions: { pt: [item.product_name], en: [item.product_name], es: [item.product_name] },
           trailDistanceKm: item.product_variables?.trailDistanceKm,
           difficulty: (item.product_variables?.difficulty || "moderado") as any,
-          imageKey: item.product_storage_info?.prefix || "",
+          images: itemImages,
           resolvedTitle: item.product_name
         };
       });
 
-      const favorites = allItems
-        .filter(it => it.product_storage_info?.prefix)
-        .slice(0, 5)
-        .map(it => it.product_storage_info.prefix);
+      const favorites = Array.from(new Set(allItineraryImages)).filter(Boolean).slice(0, 10);
 
       return {
         id: it.source_id || it.id,
