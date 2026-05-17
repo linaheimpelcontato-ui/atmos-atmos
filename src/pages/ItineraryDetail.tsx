@@ -544,8 +544,68 @@ export default function ItineraryDetail() {
   const l = labels[language as keyof typeof labels] || labels.pt;
 
   useEffect(() => {
-    if (itinerary?.favorites) {
-      setHeroImages(itinerary.favorites.slice(0, 5).map(f => getDayImage(f, itinerary.name.pt)));
+    if (itinerary) {
+      // 1. Collect all images from the days and items
+      const dayImagesList: string[] = [];
+      itinerary.days.forEach(day => {
+        if (day.images && day.images.length > 0) {
+          day.images.forEach(img => {
+            if (img && !dayImagesList.includes(img)) dayImagesList.push(img);
+          });
+        }
+        day.items.forEach(item => {
+          if (item.images && item.images.length > 0) {
+            item.images.forEach(img => {
+              if (img && !dayImagesList.includes(img)) dayImagesList.push(img);
+            });
+          }
+        });
+      });
+
+      // 2. Select initial raw images candidates
+      let candidates = (itinerary.favorites && itinerary.favorites.length > 0)
+        ? itinerary.favorites
+        : dayImagesList;
+
+      candidates = candidates.filter(Boolean);
+
+      // 3. Map candidates to optimized URLs, converting thumbnail preset to large preset for crisp hero display
+      let mapped = candidates.slice(0, 5).map(img => {
+        const resolved = getDayImage(img, itinerary.name.pt);
+        return resolved.includes("presets/thumbnail")
+          ? resolved.replace("presets/thumbnail", "presets/large")
+          : resolved;
+      });
+
+      // 4. Static itinerary cover covers as high priority fallback
+      const staticItineraryImages: Record<string, string> = {
+        "2d-classico": "produtos/cachoeiras/segredo/segredo-1.jpg",
+        "2d-jurassico": "produtos/cachoeiras/macacao/macacao-1.jpg",
+        "3d-classico": "produtos/cachoeiras/almecegas-i-e-ii--sao-bento/almecegas-i-e-ii--sao-bento-1.jpg",
+        "3d-jurassico": "produtos/cachoeiras/macaquinhos/macaquinhos-1.jpg",
+        "4d-classico": "produtos/cachoeiras/couros/couros-1.jpg",
+        "4d-jurassico": "produtos/cachoeiras/dragao/dragao-1.jpg",
+        "5d-classico": "produtos/cachoeiras/couros/couros-1.jpg",
+        "5d-jurassico": "produtos/cachoeiras/dragao/dragao-1.jpg",
+      };
+
+      const staticKey = itinerary.id;
+      if (staticItineraryImages[staticKey]) {
+        const staticUrl = optimizedUrl(staticItineraryImages[staticKey], IMAGE_PRESETS.large);
+        mapped.unshift(staticUrl);
+      }
+
+      // 5. Ultimate hard fallback if no images resolved correctly
+      if (mapped.length === 0 || mapped.every(img => img.includes('//-1.jpg'))) {
+        mapped = [
+          optimizedUrl("produtos/cachoeiras/segredo/segredo-1.jpg", IMAGE_PRESETS.large),
+          optimizedUrl("produtos/cachoeiras/almecegas-i-e-ii--sao-bento/almecegas-i-e-ii--sao-bento-1.jpg", IMAGE_PRESETS.large)
+        ];
+      }
+
+      // De-duplicate array
+      const uniqueMapped = Array.from(new Set(mapped));
+      setHeroImages(uniqueMapped);
     }
   }, [itinerary, language]);
 
@@ -589,7 +649,7 @@ export default function ItineraryDetail() {
   const formatPrice = (price: number) => `R$ ${price.toLocaleString("pt-BR")}`;
 
   return (
-    <Layout>
+    <Layout hideWishlist>
       <PageSEO 
         title={`${itinerary.name[language as keyof typeof itinerary.name]} | ATMOS`}
         description={itinerary.description[language as keyof typeof itinerary.description]}
@@ -598,27 +658,23 @@ export default function ItineraryDetail() {
 
       <div className="bg-[#fcfaf7]">
         {/* Cinematic Hero */}
-        <section className="relative h-screen min-h-[650px] overflow-hidden bg-[#2e2019]">
-          <div className="absolute inset-0">
+        <section className="relative min-h-screen flex flex-col justify-end pt-36 pb-20 md:pb-24 px-6 md:px-16 overflow-hidden bg-[#2e2019]">
+          <div className="absolute inset-0 z-0">
             <ImageCarousel images={heroImages} alt={itinerary.name.pt} />
             <div className="absolute inset-0 bg-gradient-to-t from-[#2e2019] via-[#2e2019]/40 to-transparent" />
             <div className="absolute inset-0 bg-black/20" />
           </div>
           
-          <div className="absolute top-32 left-0 right-0 z-10">
-            <div className="container px-4">
-              <button
-                onClick={() => navigate("/roteiros")}
-                className="flex items-center gap-2 text-white/60 hover:text-white transition-colors text-[10px] uppercase font-bold tracking-[0.3em]"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                {l.back}
-              </button>
-            </div>
-          </div>
+          <div className="max-w-7xl mx-auto w-full z-10 relative flex-1 flex flex-col justify-between pt-12">
+            <button
+              onClick={() => navigate("/roteiros")}
+              className="flex items-center gap-2 text-white/60 hover:text-white transition-colors text-[10px] uppercase font-bold tracking-[0.3em] self-start mb-12"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              {l.back}
+            </button>
 
-          <div className="absolute bottom-0 left-0 right-0 px-6 pb-20 md:px-16 md:pb-24 z-10">
-            <div className="max-w-7xl mx-auto">
+            <div className="w-full">
               <div className="inline-flex items-center gap-3 mb-6">
                 <div className="w-8 h-[1px] bg-white/60" />
                 <span className="text-white/80 text-[10px] md:text-xs uppercase tracking-[0.5em] font-bold">
@@ -626,7 +682,7 @@ export default function ItineraryDetail() {
                 </span>
               </div>
               
-              <h1 className="text-white text-5xl md:text-8xl lg:text-[10rem] font-black leading-[0.85] tracking-tighter drop-shadow-2xl mb-10 max-w-5xl font-outfit uppercase">
+              <h1 className="text-white text-4xl md:text-7xl lg:text-8xl font-black leading-[0.9] tracking-tighter drop-shadow-2xl mb-8 max-w-5xl font-outfit uppercase">
                 {itinerary.name[language as keyof typeof itinerary.name]}
               </h1>
 
@@ -886,25 +942,26 @@ export default function ItineraryDetail() {
         </div>
 
         {/* Pricing Cards - Premium Style */}
-        <section className="py-32 md:py-48 bg-[#2e2019] text-[#FDFCFB] relative overflow-hidden">
-          {/* Background Leaf Pattern */}
-          <div 
-            className="absolute inset-0 opacity-[0.03] pointer-events-none"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 0C50 0 70 30 70 50C70 70 50 100 50 100C50 100 30 70 30 50C30 30 50 0 50 0Z' fill='%23ffffff'/%3E%3C/svg%3E")`,
-              backgroundSize: '180px 180px',
-            }}
-          />
+        <section 
+          className="py-32 md:py-48 text-[#FDFCFB] relative overflow-hidden bg-[#160f0c]"
+          style={{
+            backgroundImage: `url(${heroImages[0] || leafTexture})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        >
+          {/* Elegant dark background overlay to ensure premium visual integration */}
+          <div className="absolute inset-0 bg-[#160f0c]/90 z-0" />
           
           <div className="container px-4 relative z-10">
             <div className="max-w-6xl mx-auto">
-              <div className="text-center space-y-6 mb-24">
+              <div className="text-center space-y-6 mb-24 relative z-10">
                 <span className="text-[10px] uppercase font-black tracking-[0.6em] text-[#c4a97d]">Investimento</span>
-                <h2 className="text-6xl md:text-9xl font-display font-outfit uppercase tracking-tight leading-[0.8]">{l.pricing}</h2>
+                <h2 className="text-3xl md:text-5xl font-display font-outfit uppercase tracking-tight leading-tight">{l.pricing}</h2>
                 <p className="text-white/40 text-sm font-light uppercase tracking-widest pt-4">{l.priceNote}</p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20 mb-32">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20 mb-16 relative z-10">
                 {/* 4x4 Option */}
                 <motion.div 
                   whileHover={{ y: -15 }}
@@ -912,7 +969,7 @@ export default function ItineraryDetail() {
                 >
                   <div className="absolute -right-20 -top-20 w-64 h-64 bg-[#c4a97d]/10 blur-[100px] rounded-full group-hover:bg-[#c4a97d]/20 transition-colors duration-700" />
                   
-                  <div className="flex items-center gap-6 mb-16">
+                  <div className="flex items-center gap-6 mb-16 relative z-10">
                     <div className="w-20 h-20 rounded-none bg-[#c4a97d]/10 flex items-center justify-center text-[#c4a97d] border border-[#c4a97d]/20">
                       <Truck className="h-10 w-10" />
                     </div>
@@ -922,18 +979,33 @@ export default function ItineraryDetail() {
                     </div>
                   </div>
 
-                  <div className="space-y-10">
+                  <div className="space-y-10 relative z-10">
+                    {/* Legenda Superior Explicativa */}
+                    <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-[0.2em] text-[#c4a97d]/50 border-b border-white/5 pb-4">
+                      <span>Qtd de pessoas no grupo</span>
+                      <span>Valor por pessoa</span>
+                    </div>
+
                     <div className="flex justify-between items-end pb-8 border-b border-white/10 group-hover:border-white/20 transition-colors">
-                      <span className="text-white/30 uppercase text-[10px] font-black tracking-widest">{l.individual}</span>
-                      <span className="text-5xl font-display text-white font-outfit">{formatPrice(itinerary.pricing.atmos4x4.individual)}</span>
+                      <span className="text-white/60 uppercase text-[10px] font-black tracking-widest">1 pessoa</span>
+                      <div className="text-right">
+                        <span className="text-5xl font-display text-white font-outfit">{formatPrice(itinerary.pricing.atmos4x4.individual)}</span>
+                        <span className="block text-[8px] uppercase tracking-widest text-white/30 mt-1">por pessoa</span>
+                      </div>
                     </div>
                     <div className="flex justify-between items-end pb-8 border-b border-white/10 group-hover:border-white/20 transition-colors">
-                      <span className="text-white/30 uppercase text-[10px] font-black tracking-widest">{l.dupla}</span>
-                      <span className="text-5xl font-display text-white font-outfit">{formatPrice(itinerary.pricing.atmos4x4.dupla)}</span>
+                      <span className="text-white/60 uppercase text-[10px] font-black tracking-widest">2 pessoas</span>
+                      <div className="text-right">
+                        <span className="text-5xl font-display text-white font-outfit">{formatPrice(itinerary.pricing.atmos4x4.dupla)}</span>
+                        <span className="block text-[8px] uppercase tracking-widest text-white/30 mt-1">por pessoa</span>
+                      </div>
                     </div>
                     <div className="flex justify-between items-end">
-                      <span className="text-white/30 uppercase text-[10px] font-black tracking-widest">{l.trioPlus}</span>
-                      <span className="text-5xl font-display text-[#c4a97d] font-outfit">{formatPrice(itinerary.pricing.atmos4x4.trio)}</span>
+                      <span className="text-white/60 uppercase text-[10px] font-black tracking-widest">3 pessoas ou mais</span>
+                      <div className="text-right">
+                        <span className="text-5xl font-display text-[#c4a97d] font-outfit">{formatPrice(itinerary.pricing.atmos4x4.trio)}</span>
+                        <span className="block text-[8px] uppercase tracking-widest text-[#c4a97d]/40 mt-1">por pessoa</span>
+                      </div>
                     </div>
                   </div>
                 </motion.div>
@@ -943,7 +1015,7 @@ export default function ItineraryDetail() {
                   whileHover={{ y: -15 }}
                   className="bg-[#1a130f] border border-white/10 rounded-none p-10 md:p-16 relative overflow-hidden backdrop-blur-sm"
                 >
-                  <div className="flex items-center gap-6 mb-16">
+                  <div className="flex items-center gap-6 mb-16 relative z-10">
                     <div className="w-20 h-20 rounded-none bg-white/5 flex items-center justify-center text-white/40 border border-white/10">
                       <Car className="h-10 w-10" />
                     </div>
@@ -953,21 +1025,45 @@ export default function ItineraryDetail() {
                     </div>
                   </div>
 
-                  <div className="space-y-10">
+                  <div className="space-y-10 relative z-10">
+                    {/* Legenda Superior Explicativa */}
+                    <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-[0.2em] text-white/20 border-b border-white/5 pb-4">
+                      <span>Qtd de pessoas no grupo</span>
+                      <span>Valor por pessoa</span>
+                    </div>
+
                     <div className="flex justify-between items-end pb-8 border-b border-white/10">
-                      <span className="text-white/20 uppercase text-[10px] font-black tracking-widest">{l.individual}</span>
-                      <span className="text-5xl font-display text-white/80 font-outfit">{formatPrice(itinerary.pricing.carroProprio.individual)}</span>
+                      <span className="text-white/60 uppercase text-[10px] font-black tracking-widest">1 pessoa</span>
+                      <div className="text-right">
+                        <span className="text-5xl font-display text-white/80 font-outfit">{formatPrice(itinerary.pricing.carroProprio.individual)}</span>
+                        <span className="block text-[8px] uppercase tracking-widest text-white/30 mt-1">por pessoa</span>
+                      </div>
                     </div>
                     <div className="flex justify-between items-end pb-8 border-b border-white/10">
-                      <span className="text-white/20 uppercase text-[10px] font-black tracking-widest">{l.dupla}</span>
-                      <span className="text-5xl font-display text-white/80 font-outfit">{formatPrice(itinerary.pricing.carroProprio.dupla)}</span>
+                      <span className="text-white/60 uppercase text-[10px] font-black tracking-widest">2 pessoas</span>
+                      <div className="text-right">
+                        <span className="text-5xl font-display text-white/80 font-outfit">{formatPrice(itinerary.pricing.carroProprio.dupla)}</span>
+                        <span className="block text-[8px] uppercase tracking-widest text-white/30 mt-1">por pessoa</span>
+                      </div>
                     </div>
                     <div className="flex justify-between items-end">
-                      <span className="text-white/20 uppercase text-[10px] font-black tracking-widest">{l.trioPlus}</span>
-                      <span className="text-5xl font-display text-white/80 font-outfit">{formatPrice(itinerary.pricing.carroProprio.trio)}</span>
+                      <span className="text-white/60 uppercase text-[10px] font-black tracking-widest">3 pessoas ou mais</span>
+                      <div className="text-right">
+                        <span className="text-5xl font-display text-white/80 font-outfit">{formatPrice(itinerary.pricing.carroProprio.trio)}</span>
+                        <span className="block text-[8px] uppercase tracking-widest text-white/30 mt-1">por pessoa</span>
+                      </div>
                     </div>
                   </div>
                 </motion.div>
+              </div>
+
+              {/* Exclusive Groups Guarantee Notice Banner */}
+              <div className="mb-32 relative z-10 text-center max-w-2xl mx-auto border border-[#c4a97d]/30 bg-[#c4a97d]/5 p-8 backdrop-blur-md">
+                <p className="text-[#c4a97d] text-xs font-black uppercase tracking-[0.3em] mb-2">Exclusividade Garantida</p>
+                <p className="text-white/80 text-sm font-light leading-relaxed">
+                  Todos os nossos roteiros são operados com <strong className="font-bold text-white">grupos exclusivos e 100% privativos</strong>. 
+                  Você terá a expedição inteiramente dedicada a você, sua família ou seus amigos, sem compartilhamento com outros clientes.
+                </p>
               </div>
 
               {/* Extra Costs & Inclusions Grid */}
