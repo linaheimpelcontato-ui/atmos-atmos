@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { trackItineraryView } from "@/lib/analytics";
 import Layout from "@/components/layout/Layout";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { normalize } from "@/lib/storage";
+import { normalize, optimizedUrl, IMAGE_PRESETS } from "@/lib/storage";
 import { useWishlist } from "@/contexts/WishlistContext";
 import { useProducts } from "@/hooks/useProducts";
 import { getItineraryById, type ItineraryDay, type Itinerary, itineraries as staticItineraries } from "@/data/itineraries";
