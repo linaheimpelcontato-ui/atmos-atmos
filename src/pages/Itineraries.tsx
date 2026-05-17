@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import PageSEO from "@/components/seo/PageSEO";
 import Layout from "@/components/layout/Layout";
-import { storageUrl } from "@/lib/storage";
+import { storageUrl, normalize } from "@/lib/storage";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useProducts } from "@/hooks/useProducts";
 import { getDurations, getItinerariesByDuration, type DurationDays, type Itinerary, itineraries as staticItineraries } from "@/data/itineraries";
@@ -249,10 +249,18 @@ const Itineraries = () => {
 
         if (childProduct) {
           const vars = childProduct.variables as any || {};
-          if (vars.gallery && Array.isArray(vars.gallery) && vars.gallery.length > 0) {
+          if (vars.gallery_order && Array.isArray(vars.gallery_order) && vars.gallery_order.length > 0) {
+            const prefix = vars.storage_id || normalize(childProduct.name) || childProduct.id;
+            let folder = "experiencias";
+            if (childProduct.type === "waterfall") folder = "cachoeiras";
+            else if (childProduct.type === "accommodation") folder = "hospedagens";
+            else if (childProduct.type === "service") folder = "serviços";
+            
+            itemImages = vars.gallery_order.map((fileName: string) => `produtos/${folder}/${prefix}/${fileName}`);
+          } else if (vars.gallery && Array.isArray(vars.gallery) && vars.gallery.length > 0) {
             itemImages = vars.gallery;
           } else {
-            const prefix = vars.storage_id || childProduct.id;
+            const prefix = vars.storage_id || normalize(childProduct.name) || childProduct.id;
             let folder = "experiencias";
             if (childProduct.type === "waterfall") folder = "cachoeiras";
             else if (childProduct.type === "accommodation") folder = "hospedagens";
@@ -281,11 +289,18 @@ const Itineraries = () => {
         };
       });
 
-      const favorites = Array.from(new Set(allItineraryImages)).filter(Boolean).slice(0, 10);
+      const itineraryPrefix = supabaseVars.storage_id || normalize(it.name) || it.id;
+      const itineraryImages = supabaseVars.gallery_order && Array.isArray(supabaseVars.gallery_order) && supabaseVars.gallery_order.length > 0
+        ? supabaseVars.gallery_order.map((fileName: string) => `produtos/roteiros/${itineraryPrefix}/${fileName}`)
+        : [];
+      
+      const favorites = (supabaseVars.favorites && supabaseVars.favorites.length > 0)
+        ? supabaseVars.favorites
+        : (itineraryImages.length > 0 ? itineraryImages : Array.from(new Set(allItineraryImages)).filter(Boolean).slice(0, 10));
 
       return {
         id: it.source_id || it.id,
-        duration: supabaseVars.duration || 3,
+        duration: typeof supabaseVars.duration === 'number' ? supabaseVars.duration : (supabaseVars.duration ? parseInt(supabaseVars.duration) : 3),
         category: it.segment,
         name: { pt: it.name, en: it.name, es: it.name },
         description: { pt: it.description || "", en: it.description || "", es: it.description || "" },
@@ -396,41 +411,6 @@ const Itineraries = () => {
               navigate={navigate} 
             />
           ))}
-        </section>
-
-        {/* Compact Bespoke CTA Section - With Blurred Photo Background */}
-        <section className="py-24 overflow-hidden relative bg-[#0A0F0A]">
-          {/* Background Image with Blur (No Grayscale) */}
-          <div className="absolute inset-0 z-0">
-            <img loading="lazy" 
-              src={storageUrl("duvidas/duvidas-bg.jpg")} 
-              alt="" 
-              className="w-full h-full object-cover opacity-60 blur-sm scale-110" 
-            />
-            <div className="absolute inset-0 bg-black/40" />
-          </div>
-
-          <div className="container px-4 relative z-10 text-[#FDFCFB]">
-            <div className="max-w-4xl mx-auto text-center">
-              <div className="inline-flex items-center gap-3 px-4 py-1 rounded-full bg-white/5 border border-white/10 text-white/40 text-[9px] uppercase tracking-[0.3em] font-bold mb-8">
-                <Sparkles className="w-3 h-3 text-[#C5A267]" />
-                Experiência Exclusiva
-              </div>
-              <h2 className="text-4xl md:text-6xl font-display mb-6 tracking-tight">
-                {l.bespokeTitle}
-              </h2>
-              <p className="text-white/60 text-base md:text-lg font-light mb-10 max-w-xl mx-auto leading-relaxed">
-                {l.bespokeDesc}
-              </p>
-              <Link
-                to="/monte-seu-roteiro"
-                className="inline-flex items-center gap-4 bg-[#C5A267] text-[#1A261B] px-8 py-4 rounded-full text-[11px] font-bold uppercase tracking-[0.2em] hover:scale-105 transition-all shadow-xl shadow-[#C5A267]/20"
-              >
-                {l.bespokeBtn}
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-          </div>
         </section>
       </div>
     </Layout>

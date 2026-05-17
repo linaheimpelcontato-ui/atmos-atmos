@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { trackItineraryView } from "@/lib/analytics";
 import Layout from "@/components/layout/Layout";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { normalize } from "@/lib/storage";
 import { useWishlist } from "@/contexts/WishlistContext";
 import { useProducts } from "@/hooks/useProducts";
 import { getItineraryById, type ItineraryDay, type Itinerary, itineraries as staticItineraries } from "@/data/itineraries";
@@ -250,77 +251,86 @@ export default function ItineraryDetail() {
     // Transform into a flat list of items (one section per product)
     return itinerariesOnly.map(dbProduct => {
       const supabaseVars = (dbProduct.variables || {}) as any;
-      const allItems: any[] = [];
-      (supabaseVars.days || []).forEach((day: any) => {
-        if (day.items && day.items.length > 0) {
-          day.items.forEach((item: any, itemIdx: number) => {
-            if (item.product_type === 'guide') return; // Skip guide items for sections
-            
-            allItems.push({
-              id: `${dbProduct.id}-item-${itemIdx}`,
-              dayNumber: day.day,
-              itemNumber: itemIdx + 1,
-              title: { pt: item.product_name, en: item.product_name, es: item.product_name },
-              trailDistanceKm: item.product_variables?.trailDistanceKm,
-              difficulty: (item.product_variables?.difficulty || "moderado") as any,
-              resolvedTitle: item.product_name,
-              attractions: { pt: [item.product_name], en: [item.product_name], es: [item.product_name] },
-              description: { 
-                pt: item.product_description || "", 
-                en: item.product_description || "",
-                es: item.product_description || ""
-              },
-              hasGuide: day.items.some((it: any) => it.product_type === 'guide'),
-              catalog_item_id: item.catalog_item_id,
-              product_id: item.product_id,
-              product_storage_info: item.product_storage_info
-            });
-          });
-        }
-      });
-
       const allItineraryImages: string[] = [];
+      
+      const enrichedDays = (supabaseVars.days || []).map((day: any) => {
+        const enrichedItems = (day.items || []).filter((item: any) => item.product_type !== 'guide').map((item: any, itemIdx: number) => {
+          const childProduct = allProducts.find(p => p.id === (item.catalog_item_id || item.product_id));
+          let itemImages: string[] = [];
 
-      const enrichedItems = allItems.map(item => {
-        const childProduct = allProducts.find(p => p.id === (item.catalog_item_id || item.product_id));
-        let itemImages: string[] = [];
-
-        if (childProduct) {
-          const vars = childProduct.variables as any || {};
-          if (vars.gallery && Array.isArray(vars.gallery) && vars.gallery.length > 0) {
-            itemImages = vars.gallery;
-          } else {
-            const prefix = vars.storage_id || childProduct.id;
-            let folder = "experiencias";
-            if (childProduct.type === "waterfall") folder = "cachoeiras";
-            else if (childProduct.type === "accommodation") folder = "hospedagens";
-            else if (childProduct.type === "service") folder = "serviços";
-            
-            itemImages = [1, 2, 3, 4, 5].map(n => `produtos/${folder}/${prefix}/${prefix}-${n}.jpg`);
+          if (childProduct) {
+            const vars = childProduct.variables as any || {};
+            if (vars.gallery_order && Array.isArray(vars.gallery_order) && vars.gallery_order.length > 0) {
+              const prefix = vars.storage_id || normalize(childProduct.name) || childProduct.id;
+              let folder = "experiencias";
+              if (childProduct.type === "waterfall") folder = "cachoeiras";
+              else if (childProduct.type === "accommodation") folder = "hospedagens";
+              else if (childProduct.type === "service") folder = "serviços";
+              
+              itemImages = vars.gallery_order.map((fileName: string) => `produtos/${folder}/${prefix}/${fileName}`);
+            } else if (vars.gallery && Array.isArray(vars.gallery) && vars.gallery.length > 0) {
+              itemImages = vars.gallery;
+            } else {
+              const prefix = vars.storage_id || normalize(childProduct.name) || childProduct.id;
+              let folder = "experiencias";
+              if (childProduct.type === "waterfall") folder = "cachoeiras";
+              else if (childProduct.type === "accommodation") folder = "hospedagens";
+              else if (childProduct.type === "service") folder = "serviços";
+              
+              itemImages = [1, 2, 3, 4, 5].map(n => `produtos/${folder}/${prefix}/${prefix}-${n}.jpg`);
+            }
           }
-        }
 
-        if (itemImages.length === 0) {
-          itemImages = [item.product_storage_info?.prefix || item.product_name];
-        }
+          if (itemImages.length === 0) {
+            itemImages = [item.product_storage_info?.prefix || item.product_name];
+          }
 
-        allItineraryImages.push(...itemImages.slice(0, 5));
+          allItineraryImages.push(...itemImages.slice(0, 5));
+
+          return {
+            ...item,
+            id: `${dbProduct.id}-item-${itemIdx}`,
+            dayNumber: day.day,
+            itemNumber: itemIdx + 1,
+            title: { pt: item.product_name, en: item.product_name, es: item.product_name },
+            trailDistanceKm: item.product_variables?.trailDistanceKm,
+            difficulty: (item.product_variables?.difficulty || "moderado") as any,
+            resolvedTitle: item.product_name,
+            attractions: { pt: [item.product_name], en: [item.product_name], es: [item.product_name] },
+            description: { 
+              pt: item.product_description || "", 
+              en: item.product_description || "",
+              es: item.product_description || ""
+            },
+            hasGuide: day.items.some((it: any) => it.product_type === 'guide'),
+            images: itemImages
+          };
+        });
 
         return {
-          ...item,
-          images: itemImages
+          ...day,
+          title: { pt: `Dia ${day.dayNumber}`, en: `Day ${day.dayNumber}`, es: `Día ${day.dayNumber}` },
+          items: enrichedItems,
+          images: day.images || (enrichedItems[0]?.images || [])
         };
       });
 
-      const favorites = Array.from(new Set(allItineraryImages)).filter(Boolean).slice(0, 15);
+      const itineraryPrefix = supabaseVars.storage_id || normalize(dbProduct.name) || dbProduct.id;
+      const itineraryImages = supabaseVars.gallery_order && Array.isArray(supabaseVars.gallery_order) && supabaseVars.gallery_order.length > 0
+        ? supabaseVars.gallery_order.map((fileName: string) => `produtos/roteiros/${itineraryPrefix}/${fileName}`)
+        : [];
+      
+      const favorites = (supabaseVars.favorites && supabaseVars.favorites.length > 0)
+        ? supabaseVars.favorites
+        : (itineraryImages.length > 0 ? itineraryImages : Array.from(new Set(allItineraryImages)).filter(Boolean).slice(0, 15));
 
       return {
         id: dbProduct.source_id || dbProduct.id,
-        duration: supabaseVars.duration || 3,
+        duration: typeof supabaseVars.duration === 'number' ? supabaseVars.duration : (supabaseVars.duration ? parseInt(supabaseVars.duration) : 3),
         category: dbProduct.segment as any,
         name: { pt: dbProduct.name, en: dbProduct.name, es: dbProduct.name },
         description: { pt: dbProduct.description || "", en: dbProduct.description || "", es: dbProduct.description || "" },
-        days: enrichedItems,
+        days: enrichedDays,
         favorites,
         pricing: supabaseVars.pricing || { 
           atmos4x4: { individual: 0, dupla: 0, trio: 0 }, 

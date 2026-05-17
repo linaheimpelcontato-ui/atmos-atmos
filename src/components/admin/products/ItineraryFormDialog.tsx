@@ -18,6 +18,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import type { Product } from "./shared";
 import { productTypeLabels, slugify, getStorageInfo } from "./shared";
 import { ProductMediaTab } from "./ProductMediaTab";
+import { normalize } from "@/lib/storage";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { 
@@ -413,6 +414,8 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
   const [seoTitle, setSeoTitle] = useState("");
   const [seoDescription, setSeoDescription] = useState("");
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [galleryOrder, setGalleryOrder] = useState<string[]>([]);
+  const [tempId, setTempId] = useState<string>("");
 
   useEffect(() => {
     if (!open) return;
@@ -430,6 +433,12 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
     setSeoTitle(vars?.seo_title || "");
     setSeoDescription(vars?.seo_description || "");
     setFavorites(vars?.favorites || []);
+    setGalleryOrder(vars?.gallery_order || []);
+    if (product) {
+      setTempId("");
+    } else {
+      setTempId(crypto.randomUUID());
+    }
     setAtmosRevenue(vars?.atmosRevenue || 0);
     setTaxPercent(vars?.taxPercent || 0);
     setMarkupPercent(vars?.markupPercent || 20);
@@ -688,6 +697,8 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
         seo_title: seoTitle,
         seo_description: seoDescription,
         favorites,
+        gallery_order: galleryOrder,
+        storage_id: tempId || product?.variables?.storage_id,
         atmosRevenue,
         taxPercent,
         markupPercent,
@@ -1181,8 +1192,20 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                 {product || name.trim() ? (
                   <div className="max-w-5xl mx-auto">
                     <ProductMediaTab 
-                      product={{ ...product, name, type: "itinerary", variables: { ...product?.variables, favorites } } as any} 
+                      product={{ 
+                        ...product, 
+                        name, 
+                        type: "itinerary", 
+                        id: product?.id || "",
+                        variables: { 
+                          ...product?.variables, 
+                          favorites, 
+                          gallery_order: galleryOrder,
+                          storage_id: tempId || product?.variables?.storage_id 
+                        } 
+                      } as any} 
                       onFavoriteToggle={(file) => setFavorites(prev => prev.includes(file) ? prev.filter(f => f !== file) : [...prev, file])}
+                      onOrderChange={(newOrder) => setGalleryOrder(newOrder)}
                     />
                   </div>
                 ) : (
