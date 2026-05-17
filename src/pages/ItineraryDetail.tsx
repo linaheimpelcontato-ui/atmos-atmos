@@ -589,7 +589,23 @@ export default function ItineraryDetail() {
         "5d-jurassico": "produtos/cachoeiras/dragao/dragao-1.jpg",
       };
 
-      const staticKey = itinerary.id;
+      let staticKey = itinerary.id;
+      if (staticKey.includes("-") && staticKey.length > 20) {
+        // It's a dynamic UUID! Resolve based on category and duration from the name.
+        const nameSlug = normalize(itinerary.name.pt || "");
+        if (nameSlug.includes("jurassico")) {
+          if (nameSlug.includes("2")) staticKey = "2d-jurassico";
+          else if (nameSlug.includes("3")) staticKey = "3d-jurassico";
+          else if (nameSlug.includes("4")) staticKey = "4d-jurassico";
+          else if (nameSlug.includes("5")) staticKey = "5d-jurassico";
+        } else {
+          if (nameSlug.includes("2")) staticKey = "2d-classico";
+          else if (nameSlug.includes("3")) staticKey = "3d-classico";
+          else if (nameSlug.includes("4")) staticKey = "4d-classico";
+          else if (nameSlug.includes("5")) staticKey = "5d-classico";
+        }
+      }
+
       if (staticItineraryImages[staticKey]) {
         const staticUrl = optimizedUrl(staticItineraryImages[staticKey], IMAGE_PRESETS.large);
         mapped.unshift(staticUrl);
