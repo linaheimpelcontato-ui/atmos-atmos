@@ -243,61 +243,81 @@ export default function ItineraryDetail() {
   const [heroImages, setHeroImages] = useState<string[]>([]);
 
   const mergedItineraries = useMemo(() => {
-    const merged = [...staticItineraries];
-    dbProducts.forEach(dbProduct => {
-      const staticIdx = merged.findIndex(i => i.id === dbProduct.source_id);
-      const dbVars = (dbProduct.variables || {}) as any;
-      const mapped: Itinerary = {
+    // Se houver produtos no banco, eles são a fonte da verdade.
+    const merged = dbProducts.length > 0 ? [] : [...staticItineraries];
+    // Transform into a flat list of items (one section per product)
+    return dbProducts.map(dbProduct => {
+      const supabaseVars = (dbProduct.variables || {}) as any;
+      const allItems: any[] = [];
+      (supabaseVars.days || []).forEach((day: any) => {
+        if (day.items && day.items.length > 0) {
+          day.items.forEach((item: any, itemIdx: number) => {
+            if (item.product_type === 'guide') return; // Skip guide items for sections
+            
+            allItems.push({
+              id: `${dbProduct.id}-item-${itemIdx}`,
+              dayNumber: day.day,
+              itemNumber: itemIdx + 1,
+              title: { pt: item.product_name, en: item.product_name, es: item.product_name },
+              trailDistanceKm: item.product_variables?.trailDistanceKm,
+              difficulty: (item.product_variables?.difficulty || "moderado") as any,
+              imageKey: item.product_storage_info?.prefix || "",
+              resolvedTitle: item.product_name,
+              attractions: { pt: [item.product_name], en: [item.product_name], es: [item.product_name] },
+              description: { 
+                pt: item.product_description || "", 
+                en: item.product_description || "",
+                es: item.product_description || ""
+              },
+              hasGuide: day.items.some((it: any) => it.product_type === 'guide')
+            });
+          });
+        }
+      });
+
+      const favorites = allItems
+        .filter(it => it.imageKey)
+        .slice(0, 15)
+        .map(it => it.imageKey);
+
+      return {
         id: dbProduct.source_id || dbProduct.id,
-        duration: (dbVars.duration || (staticIdx > -1 ? merged[staticIdx].duration : 3)) as any,
-        category: (dbProduct.segment || (staticIdx > -1 ? merged[staticIdx].category : "classico")) as any,
-        name: {
-          pt: dbProduct.name,
-          en: (staticIdx > -1 ? merged[staticIdx].name.en : dbProduct.name),
-          es: (staticIdx > -1 ? merged[staticIdx].name.es : dbProduct.name),
-        },
-        description: {
-          pt: dbProduct.description || "",
-          en: (staticIdx > -1 ? merged[staticIdx].description.en : dbProduct.description || ""),
-          es: (staticIdx > -1 ? merged[staticIdx].description.es : dbProduct.description || ""),
-        },
-        days: dbVars.days || (staticIdx > -1 ? merged[staticIdx].days : []),
-        pricing: dbVars.pricing || (staticIdx > -1 ? merged[staticIdx].pricing : { 
+        duration: supabaseVars.duration || 3,
+        category: dbProduct.segment as any,
+        name: { pt: dbProduct.name, en: dbProduct.name, es: dbProduct.name },
+        description: { pt: dbProduct.description || "", en: dbProduct.description || "", es: dbProduct.description || "" },
+        days: allItems,
+        favorites,
+        pricing: supabaseVars.pricing || { 
           atmos4x4: { individual: 0, dupla: 0, trio: 0 }, 
           carroProprio: { individual: 0, dupla: 0, trio: 0 } 
-        }),
-        extraCosts: dbVars.extraCosts || (staticIdx > -1 ? merged[staticIdx].extraCosts : { entranceFees: 0 }),
-        inclusions: dbVars.inclusions || (staticIdx > -1 ? merged[staticIdx].inclusions : { pt: [], en: [], es: [] }),
-        favorites: dbVars.favorites || (staticIdx > -1 ? (merged[staticIdx] as any).favorites : []),
+        },
+        extraCosts: supabaseVars.extraCosts || { entranceFees: 0 },
+        inclusions: supabaseVars.inclusions || { pt: [], en: [], es: [] }
       };
-      if (staticIdx > -1) merged[staticIdx] = mapped;
-      else merged.push(mapped);
     });
-    return merged;
   }, [dbProducts]);
 
   const itinerary = id ? getItineraryById(id, mergedItineraries) : undefined;
   const l = labels[language as keyof typeof labels] || labels.pt;
 
   useEffect(() => {
+    if (itinerary?.favorites) {
+      setHeroImages(itinerary.favorites.slice(0, 5).map(f => getDayImage(f, itinerary.name.pt)));
+    }
+  }, [itinerary, language]);
+
+  useEffect(() => {
     if (itinerary) {
       trackItineraryView(itinerary.name.pt, itinerary.category, itinerary.duration);
       window.scrollTo(0, 0);
-
-      // Load favorites or fallbacks
-      const favs = (itinerary as any).favorites || [];
-      if (favs.length > 0) {
-        setHeroImages(favs.map((f: string) => getItineraryImage(f, itinerary.name.pt)));
-      } else {
-        setHeroImages([getItineraryImage(itinerary.id, itinerary.name.pt)]);
-      }
     }
   }, [itinerary?.id]);
 
   if (!itinerary) {
     return (
-      <Layout>
-        <div className="container px-4 py-24 text-center">
+      <Layout hideWishlist>
+        <div className="bg-white min-h-screen container px-4 py-24 text-center">
           <p className="text-[#1A261B]/40 text-lg">{l.notFound}</p>
           <Button variant="outline" className="mt-4" onClick={() => navigate("/roteiros")}>
             <ArrowLeft className="h-4 w-4 mr-2" /> {l.back}
@@ -363,12 +383,14 @@ export default function ItineraryDetail() {
                 className="max-w-4xl"
               >
                 <div className="flex items-center gap-4 mb-8">
-                  <span className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] backdrop-blur-xl border ${
-                    isJurassico ? "bg-red-500/20 border-red-500/30 text-red-200" : "bg-[#C5A267]/20 border-[#C5A267]/30 text-[#C5A267]"
-                  }`}>
-                    {isJurassico ? <Flame className="h-3 w-3 inline mr-2" /> : <Mountain className="h-3 w-3 inline mr-2" />}
-                    {isJurassico ? l.jurassico : l.classico}
-                  </span>
+                  {itinerary.category && (
+                    <span className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] backdrop-blur-xl border ${
+                      isJurassico ? "bg-red-500/20 border-red-500/30 text-red-200" : "bg-[#C5A267]/20 border-[#C5A267]/30 text-[#C5A267]"
+                    }`}>
+                      {isJurassico ? <Flame className="h-3 w-3 inline mr-2" /> : <Mountain className="h-3 w-3 inline mr-2" />}
+                      {itinerary.category}
+                    </span>
+                  )}
                   <span className="flex items-center gap-2 text-white/80 text-[10px] font-black uppercase tracking-[0.2em] bg-white/10 backdrop-blur-xl px-5 py-2 rounded-full border border-white/10">
                     <Calendar className="h-3 w-3" />
                     {itinerary.duration} {l.days}
@@ -394,14 +416,18 @@ export default function ItineraryDetail() {
                   <span className="text-[9px] uppercase font-black tracking-widest text-[#1A261B]/40">Destino</span>
                   <span className="text-sm font-bold text-[#1A261B]">Chapada dos Veadeiros</span>
                 </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-[9px] uppercase font-black tracking-widest text-[#1A261B]/40">Duração</span>
-                  <span className="text-sm font-bold text-[#1A261B]">{itinerary.duration} {l.days}</span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-[9px] uppercase font-black tracking-widest text-[#1A261B]/40">Estilo</span>
-                  <span className="text-sm font-bold text-[#1A261B]">{isJurassico ? l.jurassico : l.classico}</span>
-                </div>
+                {itinerary.category && (
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] uppercase font-black tracking-widest text-[#1A261B]/40">Estilo</span>
+                    <span className="text-sm font-bold text-[#1A261B]">{itinerary.category}</span>
+                  </div>
+                )}
+                {itinerary.guidedDays !== undefined && (
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[9px] uppercase font-black tracking-widest text-[#C5A267]">Suporte Local</span>
+                    <span className="text-sm font-bold text-[#1A261B]">{itinerary.guidedDays} Dias Guiados</span>
+                  </div>
+                )}
               </div>
               <Button
                 onClick={toggleWishlist}
@@ -416,6 +442,54 @@ export default function ItineraryDetail() {
           </div>
         </div>
 
+        {/* Experience Gallery */}
+        {itinerary.favorites && itinerary.favorites.length > 1 && (
+          <section className="py-24 bg-[#FDFCFB] border-t border-[#1A261B]/5">
+            <div className="container px-4">
+              <div className="max-w-xl mb-16">
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[#C5A267] block mb-4">Curadoria Atmos</span>
+                <h2 className="text-4xl md:text-5xl font-display text-[#1A261B] tracking-tight">Experiências que compõem sua jornada</h2>
+                <p className="text-[#1A261B]/60 mt-4 font-light text-lg">Uma seleção cuidadosa de cenários e vivências que garantem a autenticidade da sua expedição.</p>
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
+                {itinerary.favorites.slice(0, 5).map((imgKey: string, i: number) => (
+                  <motion.div 
+                    key={i}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: i * 0.1 }}
+                    className="group relative aspect-[4/5] rounded-[2px] overflow-hidden shadow-2xl bg-[#1A261B]/5"
+                  >
+                    <OptimizedImage 
+                      src={getDayImage(imgKey, itinerary.name.pt)} 
+                      alt="Atmos Experience" 
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Timeline Summary */}
+        <section className="py-12 bg-white border-b border-[#1A261B]/5 sticky top-0 z-40 backdrop-blur-xl bg-white/80">
+          <div className="container px-4">
+            <div className="flex flex-wrap gap-4 justify-center">
+              {itinerary.days.map((day, idx) => (
+                <div key={idx} className="flex flex-col items-center gap-2 group cursor-pointer" onClick={() => document.getElementById(`day-${idx + 1}`)?.scrollIntoView({ behavior: 'smooth' })}>
+                  <div className="w-10 h-10 rounded-full border border-[#1A261B]/10 flex items-center justify-center text-[10px] font-bold text-[#1A261B]/40 group-hover:bg-[#1A261B] group-hover:text-white transition-all">
+                    {idx + 1}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* Detailed Itinerary Sections */}
         <section className="py-24 md:py-40 bg-white relative overflow-hidden">
           {/* Subtle pattern background */}
@@ -429,7 +503,7 @@ export default function ItineraryDetail() {
                 const guideItem = (day as any).items?.find((it: any) => it.product_type === "guide");
                 
                 return (
-                  <div key={idx} className="space-y-12">
+                  <div key={idx} id={`day-${idx + 1}`} className="space-y-12 scroll-mt-32">
                     <DayBanner number={idx + 1} title={resolvedTitle} />
                     
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20">
@@ -464,10 +538,10 @@ export default function ItineraryDetail() {
                                   <Map className="w-3.5 h-3.5" />
                                   <span className="text-[10px] font-bold uppercase tracking-wider">{day.trailDistanceKm || "—"}km Trilha</span>
                                 </div>
-                                {guideItem && (
-                                  <div className="flex items-center gap-2 px-3 py-1.5 bg-[#C5A267]/10 rounded-xl border border-[#C5A267]/20 shadow-sm text-[#C5A267]">
-                                    <Sparkles className="w-3.5 h-3.5" />
-                                    <span className="text-[10px] font-bold uppercase tracking-wider">Com Guia</span>
+                                {day.hasGuide && (
+                                  <div className="px-4 py-1.5 bg-[#C5A267]/10 rounded-full border border-[#C5A267]/20 flex items-center gap-2">
+                                    <Sparkles className="w-3.5 h-3.5 text-[#C5A267]" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-[#C5A267]">Com Guia</span>
                                   </div>
                                 )}
                               </div>
@@ -499,8 +573,8 @@ export default function ItineraryDetail() {
 
                       <div className="lg:col-span-5 space-y-10">
                         <div className="relative group rounded-[3rem] overflow-hidden aspect-square shadow-2xl">
-                           <OptimizedImage
-                            src={getDayImage(day.imageKey || "", resolvedTitle)}
+                          <OptimizedImage
+                            src={getDayImage(day.imageKey || "", day.resolvedTitle || resolvedTitle)}
                             alt={resolvedTitle}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
                             containerClassName="absolute inset-0"

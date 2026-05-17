@@ -31,6 +31,7 @@ const labels = {
     back: "Voltar",
     about: "Sobre a experiência",
     location: "Localização",
+    gallery: "Galeria",
   },
   en: {
     price: "Investment",
@@ -42,6 +43,7 @@ const labels = {
     back: "Back",
     about: "About the experience",
     location: "Location",
+    gallery: "Gallery",
   },
   es: {
     price: "Inversión",
@@ -53,6 +55,7 @@ const labels = {
     back: "Volver",
     about: "Sobre la experiencia",
     location: "Ubicación",
+    gallery: "Galería",
   },
 };
 
@@ -268,11 +271,9 @@ export default function ExperienceDetailDialog({
                 transition={{ delay: index * 0.05 }}
                 className="break-inside-avoid relative overflow-hidden rounded-[2px] group cursor-pointer border border-[#1A261B]/5"
               >
-                <img loading="lazy" 
-                  src={img} 
+                <img src={img} 
                   className="w-full h-auto object-cover transition-transform duration-1000 group-hover:scale-105" 
                   alt={`${experience.name.pt} gallery ${index + 1}`}
-                  loading="lazy"
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-500" />
               </motion.div>

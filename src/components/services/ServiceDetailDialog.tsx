@@ -383,7 +383,6 @@ export default function ServiceDetailDialog({
                   src={img} 
                   className="w-full h-auto object-cover transition-transform duration-1000 group-hover:scale-105" 
                   alt={`${service.title[language]} gallery ${index + 1}`}
-                  loading="lazy"
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-500" />
               </motion.div>

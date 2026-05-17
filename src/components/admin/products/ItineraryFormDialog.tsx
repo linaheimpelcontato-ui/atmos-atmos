@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Plus, ChevronDown, Pencil, Search, Package, RefreshCw, ImageIcon, UsersRound, X, Compass, GripVertical, Copy, Check, ChevronsUpDown, Route, Info, LayoutGrid, List, AlertCircle, CalendarIcon, Truck, Car, CalendarDays, CircleDollarSign, TrendingUp, AlertTriangle, Calculator, Percent, Users, Table, Map } from "lucide-react";
+import { Trash2, Plus, ChevronDown, Pencil, Search, Package, RefreshCw, ImageIcon, UsersRound, X, Compass, GripVertical, Copy, Check, ChevronsUpDown, Route, Info, LayoutGrid, List, AlertCircle, CalendarIcon, Truck, Car, CalendarDays, CircleDollarSign, TrendingUp, AlertTriangle, Calculator, Percent, Map } from "lucide-react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -79,6 +79,7 @@ type SavedDay = {
   description: { pt: string };
   imageKey?: string;
   vehicle_type?: string;
+  hasGuide?: boolean;
 };
 
 import { regionLabels } from "./shared";
@@ -432,24 +433,51 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
     setAtmosRevenue(vars?.atmosRevenue || 0);
     setTaxPercent(vars?.taxPercent || 0);
     setMarkupPercent(vars?.markupPercent || 20);
-    setGuidePricingTiers(vars?.guidePricingTiers || {
-      atmos4x4: { p1: 0, p2: 0, p3plus: 0 },
-      carroProprio: { p1: 0, p2: 0, p3plus: 0 }
-    });
+    const rawTiers = vars?.guidePricingTiers;
+    if (rawTiers && (rawTiers.p1 !== undefined || rawTiers.p2 !== undefined)) {
+      setGuidePricingTiers({
+        atmos4x4: { p1: rawTiers.p1 || 0, p2: rawTiers.p2 || 0, p3plus: rawTiers.p3plus || 0 },
+        carroProprio: { p1: rawTiers.p1 || 0, p2: rawTiers.p2 || 0, p3plus: rawTiers.p3plus || 0 }
+      });
+    } else {
+      setGuidePricingTiers(vars?.guidePricingTiers || {
+        atmos4x4: { p1: 0, p2: 0, p3plus: 0 },
+        carroProprio: { p1: 0, p2: 0, p3plus: 0 }
+      });
+    }
     setActiveModalities(vars?.activeModalities || { atmos4x4: true, carroProprio: true });
     setGuideId(vars?.guide_id || null);
 
-    if (vars?.days && vars.days.length > 0) {
-      setDays(vars.days.map((d: any, i: number) => ({
-        ...d,
-        dayNumber: d.dayNumber || i + 1,
-        vehicle_type: d.vehicle_type || "atmos4x4",
-        items: (d.items || []).map((it: any) => ({
-          ...it,
-          _uid: it._uid || Math.random().toString(36).substr(2, 9),
-          category: LEGACY_CATEGORY_MAP[it.category] || it.category || "Serviços"
-        }))
-      })));
+    if (vars?.days && Array.isArray(vars.days)) {
+      setDays(vars.days.map((d: any, i: number) => {
+        // Normalize attractions
+        let normAttractions = { pt: [] as string[] };
+        if (d.attractions?.pt) normAttractions = d.attractions;
+        else if (Array.isArray(d.attractions)) normAttractions = { pt: d.attractions };
+        else if (typeof d.attractions === 'string') normAttractions = { pt: [d.attractions] };
+
+        // Normalize description
+        let normDescription = { pt: "" };
+        if (d.description?.pt) normDescription = d.description;
+        else if (typeof d.description === 'string') normDescription = { pt: d.description };
+
+        return {
+          ...d,
+          dayNumber: d.dayNumber || i + 1,
+          vehicle_type: d.vehicle_type || "atmos4x4",
+          hasGuide: d.hasGuide !== undefined ? d.hasGuide : true,
+          attractions: normAttractions,
+          description: normDescription,
+          items: (d.items || []).map((it: any) => ({
+            ...it,
+            _uid: it._uid || Math.random().toString(36).substr(2, 9),
+            category: LEGACY_CATEGORY_MAP[it.category] || it.category || "Serviços",
+            qty: Number(it.qty) || 1,
+            cost: Number(it.cost) || 0,
+            value: Number(it.value) || 0
+          }))
+        };
+      }));
       setOpenDays([1]);
     } else {
       setDays([{ dayNumber: 1, items: [], guidePricing: {}, attractions: { pt: [] }, description: { pt: "" }, vehicle_type: "atmos4x4" }]);
@@ -577,7 +605,7 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
 
   const addDay = () => {
     const nextNum = days.length + 1;
-    setDays([...days, { dayNumber: nextNum, items: [], guidePricing: {}, attractions: { pt: [] }, description: { pt: "" }, vehicle_type: "atmos4x4" }]);
+    setDays([...days, { dayNumber: nextNum, items: [], guidePricing: {}, attractions: { pt: [] }, description: { pt: "" }, vehicle_type: "atmos4x4", hasGuide: true }]);
     setOpenDays([...openDays, nextNum]);
   };
 
@@ -591,9 +619,13 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
   };
 
   const financialAnalysis = useMemo(() => {
+    const guidedDays = days.filter(d => d.hasGuide !== false).length;
+
     const calculateForModality = (mod: 'atmos4x4' | 'carroProprio') => {
+      const tiers = guidePricingTiers?.[mod] || { p1: 0, p2: 0, p3plus: 0 };
+      
       const calculateForPax = (pax: number, guideRate: number) => {
-        const guideRevenue = guideRate * pax * days.length;
+        const guideRevenue = guideRate * pax * guidedDays;
         const atmosServiceRevenue = atmosRevenue * pax * days.length;
         
         let totalItemsCost = 0;
@@ -608,8 +640,7 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
         });
 
         const revenuePreTax = totalItemsRevenue + guideRevenue + atmosServiceRevenue;
-        const revenueWithTax = taxPercent > 0 ? revenuePreTax / (1 - taxPercent / 100) : revenuePreTax;
-        const finalPrice = revenueWithTax * (1 + markupPercent / 100);
+        const finalPrice = taxPercent > 0 ? revenuePreTax / (1 - taxPercent / 100) : revenuePreTax;
 
         return {
           guideRevenue,
@@ -621,11 +652,11 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
         };
       };
 
-      const tiers = guidePricingTiers[mod];
       return {
         p1: calculateForPax(1, tiers.p1),
         p2: calculateForPax(2, tiers.p2),
         p3: calculateForPax(3, tiers.p3plus),
+        guidedDays
       };
     };
 
@@ -662,7 +693,20 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
         markupPercent,
         guidePricingTiers,
         activeModalities,
-        guide_id: guideId
+        guide_id: guideId,
+        pricing: {
+          atmos4x4: {
+            individual: financialAnalysis.atmos4x4.p1.finalPricePerPax,
+            dupla: financialAnalysis.atmos4x4.p2.finalPricePerPax,
+            trio: financialAnalysis.atmos4x4.p3.finalPricePerPax
+          },
+          carroProprio: {
+            individual: financialAnalysis.carroProprio.p1.finalPricePerPax,
+            dupla: financialAnalysis.carroProprio.p2.finalPricePerPax,
+            trio: financialAnalysis.carroProprio.p3.finalPricePerPax
+          }
+        },
+        guidedDays: financialAnalysis.atmos4x4.guidedDays // Saving this metadata too
       },
     });
   };
@@ -715,10 +759,10 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
             </div>
 
             <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
-              <TabsContent value="definition" className="mt-0 p-8 space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="grid grid-cols-12 gap-10">
-                  <div className="col-span-12 lg:col-span-4 space-y-8">
-                    <section className="space-y-6 bg-white p-6 rounded-[2rem] border border-black/5 shadow-sm">
+              <TabsContent value="definition" className="mt-0 p-6 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="grid grid-cols-12 gap-6">
+                  <div className="col-span-12 lg:col-span-4 space-y-6">
+                    <section className="space-y-4 bg-white p-4 rounded-2xl border border-black/5 shadow-sm">
                       <div className="flex items-center gap-2 mb-2">
                         <Info className="h-4 w-4 text-primary" />
                         <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Informações Gerais</h3>
@@ -741,24 +785,24 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                         </div>
                       </div>
                     </section>
-                    <section className="bg-primary/5 p-6 rounded-[2.5rem] border border-primary/10 flex flex-col items-center text-center space-y-4">
-                      <div className="w-16 h-16 rounded-3xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                        <CalendarDays className="h-8 w-8" />
+                    <section className="bg-primary/5 p-4 rounded-3xl border border-primary/10 flex flex-col items-center text-center space-y-3">
+                      <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20">
+                        <CalendarDays className="h-6 w-6" />
                       </div>
                       <div>
-                        <h4 className="text-lg font-sans text-primary">Duração da Jornada</h4>
-                        <p className="text-xs text-muted-foreground font-medium">Atualmente configurado para</p>
+                        <h4 className="text-base font-sans text-primary">Duração da Jornada</h4>
+                        <p className="text-[10px] text-muted-foreground font-medium">Atualmente configurado para</p>
                       </div>
-                      <div className="text-5xl font-sans text-primary leading-none">{days.length} <span className="text-sm font-black uppercase tracking-widest opacity-40">Dias</span></div>
-                      <Button type="button" onClick={addDay} className="w-full h-12 rounded-2xl font-bold uppercase tracking-widest text-xs shadow-md">
+                      <div className="text-4xl font-sans text-primary leading-none">{days.length} <span className="text-xs font-black uppercase tracking-widest opacity-40">Dias</span></div>
+                      <Button type="button" onClick={addDay} className="w-full h-10 rounded-xl font-bold uppercase tracking-widest text-[9px] shadow-md">
                         Adicionar Novo Dia
                       </Button>
                     </section>
                   </div>
-                  <div className="col-span-12 lg:col-span-8 space-y-6">
+                  <div className="col-span-12 lg:col-span-8 space-y-4">
                     {days.map((day, dIdx) => (
                       <Collapsible key={day.dayNumber} open={openDays.includes(day.dayNumber)} onOpenChange={() => toggleDay(day.dayNumber)}>
-                        <div className="bg-white rounded-[2.5rem] border border-black/5 shadow-sm overflow-hidden transition-all duration-500 hover:shadow-md">
+                        <div className="bg-white rounded-2xl border border-black/5 shadow-sm overflow-hidden transition-all duration-500 hover:shadow-md">
                           <CollapsibleTrigger asChild>
                             <div className="p-6 flex items-center justify-between cursor-pointer group select-none">
                               <div className="flex items-center gap-6">
@@ -784,14 +828,32 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                             </div>
                           </CollapsibleTrigger>
                           <CollapsibleContent>
-                            <div className="p-8 pt-2 space-y-8 animate-in slide-in-from-top-4 duration-500">
-                                <div className="space-y-2 col-span-2">
-                                  <Label className="text-[10px] font-black uppercase tracking-[0.1em] text-muted-foreground/60 ml-1">Título do Dia</Label>
-                                  <Input value={day.attractions.pt?.[0] || ""} onChange={(e) => {
-                                    const newDays = [...days];
-                                    newDays[dIdx].attractions.pt = [e.target.value];
-                                    setDays(newDays);
-                                  }} className="h-11 rounded-xl bg-muted/20 border-none font-medium" placeholder="Ex: Complexo do Macacão" />
+                            <div className="p-6 pt-1 space-y-6 animate-in slide-in-from-top-4 duration-500">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div className="space-y-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-[0.1em] text-muted-foreground/60 ml-1">Título do Dia</Label>
+                                    <Input value={day.attractions.pt?.[0] || ""} onChange={(e) => {
+                                      const newDays = [...days];
+                                      newDays[dIdx].attractions.pt = [e.target.value];
+                                      setDays(newDays);
+                                    }} className="h-11 rounded-xl bg-muted/20 border-none font-medium" placeholder="Ex: Complexo do Macacão" />
+                                  </div>
+                                  <div className="flex items-center justify-between p-4 bg-muted/5 rounded-2xl border border-black/5 self-end">
+                                    <div className="flex items-center gap-3">
+                                      <div className={cn("p-2 rounded-lg transition-colors", day.hasGuide !== false ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground opacity-30")}>
+                                        <UsersRound className="h-4 w-4" />
+                                      </div>
+                                      <div className="space-y-0.5">
+                                        <p className="text-[10px] font-black uppercase tracking-tighter leading-none">Guia Atmos</p>
+                                        <p className="text-[9px] text-muted-foreground opacity-60 font-medium">Incluir custo no dia</p>
+                                      </div>
+                                    </div>
+                                    <Switch checked={day.hasGuide !== false} onCheckedChange={(v) => {
+                                      const newDays = [...days];
+                                      newDays[dIdx].hasGuide = v;
+                                      setDays(newDays);
+                                    }} />
+                                  </div>
                                 </div>
                               <div className="space-y-2">
                                 <Label className="text-[10px] font-black uppercase tracking-[0.1em] text-muted-foreground/60 ml-1">Descrição Detalhada do Dia</Label>
@@ -924,60 +986,60 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                   </div>
                 </div>
               </TabsContent>
-              <TabsContent value="pricing" className="mt-0 p-8 space-y-12 animate-in fade-in slide-in-from-right-4 duration-500">
-                <div className="max-w-5xl mx-auto space-y-12">
+               <TabsContent value="pricing" className="mt-0 p-6 space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+                <div className="max-w-5xl mx-auto space-y-8">
                   
                   {/* ── SEÇÃO 1: CONFIGURAÇÕES GERAIS DE MARGEM ── */}
-                  <section className="bg-white p-10 rounded-[3.5rem] border border-black/5 shadow-xl space-y-10">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
-                      <div className="space-y-2">
-                        <h3 className="text-3xl font-black text-primary italic tracking-tight uppercase">Configurações de Venda</h3>
-                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest opacity-60">Defina as margens e serviços base para o roteiro</p>
+                  <section className="bg-white p-6 rounded-[2rem] border border-black/5 shadow-xl space-y-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div className="space-y-1">
+                        <h3 className="text-xl font-black text-primary italic tracking-tight uppercase">Configurações de Venda</h3>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-60">Defina as margens e serviços base para o roteiro</p>
                       </div>
                       
-                      <div className="bg-[#FDFCFB] p-2 rounded-full border border-black/5 flex items-center gap-4 shadow-inner">
-                        <div className={cn("flex items-center gap-3 px-6 py-3 rounded-full transition-all duration-500", activeModalities.atmos4x4 ? "bg-primary text-white shadow-lg" : "opacity-40 grayscale")}>
-                          <Switch checked={activeModalities.atmos4x4} onCheckedChange={(v) => setActiveModalities(p => ({ ...p, atmos4x4: v }))} />
-                          <span className="text-[10px] font-black uppercase tracking-tighter leading-none">Atmos 4x4</span>
+                      <div className="bg-[#FDFCFB] p-1.5 rounded-full border border-black/5 flex items-center gap-2 shadow-inner">
+                        <div className={cn("flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-500", activeModalities.atmos4x4 ? "bg-primary text-white shadow-lg" : "opacity-40 grayscale")}>
+                          <Switch checked={activeModalities.atmos4x4} onCheckedChange={(v) => setActiveModalities(p => ({ ...p, atmos4x4: v }))} className="scale-75" />
+                          <span className="text-[9px] font-black uppercase tracking-tighter leading-none">Atmos 4x4</span>
                         </div>
-                        <div className={cn("flex items-center gap-3 px-6 py-3 rounded-full transition-all duration-500", activeModalities.carroProprio ? "bg-orange-600 text-white shadow-lg" : "opacity-40 grayscale")}>
-                          <Switch checked={activeModalities.carroProprio} onCheckedChange={(v) => setActiveModalities(p => ({ ...p, carroProprio: v }))} />
-                          <span className="text-[10px] font-black uppercase tracking-tighter leading-none">Carro Próprio</span>
+                        <div className={cn("flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-500", activeModalities.carroProprio ? "bg-orange-600 text-white shadow-lg" : "opacity-40 grayscale")}>
+                          <Switch checked={activeModalities.carroProprio} onCheckedChange={(v) => setActiveModalities(p => ({ ...p, carroProprio: v }))} className="scale-75" />
+                          <span className="text-[9px] font-black uppercase tracking-tighter leading-none">Carro Próprio</span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-6 border-t border-black/5">
-                      <div className="space-y-3 p-6 bg-muted/5 rounded-[2rem] border border-black/5">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Users className="h-4 w-4 text-primary opacity-40" />
-                          <Label className="text-[10px] font-black uppercase tracking-widest">Serviço Atmos (p/ dia/pax)</Label>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t border-black/5">
+                      <div className="space-y-2 p-4 bg-muted/5 rounded-2xl border border-black/5">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <UsersRound className="h-3 w-3 text-primary opacity-40" />
+                          <Label className="text-[9px] font-black uppercase tracking-widest">Serviço Atmos (p/ dia/pax)</Label>
                         </div>
                         <div className="relative">
-                          <NumericCell value={atmosRevenue} onCommit={setAtmosRevenue} className="h-14 bg-white border-none text-xl font-bold rounded-2xl shadow-sm pl-12" />
-                          <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-primary opacity-20">R$</span>
+                          <NumericCell value={atmosRevenue} onCommit={setAtmosRevenue} className="h-11 bg-white border-none text-base font-bold rounded-xl shadow-sm pl-10" />
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-primary opacity-20">R$</span>
                         </div>
                       </div>
 
-                      <div className="space-y-3 p-6 bg-muted/5 rounded-[2rem] border border-black/5">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Percent className="h-4 w-4 text-primary opacity-40" />
-                          <Label className="text-[10px] font-black uppercase tracking-widest">Impostos (%)</Label>
+                      <div className="space-y-2 p-4 bg-muted/5 rounded-2xl border border-black/5">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <Percent className="h-3 w-3 text-primary opacity-40" />
+                          <Label className="text-[9px] font-black uppercase tracking-widest">Impostos (%)</Label>
                         </div>
                         <div className="relative">
-                          <NumericCell value={taxPercent} onCommit={setTaxPercent} className="h-14 bg-white border-none text-xl font-bold rounded-2xl shadow-sm pr-12" />
-                          <span className="absolute right-4 top-1/2 -translate-y-1/2 font-black text-primary opacity-20">%</span>
+                          <NumericCell value={taxPercent} onCommit={setTaxPercent} className="h-11 bg-white border-none text-base font-bold rounded-xl shadow-sm pr-10" />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black text-primary opacity-20">%</span>
                         </div>
                       </div>
 
-                      <div className="space-y-3 p-6 bg-muted/5 rounded-[2rem] border border-black/5">
-                        <div className="flex items-center gap-2 mb-1">
-                          <TrendingUp className="h-4 w-4 text-primary opacity-40" />
-                          <Label className="text-[10px] font-black uppercase tracking-widest">Markup (%)</Label>
+                      <div className="space-y-2 p-4 bg-muted/5 rounded-2xl border border-black/5">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <TrendingUp className="h-3 w-3 text-primary opacity-40" />
+                          <Label className="text-[9px] font-black uppercase tracking-widest">Markup (%)</Label>
                         </div>
                         <div className="relative">
-                          <NumericCell value={markupPercent} onCommit={setMarkupPercent} className="h-14 bg-white border-none text-xl font-bold rounded-2xl shadow-sm pr-12" />
-                          <span className="absolute right-4 top-1/2 -translate-y-1/2 font-black text-primary opacity-20">%</span>
+                          <NumericCell value={markupPercent} onCommit={setMarkupPercent} className="h-11 bg-white border-none text-base font-bold rounded-xl shadow-sm pr-10" />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black text-primary opacity-20">%</span>
                         </div>
                       </div>
                     </div>
@@ -994,39 +1056,39 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
 
                       return (
                         <section key={mod} className="animate-in fade-in zoom-in duration-500">
-                          <div className="bg-white rounded-[3.5rem] border border-black/5 shadow-2xl overflow-hidden">
-                            <div className={cn("p-10 flex items-center justify-between", bgClass)}>
+                          <div className="bg-white rounded-[2rem] border border-black/5 shadow-2xl overflow-hidden">
+                            <div className={cn("p-6 flex items-center justify-between", bgClass)}>
                               <div className="flex items-center gap-4">
-                                <div className={cn("p-4 rounded-3xl bg-white shadow-sm", colorClass)}>
-                                  {mod === 'atmos4x4' ? <Truck className="h-8 w-8" /> : <Car className="h-8 w-8" />}
+                                <div className={cn("p-3 rounded-2xl bg-white shadow-sm", colorClass)}>
+                                  {mod === 'atmos4x4' ? <Truck className="h-6 w-6" /> : <Car className="h-6 w-6" />}
                                 </div>
-                                <h4 className="text-4xl font-black italic tracking-tighter uppercase">{label}</h4>
+                                <h4 className="text-2xl font-black italic tracking-tighter uppercase">{label}</h4>
                               </div>
                               <div className="text-right">
-                                <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Análise de Faturamento</p>
-                                <p className="text-2xl font-black text-primary italic leading-none">{days.length} DIAS</p>
+                                <p className="text-[9px] font-black uppercase tracking-widest opacity-40">Análise de Faturamento</p>
+                                <p className="text-xl font-black text-primary italic leading-none">{days.length} DIAS ({analysis.guidedDays} GUIADOS)</p>
                               </div>
                             </div>
 
-                            <div className="p-10 space-y-12">
+                            <div className="p-6 space-y-8">
                               {/* Configuração do Guia */}
                               <div className="space-y-6">
                                 <div className="flex items-center gap-3 pb-3 border-b border-black/5">
-                                  <Users className="h-5 w-5 opacity-40" />
+                                   <UsersRound className="h-5 w-5 opacity-40" />
                                   <h5 className="text-sm font-black uppercase tracking-widest">Diária Guia Atmos ({label})</h5>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                   {[
                                     { k: 'p1', label: '1 Pessoa' },
                                     { k: 'p2', label: '2 Pessoas' },
                                     { k: 'p3plus', label: '3 ou +' }
                                   ].map(pax => (
-                                    <div key={pax.k} className="space-y-2">
-                                      <Label className="text-[10px] font-black uppercase tracking-tighter opacity-40">{pax.label} (R$)</Label>
+                                    <div key={pax.k} className="space-y-1.5">
+                                      <Label className="text-[9px] font-black uppercase tracking-tighter opacity-40">{pax.label} (R$)</Label>
                                       <NumericCell 
                                         value={guidePricingTiers[mod][pax.k as keyof typeof guidePricingTiers['atmos4x4']]} 
                                         onCommit={(v) => setGuidePricingTiers(p => ({ ...p, [mod]: { ...p[mod], [pax.k]: v } }))} 
-                                        className="h-12 bg-muted/10 border-none font-bold text-lg rounded-xl"
+                                        className="h-10 bg-muted/10 border-none font-bold text-base rounded-lg"
                                       />
                                     </div>
                                   ))}
@@ -1037,12 +1099,12 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                               <div className="space-y-6">
                                 <div className="flex items-center justify-between pb-3 border-b border-black/5">
                                   <div className="flex items-center gap-3">
-                                    <Table className="h-5 w-5 opacity-40" />
+                                     <LayoutGrid className="h-5 w-5 opacity-40" />
                                     <h5 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Composição de Preços</h5>
                                   </div>
                                 </div>
                                 
-                                <div className="overflow-hidden rounded-[2.5rem] border border-black/5">
+                                <div className="overflow-hidden rounded-2xl border border-black/5">
                                   <table className="w-full text-xs">
                                     <thead>
                                       <tr className="bg-muted/10 text-left">
@@ -1077,13 +1139,13 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                                   const tierLabel = tier === 'p1' ? '1 Pessoa' : tier === 'p2' ? '2 Pessoas' : '3+ Pessoas';
                                   
                                   return (
-                                    <div key={tier} className={cn("p-8 rounded-[3rem] border-2 flex flex-col items-center text-center space-y-4 shadow-xl transition-all hover:scale-105", tier === 'p2' ? "border-primary bg-primary/[0.02] ring-4 ring-primary/5" : "border-black/5 bg-muted/5")}>
-                                      <div className="p-3 rounded-2xl bg-white shadow-sm mb-2">
-                                        <Users className={cn("h-6 w-6", tier === 'p2' ? "text-primary" : "text-muted-foreground")} />
+                                    <div key={tier} className="p-5 rounded-[2rem] border border-black/5 bg-white flex flex-col items-center text-center space-y-3 shadow-md transition-all hover:scale-105 hover:border-primary/20 hover:shadow-xl">
+                                      <div className="p-2 rounded-xl bg-muted/5 shadow-sm mb-1">
+                                         <UsersRound className="h-5 w-5 text-muted-foreground opacity-60" />
                                       </div>
                                       <div>
-                                        <p className="text-[10px] font-black uppercase tracking-widest opacity-40">{tierLabel}</p>
-                                        <h6 className="text-4xl font-black italic tracking-tighter text-primary">{fmtBRL(data.finalPricePerPax, 0)}<span className="text-xs not-italic opacity-40 ml-1">/PAX</span></h6>
+                                        <p className="text-[9px] font-black uppercase tracking-widest opacity-40">{tierLabel}</p>
+                                        <h6 className="text-2xl font-black italic tracking-tighter text-primary">{fmtBRL(data.finalPricePerPax, 0)}<span className="text-xs not-italic opacity-40 ml-1">/PAX</span></h6>
                                       </div>
                                       <div className="w-full pt-4 border-t border-black/5 space-y-2">
                                         <div className="flex justify-between text-[10px] font-bold uppercase tracking-tighter">

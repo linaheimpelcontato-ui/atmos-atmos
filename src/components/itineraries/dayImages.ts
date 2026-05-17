@@ -25,38 +25,43 @@ export function getDayImage(keyOrPath: string, name?: string): string {
   if (key.startsWith('http')) return key;
   
   if (key.includes('/')) {
-    return optimizedUrl(key, IMAGE_PRESETS.thumbnail);
+    // If it already has a path, use it as is (Atmos R2 is often case sensitive)
+    const path = key.startsWith('produtos') ? key : `produtos/${key}`;
+    return optimizedUrl(path, IMAGE_PRESETS.thumbnail);
   }
 
-  // If we have a name, try to slugify it and find in cachoeiras
+  // If we have a name, try to slugify it and find in cachoeiras/experiencias
   if (name) {
     const slug = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     
     // Waterfall mappings
-    if (slug.includes('couros')) return optimizedUrl("cachoeiras/couros-1.jpg", IMAGE_PRESETS.thumbnail);
-    if (slug.includes('macaquinhos')) return optimizedUrl("cachoeiras/macaquinhos-1.jpg", IMAGE_PRESETS.thumbnail);
-    if (slug.includes('dragao')) return optimizedUrl("cachoeiras/dragao-1.jpg", IMAGE_PRESETS.thumbnail);
-    if (slug.includes('macacao')) return optimizedUrl("cachoeiras/macacao-1.jpg", IMAGE_PRESETS.thumbnail);
-    if (slug.includes('ponte-de-pedra')) return optimizedUrl("cachoeiras/ponte-de-pedra-1.jpg", IMAGE_PRESETS.thumbnail);
-    if (slug.includes('segredo')) return optimizedUrl("cachoeiras/segredo-1.jpg", IMAGE_PRESETS.thumbnail);
-    if (slug.includes('vale-da-lua')) return optimizedUrl("cachoeiras/vale-da-lua-1.jpg", IMAGE_PRESETS.thumbnail);
-    if (slug.includes('almecegas')) return optimizedUrl("cachoeiras/almecegas-sao-bento-1.jpg", IMAGE_PRESETS.thumbnail);
-    if (slug.includes('santa barbara')) return optimizedUrl("cachoeiras/santa-barbara-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('couros')) return optimizedUrl("produtos/cachoeiras/Couros/couros-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('macaquinhos')) return optimizedUrl("produtos/cachoeiras/Macaquinhos/macaquinhos-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('dragao')) return optimizedUrl("produtos/cachoeiras/Dragao/dragao-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('macacao')) return optimizedUrl("produtos/cachoeiras/Macacao/macacao-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('ponte-de-pedra')) return optimizedUrl("produtos/cachoeiras/Ponte de Pedra/ponte-de-pedra-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('segredo')) return optimizedUrl("produtos/cachoeiras/Segredo/segredo-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('vale-da-lua')) return optimizedUrl("produtos/cachoeiras/Vale da Lua/vale-da-lua-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('almecegas')) return optimizedUrl("produtos/cachoeiras/Almecegas/almecegas-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('santa barbara')) return optimizedUrl("produtos/cachoeiras/Santa Barbara/santa-barbara-1.jpg", IMAGE_PRESETS.thumbnail);
     
     // Experience mappings (Portuguese keywords)
-    if (slug.includes('cavalo')) return optimizedUrl("experiencias/cavalo-1.jpg", IMAGE_PRESETS.thumbnail);
-    if (slug.includes('balao')) return optimizedUrl("experiencias/balao-1.jpg", IMAGE_PRESETS.thumbnail);
-    if (slug.includes('paramotor')) return optimizedUrl("experiencias/paramotor-1.jpg", IMAGE_PRESETS.thumbnail);
-    if (slug.includes('massagem') || slug.includes('bem-estar') || slug.includes('bem estar')) return optimizedUrl("experiencias/massagem-1.jpg", IMAGE_PRESETS.thumbnail);
-    if (slug.includes('yoga') || slug.includes('meditacao')) return optimizedUrl("experiencias/yoga-1.jpg", IMAGE_PRESETS.thumbnail);
-    if (slug.includes('noturna')) return optimizedUrl("experiencias/noturna-1.jpg", IMAGE_PRESETS.thumbnail);
-    if (slug.includes('astro')) return optimizedUrl("experiencias/astro-1.jpg", IMAGE_PRESETS.thumbnail);
-    if (slug.includes('forro')) return optimizedUrl("experiencias/forro-1.jpg", IMAGE_PRESETS.thumbnail);
-    if (slug.includes('feira')) return optimizedUrl("experiencias/feira-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('cavalo')) return optimizedUrl("produtos/experiencias/Cavalo/cavalo-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('balao')) return optimizedUrl("produtos/experiencias/Balao/balao-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('paramotor')) return optimizedUrl("produtos/experiencias/Paramotor/paramotor-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('massagem') || slug.includes('bem-estar') || slug.includes('bem estar')) return optimizedUrl("produtos/experiencias/Massagem/massagem-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('yoga')) return optimizedUrl("produtos/experiencias/Yoga/yoga-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('meditacao')) return optimizedUrl("produtos/experiencias/Meditacao/meditacao-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('noturna')) return optimizedUrl("produtos/experiencias/Noturna/noturna-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('astro')) return optimizedUrl("produtos/experiencias/Astro/astro-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('forro')) return optimizedUrl("produtos/experiencias/Forro/forro-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('feira')) return optimizedUrl("produtos/experiencias/Feira/feira-1.jpg", IMAGE_PRESETS.thumbnail);
   }
 
-  // Fallback: try common folders if it's a bare key/UUID
-  return optimizedUrl(`cachoeiras/${key}-1.jpg`, IMAGE_PRESETS.thumbnail);
+  // Fallback: try common folders with PascalCase folder and lowercase file
+  const capitalized = key.charAt(0).toUpperCase() + key.slice(1);
+  const lowerKey = key.toLowerCase();
+  return optimizedUrl(`produtos/cachoeiras/${capitalized}/${lowerKey}-1.jpg`, IMAGE_PRESETS.thumbnail);
 }
 
 /** Resolves an image key to multiple potential paths for OptimizedImage fallback */

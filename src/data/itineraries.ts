@@ -2,22 +2,27 @@ import { type Language } from "@/contexts/LanguageContext";
 
 export type ItineraryCategory = "classico" | "jurassico";
 export type DurationDays = 2 | 3 | 4 | 5;
-export type DayImageKey = "segredo" | "vale-da-lua" | "macacao" | "dragao" | "almecegas-sao-bento" | "macaquinhos" | "couros" | "ponte-de-pedra";
+export type DayImageKey = string;
 
 export interface ItineraryDay {
   title: Record<Language, string>;
-  description: Record<Language, string>;
-  attractions: Record<Language, string[]>;
+  description?: Record<Language, string>;
+  attractions?: Record<Language, string[]>;
   difficulty: "facil" | "moderado" | "dificil";
   imageKey: DayImageKey;
   /** Entrance fee in BRL. 0 = voluntary/free. */
-  entranceFee: number;
+  entranceFee?: number;
   /** True if entrance fee is voluntary (e.g., Couros) */
   voluntaryFee?: boolean;
   /** Trail distance in km (display string, e.g. "7" or "1,5") */
-  trailDistanceKm: string;
+  trailDistanceKm?: string;
   /** Optional associated products for dynamic itineraries */
   items?: any[];
+  /** Internal field for image resolution */
+  resolvedTitle?: string;
+  /** Internal field for UI grouping */
+  hasGuide?: boolean;
+  dayNumber?: number;
 }
 
 export interface ItineraryPricing {
@@ -38,9 +43,11 @@ export interface Itinerary {
   name: Record<Language, string>;
   description: Record<Language, string>;
   days: ItineraryDay[];
-  pricing: ItineraryPricing;
-  extraCosts: ItineraryExtraCosts;
-  inclusions: Record<Language, string[]>;
+  pricing?: ItineraryPricing;
+  extraCosts?: ItineraryExtraCosts;
+  inclusions?: Record<Language, string[]>;
+  guidedDays?: number;
+  favorites?: string[];
 }
 
 // Reusable day descriptions by location
