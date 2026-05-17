@@ -260,7 +260,10 @@ export default function ItineraryDetail() {
 
           if (childProduct) {
             const vars = childProduct.variables as any || {};
-            if (vars.gallery_order && Array.isArray(vars.gallery_order) && vars.gallery_order.length > 0) {
+            
+            if (vars.gallery && Array.isArray(vars.gallery) && vars.gallery.length > 0) {
+              itemImages = vars.gallery;
+            } else if (vars.gallery_order && Array.isArray(vars.gallery_order) && vars.gallery_order.length > 0) {
               const prefix = vars.storage_id || normalize(childProduct.name) || childProduct.id;
               let folder = "experiencias";
               if (childProduct.type === "waterfall") folder = "cachoeiras";
@@ -268,16 +271,126 @@ export default function ItineraryDetail() {
               else if (childProduct.type === "service") folder = "serviços";
               
               itemImages = vars.gallery_order.map((fileName: string) => `produtos/${folder}/${prefix}/${fileName}`);
-            } else if (vars.gallery && Array.isArray(vars.gallery) && vars.gallery.length > 0) {
-              itemImages = vars.gallery;
             } else {
               const prefix = vars.storage_id || normalize(childProduct.name) || childProduct.id;
+              const lookupId = childProduct.source_id || vars.imageKey || prefix || childProduct.id;
+              const keyNormalized = normalize(lookupId);
+              
               let folder = "experiencias";
               if (childProduct.type === "waterfall") folder = "cachoeiras";
               else if (childProduct.type === "accommodation") folder = "hospedagens";
               else if (childProduct.type === "service") folder = "serviços";
-              
-              itemImages = [1, 2, 3, 4, 5].map(n => `produtos/${folder}/${prefix}/${prefix}-${n}.jpg`);
+
+              const waterfallMap: Record<string, string> = {
+                "agua-fria": "produtos/cachoeiras/Agua Fria/agua fria-1.jpg",
+                "almecegas-1-2-e-sao-bento": "produtos/cachoeiras/Almecegas/almecegas-1.jpg",
+                "anjos-e-arcanjos": "produtos/cachoeiras/anjos-e-arcanjos/anjos-e-arcanjos-1.jpg",
+                "bocaina-do-farias": "produtos/cachoeiras/Bocaina do Farias/Bocaina do Farias-1.jpg",
+                "boqueirao": "produtos/cachoeiras/Boqueirao/Boqueirao-1.jpg",
+                "brancas": "produtos/cachoeiras/Brancas/Brancas-1.jpg",
+                "capivara": "produtos/cachoeiras/Capivara/capivara-1.jpg",
+                "catuaba": "produtos/cachoeiras/Catuaba/catuaba-1.jpg",
+                "cavalcante": "produtos/cachoeiras/Cavalcante/Cavalcante-1.jpg",
+                "couros": "produtos/cachoeiras/Couros/couros-1.jpg",
+                "cristais": "produtos/cachoeiras/Cristais/cristais-1.jpg",
+                "dragao": "produtos/cachoeiras/Dragao/dragao-1.jpg",
+                "loquinhas": "produtos/cachoeiras/Loquinhas/loquinhas-1.jpg",
+                "macacao": "produtos/cachoeiras/Macacao/macacao-1.jpg",
+                "macaquinhos": "produtos/cachoeiras/Macaquinhos/macaquinhos-1.jpg",
+                "paraiso-dos-panderos": "produtos/cachoeiras/Paraiso dos Panderos/Paraiso dos Panderos-1.jpg",
+                "ponte-de-pedra": "produtos/cachoeiras/Ponte de Pedra/Ponte de Pedra-1.jpg",
+                "raizama": "produtos/cachoeiras/Raizama/raizama-1.jpg",
+                "santa-barbara": "produtos/cachoeiras/Santa Barbara/santa barbara-1.jpg",
+                "segredo": "produtos/cachoeiras/Segredo/segredo-1.jpg",
+                "vale-da-lua": "produtos/cachoeiras/vale-da-lua/vale-da-lua-1.jpg"
+              };
+
+              const experienceMap: Record<string, string> = {
+                "astroturismo": "produtos/experiencias/astroturismo/astroturismo-1.jpg",
+                "batismo-de-escalada": "produtos/experiencias/batismo-de-escalada/batismo-de-escalada-1.jpg",
+                "bike-cerrado": "produtos/experiencias/bike-cerrado/bike-cerrado-1.jpg",
+                "comitivas": "produtos/experiencias/comitivas/comitivas-1.jpg",
+                "cozinha-de-origem": "produtos/experiencias/cozinha-de-origem/cozinha-de-origem-1.jpg",
+                "expedicao-4x4": "produtos/experiencias/expedicao-4x4/expedicao-4x4-1.jpg",
+                "feira-do-produtor": "produtos/experiencias/feira-do-produtor/feira-do-produtor-1.jpg",
+                "flutuacao-no-rio": "produtos/experiencias/flutuacao-no-rio/flutuacao-no-rio-1.jpg",
+                "forro-pe-de-serra": "produtos/experiencias/forro-pe-de-serra/forro-pe-de-serra-1.jpg",
+                "massagem-terapeutica": "produtos/experiencias/massagem-terapeutica/massagem-terapeutica-1.jpg",
+                "observacao-de-aves": "produtos/experiencias/observacao-de-aves/observacao-de-aves-1.jpg",
+                "oficina-de-cerâmica": "produtos/experiencias/oficina-de-ceramica/oficina-de-ceramica-1.jpg",
+                "panteao-da-chapada": "produtos/experiencias/panteao-da-chapada/panteao-da-chapada-1.jpg",
+                "picnic-no-por-do-sol": "produtos/experiencias/picnic-no-por-do-sol/picnic-no-por-do-sol-1.jpg",
+                "rapel-nas-cachoeiras": "produtos/experiencias/rapel-nas-cachoeiras/rapel-nas-cachoeiras-1.jpg",
+                "registro-com-drone": "produtos/experiencias/registro-com-drone/registro-com-drone-1.jpg",
+                "ritual-do-fogo": "produtos/experiencias/ritual-do-fogo/ritual-do-fogo-1.jpg",
+                "tirolesa-vovo-a-jato": "produtos/experiencias/tirolesa-vovo-a-jato/tirolesa-vovo-a-jato-1.jpg",
+                "trilha-noturna": "produtos/experiencias/trilha-noturna/trilha-noturna-1.jpg",
+                "voo-de-balao": "produtos/experiencias/voo-de-balao/voo-de-balao-1.jpg",
+                "noturna-imersiva": "produtos/experiencias/trilha-noturna/trilha-noturna-1.jpg",
+                "voo-balao": "produtos/experiencias/voo-de-balao/voo-de-balao-1.jpg",
+                "voo-paramotor": "produtos/experiencias/voo-de-balao/voo-de-balao-1.jpg",
+                "massagem-bem-estar": "produtos/experiencias/massagem-terapeutica/massagem-terapeutica-1.jpg",
+                "yoga-meditacao": "produtos/experiencias/ritual-do-fogo/ritual-do-fogo-1.jpg",
+                "passeio-cavalo": "produtos/experiencias/comitivas/comitivas-1.jpg",
+                "passeio-a-cavalo": "produtos/experiencias/comitivas/comitivas-1.jpg",
+                "astro-turismo": "produtos/experiencias/astroturismo/astroturismo-1.jpg",
+                "aula-forro": "produtos/experiencias/forro-pe-de-serra/forro-pe-de-serra-1.jpg",
+                "feira-produtores": "produtos/experiencias/feira-do-produtor/feira-do-produtor-1.jpg"
+              };
+
+              const accMap: Record<string, string> = {
+                "alto-da-estancia": "produtos/hospedagens/alto-da-estancia/alto-da-estancia-1.jpg",
+                "casa-da-lua": "produtos/hospedagens/casa-da-lua/casa-da-lua-1.jpg",
+                "casa-das-aguas": "produtos/hospedagens/casa-das-aguas/casa-das-aguas-1.jpg",
+                "glamping-oculto": "produtos/hospedagens/glamping-oculto/glamping-oculto-1.jpg",
+                "pousada-do-capim": "produtos/hospedagens/pousada-do-capim/pousada-do-capim-1.jpg",
+                "pousada-inacia": "produtos/hospedagens/pousada-inacia/pousada-inacia-1.jpg",
+                "toca-da-coruja": "produtos/hospedagens/toca-da-coruja/toca-da-coruja-1.jpg",
+                "vila-dos-saguis": "produtos/hospedagens/vila-dos-saguis/vila-dos-saguis-1.jpg"
+              };
+
+              const serviceMap: Record<string, string> = {
+                "transfers": "produtos/servicos/transfer.jpg",
+                "seguro-viagem": "produtos/servicos/seguro.jpg",
+                "lanche-de-trilha": "produtos/servicos/lanche.jpg",
+                "registro-drone": "produtos/servicos/drone.jpg"
+              };
+
+              const candidates: string[] = [];
+
+              // 1. Try static maps matching the normalized key
+              if (childProduct.type === "waterfall" && waterfallMap[keyNormalized]) {
+                candidates.push(waterfallMap[keyNormalized]);
+              } else if (childProduct.type === "experience" && experienceMap[keyNormalized]) {
+                candidates.push(experienceMap[keyNormalized]);
+              } else if (childProduct.type === "accommodation" && accMap[keyNormalized]) {
+                candidates.push(accMap[keyNormalized]);
+              } else if (childProduct.type === "service" && serviceMap[keyNormalized]) {
+                candidates.push(serviceMap[keyNormalized]);
+              }
+
+              // Also try matching by exact ID or prefix
+              if (candidates.length === 0) {
+                if (childProduct.type === "waterfall" && waterfallMap[prefix]) {
+                  candidates.push(waterfallMap[prefix]);
+                } else if (childProduct.type === "experience" && experienceMap[prefix]) {
+                  candidates.push(experienceMap[prefix]);
+                } else if (childProduct.type === "accommodation" && accMap[prefix]) {
+                  candidates.push(accMap[prefix]);
+                } else if (childProduct.type === "service" && serviceMap[prefix]) {
+                  candidates.push(serviceMap[prefix]);
+                }
+              }
+
+              // 2. Add candidates with multiple extensions (.jpg, .png, .avif, .webp) for maximum robustness!
+              const extensions = [".jpg", ".png", ".avif", ".webp"];
+              [1, 2, 3, 4, 5].forEach(n => {
+                extensions.forEach(ext => {
+                  candidates.push(`produtos/${folder}/${prefix}/${prefix}-${n}${ext}`);
+                });
+              });
+
+              itemImages = candidates;
             }
           }
 
