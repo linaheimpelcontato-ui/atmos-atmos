@@ -596,6 +596,7 @@ export default function ItineraryDetail() {
         path={`/roteiros/${itinerary.id}`}
       />
 
+      <div className="bg-[#fcfaf7]">
         {/* Cinematic Hero */}
         <section className="relative h-screen min-h-[650px] overflow-hidden bg-[#2e2019]">
           <div className="absolute inset-0">
