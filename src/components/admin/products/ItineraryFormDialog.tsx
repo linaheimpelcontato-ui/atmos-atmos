@@ -96,6 +96,8 @@ type ItineraryVars = {
   seo_title: string;
   seo_description: string;
   favorites: string[];
+  gallery_order?: string[];
+  storage_id?: string;
   pricing?: Pricing;
   atmosRevenue?: number;
   taxPercent?: number;
