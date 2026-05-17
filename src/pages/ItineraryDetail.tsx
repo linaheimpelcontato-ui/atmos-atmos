@@ -282,78 +282,98 @@ export default function ItineraryDetail() {
               else if (childProduct.type === "service") folder = "serviços";
 
               const waterfallMap: Record<string, string> = {
-                "agua-fria": "produtos/cachoeiras/Agua Fria/agua fria-1.jpg",
-                "almecegas-1-2-e-sao-bento": "produtos/cachoeiras/Almecegas/almecegas-1.jpg",
+                "agua-fria": "produtos/cachoeiras/agua-fria/agua-fria-1.jpg",
+                "almecegas-1-2-e-sao-bento": "produtos/cachoeiras/almecegas-i-e-ii--sao-bento/almecegas-i-e-ii--sao-bento-1.jpg",
                 "anjos-e-arcanjos": "produtos/cachoeiras/anjos-e-arcanjos/anjos-e-arcanjos-1.jpg",
-                "bocaina-do-farias": "produtos/cachoeiras/Bocaina do Farias/Bocaina do Farias-1.jpg",
-                "boqueirao": "produtos/cachoeiras/Boqueirao/Boqueirao-1.jpg",
-                "brancas": "produtos/cachoeiras/Brancas/Brancas-1.jpg",
-                "capivara": "produtos/cachoeiras/Capivara/capivara-1.jpg",
-                "catuaba": "produtos/cachoeiras/Catuaba/catuaba-1.jpg",
-                "cavalcante": "produtos/cachoeiras/Cavalcante/Cavalcante-1.jpg",
-                "couros": "produtos/cachoeiras/Couros/couros-1.jpg",
-                "cristais": "produtos/cachoeiras/Cristais/cristais-1.jpg",
-                "dragao": "produtos/cachoeiras/Dragao/dragao-1.jpg",
-                "loquinhas": "produtos/cachoeiras/Loquinhas/loquinhas-1.jpg",
-                "macacao": "produtos/cachoeiras/Macacao/macacao-1.jpg",
-                "macaquinhos": "produtos/cachoeiras/Macaquinhos/macaquinhos-1.jpg",
-                "paraiso-dos-panderos": "produtos/cachoeiras/Paraiso dos Panderos/Paraiso dos Panderos-1.jpg",
-                "ponte-de-pedra": "produtos/cachoeiras/Ponte de Pedra/Ponte de Pedra-1.jpg",
-                "raizama": "produtos/cachoeiras/Raizama/raizama-1.jpg",
-                "santa-barbara": "produtos/cachoeiras/Santa Barbara/santa barbara-1.jpg",
-                "segredo": "produtos/cachoeiras/Segredo/segredo-1.jpg",
+                "bocaina-do-farias": "produtos/cachoeiras/bocaina-do-farias/bocaina-do-farias-1.jpg",
+                "boqueirao": "produtos/cachoeiras/boqueirao/boqueirao-1.jpg",
+                "brancas": "produtos/cachoeiras/brancas/brancas-1.jpg",
+                "capivara": "produtos/cachoeiras/capivara/capivara-1.jpg",
+                "catuaba": "produtos/cachoeiras/catuaba/catuaba-1.jpg",
+                "cavalcante": "produtos/cachoeiras/cavalcante/cavalcante-1.jpg",
+                "couros": "produtos/cachoeiras/couros/couros-1.jpg",
+                "cristais": "produtos/cachoeiras/cristais/cristais-1.jpg",
+                "dragao": "produtos/cachoeiras/dragao/dragao-1.jpg",
+                "loquinhas": "produtos/cachoeiras/loquinhas/loquinhas-1.jpg",
+                "macacao": "produtos/cachoeiras/macacao/macacao-1.jpg",
+                "macaquinhos": "produtos/cachoeiras/macaquinhos/macaquinhos-1.jpg",
+                "paraiso-dos-panderos": "produtos/cachoeiras/paraiso-dos-panderos/paraiso-dos-panderos-1.jpg",
+                "ponte-de-pedra": "produtos/cachoeiras/ponte-de-pedra/ponte-de-pedra-1.jpg",
+                "raizama": "produtos/cachoeiras/raizama/raizama-1.jpg",
+                "santa-barbara": "produtos/cachoeiras/santa-barbara/santa-barbara-1.jpg",
+                "segredo": "produtos/cachoeiras/segredo/segredo-1.jpg",
                 "vale-da-lua": "produtos/cachoeiras/vale-da-lua/vale-da-lua-1.jpg"
               };
 
               const experienceMap: Record<string, string> = {
-                "astroturismo": "produtos/experiencias/astroturismo/astroturismo-1.jpg",
-                "batismo-de-escalada": "produtos/experiencias/batismo-de-escalada/batismo-de-escalada-1.jpg",
-                "bike-cerrado": "produtos/experiencias/bike-cerrado/bike-cerrado-1.jpg",
-                "comitivas": "produtos/experiencias/comitivas/comitivas-1.jpg",
-                "cozinha-de-origem": "produtos/experiencias/cozinha-de-origem/cozinha-de-origem-1.jpg",
-                "expedicao-4x4": "produtos/experiencias/expedicao-4x4/expedicao-4x4-1.jpg",
-                "feira-do-produtor": "produtos/experiencias/feira-do-produtor/feira-do-produtor-1.jpg",
-                "flutuacao-no-rio": "produtos/experiencias/flutuacao-no-rio/flutuacao-no-rio-1.jpg",
-                "forro-pe-de-serra": "produtos/experiencias/forro-pe-de-serra/forro-pe-de-serra-1.jpg",
-                "massagem-terapeutica": "produtos/experiencias/massagem-terapeutica/massagem-terapeutica-1.jpg",
-                "observacao-de-aves": "produtos/experiencias/observacao-de-aves/observacao-de-aves-1.jpg",
-                "oficina-de-cerâmica": "produtos/experiencias/oficina-de-ceramica/oficina-de-ceramica-1.jpg",
-                "panteao-da-chapada": "produtos/experiencias/panteao-da-chapada/panteao-da-chapada-1.jpg",
-                "picnic-no-por-do-sol": "produtos/experiencias/picnic-no-por-do-sol/picnic-no-por-do-sol-1.jpg",
-                "rapel-nas-cachoeiras": "produtos/experiencias/rapel-nas-cachoeiras/rapel-nas-cachoeiras-1.jpg",
-                "registro-com-drone": "produtos/experiencias/registro-com-drone/registro-com-drone-1.jpg",
-                "ritual-do-fogo": "produtos/experiencias/ritual-do-fogo/ritual-do-fogo-1.jpg",
-                "tirolesa-vovo-a-jato": "produtos/experiencias/tirolesa-vovo-a-jato/tirolesa-vovo-a-jato-1.jpg",
-                "trilha-noturna": "produtos/experiencias/trilha-noturna/trilha-noturna-1.jpg",
+                "astroturismo": "produtos/experiencias/astro-turismo/astro-turismo-1.jpg",
+                "astro-turismo": "produtos/experiencias/astro-turismo/astro-turismo-1.jpg",
+                "batismo-de-escalada": "produtos/experiencias/rapel/rapel-1.jpg",
+                "bike-cerrado": "produtos/experiencias/canionismo/canionismo-1.jpg",
+                "comitivas": "produtos/experiencias/passeio-a-cavalo/passeio-a-cavalo-1.jpg",
+                "cozinha-de-origem": "produtos/experiencias/celestial-garden/celestial-garden-1.jpg",
+                "expedicao-4x4": "produtos/experiencias/experiencia-noturna-imersiva/experiencia-noturna-imersiva-1.jpg",
+                "feira-do-produtor": "produtos/experiencias/feira-dos-produtores-locais/feira-dos-produtores-locais-1.jpg",
+                "flutuacao-no-rio": "produtos/experiencias/rafting/rafting-1.jpg",
+                "forro-pe-de-serra": "produtos/experiencias/aula-de-forro/aula-de-forro-1.jpg",
+                "massagem-terapeutica": "produtos/experiencias/massagem-e-bem-estar/massagem-e-bem-estar-1.jpg",
+                "observacao-de-aves": "produtos/experiencias/celestial-garden/celestial-garden-1.jpg",
+                "oficina-de-ceramica": "produtos/experiencias/mesa-lira/mesa-lira-1.jpg",
+                "panteao-da-chapada": "produtos/experiencias/celestial-garden/celestial-garden-1.jpg",
+                "picnic-no-por-do-sol": "produtos/experiencias/celestial-garden/celestial-garden-1.jpg",
+                "rapel-nas-cachoeiras": "produtos/experiencias/rapel/rapel-1.jpg",
+                "registro-com-drone": "produtos/serviços/registro-com-drone/registro-com-drone-1.jpg",
+                "ritual-do-fogo": "produtos/experiencias/danca-com-fogo/danca-com-fogo-1.jpg",
+                "tirolesa-vovo-a-jato": "produtos/experiencias/tirolesa-fazenda-sao-bento/tirolesa-fazenda-sao-bento-1.jpg",
+                "trilha-noturna": "produtos/experiencias/experiencia-noturna-imersiva/experiencia-noturna-imersiva-1.jpg",
                 "voo-de-balao": "produtos/experiencias/voo-de-balao/voo-de-balao-1.jpg",
-                "noturna-imersiva": "produtos/experiencias/trilha-noturna/trilha-noturna-1.jpg",
+                "noturna-imersiva": "produtos/experiencias/experiencia-noturna-imersiva/experiencia-noturna-imersiva-1.jpg",
                 "voo-balao": "produtos/experiencias/voo-de-balao/voo-de-balao-1.jpg",
-                "voo-paramotor": "produtos/experiencias/voo-de-balao/voo-de-balao-1.jpg",
-                "massagem-bem-estar": "produtos/experiencias/massagem-terapeutica/massagem-terapeutica-1.jpg",
-                "yoga-meditacao": "produtos/experiencias/ritual-do-fogo/ritual-do-fogo-1.jpg",
-                "passeio-cavalo": "produtos/experiencias/comitivas/comitivas-1.jpg",
-                "passeio-a-cavalo": "produtos/experiencias/comitivas/comitivas-1.jpg",
-                "astro-turismo": "produtos/experiencias/astroturismo/astroturismo-1.jpg",
-                "aula-forro": "produtos/experiencias/forro-pe-de-serra/forro-pe-de-serra-1.jpg",
-                "feira-produtores": "produtos/experiencias/feira-do-produtor/feira-do-produtor-1.jpg"
+                "voo-paramotor": "produtos/experiencias/voo-de-paramotor/voo-de-paramotor-1.jpg",
+                "massagem-bem-estar": "produtos/experiencias/massagem-e-bem-estar/massagem-e-bem-estar-1.jpg",
+                "yoga-meditacao": "produtos/experiencias/yoga-e-meditacao/yoga-e-meditacao-1.png",
+                "yoga-e-meditacao": "produtos/experiencias/yoga-e-meditacao/yoga-e-meditacao-1.png",
+                "passeio-cavalo": "produtos/experiencias/passeio-a-cavalo/passeio-a-cavalo-1.jpg",
+                "passeio-a-cavalo": "produtos/experiencias/passeio-a-cavalo/passeio-a-cavalo-1.jpg",
+                "aula-forro": "produtos/experiencias/aula-de-forro/aula-de-forro-1.jpg",
+                "feira-produtores": "produtos/experiencias/feira-dos-produtores-locais/feira-dos-produtores-locais-1.jpg"
               };
 
               const accMap: Record<string, string> = {
-                "alto-da-estancia": "produtos/hospedagens/alto-da-estancia/alto-da-estancia-1.jpg",
-                "casa-da-lua": "produtos/hospedagens/casa-da-lua/casa-da-lua-1.jpg",
-                "casa-das-aguas": "produtos/hospedagens/casa-das-aguas/casa-das-aguas-1.jpg",
-                "glamping-oculto": "produtos/hospedagens/glamping-oculto/glamping-oculto-1.jpg",
-                "pousada-do-capim": "produtos/hospedagens/pousada-do-capim/pousada-do-capim-1.jpg",
-                "pousada-inacia": "produtos/hospedagens/pousada-inacia/pousada-inacia-1.jpg",
-                "toca-da-coruja": "produtos/hospedagens/toca-da-coruja/toca-da-coruja-1.jpg",
-                "vila-dos-saguis": "produtos/hospedagens/vila-dos-saguis/vila-dos-saguis-1.jpg"
+                "a-nossa-casa-da-arvore": "produtos/hospedagens/a-nossa-casa-da-arvore/a-nossa-casa-da-arvore-1.jpg",
+                "amana-hotel": "produtos/hospedagens/amana-hotel/amana-hotel-1.jpg",
+                "bagua-bangalos": "produtos/hospedagens/bagua-bangalos/bagua-bangalos-1.jpg",
+                "casa-alta": "produtos/hospedagens/casa-alta/casa-alta-1.jpg",
+                "casa-horizonte": "produtos/hospedagens/casa-horizonte/casa-horizonte-1.jpg",
+                "casa-kanaro": "produtos/hospedagens/casa-kanaro/casa-kanaro-1.jpg",
+                "casa-poema": "produtos/hospedagens/casa-poema/casa-poema-1.jpg",
+                "espaco-horus": "produtos/hospedagens/espaco-horus/espaco-horus-1.jpg",
+                "mariri-jungle-lodge": "produtos/hospedagens/mariri-jungle-lodge/mariri-jungle-lodge-1.jpg",
+                "marley-s-house": "produtos/hospedagens/marley-s-house/marley-s-house-1.jpg",
+                "pousada-casa-de-shiva": "produtos/hospedagens/pousada-casa-de-shiva/pousada-casa-de-shiva-1.jpg",
+                "pousada-maya": "produtos/hospedagens/pousada-maya/pousada-maya-1.jpg",
+                "refugio-veadeiros": "produtos/hospedagens/refugio-veadeiros/refugio-veadeiros-1.jpg",
+                "rustik-chapada": "produtos/hospedagens/rustik-chapada/rustik-chapada-1.jpg",
+                "terra-gaia": "produtos/hospedagens/terra-gaia/terra-gaia-1.jpg",
+                "vila-abaton": "produtos/hospedagens/vila-abaton/vila-abaton-1.jpg",
+                "vila-baru": "produtos/hospedagens/vila-baru/vila-baru-1.jpg",
+                "vila-cerrado": "produtos/hospedagens/vila-cerrado/vila-cerrado-1.jpg",
+                "vila-chapada": "produtos/hospedagens/vila-chapada/vila-chapada-1.jpg",
+                "vila-komorebi": "produtos/hospedagens/vila-komorebi/vila-komorebi-1.jpg",
+                "vila-libelula": "produtos/hospedagens/vila-libelula/vila-libelula-1.jpg",
+                "vila-suindara": "produtos/hospedagens/vila-suindara/vila-suindara-1.jpg",
+                "vila-toa": "produtos/hospedagens/vila-toa/vila-toa-1.jpg",
+                "villa-azaleia": "produtos/hospedagens/villa-azaleia/villa-azaleia-1.jpg"
               };
 
               const serviceMap: Record<string, string> = {
-                "transfers": "produtos/servicos/transfer.jpg",
-                "seguro-viagem": "produtos/servicos/seguro.jpg",
-                "lanche-de-trilha": "produtos/servicos/lanche.jpg",
-                "registro-drone": "produtos/servicos/drone.jpg"
+                "transfers": "produtos/serviços/transfer-aeroporto-carro-particular/transfer-aeroporto-carro-particular-1.jpg",
+                "seguro-viagem": "produtos/serviços/pedidos-especiais-atmos/pedidos-especiais-atmos-1.jpg",
+                "lanche-de-trilha": "produtos/serviços/lanche-de-trilha-atmos-1.png",
+                "lanche-de-trilha-atmos": "produtos/serviços/lanche-de-trilha-atmos-1.png",
+                "registro-drone": "produtos/serviços/registro-com-drone/registro-com-drone-1.jpg",
+                "registro-com-drone": "produtos/serviços/registro-com-drone/registro-com-drone-1.jpg",
+                "registro-com-drone-captacao-com-edicao": "produtos/serviços/registro-com-drone-captacao-com-edicao/registro-com-drone-captacao-com-edicao-1.jpg"
               };
 
               const candidates: string[] = [];
@@ -386,7 +406,11 @@ export default function ItineraryDetail() {
               const extensions = [".jpg", ".png", ".avif", ".webp"];
               [1, 2, 3, 4, 5].forEach(n => {
                 extensions.forEach(ext => {
-                  candidates.push(`produtos/${folder}/${prefix}/${prefix}-${n}${ext}`);
+                  if (prefix === "lanche-de-trilha" || prefix === "lanche-de-trilha-atmos") {
+                    candidates.push(`produtos/${folder}/lanche-de-trilha-atmos-${n}${ext}`);
+                  } else {
+                    candidates.push(`produtos/${folder}/${prefix}/${prefix}-${n}${ext}`);
+                  }
                 });
               });
 
@@ -621,6 +645,12 @@ export default function ItineraryDetail() {
                   >
                     <OptimizedImage 
                       src={getDayImage(imgKey, itinerary.name.pt)} 
+                      fallbackSrcs={[
+                        getDayImage(imgKey, itinerary.name.pt),
+                        optimizedUrl(`produtos/cachoeiras/${imgKey.toLowerCase()}/${imgKey.toLowerCase()}-1.jpg`, IMAGE_PRESETS.thumbnail),
+                        optimizedUrl(`produtos/experiencias/${imgKey.toLowerCase()}/${imgKey.toLowerCase()}-1.jpg`, IMAGE_PRESETS.thumbnail),
+                        optimizedUrl(`produtos/experiencias/${imgKey.toLowerCase()}/${imgKey.toLowerCase()}-1.png`, IMAGE_PRESETS.thumbnail)
+                      ]}
                       alt="Atmos Experience" 
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     />
@@ -668,6 +698,7 @@ export default function ItineraryDetail() {
                         <div className="aspect-[16/9] md:aspect-[21/9] rounded-[2rem] overflow-hidden shadow-2xl border border-black/5 group">
                           <OptimizedImage
                             src={getDayImage(day.images?.[0] || "", resolvedTitle)}
+                            fallbackSrcs={day.images?.map((img: string) => getDayImage(img, resolvedTitle))}
                             alt={resolvedTitle}
                             className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
                           />
@@ -732,6 +763,7 @@ export default function ItineraryDetail() {
                         <div className="relative group rounded-[3rem] overflow-hidden aspect-square shadow-2xl">
                           <OptimizedImage
                             src={getDayImage(day.images?.[0] || "", day.resolvedTitle || resolvedTitle)}
+                            fallbackSrcs={day.images?.map((img: string) => getDayImage(img, day.resolvedTitle || resolvedTitle))}
                             alt={resolvedTitle}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
                             containerClassName="absolute inset-0"

@@ -5,12 +5,14 @@ import { motion, HTMLMotionProps } from "framer-motion";
 
 interface OptimizedImageProps extends HTMLMotionProps<"img"> {
   src: string;
+  fallbackSrcs?: string[];
   fallbackSrc?: string;
   containerClassName?: string;
 }
 
 export function OptimizedImage({
   src,
+  fallbackSrcs = [],
   fallbackSrc = "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1920&q=80",
   className,
   containerClassName,
@@ -22,14 +24,33 @@ export function OptimizedImage({
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
   const [currentSrc, setCurrentSrc] = useState(src);
+  const [allSrcs, setAllSrcs] = useState<string[]>([]);
+  const [srcIndex, setSrcIndex] = useState(0);
 
   useEffect(() => {
+    const list = [src];
+    if (fallbackSrcs && fallbackSrcs.length > 0) {
+      fallbackSrcs.forEach(s => {
+        if (s && !list.includes(s)) list.push(s);
+      });
+    }
+    setAllSrcs(list);
+    setSrcIndex(0);
     setLoaded(false);
     setError(false);
     setCurrentSrc(src);
-  }, [src]);
+  }, [src, fallbackSrcs]);
 
   const handleError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    // Stage 0: Try next fallbackSrc in our list
+    if (srcIndex < allSrcs.length - 1) {
+      const nextIndex = srcIndex + 1;
+      console.log(`[Atmos] Image load failed: ${currentSrc}. Trying next candidate (${nextIndex + 1}/${allSrcs.length}): ${allSrcs[nextIndex]}`);
+      setSrcIndex(nextIndex);
+      setCurrentSrc(allSrcs[nextIndex]);
+      setLoaded(false);
+      return;
+    }
     // Stage 1: If optimized URL failed, try the original storage URL
     if (currentSrc.includes('wsrv.nl')) {
       try {

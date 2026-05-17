@@ -35,33 +35,32 @@ export function getDayImage(keyOrPath: string, name?: string): string {
     const slug = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     
     // Waterfall mappings
-    if (slug.includes('couros')) return optimizedUrl("produtos/cachoeiras/Couros/couros-1.jpg", IMAGE_PRESETS.thumbnail);
-    if (slug.includes('macaquinhos')) return optimizedUrl("produtos/cachoeiras/Macaquinhos/macaquinhos-1.jpg", IMAGE_PRESETS.thumbnail);
-    if (slug.includes('dragao')) return optimizedUrl("produtos/cachoeiras/Dragao/dragao-1.jpg", IMAGE_PRESETS.thumbnail);
-    if (slug.includes('macacao')) return optimizedUrl("produtos/cachoeiras/Macacao/macacao-1.jpg", IMAGE_PRESETS.thumbnail);
-    if (slug.includes('ponte-de-pedra')) return optimizedUrl("produtos/cachoeiras/Ponte de Pedra/ponte-de-pedra-1.jpg", IMAGE_PRESETS.thumbnail);
-    if (slug.includes('segredo')) return optimizedUrl("produtos/cachoeiras/Segredo/segredo-1.jpg", IMAGE_PRESETS.thumbnail);
-    if (slug.includes('vale-da-lua')) return optimizedUrl("produtos/cachoeiras/Vale da Lua/vale-da-lua-1.jpg", IMAGE_PRESETS.thumbnail);
-    if (slug.includes('almecegas')) return optimizedUrl("produtos/cachoeiras/Almecegas/almecegas-1.jpg", IMAGE_PRESETS.thumbnail);
-    if (slug.includes('santa barbara')) return optimizedUrl("produtos/cachoeiras/Santa Barbara/santa-barbara-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('couros')) return optimizedUrl("produtos/cachoeiras/couros/couros-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('macaquinhos')) return optimizedUrl("produtos/cachoeiras/macaquinhos/macaquinhos-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('dragao')) return optimizedUrl("produtos/cachoeiras/dragao/dragao-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('macacao')) return optimizedUrl("produtos/cachoeiras/macacao/macacao-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('ponte-de-pedra')) return optimizedUrl("produtos/cachoeiras/ponte-de-pedra/ponte-de-pedra-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('segredo')) return optimizedUrl("produtos/cachoeiras/segredo/segredo-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('vale-da-lua')) return optimizedUrl("produtos/cachoeiras/vale-da-lua/vale-da-lua-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('almecegas')) return optimizedUrl("produtos/cachoeiras/almecegas-i-e-ii--sao-bento/almecegas-i-e-ii--sao-bento-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('santa barbara')) return optimizedUrl("produtos/cachoeiras/santa-barbara/santa-barbara-1.jpg", IMAGE_PRESETS.thumbnail);
     
     // Experience mappings (Portuguese keywords)
-    if (slug.includes('cavalo')) return optimizedUrl("produtos/experiencias/Cavalo/cavalo-1.jpg", IMAGE_PRESETS.thumbnail);
-    if (slug.includes('balao')) return optimizedUrl("produtos/experiencias/Balao/balao-1.jpg", IMAGE_PRESETS.thumbnail);
-    if (slug.includes('paramotor')) return optimizedUrl("produtos/experiencias/Paramotor/paramotor-1.jpg", IMAGE_PRESETS.thumbnail);
-    if (slug.includes('massagem') || slug.includes('bem-estar') || slug.includes('bem estar')) return optimizedUrl("produtos/experiencias/Massagem/massagem-1.jpg", IMAGE_PRESETS.thumbnail);
-    if (slug.includes('yoga')) return optimizedUrl("produtos/experiencias/Yoga/yoga-1.jpg", IMAGE_PRESETS.thumbnail);
-    if (slug.includes('meditacao')) return optimizedUrl("produtos/experiencias/Meditacao/meditacao-1.jpg", IMAGE_PRESETS.thumbnail);
-    if (slug.includes('noturna')) return optimizedUrl("produtos/experiencias/Noturna/noturna-1.jpg", IMAGE_PRESETS.thumbnail);
-    if (slug.includes('astro')) return optimizedUrl("produtos/experiencias/Astro/astro-1.jpg", IMAGE_PRESETS.thumbnail);
-    if (slug.includes('forro')) return optimizedUrl("produtos/experiencias/Forro/forro-1.jpg", IMAGE_PRESETS.thumbnail);
-    if (slug.includes('feira')) return optimizedUrl("produtos/experiencias/Feira/feira-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('cavalo') || slug.includes('comitiva')) return optimizedUrl("produtos/experiencias/passeio-a-cavalo/passeio-a-cavalo-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('balao')) return optimizedUrl("produtos/experiencias/voo-de-balao/voo-de-balao-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('paramotor')) return optimizedUrl("produtos/experiencias/voo-de-paramotor/voo-de-paramotor-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('massagem') || slug.includes('bem-estar') || slug.includes('bem estar')) return optimizedUrl("produtos/experiencias/massagem-e-bem-estar/massagem-e-bem-estar-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('yoga')) return optimizedUrl("produtos/experiencias/yoga-e-meditacao/yoga-e-meditacao-1.png", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('meditacao')) return optimizedUrl("produtos/experiencias/yoga-e-meditacao/yoga-e-meditacao-1.png", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('noturna')) return optimizedUrl("produtos/experiencias/experiencia-noturna-imersiva/experiencia-noturna-imersiva-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('astro')) return optimizedUrl("produtos/experiencias/astro-turismo/astro-turismo-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('forro')) return optimizedUrl("produtos/experiencias/aula-de-forro/aula-de-forro-1.jpg", IMAGE_PRESETS.thumbnail);
+    if (slug.includes('feira')) return optimizedUrl("produtos/experiencias/feira-dos-produtores-locais/feira-dos-produtores-locais-1.jpg", IMAGE_PRESETS.thumbnail);
   }
 
-  // Fallback: try common folders with PascalCase folder and lowercase file
-  const capitalized = key.charAt(0).toUpperCase() + key.slice(1);
+  // Fallback: try common folders with lowercase folder and lowercase file
   const lowerKey = key.toLowerCase();
-  return optimizedUrl(`produtos/cachoeiras/${capitalized}/${lowerKey}-1.jpg`, IMAGE_PRESETS.thumbnail);
+  return optimizedUrl(`produtos/cachoeiras/${lowerKey}/${lowerKey}-1.jpg`, IMAGE_PRESETS.thumbnail);
 }
 
 /** Resolves an image key to multiple potential paths for OptimizedImage fallback */

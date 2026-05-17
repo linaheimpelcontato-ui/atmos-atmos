@@ -3,14 +3,14 @@ import { useStorageImages } from "@/hooks/useStorageImages";
 
 /** Card cover image for each itinerary (uses main waterfall's first photo) */
 export const itineraryImages: Record<string, string> = {
-  "2d-classico": optimizedUrl("produtos/cachoeiras/Segredo/segredo-1.jpg", IMAGE_PRESETS.card),
-  "2d-jurassico": optimizedUrl("produtos/cachoeiras/Macacao/macacao-1.jpg", IMAGE_PRESETS.card),
-  "3d-classico": optimizedUrl("produtos/cachoeiras/Almecegas/almecegas-1.jpg", IMAGE_PRESETS.card),
-  "3d-jurassico": optimizedUrl("produtos/cachoeiras/Macaquinhos/macaquinhos-1.jpg", IMAGE_PRESETS.card),
-  "4d-classico": optimizedUrl("produtos/cachoeiras/Couros/couros-1.jpg", IMAGE_PRESETS.card),
-  "4d-jurassico": optimizedUrl("produtos/cachoeiras/Dragao/dragao-1.jpg", IMAGE_PRESETS.card),
-  "5d-classico": optimizedUrl("produtos/cachoeiras/Couros/couros-1.jpg", IMAGE_PRESETS.card),
-  "5d-jurassico": optimizedUrl("produtos/cachoeiras/Dragao/dragao-1.jpg", IMAGE_PRESETS.card),
+  "2d-classico": optimizedUrl("produtos/cachoeiras/segredo/segredo-1.jpg", IMAGE_PRESETS.card),
+  "2d-jurassico": optimizedUrl("produtos/cachoeiras/macacao/macacao-1.jpg", IMAGE_PRESETS.card),
+  "3d-classico": optimizedUrl("produtos/cachoeiras/almecegas-i-e-ii--sao-bento/almecegas-i-e-ii--sao-bento-1.jpg", IMAGE_PRESETS.card),
+  "3d-jurassico": optimizedUrl("produtos/cachoeiras/macaquinhos/macaquinhos-1.jpg", IMAGE_PRESETS.card),
+  "4d-classico": optimizedUrl("produtos/cachoeiras/couros/couros-1.jpg", IMAGE_PRESETS.card),
+  "4d-jurassico": optimizedUrl("produtos/cachoeiras/dragao/dragao-1.jpg", IMAGE_PRESETS.card),
+  "5d-classico": optimizedUrl("produtos/cachoeiras/couros/couros-1.jpg", IMAGE_PRESETS.card),
+  "5d-jurassico": optimizedUrl("produtos/cachoeiras/dragao/dragao-1.jpg", IMAGE_PRESETS.card),
 };
 
 const itinerarySpecifics: Record<string, string> = {
