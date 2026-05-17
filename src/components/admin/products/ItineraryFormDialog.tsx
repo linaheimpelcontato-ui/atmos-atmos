@@ -700,7 +700,7 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
         seo_description: seoDescription,
         favorites,
         gallery_order: galleryOrder,
-        storage_id: tempId || product?.variables?.storage_id,
+        storage_id: tempId || ((product?.variables || {}) as any).storage_id || "",
         atmosRevenue,
         taxPercent,
         markupPercent,
@@ -1203,7 +1203,7 @@ export default function ItineraryFormDialog({ open, onOpenChange, product, allPr
                           ...product?.variables, 
                           favorites, 
                           gallery_order: galleryOrder,
-                          storage_id: tempId || product?.variables?.storage_id 
+                          storage_id: tempId || ((product?.variables || {}) as any).storage_id || ""
                         } 
                       } as any} 
                       onFavoriteToggle={(file) => setFavorites(prev => prev.includes(file) ? prev.filter(f => f !== file) : [...prev, file])}
