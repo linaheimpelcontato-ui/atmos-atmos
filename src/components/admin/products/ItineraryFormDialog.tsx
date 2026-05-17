@@ -98,6 +98,7 @@ type ItineraryVars = {
   favorites: string[];
   gallery_order?: string[];
   storage_id?: string;
+  guidedDays?: number;
   pricing?: Pricing;
   atmosRevenue?: number;
   taxPercent?: number;
