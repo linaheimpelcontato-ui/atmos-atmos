@@ -299,7 +299,7 @@ const Itineraries = () => {
         inclusions: it.inclusions || { pt: [], en: [], es: [] }
       };
     });
-  }, [supabaseProducts]);
+  }, [allProducts]);
 
   const durations = getDurations();
   const currentItineraries = getItinerariesByDuration(selectedDuration, mergedItineraries)

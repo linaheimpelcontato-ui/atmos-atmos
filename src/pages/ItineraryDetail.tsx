@@ -330,7 +330,7 @@ export default function ItineraryDetail() {
         inclusions: supabaseVars.inclusions || { pt: [], en: [], es: [] }
       };
     });
-  }, [dbProducts]);
+  }, [allProducts]);
 
   const itinerary = id ? getItineraryById(id, mergedItineraries) : undefined;
   const l = labels[language as keyof typeof labels] || labels.pt;

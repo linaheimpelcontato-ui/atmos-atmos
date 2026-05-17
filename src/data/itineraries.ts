@@ -9,7 +9,8 @@ export interface ItineraryDay {
   description?: Record<Language, string>;
   attractions?: Record<Language, string[]>;
   difficulty: "facil" | "moderado" | "dificil";
-  imageKey: DayImageKey;
+  imageKey?: DayImageKey;
+  images?: string[];
   /** Entrance fee in BRL. 0 = voluntary/free. */
   entranceFee?: number;
   /** True if entrance fee is voluntary (e.g., Couros) */
