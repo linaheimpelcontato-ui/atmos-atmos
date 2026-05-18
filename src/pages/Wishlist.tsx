@@ -26,12 +26,9 @@ import {
   ChevronRight,
   ChevronLeft
 } from "lucide-react";
-import QuoteQuestionnaire, {
-  type QuoteAnswers,
-} from "@/components/wishlist/QuoteQuestionnaire";
 import { storageUrl } from "@/lib/storage";
-import OnboardingProcess from "@/components/wishlist/OnboardingProcess";
-import ImmersionQuestionnaire from "@/components/immersions/ImmersionQuestionnaire";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import WishlistReservationForm from "@/components/wishlist/WishlistReservationForm";
 
 /* ── i18n helpers ─────────────────────────────────────────── */
 
@@ -124,11 +121,7 @@ const Wishlist = () => {
   const { language } = useLanguage();
   const { items, removeItem, clearWishlist, count } = useWishlist();
   const { user } = useAuth();
-  const [showQuestionnaire, setShowQuestionnaire] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [pendingAnswers, setPendingAnswers] = useState<QuoteAnswers | null>(null);
-  const [questionnaireMode, setQuestionnaireMode] = useState<"quote" | "immersion">("quote");
-  const questionnaireRef = useRef<HTMLDivElement>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -143,78 +136,8 @@ const Wishlist = () => {
   );
 
   const handleStartQuote = () => {
-    setShowQuestionnaire(true);
-    setQuestionnaireMode("quote");
+    setIsFormOpen(true);
     trackQuestionnaireStart("quote");
-    setTimeout(() => {
-      questionnaireRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 100);
-  };
-
-  const handleCancelQuestionnaire = () => {
-    setShowQuestionnaire(false);
-    setQuestionnaireMode("quote");
-  };
-
-  const handleQuoteComplete = async (answers: QuoteAnswers) => {
-    setPendingAnswers(answers);
-    setShowQuestionnaire(false);
-    setShowOnboarding(true);
-    setTimeout(() => {
-      questionnaireRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 100);
-  };
-
-  const handleOnboardingConfirm = async () => {
-    if (!pendingAnswers) return;
-    try {
-      const quoteData = {
-        user_id: user?.id ?? null,
-        user_name: user?.user_metadata?.full_name ?? null,
-        user_email: user?.email ?? null,
-        user_phone: user?.user_metadata?.phone ?? null,
-        items: items,
-        answers: pendingAnswers,
-        status: "pending",
-        language,
-      };
-
-      const { error } = await (supabase as any).from("quote_requests").insert(quoteData);
-
-      if (error) {
-        console.error("Error saving quote request:", error);
-      } else if (user?.email) {
-        // Instant sync with prospects table using lookup-then-action
-        const normalizedEmail = user.email.toLowerCase();
-        const { data: existing } = await (supabase as any).from("prospects").select("id").eq("email", normalizedEmail).maybeSingle();
-        
-        const prospectData = {
-          name: user.user_metadata?.full_name || "Cliente Site",
-          email: normalizedEmail,
-          phone: user.user_metadata?.phone,
-          segment: "b2c",
-          source: "site",
-          notes: `Solicitação via Wishlist. Itens: ${items.length}.`,
-          updated_at: new Date().toISOString(),
-        };
-
-        if (existing) {
-          await (supabase as any).from("prospects").update(prospectData).eq("id", existing.id);
-        } else {
-          await (supabase as any).from("prospects").insert(prospectData);
-        }
-      }
-    } catch (e) {
-      console.error("Exception in onboarding confirm:", e);
-    }
-
-    const message = buildWhatsAppMessage(items, pendingAnswers, language);
-    const encoded = encodeURIComponent(message);
-    trackQuoteSubmit(items.length);
-    trackWhatsAppClick("quote_wishlist");
-    window.open(`https://wa.me/5511933697400?text=${encoded}`, "_blank");
-    setShowOnboarding(false);
-    setPendingAnswers(null);
   };
 
   if (count === 0) {
@@ -297,11 +220,9 @@ const Wishlist = () => {
 
       <section className="py-8 md:py-16 bg-white">
         <div className="container px-4 max-w-7xl mx-auto">
-          
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-            
             {/* Left: Items List */}
-            <div className="lg:col-span-12 space-y-10">
+            <div className="lg:col-span-8 space-y-10">
               
               <div className="flex items-center justify-between border-b border-[#1A261B]/10 pb-4">
                 <div>
@@ -338,7 +259,7 @@ const Wishlist = () => {
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       {groupItems.map((item) => (
                         <motion.div
                           layout
@@ -405,8 +326,8 @@ const Wishlist = () => {
                             </p>
                             <div className="h-[1px] w-full bg-white/10" />
                             <div className="pt-4 flex justify-between items-center text-[8px] uppercase font-bold tracking-widest text-white/30">
-                               <span>ID: {item.id.slice(0, 8)}</span>
-                               <span className="text-[#a4b595]">VERIFIED</span>
+                                <span>ID: {item.id.slice(0, 8)}</span>
+                                <span className="text-[#a4b595]">VERIFIED</span>
                             </div>
                           </div>
                         </motion.div>
@@ -417,63 +338,79 @@ const Wishlist = () => {
               })}
             </div>
 
-            {/* Final CTA Bar - Refined & Minimalist */}
-            <div className="lg:col-span-12 mt-20 pb-20 border-t border-[#1A261B]/10 pt-20 text-center" id="final-step" ref={questionnaireRef}>
-              <AnimatePresence mode="wait">
-                {!showQuestionnaire && !showOnboarding ? (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    className="max-w-3xl mx-auto relative z-10"
-                  >
-                    <span className="text-[10px] uppercase tracking-[0.6em] font-bold text-[#1A261B]/40 mb-6 block">PROXIMO PASSO</span>
-                    <h2 className="text-4xl md:text-6xl font-display text-[#1A261B] mb-8 leading-tight">O Toque Final da Atmos</h2>
-                    <p className="text-[#2C3E2D]/60 mb-12 text-xl font-light leading-relaxed max-w-2xl mx-auto">
-                      Suas escolhas definem a alma da experiência. Agora, responda a perguntas rápidas para que nosso time consiga criar o seu roteiro.
-                    </p>
-                    <Button
-                      size="lg"
-                      className="rounded-full px-16 py-10 bg-[#1A261B] hover:bg-black text-white font-bold uppercase tracking-[0.3em] text-[12px] shadow-2xl transition-all hover:scale-105"
-                      onClick={handleStartQuote}
-                    >
-                      Prosseguir para Roteiro
-                      <ChevronRight className="h-5 w-5" />
-                    </Button>
-                  </motion.div>
-                ) : showQuestionnaire ? (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="max-w-4xl mx-auto"
-                  >
-                    <div className="flex items-center justify-between mb-8">
-                       <button onClick={handleCancelQuestionnaire} className="flex items-center gap-2 text-[10px] uppercase font-bold tracking-widest text-[#1A261B]/40 hover:text-[#1A261B] transition-colors">
-                        <ChevronLeft className="h-4 w-4" /> Voltar para lista
-                       </button>
-                    </div>
-                    <QuoteQuestionnaire
-                      language={language}
-                      onComplete={handleQuoteComplete}
-                      onCancel={handleCancelQuestionnaire}
-                      onSwitchToImmersion={() => setQuestionnaireMode("immersion")}
-                    />
-                  </motion.div>
-                ) : showOnboarding ? (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="max-w-4xl mx-auto"
-                  >
-                    <OnboardingProcess 
-                      language={language}
-                      onConfirm={handleOnboardingConfirm}
-                      onCancel={() => setShowOnboarding(false)}
-                    />
-                  </motion.div>
-                ) : null}
-              </AnimatePresence>
+            {/* Right Sidebar: Inclusions & Important Info */}
+            <div className="lg:col-span-4 space-y-8">
+              {/* Incluso no Roteiro Box */}
+              <div className="border border-[#2e2019]/10 bg-[#fcfaf7] p-8 shadow-sm">
+                <span className="text-[10px] uppercase tracking-[0.4em] font-bold text-[#c4a97d] mb-4 block">
+                  ATMOS EXPERIENCE
+                </span>
+                <h3 className="text-xl font-display text-[#2e2019] uppercase tracking-wider mb-6 font-outfit">
+                  Incluso no roteiro
+                </h3>
+                <ul className="space-y-4">
+                  {[
+                    "Guiamento ATMOS especializado",
+                    "Curadoria completa do roteiro",
+                    "Registros fotográficos",
+                    "Assistência ATMOS 360° durante toda a viagem"
+                  ].map((text, idx) => (
+                    <li key={idx} className="flex items-start gap-3">
+                      <div className="h-5 w-5 rounded-full bg-[#c4a97d]/10 flex items-center justify-center text-[#c4a97d] shrink-0 mt-0.5">
+                        <Check className="h-3 w-3" />
+                      </div>
+                      <span className="text-sm text-[#2e2019]/80 font-light">{text}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Importante Saber Box */}
+              <div className="border border-[#2e2019]/10 bg-[#fcfaf7] p-8 shadow-sm">
+                <span className="text-[10px] uppercase tracking-[0.4em] font-bold text-[#c4a97d] mb-4 block">
+                  CONDIÇÕES E LOGÍSTICA
+                </span>
+                <h3 className="text-xl font-display text-[#2e2019] uppercase tracking-wider mb-6 font-outfit">
+                  Importante saber
+                </h3>
+                <p className="text-sm text-[#2e2019]/70 leading-relaxed font-light mb-4">
+                  As hospedagens <strong className="text-[#2e2019]">não estão inclusas</strong> no valor do roteiro.
+                </p>
+                <p className="text-xs text-[#2e2019]/60 leading-relaxed font-light">
+                  Recomendamos reservar 1 noite antes e 1 noite após o roteiro para chegada e retorno. A ATMOS oferece curadoria completa de hospedagens para organizar essas etapas com praticidade e conforto.
+                </p>
+              </div>
             </div>
+
+            {/* Final CTA Bar - Refined & Minimalist */}
+            <div className="lg:col-span-12 mt-20 pb-20 border-t border-[#1A261B]/10 pt-20 text-center" id="final-step">
+              <div className="max-w-3xl mx-auto relative z-10">
+                <span className="text-[10px] uppercase tracking-[0.6em] font-bold text-[#1A261B]/40 mb-6 block">PROXIMO PASSO</span>
+                <h2 className="text-4xl md:text-6xl font-display text-[#1A261B] mb-8 leading-tight">O Toque Final da Atmos</h2>
+                <p className="text-[#2C3E2D]/60 mb-12 text-xl font-light leading-relaxed max-w-2xl mx-auto">
+                  Suas escolhas definem a alma da experiência. Agora, responda a perguntas rápidas para que nosso time consiga criar o seu roteiro.
+                </p>
+                <Button
+                  size="lg"
+                  className="rounded-full px-16 py-10 bg-[#1A261B] hover:bg-black text-white font-bold uppercase tracking-[0.3em] text-[12px] shadow-2xl transition-all hover:scale-105"
+                  onClick={handleStartQuote}
+                >
+                  Prosseguir para Roteiro
+                  <ChevronRight className="h-5 w-5" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Reservation Form Modal Dialog */}
+            <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+              <DialogContent className="max-w-xl md:max-w-2xl bg-[#fcfaf7] border border-[#e4dbcc] p-6 md:p-10 text-[#2e2019] rounded-none focus:outline-none focus-visible:outline-none">
+                <WishlistReservationForm
+                  items={items}
+                  language={language}
+                  onClose={() => setIsFormOpen(false)}
+                />
+              </DialogContent>
+            </Dialog>
 
             <div className="lg:col-span-12 text-center mt-8 pb-20">
                <Link to="/monte-seu-roteiro" className="text-[11px] uppercase tracking-[0.3em] font-bold text-[#1A261B]/40 hover:text-[#1A261B] transition-colors border-b border-transparent hover:border-[#1A261B] pb-1">
