@@ -86,19 +86,63 @@
     <div id="root"></div>
     <script>
       window.onerror = function(message, source, lineno, colno, error) {
-        document.body.innerHTML += '<div style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(30,10,10,0.95);color:white;z-index:9999;padding:2rem;font-family:monospace;overflow:auto;">' +
-          '<h1>Erro de Execução (Runtime Error)</h1>' +
+        console.error("Runtime error caught:", message, source, lineno, colno, error);
+        
+        // Prevent infinite recursive rendering loops
+        if (document.getElementById('critical-error-overlay')) return;
+        
+        var div = document.createElement('div');
+        div.id = 'critical-error-overlay';
+        div.style.position = 'fixed';
+        div.style.top = '0';
+        div.style.left = '0';
+        div.style.width = '100vw';
+        div.style.height = '100vh';
+        div.style.background = 'rgba(30,10,10,0.95)';
+        div.style.color = 'white';
+        div.style.zIndex = '9999';
+        div.style.padding = '2rem';
+        div.style.fontFamily = 'monospace';
+        div.style.overflow = 'auto';
+        
+        div.innerHTML = '<h1>Erro de Execução (Runtime Error)</h1>' +
           '<p><strong>Message:</strong> ' + message + '</p>' +
           '<p><strong>Source:</strong> ' + source + ':' + lineno + ':' + colno + '</p>' +
-          '<pre style="background:#000;padding:1rem;margin-top:1rem;">' + (error && error.stack ? error.stack : 'No stack trace') + '</pre>' +
-          '</div>';
+          '<pre style="background:#000;padding:1rem;margin-top:1rem;white-space:pre-wrap;word-break:break-all;">' + 
+          (error && error.stack ? error.stack : 'No stack trace') + '</pre>';
+          
+        document.body.appendChild(div);
       };
+      
       window.addEventListener('unhandledrejection', function(event) {
-        document.body.innerHTML += '<div style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(30,10,10,0.95);color:white;z-index:9999;padding:2rem;font-family:monospace;overflow:auto;">' +
-          '<h1>Unhandled Promise Rejection</h1>' +
-          '<p><strong>Reason:</strong> ' + event.reason + '</p>' +
-          '<pre style="background:#000;padding:1rem;margin-top:1rem;">' + (event.reason && event.reason.stack ? event.reason.stack : 'No stack trace') + '</pre>' +
-          '</div>';
+        console.error("Unhandled promise rejection:", event.reason);
+        
+        // Prevent infinite recursive rendering loops
+        if (document.getElementById('critical-error-overlay')) return;
+        
+        var div = document.createElement('div');
+        div.id = 'critical-error-overlay';
+        div.style.position = 'fixed';
+        div.style.top = '0';
+        div.style.left = '0';
+        div.style.width = '100vw';
+        div.style.height = '100vh';
+        div.style.background = 'rgba(30,10,10,0.95)';
+        div.style.color = 'white';
+        div.style.zIndex = '9999';
+        div.style.padding = '2rem';
+        div.style.fontFamily = 'monospace';
+        div.style.overflow = 'auto';
+        
+        var reasonStr = event.reason ? (event.reason.message || event.reason) : 'Unknown reason';
+        var stackStr = event.reason && event.reason.stack ? event.reason.stack : 'No stack trace';
+        
+        div.innerHTML = '<h1>Unhandled Promise Rejection</h1>' +
+          '<p><strong>Reason:</strong> ' + reasonStr + '</p>' +
+          '<pre style="background:#000;padding:1rem;margin-top:1rem;white-space:pre-wrap;word-break:break-all;">' + 
+          stackStr + '</pre>';
+          
+        document.body.appendChild(div);
       });
     </script>
     <script type="module" src="/src/main.tsx"></script>
