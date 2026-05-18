@@ -45,6 +45,8 @@ import { toast } from "@/hooks/use-toast";
 import PageSEO from "@/components/seo/PageSEO";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import ItineraryReservationForm from "@/components/itineraries/ItineraryReservationForm";
 
 const getLangVal = (field: any, lang: 'pt' | 'en' | 'es'): string => {
   if (!field) return "";
@@ -342,6 +344,7 @@ export default function ItineraryDetail() {
   const { addItem, removeItem, isInWishlist } = useWishlist();
   const { data: allProducts = EMPTY_PRODUCTS } = useProducts();
   const [heroImages, setHeroImages] = useState<string[]>([]);
+  const [isReservationOpen, setIsReservationOpen] = useState(false);
 
   const mergedItineraries = useMemo(() => {
     // Se houver produtos no banco, eles são a fonte da verdade.
@@ -1377,20 +1380,43 @@ export default function ItineraryDetail() {
         <section className="py-32 bg-[#fcfaf7] text-center border-t border-[#e4dbcc]">
           <div className="container px-4">
             <div className="max-w-2xl mx-auto space-y-10">
-              <h2 className="text-4xl md:text-5xl font-display text-[#2e2019] font-outfit uppercase tracking-tight">{l.bespokeTitle}</h2>
+              <h2 className="text-4xl md:text-5xl font-display text-[#2e2019] font-outfit uppercase tracking-tight">
+                {language === "en" 
+                  ? `Secure your spot on: ${getLangVal(itinerary.title, 'en')}`
+                  : language === "es"
+                  ? `Reserve su lugar en: ${getLangVal(itinerary.title, 'es')}`
+                  : `Garanta sua vaga no: ${getLangVal(itinerary.title, 'pt')}`
+                }
+              </h2>
               <p className="text-[#2e2019]/60 text-lg font-light leading-relaxed">
-                {l.bespokeDesc}
+                {language === "en"
+                  ? "Ready to embark on this extraordinary journey? Let us build the perfect experience for you. Request your reservation now."
+                  : language === "es"
+                  ? "¿Listo para embarcarse en este viaje extraordinario? Déjenos construir la experiencia perfecta para usted. Solicite su reserva ahora."
+                  : "Pronto para embarcar nessa jornada extraordinária? Deixe-nos estruturar a experiência perfeita para você. Solicite sua reserva agora."
+                }
               </p>
               <Button 
-                onClick={() => navigate("/monte-seu-roteiro")}
+                onClick={() => setIsReservationOpen(true)}
                 className="rounded-none px-12 py-8 bg-[#c4a97d] hover:bg-[#b09366] text-white text-sm font-black uppercase tracking-[0.3em] transition-all shadow-2xl shadow-[#c4a97d]/20"
               >
-                {l.bespokeBtn}
+                {language === "en" ? "Request reservation" : language === "es" ? "Solicitar reserva" : "Solicitar reserva"}
                 <ArrowRight className="h-4 w-4 ml-3" />
               </Button>
             </div>
           </div>
         </section>
+
+        {/* Itinerary Reservation Dialog */}
+        <Dialog open={isReservationOpen} onOpenChange={setIsReservationOpen}>
+          <DialogContent className="max-w-lg p-8 sm:p-12 overflow-y-auto max-h-[90vh] rounded-none border border-[#e4dbcc] bg-[#fcfaf7]">
+            <ItineraryReservationForm
+              itinerary={itinerary}
+              language={language}
+              onClose={() => setIsReservationOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );
