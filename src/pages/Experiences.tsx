@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import PageSEO from "@/components/seo/PageSEO";
 
 import Layout from "@/components/layout/Layout";

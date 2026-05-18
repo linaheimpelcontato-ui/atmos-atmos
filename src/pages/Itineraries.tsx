@@ -24,6 +24,12 @@ import {
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { getDayImage } from "@/components/itineraries/dayImages";
 
+const getLangVal = (field: any, lang: 'pt' | 'en' | 'es'): string => {
+  if (!field) return "";
+  if (typeof field === "string") return field;
+  return field[lang] || field.pt || field.en || field.es || "";
+};
+
 const pageLabels = {
   pt: {
     title: "Sugestões Atmos",
@@ -409,7 +415,11 @@ const Itineraries = () => {
         }
 
         if (itemImages.length === 0) {
-          itemImages = [item.product_storage_info?.prefix || item.product_name];
+          const fallbackPrefix = item.product_storage_info?.prefix;
+          const fallbackName = typeof item.product_name === "string" 
+            ? item.product_name 
+            : (item.product_name?.pt || item.product_name?.en || "");
+          itemImages = [fallbackPrefix || fallbackName || ""];
         }
 
         allItineraryImages.push(...itemImages.slice(0, 5));
@@ -417,13 +427,21 @@ const Itineraries = () => {
         return {
           id: `${it.id}-item-${idx}`,
           dayNumber: item.dayNumber,
-          title: { pt: item.product_name, en: item.product_name, es: item.product_name },
+          title: { 
+            pt: getLangVal(item.product_name, 'pt'), 
+            en: getLangVal(item.product_name, 'en'), 
+            es: getLangVal(item.product_name, 'es') 
+          },
           description: { pt: "", en: "", es: "" },
-          attractions: { pt: [item.product_name], en: [item.product_name], es: [item.product_name] },
+          attractions: { 
+            pt: [getLangVal(item.product_name, 'pt')], 
+            en: [getLangVal(item.product_name, 'en')], 
+            es: [getLangVal(item.product_name, 'es')] 
+          },
           trailDistanceKm: item.product_variables?.trailDistanceKm,
           difficulty: (item.product_variables?.difficulty || "moderado") as any,
           images: itemImages,
-          resolvedTitle: item.product_name
+          resolvedTitle: getLangVal(item.product_name, 'pt')
         };
       });
 
@@ -440,8 +458,16 @@ const Itineraries = () => {
         id: it.source_id || it.id,
         duration: typeof supabaseVars.duration === 'number' ? supabaseVars.duration : (supabaseVars.duration ? parseInt(supabaseVars.duration) : 3),
         category: it.segment,
-        name: { pt: it.name, en: it.name, es: it.name },
-        description: { pt: it.description || "", en: it.description || "", es: it.description || "" },
+        name: { 
+          pt: getLangVal(it.name, 'pt'), 
+          en: getLangVal(it.name, 'en'), 
+          es: getLangVal(it.name, 'es') 
+        },
+        description: { 
+          pt: getLangVal(it.description || "", 'pt'), 
+          en: getLangVal(it.description || "", 'en'), 
+          es: getLangVal(it.description || "", 'es') 
+        },
         days: enrichedItems,
         favorites,
         pricing: it.pricing || { 

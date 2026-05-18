@@ -65,7 +65,7 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             type: row.item_type as WishlistItemType,
             name: row.item_name,
             details: row.item_details ?? undefined,
-            imageUrl: row.item_image_url ?? undefined,
+            imageUrl: (row as any).item_image_url ?? undefined,
           }));
           
           setItems(prevLocalItems => {

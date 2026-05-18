@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { trackItineraryView } from "@/lib/analytics";
 import Layout from "@/components/layout/Layout";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { normalize, optimizedUrl, IMAGE_PRESETS } from "@/lib/storage";
+import { normalize, optimizedUrl, heroUrl, IMAGE_PRESETS } from "@/lib/storage";
 import { useWishlist } from "@/contexts/WishlistContext";
 import { useProducts } from "@/hooks/useProducts";
 import { getItineraryById, type ItineraryDay, type Itinerary, itineraries as staticItineraries } from "@/data/itineraries";
@@ -45,6 +45,12 @@ import { toast } from "@/hooks/use-toast";
 import PageSEO from "@/components/seo/PageSEO";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { ScrollArea } from "@/components/ui/scroll-area";
+
+const getLangVal = (field: any, lang: 'pt' | 'en' | 'es'): string => {
+  if (!field) return "";
+  if (typeof field === "string") return field;
+  return field[lang] || field.pt || field.en || field.es || "";
+};
 
 const leafTexture = optimizedUrl("proposta-visual-cliente/leaf-texture - horizontal.jpg", IMAGE_PRESETS.large);
 const leafTextureAlt = optimizedUrl("proposta-visual-cliente/leaf-texture.jpg", IMAGE_PRESETS.large);
@@ -196,6 +202,7 @@ function ImageCarousel({ images, alt }: { images: string[], alt: string }) {
         src={images[0]}
         alt={alt}
         className="w-full h-full object-cover"
+        containerClassName="w-full h-full"
       />
     );
   }
@@ -215,6 +222,7 @@ function ImageCarousel({ images, alt }: { images: string[], alt: string }) {
             src={images[currentIndex]}
             alt={`${alt} - ${currentIndex + 1}`}
             className="w-full h-full object-cover"
+            containerClassName="absolute inset-0"
           />
         </motion.div>
       </AnimatePresence>
@@ -249,10 +257,10 @@ function ImageCarousel({ images, alt }: { images: string[], alt: string }) {
 
 function DayBanner({ number, title, bgImage, children }: { number: number, title: string, bgImage?: string, children?: React.ReactNode }) {
   return (
-    <div className="relative w-full px-6 md:px-12 py-20 md:py-32 overflow-hidden bg-[#2e2019]">
-      {/* Base layer: the leaf pattern pattern */}
+    <div className="relative w-full px-6 md:px-12 py-20 md:py-32 overflow-hidden bg-black">
+      {/* Base layer: the leaf pattern */}
       <div 
-        className={`absolute inset-0 z-0 transition-opacity duration-1000 ${bgImage ? 'opacity-25 mix-blend-overlay' : 'opacity-100'}`}
+        className={`absolute inset-0 z-0 transition-opacity duration-1000 ${bgImage ? 'opacity-20 mix-blend-overlay' : 'opacity-60 mix-blend-screen'}`}
         style={{ 
           backgroundImage: `url("${leafTexture}"), url("${leafTextureAlt}")`, 
           backgroundSize: 'cover',
@@ -269,7 +277,7 @@ function DayBanner({ number, title, bgImage, children }: { number: number, title
           className="absolute inset-0 z-0"
         >
           <img loading="lazy" src={bgImage} alt="" className="w-full h-full object-cover grayscale-[20%]" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#2e2019]/60 via-transparent to-[#2e2019]/80" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80" />
         </motion.div>
       )}
       
@@ -301,16 +309,35 @@ export default function ItineraryDetail() {
   const { language = "pt" } = useLanguage();
   const { addItem, removeItem, isInWishlist } = useWishlist();
   const { data: allProducts = [] } = useProducts();
-
   const [heroImages, setHeroImages] = useState<string[]>([]);
 
   const mergedItineraries = useMemo(() => {
     // Se houver produtos no banco, eles são a fonte da verdade.
     const itinerariesOnly = allProducts.filter(p => p.type === 'itinerary');
-    const merged = itinerariesOnly.length > 0 ? [] : [...staticItineraries];
+    
+    // Normalize static itineraries so they have day.images mapped from day.imageKey
+    const normalizedStatic = staticItineraries.map(st => ({
+      ...st,
+      favorites: st.favorites || [],
+      pricing: st.pricing || { 
+        atmos4x4: { individual: 0, dupla: 0, trio: 0 }, 
+        carroProprio: { individual: 0, dupla: 0, trio: 0 } 
+      },
+      extraCosts: st.extraCosts || { entranceFees: 0 },
+      inclusions: st.inclusions || { pt: [], en: [], es: [] },
+      days: st.days.map(day => ({
+        ...day,
+        images: (day.images && day.images.length > 0) ? day.images : (day.imageKey ? [day.imageKey] : [])
+      }))
+    }));
+
+    // If no database itineraries, use only normalized static
+    if (itinerariesOnly.length === 0) {
+      return normalizedStatic;
+    }
     
     // Transform into a flat list of items (one section per product)
-    return itinerariesOnly.map(dbProduct => {
+    const dbMapped = itinerariesOnly.map(dbProduct => {
       const supabaseVars = (dbProduct.variables || {}) as any;
       const allItineraryImages: string[] = [];
       
@@ -323,24 +350,36 @@ export default function ItineraryDetail() {
             const vars = childProduct.variables as any || {};
             
             if (vars.gallery && Array.isArray(vars.gallery) && vars.gallery.length > 0) {
-              itemImages = vars.gallery;
+              const prefix = vars.storage_id || normalize(childProduct.name) || childProduct.id;
+              let folder = "experiencias";
+              if (childProduct.type === "accommodation") folder = "hospedagens";
+              else if (childProduct.type === "service") folder = "servicos";
+              else if (childProduct.category && childProduct.category.toLowerCase() === "cachoeiras") folder = "cachoeiras";
+
+              itemImages = vars.gallery.map((fileName: string) => {
+                if (fileName.includes('/')) return fileName;
+                return `produtos/${folder}/${prefix}/${fileName}`;
+              });
             } else if (vars.gallery_order && Array.isArray(vars.gallery_order) && vars.gallery_order.length > 0) {
               const prefix = vars.storage_id || normalize(childProduct.name) || childProduct.id;
               let folder = "experiencias";
-              if (childProduct.type === "waterfall") folder = "cachoeiras";
-              else if (childProduct.type === "accommodation") folder = "hospedagens";
-              else if (childProduct.type === "service") folder = "serviços";
+              if (childProduct.type === "accommodation") folder = "hospedagens";
+              else if (childProduct.type === "service") folder = "servicos";
+              else if (childProduct.category && childProduct.category.toLowerCase() === "cachoeiras") folder = "cachoeiras";
               
-              itemImages = vars.gallery_order.map((fileName: string) => `produtos/${folder}/${prefix}/${fileName}`);
+              itemImages = vars.gallery_order.map((fileName: string) => {
+                if (fileName.includes('/')) return fileName;
+                return `produtos/${folder}/${prefix}/${fileName}`;
+              });
             } else {
               const prefix = vars.storage_id || normalize(childProduct.name) || childProduct.id;
               const lookupId = childProduct.source_id || vars.imageKey || prefix || childProduct.id;
               const keyNormalized = normalize(lookupId);
               
               let folder = "experiencias";
-              if (childProduct.type === "waterfall") folder = "cachoeiras";
-              else if (childProduct.type === "accommodation") folder = "hospedagens";
-              else if (childProduct.type === "service") folder = "serviços";
+              if (childProduct.type === "accommodation") folder = "hospedagens";
+              else if (childProduct.type === "service") folder = "servicos";
+              else if (childProduct.category && childProduct.category.toLowerCase() === "cachoeiras") folder = "cachoeiras";
 
               const waterfallMap: Record<string, string> = {
                 "agua-fria": "produtos/cachoeiras/agua-fria/agua-fria-1.jpg",
@@ -439,48 +478,100 @@ export default function ItineraryDetail() {
 
               const candidates: string[] = [];
 
-              // 1. Try static maps matching the normalized key
-              if (childProduct.type === "waterfall" && waterfallMap[keyNormalized]) {
-                candidates.push(waterfallMap[keyNormalized]);
-              } else if (childProduct.type === "experience" && experienceMap[keyNormalized]) {
-                candidates.push(experienceMap[keyNormalized]);
-              } else if (childProduct.type === "accommodation" && accMap[keyNormalized]) {
-                candidates.push(accMap[keyNormalized]);
-              } else if (childProduct.type === "service" && serviceMap[keyNormalized]) {
-                candidates.push(serviceMap[keyNormalized]);
-              }
+              // Helper to check if two slugs share a significant word (length > 3)
+              const sharesSignificantWord = (slug1: string, slug2: string) => {
+                const words1 = slug1.split('-');
+                const words2 = slug2.split('-');
+                return words1.some(w1 => 
+                  w1.length > 3 && words2.some(w2 => w2 === w1 || w2.includes(w1) || w1.includes(w2))
+                );
+              };
 
-              // Also try matching by exact ID or prefix
-              if (candidates.length === 0) {
-                if (childProduct.type === "waterfall" && waterfallMap[prefix]) {
-                  candidates.push(waterfallMap[prefix]);
-                } else if (childProduct.type === "experience" && experienceMap[prefix]) {
-                  candidates.push(experienceMap[prefix]);
-                } else if (childProduct.type === "accommodation" && accMap[prefix]) {
-                  candidates.push(accMap[prefix]);
-                } else if (childProduct.type === "service" && serviceMap[prefix]) {
-                  candidates.push(serviceMap[prefix]);
+              let foundPath = "";
+              const nameNormalized = normalize(childProduct.name || "");
+
+              // 1. Try smart matching on static maps
+              if (childProduct.type === "waterfall") {
+                if (waterfallMap[keyNormalized]) {
+                  foundPath = waterfallMap[keyNormalized];
+                } else if (waterfallMap[prefix]) {
+                  foundPath = waterfallMap[prefix];
+                } else {
+                  const matchedKey = Object.keys(waterfallMap).find(k => 
+                    nameNormalized.includes(k) || keyNormalized.includes(k) || k.includes(keyNormalized) || k.includes(prefix) || prefix.includes(k) || sharesSignificantWord(nameNormalized, k)
+                  );
+                  if (matchedKey) foundPath = waterfallMap[matchedKey];
+                }
+              } else if (childProduct.type === "experience") {
+                if (experienceMap[keyNormalized]) {
+                  foundPath = experienceMap[keyNormalized];
+                } else if (experienceMap[prefix]) {
+                  foundPath = experienceMap[prefix];
+                } else {
+                  const matchedKey = Object.keys(experienceMap).find(k => 
+                    nameNormalized.includes(k) || keyNormalized.includes(k) || k.includes(keyNormalized) || k.includes(prefix) || prefix.includes(k) || sharesSignificantWord(nameNormalized, k)
+                  );
+                  if (matchedKey) foundPath = experienceMap[matchedKey];
+                }
+              } else if (childProduct.type === "accommodation") {
+                if (accMap[keyNormalized]) {
+                  foundPath = accMap[keyNormalized];
+                } else if (accMap[prefix]) {
+                  foundPath = accMap[prefix];
+                } else {
+                  const matchedKey = Object.keys(accMap).find(k => 
+                    nameNormalized.includes(k) || keyNormalized.includes(k) || k.includes(keyNormalized) || k.includes(prefix) || prefix.includes(k) || sharesSignificantWord(nameNormalized, k)
+                  );
+                  if (matchedKey) foundPath = accMap[matchedKey];
+                }
+              } else if (childProduct.type === "service") {
+                if (serviceMap[keyNormalized]) {
+                  foundPath = serviceMap[keyNormalized];
+                } else if (serviceMap[prefix]) {
+                  foundPath = serviceMap[prefix];
+                } else {
+                  const matchedKey = Object.keys(serviceMap).find(k => 
+                    nameNormalized.includes(k) || keyNormalized.includes(k) || k.includes(keyNormalized) || k.includes(prefix) || prefix.includes(k) || sharesSignificantWord(nameNormalized, k)
+                  );
+                  if (matchedKey) foundPath = serviceMap[matchedKey];
                 }
               }
 
-              // 2. Add candidates with multiple extensions (.jpg, .png, .avif, .webp) for maximum robustness!
-              const extensions = [".jpg", ".png", ".avif", ".webp"];
-              [1, 2, 3, 4, 5].forEach(n => {
-                extensions.forEach(ext => {
-                  if (prefix === "lanche-de-trilha" || prefix === "lanche-de-trilha-atmos") {
-                    candidates.push(`produtos/${folder}/lanche-de-trilha-atmos-${n}${ext}`);
-                  } else {
-                    candidates.push(`produtos/${folder}/${prefix}/${prefix}-${n}${ext}`);
-                  }
+              if (foundPath) {
+                candidates.push(foundPath);
+                
+                // Extract directory and base name to generate sequential images
+                const match = foundPath.match(/(.+)\/\d+\.(jpg|png|webp|avif)$/) || foundPath.match(/(.+)-1\.(jpg|png|webp|avif)$/);
+                if (match) {
+                  const base = match[1];
+                  const ext = match[2];
+                  candidates.push(`${base}-2.${ext}`);
+                  candidates.push(`${base}-3.${ext}`);
+                }
+              } else {
+                // 2. No static match: Add candidates with multiple extensions (.jpg, .png) for fallback
+                const extensions = [".jpg", ".png"];
+                [1, 2, 3].forEach(n => {
+                  extensions.forEach(ext => {
+                    if (prefix === "lanche-de-trilha" || prefix === "lanche-de-trilha-atmos") {
+                      candidates.push(`produtos/${folder}/lanche-de-trilha-atmos-${n}${ext}`);
+                    } else {
+                      candidates.push(`produtos/${folder}/${prefix}/${prefix}-${n}${ext}`);
+                    }
+                  });
                 });
-              });
+              }
 
               itemImages = candidates;
             }
           }
 
           if (itemImages.length === 0) {
-            itemImages = [item.product_storage_info?.prefix || item.product_name];
+            const fallbackPrefix = item.product_storage_info?.prefix;
+            const fallbackName = typeof item.product_name === "string" 
+              ? item.product_name 
+              : (item.product_name?.pt || item.product_name?.en || "");
+            itemImages = [fallbackPrefix || fallbackName || ""];
           }
 
           allItineraryImages.push(...itemImages.slice(0, 5));
@@ -490,26 +581,42 @@ export default function ItineraryDetail() {
             id: `${dbProduct.id}-item-${itemIdx}`,
             dayNumber: day.day,
             itemNumber: itemIdx + 1,
-            title: { pt: item.product_name, en: item.product_name, es: item.product_name },
+            title: { 
+              pt: getLangVal(item.product_name, 'pt'), 
+              en: getLangVal(item.product_name, 'en'), 
+              es: getLangVal(item.product_name, 'es') 
+            },
             trailDistanceKm: item.product_variables?.trailDistanceKm,
             difficulty: (item.product_variables?.difficulty || "moderado") as any,
-            resolvedTitle: item.product_name,
-            attractions: { pt: [item.product_name], en: [item.product_name], es: [item.product_name] },
+            resolvedTitle: getLangVal(item.product_name, 'pt'),
+            attractions: { 
+              pt: [getLangVal(item.product_name, 'pt')], 
+              en: [getLangVal(item.product_name, 'en')], 
+              es: [getLangVal(item.product_name, 'es')] 
+            },
             description: { 
-              pt: item.product_description || "", 
-              en: item.product_description || "",
-              es: item.product_description || ""
+              pt: getLangVal(item.product_description || "", 'pt'), 
+              en: getLangVal(item.product_description || "", 'en'),
+              es: getLangVal(item.product_description || "", 'es')
             },
             hasGuide: day.items.some((it: any) => it.product_type === 'guide'),
             images: itemImages
           };
         });
 
+        const dayProductImages = Array.from(new Set(
+          enrichedItems
+            .flatMap((item: any) => item.images || [])
+            .filter((img: any) => typeof img === "string" && img.trim() !== "")
+        ));
+
         return {
           ...day,
           title: { pt: `Dia ${day.dayNumber}`, en: `Day ${day.dayNumber}`, es: `Día ${day.dayNumber}` },
           items: enrichedItems,
-          images: day.images || (enrichedItems[0]?.images || [])
+          images: dayProductImages.length > 0 
+            ? dayProductImages 
+            : ((day.images && day.images.length > 0) ? day.images : (day.imageKey ? [day.imageKey] : []))
         };
       });
 
@@ -526,8 +633,16 @@ export default function ItineraryDetail() {
         id: dbProduct.source_id || dbProduct.id,
         duration: typeof supabaseVars.duration === 'number' ? supabaseVars.duration : (supabaseVars.duration ? parseInt(supabaseVars.duration) : 3),
         category: dbProduct.segment as any,
-        name: { pt: dbProduct.name, en: dbProduct.name, es: dbProduct.name },
-        description: { pt: dbProduct.description || "", en: dbProduct.description || "", es: dbProduct.description || "" },
+        name: { 
+          pt: getLangVal(dbProduct.name, 'pt'), 
+          en: getLangVal(dbProduct.name, 'en'), 
+          es: getLangVal(dbProduct.name, 'es') 
+        },
+        description: { 
+          pt: getLangVal(dbProduct.description || "", 'pt'), 
+          en: getLangVal(dbProduct.description || "", 'en'), 
+          es: getLangVal(dbProduct.description || "", 'es') 
+        },
         days: enrichedDays,
         favorites,
         pricing: supabaseVars.pricing || { 
@@ -538,6 +653,16 @@ export default function ItineraryDetail() {
         inclusions: supabaseVars.inclusions || { pt: [], en: [], es: [] }
       };
     });
+
+    // Merge both, with DB having priority if there are duplicate IDs
+    const merged = [...dbMapped];
+    normalizedStatic.forEach(st => {
+      if (!merged.some(m => m.id === st.id)) {
+        merged.push(st);
+      }
+    });
+
+    return merged;
   }, [allProducts]);
 
   const itinerary = id ? getItineraryById(id, mergedItineraries) : undefined;
@@ -607,15 +732,15 @@ export default function ItineraryDetail() {
       }
 
       if (staticItineraryImages[staticKey]) {
-        const staticUrl = optimizedUrl(staticItineraryImages[staticKey], IMAGE_PRESETS.large);
-        mapped.unshift(staticUrl);
+        // Use heroUrl() for R2 CDN at full 1920px resolution — never local thumbnail
+        const staticHeroUrl = heroUrl(staticItineraryImages[staticKey]);
+        mapped = [staticHeroUrl]; // Use only the high-quality static image as the hero
       }
 
       // 5. Ultimate hard fallback if no images resolved correctly
-      if (mapped.length === 0 || mapped.every(img => img.includes('//-1.jpg'))) {
+      if (mapped.length === 0) {
         mapped = [
-          optimizedUrl("produtos/cachoeiras/segredo/segredo-1.jpg", IMAGE_PRESETS.large),
-          optimizedUrl("produtos/cachoeiras/almecegas-i-e-ii--sao-bento/almecegas-i-e-ii--sao-bento-1.jpg", IMAGE_PRESETS.large)
+          heroUrl("produtos/cachoeiras/segredo/segredo-1.jpg"),
         ];
       }
 
@@ -674,11 +799,16 @@ export default function ItineraryDetail() {
 
       <div className="bg-[#fcfaf7]">
         {/* Cinematic Hero */}
-        <section className="relative min-h-screen flex flex-col justify-end pt-36 pb-20 md:pb-24 px-6 md:px-16 overflow-hidden bg-[#2e2019]">
+        <section
+          className="relative min-h-screen flex flex-col justify-end pt-36 pb-20 md:pb-24 px-6 md:px-16 overflow-hidden bg-black"
+          style={heroImages.length > 0 ? {
+            backgroundImage: `url(${heroImages[0]})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          } : undefined}
+        >
           <div className="absolute inset-0 z-0">
-            <ImageCarousel images={heroImages} alt={itinerary.name.pt} />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#2e2019] via-[#2e2019]/40 to-transparent" />
-            <div className="absolute inset-0 bg-black/20" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-black/20" />
           </div>
           
           <div className="max-w-7xl mx-auto w-full z-10 relative flex-1 flex flex-col justify-between pt-12">
@@ -712,14 +842,7 @@ export default function ItineraryDetail() {
                     <span className="text-white/40 text-[10px] uppercase tracking-widest mb-1 font-bold">Destino</span>
                     <span className="text-white text-lg font-medium">Chapada dos Veadeiros</span>
                   </div>
-                  {itinerary.category && (
-                    <div className="flex flex-col">
-                      <span className="text-white/40 text-[10px] uppercase tracking-widest mb-1 font-bold">Estilo</span>
-                      <span className="text-white text-lg font-medium uppercase tracking-widest font-black text-[#c4a97d]">
-                        {isJurassico ? l.jurassico : l.classico}
-                      </span>
-                    </div>
-                  )}
+
                   <div className="flex flex-col">
                     <span className="text-white/40 text-[10px] uppercase tracking-widest mb-1 font-bold">Duração</span>
                     <span className="text-white text-lg font-medium">{itinerary.duration} {l.days}</span>
@@ -747,64 +870,32 @@ export default function ItineraryDetail() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 1.2 }}
-          className="py-32 md:py-48 px-6 bg-white border-y border-[#e4dbcc]"
+          className="py-16 md:py-20 px-6 bg-[#f5f0e8] border-y border-[#e4dbcc]"
         >
-          <div className="max-w-4xl mx-auto text-center">
-            <img loading="lazy" src={logoAtmos} alt="ATMOS" className="h-20 mx-auto mb-12 opacity-80" />
-            <h2 className="text-3xl md:text-6xl font-black leading-none mb-10 font-outfit uppercase tracking-tighter" style={{ color: "#2e2019" }}>
+          <div className="max-w-3xl mx-auto text-center">
+            <p className="text-[10px] uppercase tracking-[0.4em] font-black mb-4" style={{ color: "#c4a97d" }}>atmos.</p>
+            <h2 className="text-4xl md:text-5xl font-black leading-none mb-6 font-outfit uppercase tracking-tighter" style={{ color: "#2e2019" }}>
               {language === "pt" ? "A Experiência Atmos" : language === "es" ? "La Experiencia Atmos" : "The Atmos Experience"}
             </h2>
-            <div className="w-16 h-[1px] bg-[#c4a97d] mx-auto mb-10" />
-            <p className="text-lg md:text-2xl leading-relaxed max-w-3xl mx-auto mb-6 font-light italic" style={{ color: "#2e2019" }}>
+            <div className="w-12 h-[2px] bg-[#c4a97d] mx-auto mb-6" />
+            <p className="text-base md:text-lg leading-relaxed max-w-2xl mx-auto mb-4 font-light italic" style={{ color: "#5c4a32" }}>
               {language === "pt" 
                 ? "Desenhamos expedições singulares na Chapada dos Veadeiros, combinando o espírito de aventura selvagem com a sofisticação de serviços exclusivos."
                 : language === "es"
                 ? "Diseñamos expediciones singulares en la Chapada dos Veadeiros, combinando el espíritu de la aventura salvaje con la sofisticación de servicios exclusivos."
                 : "We design unique expeditions in Chapada dos Veadeiros, combining the spirit of wild adventure with the sophistication of exclusive services."}
             </p>
-            <p className="text-base md:text-lg leading-relaxed max-w-2xl mx-auto uppercase tracking-widest font-bold" style={{ color: "#8d7b63" }}>
+            <p className="text-xs uppercase tracking-widest font-bold" style={{ color: "#c4a97d" }}>
               {language === "pt" 
-                ? "SUA EXPEDIÇÃO PERSONALIZADA COMEÇA AQUI" 
+                ? "Sua expedição personalizada começa aqui" 
                 : language === "es"
-                ? "TU EXPEDICIÓN PERSONALIZADA COMIENZA AQUÍ"
-                : "YOUR CUSTOM EXPEDITION BEGINS HERE"}
+                ? "Tu expedición personalizada comienza aquí"
+                : "Your custom expedition begins here"}
             </p>
           </div>
         </motion.section>
 
-        {/* ══════════════════════ DIVIDER ══════════════════════ */}
-        <div className="h-[40vh] md:h-[50vh] overflow-hidden">
-          <img loading="lazy" src={dividerImage} alt="" className="w-full h-full object-cover" />
-        </div>
 
-        {/* Timeline Summary (sticky top above schedule title) */}
-        <section className="py-8 bg-[#fcfaf7]/90 border-b border-[#e4dbcc] sticky top-0 z-30 backdrop-blur-xl">
-          <div className="container px-4">
-            <div className="flex flex-wrap gap-4 justify-center">
-              {itinerary.days.map((day, idx) => (
-                <div key={idx} className="flex flex-col items-center gap-2 group cursor-pointer" onClick={() => document.getElementById(`day-${idx + 1}`)?.scrollIntoView({ behavior: 'smooth' })}>
-                  <div className="w-10 h-10 rounded-full border border-[#2e2019]/10 flex items-center justify-center text-[10px] font-bold text-[#2e2019]/40 group-hover:bg-[#2e2019] group-hover:text-white transition-all">
-                    {idx + 1}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ══════════════════════ ITINERARY SECTION TITLE ══════════════════════ */}
-        <section className="py-24 md:py-32 text-center" style={{ background: "#2e2019" }}>
-          <div className="inline-flex items-center gap-4 mb-6">
-            <div className="w-12 h-[1px] bg-[#c4a97d]/40" />
-            <p className="text-[12px] uppercase tracking-[0.5em] font-bold" style={{ color: "#c4a97d" }}>
-              {language === "pt" ? "Cronograma" : language === "es" ? "Cronograma" : "Schedule"}
-            </p>
-            <div className="w-12 h-[1px] bg-[#c4a97d]/40" />
-          </div>
-          <h2 className="text-5xl md:text-8xl font-black text-white font-outfit uppercase tracking-tighter leading-none">
-            {language === "pt" ? "Sua Viagem" : language === "es" ? "Tu Viaje" : "Your Trip"}
-          </h2>
-        </section>
 
         {/* ══════════════════════ DAY SECTIONS ══════════════════════ */}
         <div
@@ -816,7 +907,6 @@ export default function ItineraryDetail() {
           }}
         >
           {itinerary.days.map((day, idx) => {
-            const diff = difficultyConfig[day.difficulty as keyof typeof difficultyConfig] || difficultyConfig.moderado;
             const resolvedTitle = day.title?.[language] || ((day as any).items?.[0]?.product_name ? (day as any).items[0].product_name : `Dia ${idx + 1}`);
             
             const productTypeToCategory: Record<string, string> = {
@@ -836,6 +926,35 @@ export default function ItineraryDetail() {
             const visibleItems = ((day as any).items || []).filter((item: any) => item.product_type !== 'guide');
             const isEven = idx % 2 === 0;
 
+            // 1. Dificuldade Dinâmica (Dia -> Itens -> Catalog/Variables -> Moderado)
+            const resolvedDifficulty = day.difficulty || ((day as any).items || []).reduce((found: string, item: any) => {
+              if (found) return found;
+              const childProduct = allProducts.find((p: any) => p.id === (item.catalog_item_id || item.product_id));
+              const vars = (childProduct?.variables || {}) as any;
+              return item.difficulty || item.product_variables?.difficulty || vars.difficulty || "";
+            }, "") || "moderado";
+
+            const diff = difficultyConfig[resolvedDifficulty as keyof typeof difficultyConfig] || difficultyConfig.moderado;
+
+            // 2. Distância de Trilha Dinâmica (Dia -> Itens -> Catalog/Variables -> Fallback Cachoeira)
+            const hasWaterfall = ((day as any).items || []).some((item: any) => item.product_type === 'waterfall');
+            const resolvedTrailDistance = day.trailDistanceKm || ((day as any).items || []).reduce((acc: number, item: any) => {
+              const childProduct = allProducts.find((p: any) => p.id === (item.catalog_item_id || item.product_id));
+              const vars = (childProduct?.variables || {}) as any;
+              const dist = item.trailDistanceKm || item.product_variables?.trailDistanceKm || vars.distanceKm || 0;
+              return acc + Number(String(dist).replace(",", "."));
+            }, 0);
+            const finalTrailDistance = resolvedTrailDistance > 0 ? resolvedTrailDistance : (hasWaterfall ? 3 : 0);
+
+            // 3. Distância de Carro Dinâmica (Itens -> Catalog/Variables -> Fallback Cachoeira)
+            const dayCarDistance = ((day as any).items || []).reduce((acc: number, item: any) => {
+              const childProduct = allProducts.find((p: any) => p.id === (item.catalog_item_id || item.product_id));
+              const vars = (childProduct?.variables || {}) as any;
+              const dist = item.product_variables?.distanceCarKm || vars.distanceCarKm || 0;
+              return acc + Number(dist);
+            }, 0);
+            const finalCarDistance = dayCarDistance > 0 ? dayCarDistance : (hasWaterfall ? 45 : 0);
+
             return (
               <motion.section 
                 key={idx} 
@@ -852,8 +971,8 @@ export default function ItineraryDetail() {
                   title={resolvedTitle} 
                   bgImage={day.images && day.images.length > 0 ? getDayImage(day.images[0], resolvedTitle) : undefined}
                 >
-                  <div className="flex flex-col gap-2 items-end justify-end">
-                    {guideNames.length > 0 && (
+                  {guideNames.length > 0 && (
+                    <div className="flex flex-col gap-2 items-end justify-end">
                       <div className="flex flex-wrap gap-1 justify-end">
                         {guideNames.map((name: string, gi: number) => (
                           <span key={gi} className="inline-flex items-center gap-2 px-4 py-2 text-[10px] uppercase tracking-widest font-black"
@@ -863,90 +982,121 @@ export default function ItineraryDetail() {
                           </span>
                         ))}
                       </div>
-                    )}
-                    <div className="flex flex-wrap gap-1 justify-end">
-                      {day.difficulty && (
-                        <span className="inline-flex items-center gap-2 px-4 py-2 text-[10px] uppercase tracking-widest font-black bg-[#556952] text-white">
-                          <Mountain className="w-3.5 h-3.5" />
-                          {diff[language as keyof typeof diff] || diff.pt}
-                        </span>
-                      )}
-                      {day.trailDistanceKm && day.trailDistanceKm !== "0" && (
-                        <span className="inline-flex items-center gap-2 px-4 py-2 text-[10px] uppercase tracking-widest font-black bg-[#556952] text-white">
-                          <Footprints className="w-3.5 h-3.5" />
-                          {day.trailDistanceKm}km Trilha
-                        </span>
-                      )}
                     </div>
-                  </div>
+                  )}
                 </DayBanner>
 
-                {/* ══════ TWO-COLUMN BODY: items left, carousel right ══════ */}
-                <div style={{ background: isEven ? "#fff" : "#fcfaf7" }} className="border-b border-[#e4dbcc]">
-                  <div className="max-w-7xl mx-auto px-6 py-16 md:py-24">
-                    <div className="flex flex-col lg:flex-row gap-12 lg:gap-20">
-                      {/* LEFT — scrollable items */}
-                      <div className="flex-1 min-w-0">
-                        <ScrollArea type="always" className="proposal-itinerary-scroll md:h-[600px]">
-                          <div className="md:pr-10 space-y-12">
-                            {day.description && (
-                              <div className="mb-12">
-                                <p className="text-xl md:text-2xl font-light leading-relaxed text-[#5c4a32] italic border-l-4 border-[#c4a97d] pl-8 py-2">
-                                  {typeof day.description === 'string' ? day.description : day.description?.[language] || ""}
-                                </p>
-                              </div>
-                            )}
+                {/* ══════ DAY BODY: image bleeds left, content right ══════ */}
+                <div style={{ background: isEven ? "#fff" : "#fcfaf7" }} className="py-8 md:py-12 border-b border-[#e4dbcc] overflow-hidden">
+                  <div className="flex flex-col lg:flex-row lg:items-stretch min-h-[420px]">
 
-                            <div className="space-y-8">
-                              {visibleItems.map((item: any, localIdx: number) => {
-                                const catKey = productTypeToCategory[item.product_type] || "Experiência";
-                                const Icon = CATEGORY_ICONS[catKey] || MapPin;
-                                const catLabel = CATEGORY_LABELS[catKey]?.[language] || catKey;
-                                const itemTitle = item.product_name || item.name?.[language] || item.title?.[language] || "";
-                                const itemDesc = item.product_description || item.description?.[language] || "";
-                                
-                                return (
-                                  <div key={localIdx} className="flex items-start gap-4">
-                                    <div className="w-10 h-10 flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: "#2e2019" }}>
-                                      <Icon className="w-5 h-5 text-white" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-[10px] uppercase tracking-[0.3em] font-black mb-1" style={{ color: "#c4a97d" }}>
-                                        {catLabel}
-                                      </p>
-                                      <span className="text-xl font-black font-outfit uppercase tracking-tight text-[#2e2019]">
-                                        {itemTitle}
-                                      </span>
-                                      {itemDesc && (
-                                        <div className="mt-2 pl-4 py-2 pr-2 text-base italic border-l-2 border-[#c4a97d] text-[#5c4a32] leading-relaxed">
-                                          {itemDesc}
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
+                    {/* LEFT — image bleeds to screen edge (no left padding/margin) */}
+                    {day.images && day.images.length > 0 && (
+                      <div className="w-full lg:w-[48%] flex-shrink-0 lg:ml-0">
+                        <div className="lg:sticky lg:top-20 self-start relative overflow-hidden w-full" style={{ aspectRatio: '4/3', maxHeight: '520px' }}>
+                          <ImageCarousel 
+                            images={day.images.map((img: string) => getDayImage(img, resolvedTitle))} 
+                            alt={resolvedTitle} 
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none" />
+                          <div className="absolute bottom-8 left-8 right-8 pointer-events-none">
+                            <p className="text-white/50 text-[10px] uppercase tracking-widest font-bold mb-1">Dia {idx + 1}</p>
+                            <h4 className="text-white font-black text-2xl md:text-3xl uppercase font-outfit tracking-tighter leading-none">
+                              {resolvedTitle}
+                            </h4>
                           </div>
-                        </ScrollArea>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* RIGHT — content with generous padding */}
+                    <div className="flex-1 min-w-0 px-8 md:px-14 lg:px-16 py-10 md:py-12 flex flex-col justify-center">
+                      {/* Elegant Column Header: Nome do Roteiro & Dia */}
+                      <div className="mb-8 pb-6 border-b border-[#e4dbcc]/60">
+                        <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                          <span className="text-[10px] uppercase tracking-[0.3em] font-black text-[#c4a97d]">
+                            {itinerary?.name?.[language] || itinerary?.name?.pt || "Roteiro Atmos"}
+                          </span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#c4a97d]/40" />
+                          <span className="text-[10px] uppercase tracking-[0.3em] font-black text-[#5c4a32]">
+                            {language === "en" ? `Day ${idx + 1}` : language === "es" ? `Día ${idx + 1}` : `Dia ${idx + 1}`}
+                          </span>
+                        </div>
+                        <h3 className="text-2xl md:text-3xl font-black font-outfit uppercase tracking-tight text-[#2e2019] leading-tight">
+                          {resolvedTitle}
+                        </h3>
                       </div>
 
-                      {/* RIGHT — sticky image gallery */}
-                      {day.images && day.images.length > 0 && (
-                        <div className="w-full lg:w-[40%] flex-shrink-0">
-                          <div className="lg:sticky lg:top-28 self-start">
-                            <div className="aspect-square lg:aspect-auto lg:h-[700px] overflow-hidden shadow-2xl rounded-2xl relative group">
-                              <ImageCarousel 
-                                images={day.images.map((img: string) => getDayImage(img, resolvedTitle))} 
-                                alt={resolvedTitle} 
-                              />
-                              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#2e2019]/80 opacity-60 pointer-events-none" />
-                              <div className="absolute bottom-10 left-10 right-10 pointer-events-none">
-                                <h4 className="text-white font-display text-2xl mb-2 uppercase font-outfit tracking-tighter">A essência do {idx + 1}º Dia</h4>
-                                <p className="text-white/60 text-xs font-light">Uma jornada curada para conectar você com a alma da Chapada.</p>
+                      {(() => {
+                        const descText = typeof day.description === 'string' 
+                          ? day.description 
+                          : day.description?.[language] || "";
+                        if (!descText.trim()) return null;
+                        return (
+                          <p className="text-lg md:text-xl font-light leading-relaxed text-[#5c4a32] italic border-l-4 border-[#c4a97d] pl-6 py-1 mb-10">
+                            {descText}
+                          </p>
+                        );
+                      })()}
+
+                      <div className="space-y-8">
+                        {visibleItems.map((item: any, localIdx: number) => {
+                          const catKey = productTypeToCategory[item.product_type] || "Experiência";
+                          const Icon = CATEGORY_ICONS[catKey] || MapPin;
+                          const catLabel = CATEGORY_LABELS[catKey]?.[language] || catKey;
+                          const itemTitle = item.product_name || item.name?.[language] || item.title?.[language] || "";
+                          const itemDesc = item.product_description || item.description?.[language] || "";
+                          
+                          return (
+                            <div key={localIdx} className="flex items-start gap-4 pb-8 border-b border-[#e4dbcc] last:border-0 last:pb-0">
+                              <div className="w-10 h-10 flex items-center justify-center flex-shrink-0 mt-0.5 bg-black">
+                                <Icon className="w-5 h-5 text-white" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[10px] uppercase tracking-[0.3em] font-black mb-1" style={{ color: "#c4a97d" }}>
+                                  {catLabel}
+                                </p>
+                                <span className="text-xl font-black font-outfit uppercase tracking-tight text-[#2e2019]">
+                                  {itemTitle}
+                                </span>
+                                {itemDesc && (
+                                  <div className="mt-2 pl-4 py-2 pr-2 text-sm italic border-l-2 border-[#c4a97d] text-[#5c4a32] leading-relaxed">
+                                    {itemDesc}
+                                  </div>
+                                )}
                               </div>
                             </div>
-                          </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Day meta badges */}
+                      {(resolvedDifficulty || finalTrailDistance > 0 || finalCarDistance > 0 || hasWaterfall) && (
+                        <div className="flex flex-wrap gap-2 mt-10 pt-8 border-t border-[#e4dbcc]">
+                          {hasWaterfall && (
+                            <span className="inline-flex items-center gap-2 px-4 py-2 text-[10px] uppercase tracking-widest font-black bg-[#556952] text-white">
+                              <Compass className="w-3.5 h-3.5" />
+                              {language === "en" ? "SPECIALIZED GUIDE" : language === "es" ? "GUÍA ESPECIALIZADO" : "GUIA ESPECIALIZADO"}
+                            </span>
+                          )}
+                          {resolvedDifficulty && (
+                            <span className="inline-flex items-center gap-2 px-4 py-2 text-[10px] uppercase tracking-widest font-black bg-[#556952] text-white">
+                              <Mountain className="w-3.5 h-3.5" />
+                              {resolvedDifficulty === "facil" ? (language === "en" ? "Easy" : language === "es" ? "Fácil" : "Fácil") : resolvedDifficulty === "dificil" ? (language === "en" ? "Difficult" : language === "es" ? "Difícil" : "Difícil") : (language === "en" ? "Moderate" : language === "es" ? "Moderado" : "Moderado")}
+                            </span>
+                          )}
+                          {finalTrailDistance > 0 && (
+                            <span className="inline-flex items-center gap-2 px-4 py-2 text-[10px] uppercase tracking-widest font-black bg-[#556952] text-white">
+                              <Footprints className="w-3.5 h-3.5" />
+                              {finalTrailDistance} {language === "en" ? "KM TRAIL" : language === "es" ? "KM SENDERO" : "KM TRILHA"}
+                            </span>
+                          )}
+                          {finalCarDistance > 0 && (
+                            <span className="inline-flex items-center gap-2 px-4 py-2 text-[10px] uppercase tracking-widest font-black bg-[#556952] text-white">
+                              <Car className="w-3.5 h-3.5" />
+                              {finalCarDistance} KM
+                            </span>
+                          )}
                         </div>
                       )}
                     </div>
@@ -961,13 +1111,13 @@ export default function ItineraryDetail() {
         <section 
           className="py-32 md:py-48 text-[#FDFCFB] relative overflow-hidden bg-[#160f0c]"
           style={{
-            backgroundImage: `url(${heroImages[0] || leafTexture})`,
+            backgroundImage: `url(${heroImages[0] || heroUrl("produtos/cachoeiras/segredo/segredo-1.jpg")})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
           }}
         >
           {/* Elegant dark background overlay to ensure premium visual integration */}
-          <div className="absolute inset-0 bg-[#160f0c]/90 z-0" />
+          <div className="absolute inset-0 bg-black/70 z-0" />
           
           <div className="container px-4 relative z-10">
             <div className="max-w-6xl mx-auto">

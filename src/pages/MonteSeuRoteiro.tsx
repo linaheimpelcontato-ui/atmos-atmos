@@ -158,6 +158,12 @@ const superNormalize = (str: string | null | undefined): string => {
     .trim();
 };
 
+const getLangVal = (field: any, lang: 'pt' | 'en' | 'es'): string => {
+  if (!field) return "";
+  if (typeof field === "string") return field;
+  return field[lang] || field.pt || field.en || field.es || "";
+};
+
 export default function MonteSeuRoteiro() {
   const { language = "pt", t } = useLanguage();
   const { count } = useWishlist();
@@ -215,15 +221,15 @@ export default function MonteSeuRoteiro() {
     if (!dbWaterfalls || dbWaterfalls.length === 0) return staticWaterfalls;
 
     return dbWaterfalls.map(db => {
-      const staticEntry = staticWaterfalls.find(s => s.id === db.source_id || s.name.pt.toLowerCase() === db.name.toLowerCase());
+      const staticEntry = staticWaterfalls.find(s => s.id === db.source_id || s.name.pt.toLowerCase() === getLangVal(db.name, 'pt').toLowerCase());
       const vars = (db.variables || {}) as any;
       
       return {
         id: db.id,
         name: { 
-          pt: db.name, 
-          en: staticEntry?.name.en || db.name, 
-          es: staticEntry?.name.es || db.name 
+          pt: getLangVal(db.name, 'pt'), 
+          en: staticEntry?.name.en || getLangVal(db.name, 'en'), 
+          es: staticEntry?.name.es || getLangVal(db.name, 'es') 
         },
         region: superNormalize((db.variables as any)?.region || (db.category && regionLabels[db.category] ? db.category : "") || (db.segment !== "b2c" && db.segment !== "b2b" ? db.segment : "") || staticEntry?.region || "alto-paraiso") as any,
         distanceKm: Number(vars.distanceKm || staticEntry?.distanceKm || 0),
@@ -233,9 +239,9 @@ export default function MonteSeuRoteiro() {
         requiresGuide: vars.requiresGuide === "true" || vars.requiresGuide === true || staticEntry?.requiresGuide || false,
         requires4x4: vars.requires4x4 === "true" || vars.requires4x4 === true || staticEntry?.requires4x4 || false,
         description: { 
-          pt: db.description || staticEntry?.description.pt || "", 
-          en: staticEntry?.description.en || db.description || "", 
-          es: staticEntry?.description.es || db.description || "" 
+          pt: getLangVal(db.description || "", 'pt') || staticEntry?.description.pt || "", 
+          en: staticEntry?.description.en || getLangVal(db.description || "", 'en') || "", 
+          es: staticEntry?.description.es || getLangVal(db.description || "", 'es') || "" 
         },
         imageIndex: staticEntry?.imageIndex || 1,
         storageId: staticEntry?.id || normalize(db.name)
@@ -247,7 +253,7 @@ export default function MonteSeuRoteiro() {
     if (!dbExperiences || dbExperiences.length === 0) return staticExperiences;
 
     return dbExperiences.map(db => {
-      const staticEntry = staticExperiences.find(s => s.id === db.source_id || s.name.pt.toLowerCase() === db.name.toLowerCase());
+      const staticEntry = staticExperiences.find(s => s.id === db.source_id || s.name.pt.toLowerCase() === getLangVal(db.name, 'pt').toLowerCase());
       const vars = (db.variables || {}) as any;
       const validCategories = ["aventura", "bem-estar", "cultura", "contemplacao"];
       const finalCat = validCategories.includes(db.category?.toLowerCase() || "") ? db.category?.toLowerCase() : (staticEntry?.category || "aventura");
@@ -255,16 +261,16 @@ export default function MonteSeuRoteiro() {
       return {
         id: db.id,
         name: {
-          pt: db.name,
-          en: staticEntry?.name.en ?? db.name,
-          es: staticEntry?.name.es ?? db.name,
+          pt: getLangVal(db.name, 'pt'),
+          en: staticEntry?.name.en ?? getLangVal(db.name, 'en'),
+          es: staticEntry?.name.es ?? getLangVal(db.name, 'es'),
         },
         category: finalCat as ExperienceCategory,
         priceRange: db.unit_price > 0 ? `R$ ${db.unit_price}` : (staticEntry?.priceRange ?? "Sob consulta"),
         description: {
-          pt: db.description || staticEntry?.description.pt || "",
-          en: staticEntry?.description.en || db.description || "",
-          es: staticEntry?.description.es || db.description || "",
+          pt: getLangVal(db.description || "", 'pt') || staticEntry?.description.pt || "",
+          en: staticEntry?.description.en || getLangVal(db.description || "", 'en') || "",
+          es: staticEntry?.description.es || getLangVal(db.description || "", 'es') || "",
         },
         region: superNormalize((db.variables as any)?.region || (db.category && regionLabels[db.category] ? db.category : "") || (db.segment !== "b2c" && db.segment !== "b2b" ? db.segment : "") || staticEntry?.region || "alto-paraiso") as any,
         imageKey: staticEntry?.imageKey || db.source_id || db.id,
@@ -277,12 +283,12 @@ export default function MonteSeuRoteiro() {
     if (!dbAccommodations || dbAccommodations.length === 0) return staticAccommodations;
 
     return dbAccommodations.map(db => {
-      const staticEntry = staticAccommodations.find(s => s.id === db.source_id || s.name.toLowerCase() === db.name.toLowerCase());
+      const staticEntry = staticAccommodations.find(s => s.id === db.source_id || s.name.toLowerCase() === getLangVal(db.name, 'pt').toLowerCase());
       const vars = (db.variables || {}) as any;
       
       return {
         id: db.id,
-        name: db.name,
+        name: getLangVal(db.name, 'pt'),
         region: superNormalize((db.variables as any)?.region || (db.category && regionLabels[db.category] ? db.category : "") || (db.segment !== "b2c" && db.segment !== "b2b" ? db.segment : "") || staticEntry?.region || "alto-paraiso") as any,
         type: (vars.type || db.category || staticEntry?.type || "pousada") as AccType,
         priceRange: vars.priceRange || staticEntry?.priceRange || "R$ 0 – R$ 0",
@@ -292,9 +298,9 @@ export default function MonteSeuRoteiro() {
         capacity: staticEntry?.capacity || vars.capacity || "2",
         imageIndex: staticEntry?.imageIndex || 1,
         description: {
-          pt: db.description || staticEntry?.description.pt || "",
-          en: staticEntry?.description.en || db.description || "",
-          es: staticEntry?.description.es || db.description || "",
+          pt: getLangVal(db.description || "", 'pt') || staticEntry?.description.pt || "",
+          en: staticEntry?.description.en || getLangVal(db.description || "", 'en') || "",
+          es: staticEntry?.description.es || getLangVal(db.description || "", 'es') || "",
         },
         longDescription: staticEntry?.longDescription,
         instagram: vars.instagram || staticEntry?.instagram,
@@ -324,9 +330,9 @@ export default function MonteSeuRoteiro() {
       return {
         id: db.source_id || db.id,
         title: { 
-          pt: db.name, 
-          en: staticEntry?.title.en || db.name, 
-          es: staticEntry?.title.es || db.name 
+          pt: getLangVal(db.name, 'pt'), 
+          en: staticEntry?.title.en || getLangVal(db.name, 'en'), 
+          es: staticEntry?.title.es || getLangVal(db.name, 'es') 
         },
         subtitle: { 
           pt: vars.subcategory || (db.segment && db.segment !== "b2c" && db.segment !== "b2b" ? db.segment : ""), 
@@ -336,14 +342,14 @@ export default function MonteSeuRoteiro() {
         category: finalCat,
         price: db.unit_price ? `R$ ${db.unit_price}` : (staticEntry?.price || vars.price || ""),
         description: { 
-          pt: db.description || staticEntry?.description.pt || "", 
-          en: staticEntry?.description.en || db.description || "", 
-          es: staticEntry?.description.es || db.description || "" 
+          pt: getLangVal(db.description || "", 'pt') || staticEntry?.description.pt || "", 
+          en: staticEntry?.description.en || getLangVal(db.description || "", 'en') || "", 
+          es: staticEntry?.description.es || getLangVal(db.description || "", 'es') || "" 
         },
         variations: vars.variations,
         type: "service",
         variables: vars,
-        name: db.name,
+        name: getLangVal(db.name, 'pt'),
         storageId: staticEntry?.id || normalize(db.name),
       } as Service;
     });

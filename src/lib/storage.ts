@@ -118,17 +118,35 @@ export function correctStoragePath(path: string): string {
   const subfolders = ["cachoeiras", "experiencias", "hospedagens", "serviços", "serviços"];
   
   for (const sub of subfolders) {
-    const trigger = `produtos/${sub}/`;
+    let trigger = `produtos/${sub}/`;
+    let rest = "";
+    let prefix = "";
+    
     if (clean.includes(trigger)) {
       const parts = clean.split(trigger);
-      const prefix = parts[0] + trigger;
-      const rest = parts[1]; // e.g. "macacao/macacao-1.jpg"
-      const subParts = rest.split("/");
-      const folder = subParts[0].toLowerCase();
+      prefix = parts[0] + trigger;
+      rest = parts[1];
+    } else if (clean.startsWith(`${sub}/`)) {
+      prefix = `produtos/${sub}/`;
+      rest = clean.slice(`${sub}/`.length);
+    }
+    
+    if (rest) {
+      let folderKey = "";
+      let fileName = "";
       
-      const mapped = PRODUCT_PATH_MAP[folder];
+      if (rest.includes("/")) {
+        const subParts = rest.split("/");
+        folderKey = subParts[0].toLowerCase();
+        fileName = subParts[1] || "";
+      } else {
+        fileName = rest;
+        folderKey = rest.split(".")[0].replace(/-\d+$/, "").toLowerCase();
+      }
+      
+      const mapped = PRODUCT_PATH_MAP[folderKey];
       if (mapped) {
-        const match = subParts[1]?.match(/-(\d+)\.(jpg|png|jpeg|svg|webp)$/i);
+        const match = fileName.match(/-(\d+)\.(jpg|png|jpeg|svg|webp)$/i);
         if (match) {
           const index = match[1];
           const ext = match[2];
@@ -151,13 +169,13 @@ export function getBaseStorageUrl(path: string): string {
   let cleanPath = path.replace(/^\//, "");
   
   // Apply case correction for folders and files in local assets and R2 storage
-  cleanPath = correctStoragePath(cleanPath);
+  cleanPath = correctStoragePath(cleanPath).normalize("NFD");
   
   // Encode the path to handle spaces and special characters
   const encodedPath = cleanPath.split('/').map(segment => encodeURIComponent(segment)).join('/');
   
-  // In development, prefer local assets if R2 domain is not set
-  if (import.meta.env.DEV && !import.meta.env.VITE_R2_DOMAIN) {
+  // In development, always prefer local assets to load instantly (0ms) and avoid slow network requests
+  if (import.meta.env.DEV) {
     return `/assets/${encodedPath}`;
   }
   
@@ -193,15 +211,62 @@ export function optimizedUrl(path: string, options: { width?: number; height?: n
   return getBaseStorageUrl(path);
 }
 
-/** 
- * Cleans a string for matching: no accents, lowercase, only letters/numbers 
+/**
+ * Returns a FULL-RESOLUTION hero image URL — always fetches from R2 CDN,
+ * piped through wsrv.nl for 1920px WebP at quality 85.
+ * Use exclusively for hero background images where sharpness is critical.
+ * NOTE: R2 uses lowercase paths without accents (e.g. macacao/macacao-1.jpg).
  */
-export const normalize = (str: string) => 
-  str.normalize("NFD")
-     .replace(/[\u0300-\u036f]/g, "")
-     .toLowerCase()
-     .replace(/[^a-z0-9]+/g, "-")
-     .replace(/(^-|-$)/g, "");
+const R2_BASE = import.meta.env.VITE_R2_DOMAIN || "https://assets.atmos.tur.br";
+export function heroUrl(path: string): string {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+
+  // Use the raw lowercase path — R2 stores files with lowercase, no-accent slugs
+  const cleanPath = path.replace(/^\//, "");
+
+  // Encode each segment for URL safety (handles spaces, etc.)
+  const encodedPath = cleanPath.split('/').map(segment => encodeURIComponent(segment)).join('/');
+  const r2Url = `${R2_BASE}/${encodedPath}`;
+
+  // Pipe through wsrv.nl: 1920px wide, quality 85, WebP, cover resize
+  return `https://wsrv.nl/?url=${encodeURIComponent(r2Url)}&w=1920&q=85&output=webp&fit=cover`;
+}
+
+/**
+ * Returns a card/gallery image URL — always fetches from R2 CDN,
+ * piped through wsrv.nl for 900px WebP at quality 82.
+ * Use for day gallery carousels, product cards, etc.
+ * NOTE: R2 uses lowercase paths without accents (e.g. macacao/macacao-1.jpg).
+ */
+export function cardUrl(path: string): string {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+
+  const cleanPath = path.replace(/^\//, "");
+  const encodedPath = cleanPath.split('/').map(segment => encodeURIComponent(segment)).join('/');
+  const r2Url = `${R2_BASE}/${encodedPath}`;
+
+  return `https://wsrv.nl/?url=${encodeURIComponent(r2Url)}&w=900&q=82&output=webp&fit=cover`;
+}
+
+export const normalize = (str: any): string => {
+  if (!str) return "";
+  let val = "";
+  if (typeof str === "string") {
+    val = str;
+  } else if (typeof str === "object") {
+    val = str.pt || str.en || str.es || "";
+  } else {
+    val = String(str);
+  }
+  return val
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+};
 
 /**
  * Flexible matching for images.
