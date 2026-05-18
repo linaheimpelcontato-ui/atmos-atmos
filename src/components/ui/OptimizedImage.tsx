@@ -59,7 +59,7 @@ export function OptimizedImage({
       });
     }
     setAllSrcs(list);
-  }, [src, JSON.stringify(fallbackSrcs)]);
+  }, [src, fallbackSrcs?.join(",")]);
 
   const handleError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     e.persist();
