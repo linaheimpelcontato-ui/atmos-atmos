@@ -1178,14 +1178,6 @@ export default function ProposalPublic() {
           </p>
         </div>
       </motion.section>
-
-
-      {/* ══════════════════════ DIVIDER ══════════════════════ */}
-      <div className="h-[40vh] md:h-[50vh] overflow-hidden">
-        <img loading="lazy" src={dividerImage} alt="" className="w-full h-full object-cover" />
-      </div>
-
-
       {/* ══════════════════════ DAY SECTIONS ══════════════════════ */}
       <div
         style={{
