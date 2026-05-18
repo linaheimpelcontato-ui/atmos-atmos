@@ -124,7 +124,9 @@ const labels = {
     highlights: "Destaques do Dia",
     priceNote: "Valores por pessoa conforme o tamanho do grupo",
     guideIncluded: "Guia Atmos incluso",
-    guideSuggested: "Guia Sugerido"
+    guideSuggested: "Guia Sugerido",
+    importantToKnow: "Importante saber",
+    accommodationNotice: "As hospedagens não estão inclusas no valor do roteiro. Recomendamos reservar 1 noite antes e 1 noite após o roteiro para chegada e retorno. A ATMOS oferece curadoria completa de hospedagens para organizar essas etapas com praticidade e conforto."
   },
   en: {
     back: "All Itineraries",
@@ -156,7 +158,9 @@ const labels = {
     highlights: "Daily Highlights",
     priceNote: "Prices per person based on group size",
     guideIncluded: "Atmos Guide included",
-    guideSuggested: "Suggested Guide"
+    guideSuggested: "Suggested Guide",
+    importantToKnow: "Important to know",
+    accommodationNotice: "Accommodations are not included in the itinerary price. We recommend booking 1 night before and 1 night after the itinerary for arrival and departure. ATMOS offers a complete curation of accommodations to organize these steps with convenience and comfort."
   },
   es: {
     back: "Todos los Itinerarios",
@@ -188,7 +192,9 @@ const labels = {
     highlights: "Destaques del Día",
     priceNote: "Valores por persona según el tamaño del grupo",
     guideIncluded: "Guía Atmos incluido",
-    guideSuggested: "Guía Sugerido"
+    guideSuggested: "Guía Sugerido",
+    importantToKnow: "Importante saber",
+    accommodationNotice: "El alojamiento no está incluido en el precio del itinerario. Recomendamos reservar 1 noche antes y 1 noche después del itinerario para la llegada y el regreso. ATMOS ofrece una curaduría completa de alojamientos para organizar estas etapas con comodidad y practicidad."
   },
 };
 
@@ -1261,70 +1267,105 @@ export default function ItineraryDetail() {
               </div>
 
               {/* Extra Costs & Inclusions Grid */}
-              <div className={`grid gap-20 lg:gap-32 pt-24 border-t border-white/10 ${
-                ((itinerary.extraCosts?.entranceFees > 0) || (itinerary.extraCosts?.equipmentFees > 0))
-                  ? "grid-cols-1 md:grid-cols-2"
-                  : "grid-cols-1"
-              }`}>
-                {((itinerary.extraCosts?.entranceFees > 0) || (itinerary.extraCosts?.equipmentFees > 0)) && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-20 lg:gap-32 pt-24 border-t border-white/10">
+                {/* Left Column: Extra Costs (if present) & Importante Saber */}
+                <div className="space-y-16">
+                  {((itinerary.extraCosts?.entranceFees > 0) || (itinerary.extraCosts?.equipmentFees > 0)) && (
+                    <div className="space-y-12">
+                      <div className="flex items-center gap-4">
+                        <div className="w-2 h-2 bg-[#c4a97d] rounded-none" />
+                        <h4 className="text-[12px] font-black uppercase tracking-[0.4em] text-white/60">{l.extraCosts}</h4>
+                      </div>
+                      <div className="space-y-6">
+                        {itinerary.extraCosts.entranceFees > 0 && (
+                          <div className="flex items-center justify-between p-8 bg-[#1a130f] rounded-none border border-white/10 hover:bg-[#1a130f]/80 transition-colors">
+                            <div className="flex items-center gap-6">
+                              <div className="w-12 h-12 rounded-none bg-[#c4a97d]/10 flex items-center justify-center text-[#c4a97d] border border-[#c4a97d]/20">
+                                <Ticket className="h-6 w-6" />
+                              </div>
+                              <div>
+                                <p className="text-lg font-display font-outfit uppercase tracking-tight">{l.entranceFees}</p>
+                                <p className="text-[10px] text-white/30 uppercase tracking-widest">{l.chargedSeparately}</p>
+                              </div>
+                            </div>
+                            <span className="text-3xl font-display text-[#c4a97d] font-outfit">{formatPrice(itinerary.extraCosts.entranceFees)}</span>
+                          </div>
+                        )}
+                        {itinerary.extraCosts.equipmentFees > 0 && (
+                          <div className="flex items-center justify-between p-8 bg-[#1a130f] rounded-none border border-white/10 hover:bg-[#1a130f]/80 transition-colors">
+                            <div className="flex items-center gap-6">
+                              <div className="w-12 h-12 rounded-none bg-[#c4a97d]/10 flex items-center justify-center text-[#c4a97d] border border-[#c4a97d]/20">
+                                <HelmetIcon size={24} />
+                              </div>
+                              <div>
+                                <p className="text-lg font-display font-outfit uppercase tracking-tight">{l.equipmentFees}</p>
+                                <p className="text-[10px] text-white/30 uppercase tracking-widest">
+                                  {typeof itinerary.extraCosts.equipmentItems === 'string' ? itinerary.extraCosts.equipmentItems : itinerary.extraCosts.equipmentItems?.[language as keyof typeof itinerary.extraCosts.equipmentItems] || ""}
+                                </p>
+                              </div>
+                            </div>
+                            <span className="text-3xl font-display text-[#c4a97d] font-outfit">{formatPrice(itinerary.extraCosts.equipmentFees)}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="space-y-12">
                     <div className="flex items-center gap-4">
                       <div className="w-2 h-2 bg-[#c4a97d] rounded-none" />
-                      <h4 className="text-[12px] font-black uppercase tracking-[0.4em] text-white/60">{l.extraCosts}</h4>
+                      <h4 className="text-[12px] font-black uppercase tracking-[0.4em] text-white/60">{l.importantToKnow}</h4>
                     </div>
-                    <div className="space-y-6">
-                      {itinerary.extraCosts.entranceFees > 0 && (
-                        <div className="flex items-center justify-between p-8 bg-[#1a130f] rounded-none border border-white/10 hover:bg-[#1a130f]/80 transition-colors">
-                          <div className="flex items-center gap-6">
-                            <div className="w-12 h-12 rounded-none bg-[#c4a97d]/10 flex items-center justify-center text-[#c4a97d] border border-[#c4a97d]/20">
-                              <Ticket className="h-6 w-6" />
-                            </div>
-                            <div>
-                              <p className="text-lg font-display font-outfit uppercase tracking-tight">{l.entranceFees}</p>
-                              <p className="text-[10px] text-white/30 uppercase tracking-widest">{l.chargedSeparately}</p>
-                            </div>
-                          </div>
-                          <span className="text-3xl font-display text-[#c4a97d] font-outfit">{formatPrice(itinerary.extraCosts.entranceFees)}</span>
-                        </div>
-                      )}
-                      {itinerary.extraCosts.equipmentFees > 0 && (
-                        <div className="flex items-center justify-between p-8 bg-[#1a130f] rounded-none border border-white/10 hover:bg-[#1a130f]/80 transition-colors">
-                          <div className="flex items-center gap-6">
-                            <div className="w-12 h-12 rounded-none bg-[#c4a97d]/10 flex items-center justify-center text-[#c4a97d] border border-[#c4a97d]/20">
-                              <HelmetIcon size={24} />
-                            </div>
-                            <div>
-                              <p className="text-lg font-display font-outfit uppercase tracking-tight">{l.equipmentFees}</p>
-                              <p className="text-[10px] text-white/30 uppercase tracking-widest">
-                                {typeof itinerary.extraCosts.equipmentItems === 'string' ? itinerary.extraCosts.equipmentItems : itinerary.extraCosts.equipmentItems?.[language as keyof typeof itinerary.extraCosts.equipmentItems] || ""}
-                              </p>
-                            </div>
-                          </div>
-                          <span className="text-3xl font-display text-[#c4a97d] font-outfit">{formatPrice(itinerary.extraCosts.equipmentFees)}</span>
-                        </div>
-                      )}
+                    <div className="p-8 bg-[#1a130f] rounded-none border border-white/10 hover:bg-[#1a130f]/80 transition-colors">
+                      <p className="text-white/80 text-sm font-light leading-relaxed">
+                        {l.accommodationNotice}
+                      </p>
                     </div>
                   </div>
-                )}
+                </div>
 
+                {/* Right Column: Inclusions */}
                 <div className="space-y-12">
                   <div className="flex items-center gap-4">
                     <div className="w-2 h-2 bg-[#c4a97d] rounded-none" />
                     <h4 className="text-[12px] font-black uppercase tracking-[0.4em] text-white/60">{l.inclusiveExp}</h4>
                   </div>
-                  <ul className={`grid gap-6 ${
-                    ((itinerary.extraCosts?.entranceFees > 0) || (itinerary.extraCosts?.equipmentFees > 0))
-                      ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-1"
-                      : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-                  }`}>
-                    {(itinerary.inclusions[language as keyof typeof itinerary.inclusions] || []).map((inc, i) => (
-                      <li key={i} className="flex items-start gap-6 text-white/70 group">
-                        <div className="w-8 h-8 rounded-none bg-[#c4a97d]/10 flex items-center justify-center flex-shrink-0 border border-[#c4a97d]/20 group-hover:bg-[#c4a97d]/30 transition-colors">
-                          <Check className="h-4 w-4 text-[#c4a97d]" />
-                        </div>
-                        <span className="text-xl font-light leading-snug">{inc}</span>
-                      </li>
-                    ))}
+                  <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-6">
+                    {(() => {
+                      const defaultInclusions = {
+                        pt: [
+                          "Guiamento ATMOS especializado",
+                          "Curadoria completa do roteiro",
+                          "Registros fotográficos",
+                          "Assistência ATMOS 360° durante toda a viagem"
+                        ],
+                        en: [
+                          "Specialized ATMOS guiding",
+                          "Complete itinerary curation",
+                          "Photographic records",
+                          "ATMOS 360° assistance throughout the journey"
+                        ],
+                        es: [
+                          "Guía especializado de ATMOS",
+                          "Curaduría completa del itinerario",
+                          "Registros fotográficos",
+                          "Asistencia ATMOS 360° durante todo el viaje"
+                        ]
+                      };
+
+                      const inclusionsList = (itinerary.inclusions && itinerary.inclusions[language as keyof typeof itinerary.inclusions] && itinerary.inclusions[language as keyof typeof itinerary.inclusions].length > 0)
+                        ? itinerary.inclusions[language as keyof typeof itinerary.inclusions]
+                        : defaultInclusions[language as keyof typeof defaultInclusions] || defaultInclusions.pt;
+
+                      return inclusionsList.map((inc, i) => (
+                        <li key={i} className="flex items-start gap-6 text-white/70 group">
+                          <div className="w-8 h-8 rounded-none bg-[#c4a97d]/10 flex items-center justify-center flex-shrink-0 border border-[#c4a97d]/20 group-hover:bg-[#c4a97d]/30 transition-colors">
+                            <Check className="h-4 w-4 text-[#c4a97d]" />
+                          </div>
+                          <span className="text-xl font-light leading-snug">{inc}</span>
+                        </li>
+                      ));
+                    })()}
                   </ul>
                 </div>
               </div>
