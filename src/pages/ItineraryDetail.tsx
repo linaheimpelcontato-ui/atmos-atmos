@@ -1261,50 +1261,62 @@ export default function ItineraryDetail() {
               </div>
 
               {/* Extra Costs & Inclusions Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-20 lg:gap-32 pt-24 border-t border-white/10">
-                <div className="space-y-12">
-                  <div className="flex items-center gap-4">
-                    <div className="w-2 h-2 bg-[#c4a97d] rounded-none" />
-                    <h4 className="text-[12px] font-black uppercase tracking-[0.4em] text-white/60">{l.extraCosts}</h4>
-                  </div>
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between p-8 bg-[#1a130f] rounded-none border border-white/10 hover:bg-[#1a130f]/80 transition-colors">
-                      <div className="flex items-center gap-6">
-                        <div className="w-12 h-12 rounded-none bg-[#c4a97d]/10 flex items-center justify-center text-[#c4a97d] border border-[#c4a97d]/20">
-                          <Ticket className="h-6 w-6" />
-                        </div>
-                        <div>
-                          <p className="text-lg font-display font-outfit uppercase tracking-tight">{l.entranceFees}</p>
-                          <p className="text-[10px] text-white/30 uppercase tracking-widest">{l.chargedSeparately}</p>
-                        </div>
-                      </div>
-                      <span className="text-3xl font-display text-[#c4a97d] font-outfit">{formatPrice(itinerary.extraCosts.entranceFees)}</span>
+              <div className={`grid gap-20 lg:gap-32 pt-24 border-t border-white/10 ${
+                ((itinerary.extraCosts?.entranceFees > 0) || (itinerary.extraCosts?.equipmentFees > 0))
+                  ? "grid-cols-1 md:grid-cols-2"
+                  : "grid-cols-1"
+              }`}>
+                {((itinerary.extraCosts?.entranceFees > 0) || (itinerary.extraCosts?.equipmentFees > 0)) && (
+                  <div className="space-y-12">
+                    <div className="flex items-center gap-4">
+                      <div className="w-2 h-2 bg-[#c4a97d] rounded-none" />
+                      <h4 className="text-[12px] font-black uppercase tracking-[0.4em] text-white/60">{l.extraCosts}</h4>
                     </div>
-                    {itinerary.extraCosts.equipmentFees && (
-                      <div className="flex items-center justify-between p-8 bg-[#1a130f] rounded-none border border-white/10 hover:bg-[#1a130f]/80 transition-colors">
-                        <div className="flex items-center gap-6">
-                          <div className="w-12 h-12 rounded-none bg-[#c4a97d]/10 flex items-center justify-center text-[#c4a97d] border border-[#c4a97d]/20">
-                            <HelmetIcon size={24} />
+                    <div className="space-y-6">
+                      {itinerary.extraCosts.entranceFees > 0 && (
+                        <div className="flex items-center justify-between p-8 bg-[#1a130f] rounded-none border border-white/10 hover:bg-[#1a130f]/80 transition-colors">
+                          <div className="flex items-center gap-6">
+                            <div className="w-12 h-12 rounded-none bg-[#c4a97d]/10 flex items-center justify-center text-[#c4a97d] border border-[#c4a97d]/20">
+                              <Ticket className="h-6 w-6" />
+                            </div>
+                            <div>
+                              <p className="text-lg font-display font-outfit uppercase tracking-tight">{l.entranceFees}</p>
+                              <p className="text-[10px] text-white/30 uppercase tracking-widest">{l.chargedSeparately}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-lg font-display font-outfit uppercase tracking-tight">{l.equipmentFees}</p>
-                            <p className="text-[10px] text-white/30 uppercase tracking-widest">
-                              {typeof itinerary.extraCosts.equipmentItems === 'string' ? itinerary.extraCosts.equipmentItems : itinerary.extraCosts.equipmentItems?.[language as keyof typeof itinerary.extraCosts.equipmentItems] || ""}
-                            </p>
-                          </div>
+                          <span className="text-3xl font-display text-[#c4a97d] font-outfit">{formatPrice(itinerary.extraCosts.entranceFees)}</span>
                         </div>
-                        <span className="text-3xl font-display text-[#c4a97d] font-outfit">{formatPrice(itinerary.extraCosts.equipmentFees)}</span>
-                      </div>
-                    )}
+                      )}
+                      {itinerary.extraCosts.equipmentFees > 0 && (
+                        <div className="flex items-center justify-between p-8 bg-[#1a130f] rounded-none border border-white/10 hover:bg-[#1a130f]/80 transition-colors">
+                          <div className="flex items-center gap-6">
+                            <div className="w-12 h-12 rounded-none bg-[#c4a97d]/10 flex items-center justify-center text-[#c4a97d] border border-[#c4a97d]/20">
+                              <HelmetIcon size={24} />
+                            </div>
+                            <div>
+                              <p className="text-lg font-display font-outfit uppercase tracking-tight">{l.equipmentFees}</p>
+                              <p className="text-[10px] text-white/30 uppercase tracking-widest">
+                                {typeof itinerary.extraCosts.equipmentItems === 'string' ? itinerary.extraCosts.equipmentItems : itinerary.extraCosts.equipmentItems?.[language as keyof typeof itinerary.extraCosts.equipmentItems] || ""}
+                              </p>
+                            </div>
+                          </div>
+                          <span className="text-3xl font-display text-[#c4a97d] font-outfit">{formatPrice(itinerary.extraCosts.equipmentFees)}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div className="space-y-12">
                   <div className="flex items-center gap-4">
                     <div className="w-2 h-2 bg-[#c4a97d] rounded-none" />
                     <h4 className="text-[12px] font-black uppercase tracking-[0.4em] text-white/60">{l.inclusiveExp}</h4>
                   </div>
-                  <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-6">
+                  <ul className={`grid gap-6 ${
+                    ((itinerary.extraCosts?.entranceFees > 0) || (itinerary.extraCosts?.equipmentFees > 0))
+                      ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-1"
+                      : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                  }`}>
                     {(itinerary.inclusions[language as keyof typeof itinerary.inclusions] || []).map((inc, i) => (
                       <li key={i} className="flex items-start gap-6 text-white/70 group">
                         <div className="w-8 h-8 rounded-none bg-[#c4a97d]/10 flex items-center justify-center flex-shrink-0 border border-[#c4a97d]/20 group-hover:bg-[#c4a97d]/30 transition-colors">
