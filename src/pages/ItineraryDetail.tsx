@@ -303,12 +303,14 @@ function DayBanner({ number, title, bgImage, children }: { number: number, title
   );
 }
 
+const EMPTY_PRODUCTS: any[] = [];
+
 export default function ItineraryDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { language = "pt" } = useLanguage();
   const { addItem, removeItem, isInWishlist } = useWishlist();
-  const { data: allProducts = [] } = useProducts();
+  const { data: allProducts = EMPTY_PRODUCTS } = useProducts();
   const [heroImages, setHeroImages] = useState<string[]>([]);
 
   const mergedItineraries = useMemo(() => {

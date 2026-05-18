@@ -46,7 +46,7 @@ export function OptimizedImage({
     setLoaded(false);
     setError(false);
     setCurrentSrc(src);
-  }, [src, fallbackSrcs]);
+  }, [src, JSON.stringify(fallbackSrcs)]);
 
   const handleError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     // Stage 0: Try next fallbackSrc in our list
