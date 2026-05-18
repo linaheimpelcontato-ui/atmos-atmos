@@ -81,9 +81,9 @@ function buildWhatsAppMessage(
 ) {
   const greeting = txt(
     lang,
-    `Olá! Gostaria de solicitar reserva para o roteiro: *${itinerary.title.pt}* (${itinerary.duration} dias). Seguem minhas informações:`,
-    `Hello! I'd like to request a reservation for the itinerary: *${itinerary.title.pt}* (${itinerary.duration} days). Here are my details:`,
-    `¡Hola! Me gustaría solicitar una reserva para el itinerario: *${itinerary.title.pt}* (${itinerary.duration} días). Aquí mis datos:`
+    `Olá! Gostaria de solicitar reserva para o roteiro: *${itinerary.name.pt}* (${itinerary.duration} dias). Seguem minhas informações:`,
+    `Hello! I'd like to request a reservation for the itinerary: *${itinerary.name.pt}* (${itinerary.duration} days). Here are my details:`,
+    `¡Hola! Me gustaría solicitar una reserva para el itinerario: *${itinerary.name.pt}* (${itinerary.duration} días). Aquí mis datos:`
   );
 
   const answerLines: string[] = [];
@@ -101,7 +101,7 @@ function buildWhatsAppMessage(
       answerLines.push(`• ${txt(lang, "Data de início", "Start date", "Fecha de inicio")}: ${startFormatted}`);
     }
   }
-  answerLines.push(`• ${txt(lang, "Roteiro Selecionado", "Selected Itinerary", "Itinerario Seleccionado")}: ${itinerary.title.pt} (${itinerary.duration} dias)`);
+  answerLines.push(`• ${txt(lang, "Roteiro Selecionado", "Selected Itinerary", "Itinerario Seleccionado")}: ${itinerary.name.pt} (${itinerary.duration} dias)`);
   if (answers.groupSize) answerLines.push(`• ${txt(lang, "Pessoas no grupo", "People in group", "Personas en el grupo")}: ${answers.groupSize}`);
   if (answers.children) answerLines.push(`• ${txt(lang, "Crianças", "Children", "Niños")}: ${answers.children}`);
   if (answers.mobility) answerLines.push(`• ${txt(lang, "Mobilidade", "Mobility", "Movilidad")}: ${answers.mobility}${answers.mobilityDetails ? ` (${answers.mobilityDetails})` : ""}`);
@@ -424,15 +424,15 @@ export default function ItineraryReservationForm({ itinerary, language, onClose 
         items: [{
           type: "itinerary",
           id: itinerary.id,
-          name: itinerary.title[language as keyof typeof itinerary.title] || itinerary.title.pt,
+          name: itinerary.name[language as keyof typeof itinerary.name] || itinerary.name.pt,
           details: `${itinerary.duration} dias`
-        }],
-        answers: answers,
+        }] as any,
+        answers: answers as any,
         status: "pending",
         language,
       };
 
-      const { error } = await supabase.from("quote_requests").insert(quoteData);
+      const { error } = await supabase.from("quote_requests").insert(quoteData as any);
 
       if (error) {
         console.error("Error saving quote request:", error);
@@ -455,7 +455,7 @@ export default function ItineraryReservationForm({ itinerary, language, onClose 
                   name: answers.name,
                   phone: answers.phone,
                   tags: newTags,
-                  notes: `Solicitou reserva para o roteiro: ${itinerary.title.pt}`
+                  notes: `Solicitou reserva para o roteiro: ${itinerary.name.pt}`
                 })
                 .eq("id", prospect.id);
             }
@@ -499,7 +499,7 @@ export default function ItineraryReservationForm({ itinerary, language, onClose 
                 {currentStep + 1} / {visibleQuestions.length}
               </span>
               <span className="text-[10px] uppercase tracking-widest text-[#c4a97d] font-bold">
-                {itinerary.title.pt}
+                {itinerary.name.pt}
               </span>
             </div>
             <div className="w-full bg-[#2e2019]/5 rounded-full h-1.5">

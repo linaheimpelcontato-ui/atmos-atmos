@@ -1382,10 +1382,10 @@ export default function ItineraryDetail() {
             <div className="max-w-2xl mx-auto space-y-10">
               <h2 className="text-4xl md:text-5xl font-display text-[#2e2019] font-outfit uppercase tracking-tight">
                 {language === "en" 
-                  ? `Secure your spot on: ${getLangVal(itinerary.title, 'en')}`
+                  ? `Secure your spot on: ${getLangVal(itinerary.name, 'en')}`
                   : language === "es"
-                  ? `Reserve su lugar en: ${getLangVal(itinerary.title, 'es')}`
-                  : `Garanta sua vaga no: ${getLangVal(itinerary.title, 'pt')}`
+                  ? `Reserve su lugar en: ${getLangVal(itinerary.name, 'es')}`
+                  : `Garanta sua vaga no: ${getLangVal(itinerary.name, 'pt')}`
                 }
               </h2>
               <p className="text-[#2e2019]/60 text-lg font-light leading-relaxed">
