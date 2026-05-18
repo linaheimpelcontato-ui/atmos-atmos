@@ -193,16 +193,30 @@ const labels = {
 };
 
 function ImageCarousel({ images, alt }: { images: string[], alt: string }) {
+  const [activeImages, setActiveImages] = useState<string[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  if (!images || images.length === 0) return null;
-  if (images.length === 1) {
+  useEffect(() => {
+    if (images) {
+      setActiveImages(images.filter(img => typeof img === "string" && img.trim() !== ""));
+    } else {
+      setActiveImages([]);
+    }
+    setCurrentIndex(0);
+  }, [images]);
+
+  if (!activeImages || activeImages.length === 0) return null;
+  
+  if (activeImages.length === 1) {
     return (
       <OptimizedImage
-        src={images[0]}
+        src={activeImages[0]}
         alt={alt}
         className="w-full h-full object-cover"
         containerClassName="w-full h-full"
+        onError={() => {
+          setActiveImages([]);
+        }}
       />
     );
   }
@@ -219,16 +233,26 @@ function ImageCarousel({ images, alt }: { images: string[], alt: string }) {
           className="absolute inset-0"
         >
           <OptimizedImage
-            src={images[currentIndex]}
+            src={activeImages[currentIndex]}
             alt={`${alt} - ${currentIndex + 1}`}
             className="w-full h-full object-cover"
             containerClassName="absolute inset-0"
+            onError={() => {
+              const failedUrl = activeImages[currentIndex];
+              setActiveImages(prev => {
+                const filtered = prev.filter(img => img !== failedUrl);
+                if (currentIndex >= filtered.length) {
+                  setCurrentIndex(Math.max(0, filtered.length - 1));
+                }
+                return filtered;
+              });
+            }}
           />
         </motion.div>
       </AnimatePresence>
 
       <div className="absolute inset-x-0 bottom-6 flex justify-center gap-2 z-10">
-        {images.map((_, i) => (
+        {activeImages.map((_, i) => (
           <button
             key={i}
             onClick={() => setCurrentIndex(i)}
@@ -240,13 +264,13 @@ function ImageCarousel({ images, alt }: { images: string[], alt: string }) {
       </div>
 
       <button
-        onClick={() => setCurrentIndex((prev) => (prev - 1 + images.length) % images.length)}
+        onClick={() => setCurrentIndex((prev) => (prev - 1 + activeImages.length) % activeImages.length)}
         className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity border border-white/20"
       >
         <ChevronLeft className="h-5 w-5" />
       </button>
       <button
-        onClick={() => setCurrentIndex((prev) => (prev + 1) % images.length)}
+        onClick={() => setCurrentIndex((prev) => (prev + 1) % activeImages.length)}
         className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity border border-white/20"
       >
         <ChevronRight className="h-5 w-5" />
@@ -547,13 +571,15 @@ export default function ItineraryDetail() {
                 if (match) {
                   const base = match[1];
                   const ext = match[2];
-                  candidates.push(`${base}-2.${ext}`);
-                  candidates.push(`${base}-3.${ext}`);
+                  // Try to load up to 10 images if they exist on Cloudflare
+                  for (let i = 2; i <= 10; i++) {
+                    candidates.push(`${base}-${i}.${ext}`);
+                  }
                 }
               } else {
                 // 2. No static match: Add candidates with multiple extensions (.jpg, .png) for fallback
                 const extensions = [".jpg", ".png"];
-                [1, 2, 3].forEach(n => {
+                for (let n = 1; n <= 10; n++) {
                   extensions.forEach(ext => {
                     if (prefix === "lanche-de-trilha" || prefix === "lanche-de-trilha-atmos") {
                       candidates.push(`produtos/${folder}/lanche-de-trilha-atmos-${n}${ext}`);
@@ -561,7 +587,7 @@ export default function ItineraryDetail() {
                       candidates.push(`produtos/${folder}/${prefix}/${prefix}-${n}${ext}`);
                     }
                   });
-                });
+                }
               }
 
               itemImages = candidates;
