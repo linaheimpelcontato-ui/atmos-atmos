@@ -1,8 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import PageSEO from "@/components/seo/PageSEO";
-import { trackQuoteSubmit, trackWhatsAppClick, trackQuestionnaireStart } from "@/lib/analytics";
-import { format } from "date-fns";
-import { ptBR, enUS, es as esLocale } from "date-fns/locale";
+import { trackQuestionnaireStart } from "@/lib/analytics";
 import Layout from "@/components/layout/Layout";
 import { useLanguage, type Language } from "@/contexts/LanguageContext";
 import { useWishlist, type WishlistItemType } from "@/contexts/WishlistContext";
@@ -24,7 +22,8 @@ import {
   X,
   ClipboardList,
   ChevronRight,
-  ChevronLeft
+  ChevronLeft,
+  Check
 } from "lucide-react";
 import { storageUrl } from "@/lib/storage";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -34,13 +33,6 @@ import WishlistReservationForm from "@/components/wishlist/WishlistReservationFo
 
 const txt = (lang: Language, pt: string, en: string, es: string) =>
   lang === "en" ? en : lang === "es" ? es : pt;
-
-const signalIntent = (lang: Language) => txt(
-  lang,
-  "\n\n*Estou ciente do sinal de compromisso (R$ 1.500) para garantir a exclusividade da curadoria e agendamento.*",
-  "\n\n*I am aware of the commitment deposit (R$ 1,500) to ensure curation exclusivity and scheduling.*",
-  "\n\n*Soy consciente de la señal de compromiso (R$ 1.500) para garantizar la exclusividad de la curaduría y programación.*"
-);
 
 const typeLabel: Record<WishlistItemType, Record<Language, string>> = {
   itinerary: { pt: "Roteiros", en: "Itineraries", es: "Itinerarios" },
@@ -65,57 +57,6 @@ const groupOrder: WishlistItemType[] = [
   "accommodation",
   "service",
 ];
-
-const dateLocale = (lang: Language) =>
-  lang === "en" ? enUS : lang === "es" ? esLocale : ptBR;
-
-function buildWhatsAppMessage(
-  items: { type: WishlistItemType; name: string; details?: string }[],
-  answers: QuoteAnswers,
-  lang: Language
-) {
-  const greeting = txt(
-    lang,
-    "Olá! Gostaria de solicitar um orçamento. Seguem minhas informações e interesses:",
-    "Hello! I'd like to request a quote. Here are my details and interests:",
-    "¡Hola! Me gustaría solicitar un presupuesto. Aquí mis datos e intereses:"
-  );
-
-  const answerLines: string[] = [];
-  if (answers.status) answerLines.push(`• ${txt(lang, "Situação", "Status", "Situación")}: ${answers.status}`);
-  if (answers.startDate) {
-    const startFormatted = format(answers.startDate, "PPP", { locale: dateLocale(lang) });
-    if (answers.endDate) {
-      const endFormatted = format(answers.endDate, "PPP", { locale: dateLocale(lang) });
-      answerLines.push(`• ${txt(lang, "Período", "Period", "Período")}: ${startFormatted} – ${endFormatted}`);
-    } else {
-      answerLines.push(`• ${txt(lang, "Data de início", "Start date", "Fecha de inicio")}: ${startFormatted}`);
-    }
-  }
-  if (answers.numDays) answerLines.push(`• ${txt(lang, "Dias de passeio", "Tour days", "Días de paseo")}: ${answers.numDays}`);
-  if (answers.groupSize) answerLines.push(`• ${txt(lang, "Pessoas no grupo", "People in group", "Personas en el grupo")}: ${answers.groupSize}`);
-  if (answers.children) answerLines.push(`• ${txt(lang, "Crianças", "Children", "Niños")}: ${answers.children}`);
-  if (answers.mobility) answerLines.push(`• ${txt(lang, "Mobilidade", "Mobility", "Movilidad")}: ${answers.mobility}${answers.mobilityDetails ? ` (${answers.mobilityDetails})` : ""}`);
-  if (answers.transport) answerLines.push(`• ${txt(lang, "Transporte", "Transport", "Transporte")}: ${answers.transport}`);
-  if (answers.hasAccommodation) answerLines.push(`• ${txt(lang, "Hospedagem reservada", "Accommodation booked", "Hospedaje reservado")}: ${answers.hasAccommodation}${answers.accommodationLocation ? ` (${answers.accommodationLocation})` : ""}`);
-  if (answers.notes) answerLines.push(`• ${txt(lang, "Observações", "Notes", "Observaciones")}: ${answers.notes}`);
-
-  const answersBlock = answerLines.length > 0 ? `*${txt(lang, "Minhas informações", "My details", "Mis datos")}*\n${answerLines.join("\n")}` : "";
-
-  const grouped = groupOrder
-    .map((type) => {
-      const ofType = items.filter((i) => i.type === type);
-      if (ofType.length === 0) return null;
-      const label = typeLabel[type][lang];
-      const list = ofType.map((i) => `  • ${i.name}${i.details ? ` (${i.details})` : ""}`).join("\n");
-      return `*${label}*\n${list}`;
-    })
-    .filter(Boolean)
-    .join("\n\n");
-
-  const closing = txt(lang, "Aguardo retorno. Obrigado(a)!", "Looking forward to hearing from you. Thanks!", "Espero su respuesta. ¡Gracias!");
-  return [greeting, answersBlock, grouped, closing, signalIntent(lang)].filter(Boolean).join("\n\n");
-}
 
 const Wishlist = () => {
   const { language } = useLanguage();
