@@ -162,8 +162,8 @@ const Wishlist = () => {
       <section className="py-8 md:py-16 bg-white">
         <div className="container px-4 max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-            {/* Left: Items List */}
-            <div className="lg:col-span-8 space-y-10">
+            {/* Full-width: Items List */}
+            <div className="lg:col-span-12 space-y-10">
               
               <div className="flex items-center justify-between border-b border-[#1A261B]/10 pb-4">
                 <div>
@@ -200,7 +200,7 @@ const Wishlist = () => {
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                       {groupItems.map((item) => (
                         <motion.div
                           layout
@@ -279,65 +279,27 @@ const Wishlist = () => {
               })}
             </div>
 
-            {/* Right Sidebar: Inclusions & Important Info */}
-            <div className="lg:col-span-4 space-y-8">
-              {/* Incluso no Roteiro Box */}
-              <div className="border border-[#2e2019]/10 bg-[#fcfaf7] p-8 shadow-sm">
-                <span className="text-[10px] uppercase tracking-[0.4em] font-bold text-[#c4a97d] mb-4 block">
-                  ATMOS EXPERIENCE
-                </span>
-                <h3 className="text-xl font-display text-[#2e2019] uppercase tracking-wider mb-6 font-outfit">
-                  Incluso no roteiro
-                </h3>
-                <ul className="space-y-4">
-                  {[
-                    "Guiamento ATMOS especializado",
-                    "Curadoria completa do roteiro",
-                    "Registros fotográficos",
-                    "Assistência ATMOS 360° durante toda a viagem"
-                  ].map((text, idx) => (
-                    <li key={idx} className="flex items-start gap-3">
-                      <div className="h-5 w-5 rounded-full bg-[#c4a97d]/10 flex items-center justify-center text-[#c4a97d] shrink-0 mt-0.5">
-                        <Check className="h-3 w-3" />
-                      </div>
-                      <span className="text-sm text-[#2e2019]/80 font-light">{text}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Importante Saber Box */}
-              <div className="border border-[#2e2019]/10 bg-[#fcfaf7] p-8 shadow-sm">
-                <span className="text-[10px] uppercase tracking-[0.4em] font-bold text-[#c4a97d] mb-4 block">
-                  CONDIÇÕES E LOGÍSTICA
-                </span>
-                <h3 className="text-xl font-display text-[#2e2019] uppercase tracking-wider mb-6 font-outfit">
-                  Importante saber
-                </h3>
-                <p className="text-sm text-[#2e2019]/70 leading-relaxed font-light mb-4">
-                  As hospedagens <strong className="text-[#2e2019]">não estão inclusas</strong> no valor do roteiro.
-                </p>
-                <p className="text-xs text-[#2e2019]/60 leading-relaxed font-light">
-                  Recomendamos reservar 1 noite antes e 1 noite após o roteiro para chegada e retorno. A ATMOS oferece curadoria completa de hospedagens para organizar essas etapas com praticidade e conforto.
-                </p>
-              </div>
-            </div>
-
             {/* Final CTA Bar - Refined & Minimalist */}
-            <div className="lg:col-span-12 mt-20 pb-20 border-t border-[#1A261B]/10 pt-20 text-center" id="final-step">
+            <div className="lg:col-span-12 mt-20 border border-[#e4dbcc] bg-[#fcfaf7] py-16 md:py-24 px-6 md:px-12 text-center" id="final-step">
               <div className="max-w-3xl mx-auto relative z-10">
-                <span className="text-[10px] uppercase tracking-[0.6em] font-bold text-[#1A261B]/40 mb-6 block">PROXIMO PASSO</span>
-                <h2 className="text-4xl md:text-6xl font-display text-[#1A261B] mb-8 leading-tight">O Toque Final da Atmos</h2>
-                <p className="text-[#2C3E2D]/60 mb-12 text-xl font-light leading-relaxed max-w-2xl mx-auto">
-                  Suas escolhas definem a alma da experiência. Agora, responda a perguntas rápidas para que nosso time consiga criar o seu roteiro.
+                <span className="text-[10px] uppercase tracking-[0.6em] font-bold text-[#c4a97d] mb-6 block">PROXIMO PASSO</span>
+                <h2 className="text-3xl md:text-5xl font-display text-[#2e2019] uppercase tracking-tight mb-8 leading-tight">
+                  {txt(language, "Sua jornada sob medida começa aqui", "Your bespoke journey begins here", "Su viaje a medida comienza aquí")}
+                </h2>
+                <p className="text-[#2e2019]/60 mb-12 text-lg font-light leading-relaxed max-w-2xl mx-auto">
+                  {txt(
+                    language,
+                    "Com base nas suas preferências selecionadas, nosso time irá desenhar um roteiro inteiramente personalizado para você. Solicite sua reserva e dê o primeiro passo rumo à Chapada Diamantina.",
+                    "Based on your selected preferences, our team will design an entirely custom itinerary for you. Request your reservation and take the first step towards Chapada Diamantina.",
+                    "Según sus preferences seleccionadas, nuestro equipo diseñará un itinerario completamente personalizado para usted. Solicite su reserva y dé el primer paso hacia la Chapada Diamantina."
+                  )}
                 </p>
                 <Button
-                  size="lg"
-                  className="rounded-full px-16 py-10 bg-[#1A261B] hover:bg-black text-white font-bold uppercase tracking-[0.3em] text-[12px] shadow-2xl transition-all hover:scale-105"
+                  className="rounded-none px-12 py-8 bg-[#c4a97d] hover:bg-[#b09366] text-white text-sm font-black uppercase tracking-[0.3em] transition-all shadow-2xl shadow-[#c4a97d]/20"
                   onClick={handleStartQuote}
                 >
-                  Prosseguir para Roteiro
-                  <ChevronRight className="h-5 w-5" />
+                  {txt(language, "Solicitar sua reserva", "Request your reservation", "Solicitar su reserva")}
+                  <ArrowRight className="h-4 w-4 ml-3" />
                 </Button>
               </div>
             </div>
