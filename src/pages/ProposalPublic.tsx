@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { storageUrl, optimizedUrl, IMAGE_PRESETS } from "@/lib/storage";
 import { fetchStorageImages } from "@/hooks/useStorageImages";
+import { getDayImage } from "@/components/itineraries/dayImages";
 import { trackProposalView } from "@/lib/analytics";
 import {
   Check, MapPin, Users, CalendarDays,
@@ -675,11 +676,13 @@ export default function ProposalPublic() {
   useEffect(() => {
     if (items.length === 0 || products.length === 0) return;
     const dayNums = [...new Set(items.map(i => i.day_number))];
+    const sortedDays = [...dayNums].sort((a, b) => a - b);
 
     (async () => {
       const dayGalleries: Record<number, string[]> = {};
-      for (const dayNum of dayNums) {
-        // Sort items to prioritize waterfall/experience for the first image
+      
+      // Query all day galleries in parallel!
+      await Promise.all(sortedDays.map(async (dayNum) => {
         const dayItems2 = items
           .filter(i => i.day_number === dayNum)
           .sort((a, b) => {
@@ -698,9 +701,11 @@ export default function ProposalPublic() {
           });
 
         const urls: string[] = [];
-        for (const item of dayItems2) {
+        
+        // Query all items for this day in parallel!
+        const itemsImgs = await Promise.all(dayItems2.map(async (item) => {
           const product = findProductRef(item);
-          if (!product?.source_id) continue;
+          if (!product?.source_id) return [];
           
           const normType = product.type.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
           const typeMap: Record<string, string> = {
@@ -719,56 +724,70 @@ export default function ProposalPublic() {
             ? (EXP_STORAGE_KEY[product.source_id] || product.source_id)
             : (EXP_STORAGE_KEY[product.source_id] || product.source_id);
             
-          const imgs = await fetchStorageImages(folder as any, key);
+          try {
+            return await fetchStorageImages(folder as any, key);
+          } catch (e) {
+            return [];
+          }
+        }));
+
+        for (const imgs of itemsImgs) {
           const optimizedImgs = imgs.map(url => optimizedUrl(url, IMAGE_PRESETS.card));
           urls.push(...optimizedImgs);
         }
         dayGalleries[dayNum] = urls;
-      }
+      }));
+
       setDynamicDayGalleries(dayGalleries);
 
       // Set first day's first image as hero if available — use LARGE preset
-      const firstDay = days[0];
+      const firstDay = sortedDays[0];
       if (firstDay && dayGalleries[firstDay]?.length > 0) {
-        // Need to re-optimize for LARGE since it's the hero
         setHeroImageUrl(optimizedUrl(dayGalleries[firstDay][0], IMAGE_PRESETS.large));
       }
 
       const accImgs: Record<string, string[]> = {};
       const seen = new Set<string>();
-      
-      // Collect from items
+      const accToFetch: { sourceId: string; productName: string }[] = [];
+
+      // Collect accommodations from items
       for (const item of items) {
         if (item.category !== "Hospedagem") continue;
         const product = findProductRef(item);
         const sourceId = product?.source_id;
         if (!sourceId || seen.has(sourceId)) continue;
         seen.add(sourceId);
-        const imgs = await fetchStorageImages("HOSPEDAGENS", sourceId);
-        accImgs[sourceId] = imgs.length > 0
-          ? imgs.map(url => optimizedUrl(url, IMAGE_PRESETS.card))
-          : Array.from({ length: 6 }, (_, i) => {
-              const folderName = product?.name || sourceId;
-              return optimizedUrl(`HOSPEDAGENS/${folderName}/${folderName}-${i + 1}.jpg`, IMAGE_PRESETS.card);
-            });
+        accToFetch.push({ sourceId, productName: product.name });
       }
 
-      // Collect from proposal_accommodations
+      // Collect dedicated accommodations
       if (proposal?.proposal_accommodations) {
         for (const acc of proposal.proposal_accommodations) {
           const product = products.find(p => p.id === acc.product_id);
           const sourceId = product?.source_id;
           if (!sourceId || seen.has(sourceId)) continue;
           seen.add(sourceId);
+          accToFetch.push({ sourceId, productName: product?.name || "Hospedagem" });
+        }
+      }
+
+      // Fetch all accommodation images in parallel!
+      await Promise.all(accToFetch.map(async ({ sourceId, productName }) => {
+        try {
           const imgs = await fetchStorageImages("HOSPEDAGENS", sourceId);
           accImgs[sourceId] = imgs.length > 0
             ? imgs.map(url => optimizedUrl(url, IMAGE_PRESETS.card))
             : Array.from({ length: 6 }, (_, i) => {
-                const folderName = product?.name || sourceId;
+                const folderName = productName || sourceId;
                 return optimizedUrl(`HOSPEDAGENS/${folderName}/${folderName}-${i + 1}.jpg`, IMAGE_PRESETS.card);
               });
+        } catch (e) {
+          accImgs[sourceId] = Array.from({ length: 6 }, (_, i) => {
+            const folderName = productName || sourceId;
+            return optimizedUrl(`HOSPEDAGENS/${folderName}/${folderName}-${i + 1}.jpg`, IMAGE_PRESETS.card);
+          });
         }
-      }
+      }));
 
       setDynamicAccImages(accImgs);
     })();
@@ -883,7 +902,40 @@ export default function ProposalPublic() {
 
 
   const getDayGallery = (dayNum: number): string[] => {
-    return dynamicDayGalleries[dayNum] || [];
+    const dynamic = dynamicDayGalleries[dayNum];
+    if (dynamic && dynamic.length > 0) return dynamic;
+
+    const dayItems = items.filter(i => i.day_number === dayNum);
+    const sortedForGallery = [...dayItems].sort((a, b) => {
+      const aCat = a.category.toLowerCase();
+      const bCat = b.category.toLowerCase();
+      const aIsMain = aCat.includes("cachoeira") || aCat.includes("experi");
+      const bIsMain = bCat.includes("cachoeira") || bCat.includes("experi");
+      if (aIsMain && !bIsMain) return -1;
+      if (!aIsMain && bIsMain) return 1;
+      return 0;
+    });
+
+    const fallbackUrls: string[] = [];
+    
+    for (const item of sortedForGallery) {
+      const product = findProduct(item);
+      const sourceId = product?.source_id;
+      const name = item.item_name || product?.name;
+      
+      if (sourceId || name) {
+        const url = getDayImage(sourceId || "", name);
+        if (url && !fallbackUrls.includes(url)) {
+          fallbackUrls.push(url);
+        }
+      }
+    }
+
+    if (fallbackUrls.length === 0) {
+      fallbackUrls.push("https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&q=80");
+    }
+
+    return fallbackUrls;
   };
 
   const getAccommodations = (): { name: string; sourceId: string; images: string[] }[] => {
