@@ -672,15 +672,15 @@ export default function ItineraryDetail() {
     if (itinerary) {
       // 1. Collect all images from the days and items
       const dayImagesList: string[] = [];
-      itinerary.days.forEach(day => {
+      (itinerary.days || []).forEach(day => {
         if (day.images && day.images.length > 0) {
-          day.images.forEach(img => {
+          (day.images || []).forEach(img => {
             if (img && !dayImagesList.includes(img)) dayImagesList.push(img);
           });
         }
-        day.items.forEach(item => {
+        (day.items || []).forEach(item => {
           if (item.images && item.images.length > 0) {
-            item.images.forEach(img => {
+            (item.images || []).forEach(img => {
               if (img && !dayImagesList.includes(img)) dayImagesList.push(img);
             });
           }
