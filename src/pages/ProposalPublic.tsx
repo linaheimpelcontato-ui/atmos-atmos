@@ -1313,142 +1313,147 @@ export default function ProposalPublic() {
               </div>
             </DayBanner>
 
-            {/* ══════ TWO-COLUMN BODY: items left, carousel right ══════ */}
-            <div style={{ background: isEven ? "#fff" : "#fcfaf7" }} className="border-b border-[#e4dbcc]">
-            <div className="max-w-7xl mx-auto px-6 py-16 md:py-24">
-              <div className="flex flex-col md:flex-row gap-12 md:gap-20">
-                {/* LEFT — scrollable items */}
-                <div className="flex-1 min-w-0">
-                  <ScrollArea type="always" className="proposal-itinerary-scroll md:h-[600px]">
-                    <div className="md:pr-10">
-                    {dayDescriptions[dayNum] && (
-                      <div className="mb-12">
-                        <p className="text-xl md:text-2xl font-light leading-relaxed text-[#5c4a32] italic border-l-4 border-[#c4a97d] pl-8 py-2">
-                          {dayDescriptions[dayNum]}
-                        </p>
-                      </div>
-                    )}
-                    {(() => {
-                      const visibleItems = dayItemsSorted.filter(i => {
-                        const cat = i.category.toLowerCase();
-                        const name = (i.item_name || "").toLowerCase();
-                        return (i.item_name || i.value > 0) && 
-                               !cat.includes("guia") && 
-                               !cat.includes("monitor") &&
-                               !cat.includes("lanche") &&
-                               !name.includes("drone");
-                      });
-                      const itemContent = visibleItems.map((item, localIdx) => {
-                        const Icon = CATEGORY_ICONS[item.category] || MapPin;
-                        const catLabel = CATEGORY_LABELS[item.category]?.[lang] || item.category;
-                        const globalIdx = items.indexOf(item);
-                        const descKey = `${item.day_number}-${globalIdx}`;
-                        const sortableId = `${dayNum}-${item.item_index}`;
+            {/* ══════ DAY BODY: image bleeds left, content right ══════ */}
+            <div style={{ background: isEven ? "#fff" : "#fcfaf7" }} className="py-8 md:py-12 border-b border-[#e4dbcc] overflow-hidden">
+              <div className="flex flex-col lg:flex-row lg:items-stretch min-h-[420px]">
 
-                        const inner = (
-                          <>
-                            {editMode && (
-                              <div className="cursor-grab active:cursor-grabbing pt-1 touch-none" data-drag-handle>
-                                <GripVertical className="w-4 h-4" style={{ color: "#8d7b63" }} />
-                              </div>
-                            )}
-                            <div className="w-10 h-10 flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: "#2e2019" }}>
-                              <Icon className="w-5 h-5 text-white" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-[10px] uppercase tracking-[0.3em] font-black mb-1" style={{ color: "#c4a97d" }}>{catLabel}</p>
-                              <span className="text-xl font-black font-outfit uppercase tracking-tight" style={{ color: "#2e2019" }}>
-                                {(() => {
-                                  const prod = findProduct(item);
-                                  const baseName = prod?.name;
-                                  const varName = item.item_name || item.category;
-                                  const catLower = item.category.toLowerCase();
-                                  const isMainType = catLower.includes("cachoeira") || catLower.includes("experiencia") || catLower.includes("experiência");
-                                  
-                                  if (baseName && varName && baseName !== varName) {
-                                    return (
-                                      <span className="flex flex-col">
-                                        <span className="block text-sm font-bold opacity-60 mb-0.5" style={{ color: "#8d7b63" }}>{baseName}</span>
-                                        <span className="leading-tight">{varName}</span>
-                                      </span>
-                                    );
-                                  }
-                                  if (baseName && isMainType) return baseName;
-                                  return varName;
-                                })()}
-                                {item.value === 0 && (
-                                  <span className="ml-3 text-[10px] bg-[#c4a97d] text-white px-2 py-0.5 align-middle tracking-widest font-black">CORTESIA</span>
-                                )}
-                              </span>
-                              {editMode ? (
-                                <input
-                                  className="block w-full text-sm mt-2 bg-white border border-dashed px-3 py-2 outline-none"
-                                  style={{ color: "#8d7b63", borderColor: "#e4dbcc" }}
-                                  placeholder="Ex: 12H - Saída do Aeroporto..."
-                                  value={editDescriptions[descKey] ?? item.description ?? ""}
-                                  onChange={(e) => setEditDescriptions(prev => ({ ...prev, [descKey]: e.target.value }))}
-                                />
-                              ) : (
-                                item.description && (
-                                  <div className="mt-2 pl-4 py-2 pr-2 text-base italic border-l-2 border-[#c4a97d]" style={{ color: "#5c4a32" }}>
-                                    {item.description}
-                                  </div>
-                                )
-                              )}
-                            </div>
-                          </>
-                        );
-
-                        if (editMode) {
-                          return <SortableDayItemWrapper key={sortableId} id={sortableId}>{inner}</SortableDayItemWrapper>;
-                        }
-                        return <div key={`${item.day_number}-${localIdx}`} className="flex items-start gap-4">{inner}</div>;
-                      });
-
-                      if (editMode) {
-                        return (
-                          <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={handleDayDragEnd(dayNum)}>
-                            <SortableContext items={visibleItems.map(i => `${dayNum}-${i.item_index}`)} strategy={verticalListSortingStrategy}>
-                              <div className="space-y-8">{itemContent}</div>
-                            </SortableContext>
-                          </DndContext>
-                        );
-                      }
-                      return <div className="space-y-8">{itemContent}</div>;
-                    })()}
-
-                    {/* ── Observation at end of day ── */}
-                    {editMode ? (
-                      <textarea
-                        className="w-full text-sm leading-relaxed mt-10 bg-white border border-dashed p-4 outline-none resize-none min-h-[60px]"
-                        style={{ color: "#5c4a32", borderColor: "#e4dbcc" }}
-                        placeholder="Observação extra do dia (opcional)..."
-                        value={editObservations[dayNum] || ""}
-                        onChange={(e) => setEditObservations(prev => ({ ...prev, [dayNum]: e.target.value }))}
-                      />
-                    ) : (
-                      dayObservations[dayNum] && (
-                        <p className="text-base italic leading-relaxed mt-10 border-t border-[#e4dbcc] pt-6" style={{ color: "#8d7b63" }}>
-                          {dayObservations[dayNum]}
-                        </p>
-                      )
-                    )}
-                    </div>
-                  </ScrollArea>
-                </div>
-
-                {/* RIGHT — sticky vertical carousel */}
+                {/* LEFT — image bleeds to screen edge (no left padding/margin) */}
                 {gallery.length > 0 && (
-                  <div className="w-full md:w-[55%] flex-shrink-0">
-                    <div className="md:sticky md:top-28 self-start">
-                      <div className="aspect-square md:aspect-auto md:h-[700px] overflow-hidden shadow-2xl rounded-2xl">
-                        <ImageCarousel images={gallery} alt={dayLabel} />
+                  <div className="w-full lg:w-[48%] flex-shrink-0 lg:ml-0">
+                    <div className="lg:sticky lg:top-20 self-start relative overflow-hidden w-full" style={{ aspectRatio: '4/3', maxHeight: '520px' }}>
+                      <ImageCarousel images={gallery} alt={dayLabel} />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none" />
+                      <div className="absolute bottom-8 left-8 right-8 pointer-events-none">
+                        <p className="text-white/50 text-[10px] uppercase tracking-widest font-bold mb-1">{t.day} {dayNum}</p>
+                        <h4 className="text-white font-black text-2xl md:text-3xl uppercase font-outfit tracking-tighter leading-none">
+                          {dayLabel}
+                        </h4>
                       </div>
                     </div>
                   </div>
                 )}
+
+                {/* RIGHT — content with generous padding */}
+                <div className="flex-1 min-w-0 px-8 md:px-14 lg:px-16 py-10 md:py-12 flex flex-col justify-center">
+                  
+                  {/* Day description */}
+                  {dayDescriptions[dayNum] && (
+                    <div className="mb-10">
+                      <p className="text-lg md:text-xl font-light leading-relaxed text-[#5c4a32] italic border-l-4 border-[#c4a97d] pl-6 py-1">
+                        {dayDescriptions[dayNum]}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Day Items List */}
+                  {(() => {
+                    const visibleItems = dayItemsSorted.filter(i => {
+                      const cat = i.category.toLowerCase();
+                      const name = (i.item_name || "").toLowerCase();
+                      return (i.item_name || i.value > 0) && 
+                             !cat.includes("guia") && 
+                             !cat.includes("monitor") &&
+                             !cat.includes("lanche") &&
+                             !name.includes("drone");
+                    });
+                    const itemContent = visibleItems.map((item, localIdx) => {
+                      const Icon = CATEGORY_ICONS[item.category] || MapPin;
+                      const catLabel = CATEGORY_LABELS[item.category]?.[lang] || item.category;
+                      const globalIdx = items.indexOf(item);
+                      const descKey = `${item.day_number}-${globalIdx}`;
+                      const sortableId = `${dayNum}-${item.item_index}`;
+
+                      const inner = (
+                        <>
+                          {editMode && (
+                            <div className="cursor-grab active:cursor-grabbing pt-1 touch-none" data-drag-handle>
+                              <GripVertical className="w-4 h-4" style={{ color: "#8d7b63" }} />
+                            </div>
+                          )}
+                          <div className="w-10 h-10 flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: "#2e2019" }}>
+                            <Icon className="w-5 h-5 text-white" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[10px] uppercase tracking-[0.3em] font-black mb-1" style={{ color: "#c4a97d" }}>{catLabel}</p>
+                            <span className="text-xl font-black font-outfit uppercase tracking-tight" style={{ color: "#2e2019" }}>
+                              {(() => {
+                                const prod = findProduct(item);
+                                const baseName = prod?.name;
+                                const varName = item.item_name || item.category;
+                                const catLower = item.category.toLowerCase();
+                                const isMainType = catLower.includes("cachoeira") || catLower.includes("experiencia") || catLower.includes("experiência");
+                                
+                                if (baseName && varName && baseName !== varName) {
+                                  return (
+                                    <span className="flex flex-col">
+                                      <span className="block text-sm font-bold opacity-60 mb-0.5" style={{ color: "#8d7b63" }}>{baseName}</span>
+                                      <span className="leading-tight">{varName}</span>
+                                    </span>
+                                  );
+                                }
+                                if (baseName && isMainType) return baseName;
+                                return varName;
+                              })()}
+                              {item.value === 0 && (
+                                <span className="ml-3 text-[10px] bg-[#c4a97d] text-white px-2 py-0.5 align-middle tracking-widest font-black">CORTESIA</span>
+                              )}
+                            </span>
+                            {editMode ? (
+                              <input
+                                className="block w-full text-sm mt-2 bg-white border border-dashed px-3 py-2 outline-none"
+                                style={{ color: "#8d7b63", borderColor: "#e4dbcc" }}
+                                placeholder="Ex: 12H - Saída do Aeroporto..."
+                                value={editDescriptions[descKey] ?? item.description ?? ""}
+                                onChange={(e) => setEditDescriptions(prev => ({ ...prev, [descKey]: e.target.value }))}
+                              />
+                            ) : (
+                              item.description && (
+                                <div className="mt-2 pl-4 py-2 pr-2 text-base italic border-l-2 border-[#c4a97d]" style={{ color: "#5c4a32" }}>
+                                  {item.description}
+                                </div>
+                              )
+                            )}
+                          </div>
+                        </>
+                      );
+
+                      if (editMode) {
+                        return <SortableDayItemWrapper key={sortableId} id={sortableId}>{inner}</SortableDayItemWrapper>;
+                      }
+                      return <div key={`${item.day_number}-${localIdx}`} className="flex items-start gap-4">{inner}</div>;
+                    });
+
+                    if (editMode) {
+                      return (
+                        <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={handleDayDragEnd(dayNum)}>
+                          <SortableContext items={visibleItems.map(i => `${dayNum}-${i.item_index}`)} strategy={verticalListSortingStrategy}>
+                            <div className="space-y-8">{itemContent}</div>
+                          </SortableContext>
+                        </DndContext>
+                      );
+                    }
+                    return <div className="space-y-8">{itemContent}</div>;
+                  })()}
+
+                  {/* Extra Observation at end of day */}
+                  {editMode ? (
+                    <textarea
+                      className="w-full text-sm leading-relaxed mt-10 bg-white border border-dashed p-4 outline-none resize-none min-h-[60px]"
+                      style={{ color: "#5c4a32", borderColor: "#e4dbcc" }}
+                      placeholder="Observação extra do dia (opcional)..."
+                      value={editObservations[dayNum] || ""}
+                      onChange={(e) => setEditObservations(prev => ({ ...prev, [dayNum]: e.target.value }))}
+                    />
+                  ) : (
+                    dayObservations[dayNum] && (
+                      <p className="text-base italic leading-relaxed mt-10 border-t border-[#e4dbcc] pt-6" style={{ color: "#8d7b63" }}>
+                        {dayObservations[dayNum]}
+                      </p>
+                    )
+                  )}
+
+                </div>
               </div>
-            </div>
             </div>
           </motion.section>
         );
