@@ -1162,18 +1162,18 @@ export default function ProposalPublic() {
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 1.2 }}
-        className="py-32 md:py-48 px-6 bg-white border-y border-[#e4dbcc]"
+        className="py-12 md:py-16 px-6 bg-white border-y border-[#e4dbcc]"
       >
         <div className="max-w-4xl mx-auto text-center">
-          <img loading="lazy" src={logoAtmos} alt="ATMOS" className="h-20 mx-auto mb-12 opacity-80" />
-          <h2 className="text-3xl md:text-6xl font-black leading-none mb-10 font-outfit uppercase tracking-tighter" style={{ color: "#2e2019" }}>
+          <img loading="lazy" src={logoAtmos} alt="ATMOS" className="h-16 mx-auto mb-6 opacity-80" />
+          <h2 className="text-3xl md:text-5xl font-black leading-none mb-6 font-outfit uppercase tracking-tighter" style={{ color: "#2e2019" }}>
             {t.brandTitle}
           </h2>
-          <div className="w-16 h-[1px] bg-[#c4a97d] mx-auto mb-10" />
-          <p className="text-lg md:text-2xl leading-relaxed max-w-3xl mx-auto mb-6 font-light italic" style={{ color: "#2e2019" }}>
+          <div className="w-16 h-[1px] bg-[#c4a97d] mx-auto mb-6" />
+          <p className="text-base md:text-xl leading-relaxed max-w-3xl mx-auto mb-4 font-light italic" style={{ color: "#2e2019" }}>
             {t.brandText1}
           </p>
-          <p className="text-base md:text-lg leading-relaxed max-w-2xl mx-auto uppercase tracking-widest font-bold" style={{ color: "#8d7b63" }}>
+          <p className="text-sm md:text-base leading-relaxed max-w-2xl mx-auto uppercase tracking-widest font-bold" style={{ color: "#8d7b63" }}>
             {t.brandText2}
           </p>
         </div>
@@ -1184,20 +1184,6 @@ export default function ProposalPublic() {
       <div className="h-[40vh] md:h-[50vh] overflow-hidden">
         <img loading="lazy" src={dividerImage} alt="" className="w-full h-full object-cover" />
       </div>
-
-      {/* ══════════════════════ ITINERARY SECTION TITLE ══════════════════════ */}
-      {days.length > 0 && (
-        <section className="py-24 md:py-32 text-center" style={{ background: "#2e2019" }}>
-          <div className="inline-flex items-center gap-4 mb-6">
-            <div className="w-12 h-[1px] bg-[#c4a97d]/40" />
-            <p className="text-[12px] uppercase tracking-[0.5em] font-bold" style={{ color: "#c4a97d" }}>
-              {lang === "pt" ? "Cronograma" : lang === "es" ? "Cronograma" : "Schedule"}
-            </p>
-            <div className="w-12 h-[1px] bg-[#c4a97d]/40" />
-          </div>
-          <h2 className="text-5xl md:text-8xl font-black text-white font-outfit uppercase tracking-tighter leading-none">{t.yourTrip}</h2>
-        </section>
-      )}
 
 
       {/* ══════════════════════ DAY SECTIONS ══════════════════════ */}
