@@ -85,6 +85,7 @@
     <!-- End Google Tag Manager (noscript) -->
     <div id="root"></div>
     <script>
+      window.__handling_error = false;
       window.onerror = function(message, source, lineno, colno, error) {
         console.error("Runtime error caught:", message, source, lineno, colno, error);
         
@@ -124,8 +125,6 @@
           }
         } catch (e) {
           console.error("Failed to render error overlay safely:", e);
-        } finally {
-          window.__handling_error = false;
         }
       };
       
@@ -170,8 +169,6 @@
           }
         } catch (e) {
           console.error("Failed to render promise rejection safely:", e);
-        } finally {
-          window.__handling_error = false;
         }
       });
     </script>
