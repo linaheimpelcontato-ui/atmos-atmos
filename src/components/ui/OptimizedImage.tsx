@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "./skeleton";
 import { motion, HTMLMotionProps } from "framer-motion";
@@ -26,6 +26,13 @@ export function OptimizedImage({
   const [currentSrc, setCurrentSrc] = useState(src);
   const [allSrcs, setAllSrcs] = useState<string[]>([]);
   const [srcIndex, setSrcIndex] = useState(0);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    if (imgRef.current?.complete && currentSrc) {
+      setLoaded(true);
+    }
+  }, [currentSrc]);
 
   useEffect(() => {
     const list = [src];
@@ -99,6 +106,7 @@ export function OptimizedImage({
         <div className="absolute inset-0 bg-gradient-to-br from-[#1A261B] to-[#2A362B] animate-pulse" />
       )}
       <motion.img
+        ref={imgRef}
         src={currentSrc}
         alt={alt || "Atmos Expedition"}
         onLoad={(e) => {
