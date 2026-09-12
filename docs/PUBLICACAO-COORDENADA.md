@@ -180,3 +180,9 @@ Restauração destrutiva integral não está incluída automaticamente na autori
 Guardar no ticket: SHA/manifesto liberado; parecer da 24; ambiente e cobertura efetiva de homologação diante do bloqueio DEV; evidência de desbloqueio/preview e deployment Vercel final; projeto e lista de migrations; versões das functions; backup e ensaio de restore; responsáveis/horários; checks de dados antes/depois; resultados dos smoke tests; eventos reconciliados e pendências. Secrets e dados pessoais ficam em armazenamento restrito, nunca anexados ao Git.
 
 Referências locais: [homologação integrada](HOMOLOGACAO-FLUXOS-2026-09-12.md), [matriz de autorização](revisoes/AUTORIZACAO-MODULOS-2026-09-12.md) e [configuração das edges](../supabase/functions/_shared/ADMIN_AUTHORIZATION.md).
+
+### Diagnóstico confirmado da Vercel — 18:05 BRT
+
+No push de `52215fd`, o status GitHub informou: `Git author gustavosextaro must have access to the project on Vercel to create deployments.` O impedimento agora tem causa identificada: vínculo/permissão da conta autora no projeto Vercel. Regularizar o acesso legítimo ou executar a publicação pela conta titular; não alterar autoria para contornar o controle. Nenhuma conclusão sobre necessidade de plano pago foi obtida. Backup GitHub confirmado; publicação remota permanece pendente.
+
+Consulta PRD adicional confirmou coluna de vínculo de guia existente e zero admins restritos vinculados como guia. A permissão legada `['all']` continua sendo a pendência de dados conhecida.

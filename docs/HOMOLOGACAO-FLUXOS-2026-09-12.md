@@ -59,3 +59,9 @@ Concluir migrations de aprovação/recebíveis e transição Clicksign, revisar 
 - Procedimento assistido de Clicksign disponível em [CLICKSIGN-OPERACAO.md](CLICKSIGN-OPERACAO.md); guia de integração/recuperação em [PUBLICACAO-COORDENADA.md](PUBLICACAO-COORDENADA.md). Documentos operacionais não representam deploy nem comprovação de configuração dos provedores.
 
 Revisão final do Claude: nenhum bypass ou lockout confirmado como bug na24. Suíte independente passou em clone vazio; consulta adicional no banco de QA confirmou B2C sem leitura de B2B. Permissões legadas e contas com papéis combinados continuam sujeitos ao preflight documentado.
+
+### Diagnóstico confirmado da Vercel — 18:05 BRT
+
+No push de `52215fd`, o status GitHub informou: `Git author gustavosextaro must have access to the project on Vercel to create deployments.` O impedimento agora tem causa identificada: vínculo/permissão da conta autora no projeto Vercel. Regularizar o acesso legítimo ou executar a publicação pela conta titular; não alterar autoria para contornar o controle. Nenhuma conclusão sobre necessidade de plano pago foi obtida. Backup GitHub confirmado; publicação remota permanece pendente.
+
+Consulta PRD adicional confirmou coluna de vínculo de guia existente e zero admins restritos vinculados como guia. A permissão legada `['all']` continua sendo a pendência de dados conhecida.
