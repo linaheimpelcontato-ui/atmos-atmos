@@ -31,7 +31,6 @@ export default function GuideWaterfalls() {
   const { data: guide } = useQuery({
     queryKey: ["guide-details", guideId],
     queryFn: async () => {
-      if (guideId === "preview-admin-mode") return { has_4x4: true };
       const { data } = await db.from("guides").select("has_4x4").eq("id", guideId).single();
       return data;
     },

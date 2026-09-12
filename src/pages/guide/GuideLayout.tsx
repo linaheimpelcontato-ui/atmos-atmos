@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react";
-import { Link, useLocation, Outlet } from "react-router-dom";
+import { Link, useLocation, useSearchParams, Outlet } from "react-router-dom";
 import { LayoutDashboard, Calendar, User, Mountain, ArrowLeft, ShieldCheck, Menu } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useGuideGuard } from "@/hooks/useGuideGuard";
 import { storageUrl } from "@/lib/storage";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -28,7 +30,7 @@ function NavLinks({ location, onNavigate }: { location: ReturnType<typeof useLoc
           return (
             <Link
               key={link.path}
-              to={link.path}
+              to={link.path + location.search}
               onClick={onNavigate}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 isActive
@@ -58,7 +60,15 @@ function NavLinks({ location, onNavigate }: { location: ReturnType<typeof useLoc
 }
 
 export default function GuideLayout() {
-  const { isGuide, checking } = useGuideGuard();
+  const { isGuide, checking, error, isAdmin, preview, userId, guideId } = useGuideGuard();
+  const [, setSearchParams] = useSearchParams();
+  const guides = useQuery({ queryKey: ['guide-preview-options', userId], enabled: isAdmin,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('guides').select('id,name').order('name');
+      if (error) throw error;
+      return data;
+    },
+  });
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const mainRef = useRef<HTMLElement>(null);
@@ -68,7 +78,9 @@ export default function GuideLayout() {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
-  if (checking || !isGuide) {
+  if (!checking && (error || !isGuide)) return <div className="p-6" role="alert">{error ? 'Não foi possível autorizar o portal. Verifique o vínculo da conta ou a prévia selecionada.' : 'Sua conta não possui vínculo de guia.'} <Link to="/">Voltar</Link>{preview && <button onClick={() => setSearchParams({})}>Sair da prévia</button>}</div>;
+
+  if (checking) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
@@ -130,7 +142,13 @@ export default function GuideLayout() {
 
       {/* Main content */}
       <main ref={mainRef} className="flex-1 overflow-y-auto overflow-x-hidden md:pt-0 pt-16 bg-background/50">
-        <Outlet />
+        {isAdmin && <div className="p-4 border-b"><label>Prévia administrativa (agenda e dashboard): <select aria-label="Guia da prévia" value={preview || ''} onChange={e => setSearchParams(e.target.value ? { guide: e.target.value } : {})}>
+          <option value="">Meu vínculo / selecionar guia</option>
+          {guides.data?.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+        </select></label>{guides.error && <p role="alert">Não foi possível listar guias.</p>}</div>}
+        {/^\/guia\/(perfil|cachoeiras)\/?$/.test(location.pathname) && (preview || !isAdmin || !guideId)
+          ? <p className="p-6">Esta área ainda não está disponível para autoatendimento. Solicite à equipe a atualização do cadastro ou dos valores.</p>
+          : <Outlet />}
       </main>
     </div>
   );
