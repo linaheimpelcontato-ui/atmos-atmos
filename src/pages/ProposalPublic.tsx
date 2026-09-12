@@ -7,11 +7,12 @@ import { storageUrl, optimizedUrl, IMAGE_PRESETS } from "@/lib/storage";
 import { fetchStorageImages } from "@/hooks/useStorageImages";
 import { getDayImage } from "@/components/itineraries/dayImages";
 import { trackProposalView } from "@/lib/analytics";
+import { parsePublicProposal, canShowPriceBreakdown, findDayTotal, type PublicProposal } from "@/lib/publicProposal";
 import {
   Check, MapPin, Users, CalendarDays,
   Sunrise, Mountain, Compass, Sparkles, Leaf, MessageCircle,
   ChevronLeft, ChevronRight, ChevronDown, Home, Car, Footprints, Truck,
-  Pencil, Save, Globe, Link, FileSignature, GripVertical,
+  Pencil, Save, Globe, Link, FileSignature, GripVertical, Eye, EyeOff,
 } from "lucide-react";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
@@ -26,23 +27,10 @@ const leafTexture = optimizedUrl("proposta-visual-cliente/leaf-texture - horizon
 const leafTextureAlt = optimizedUrl("proposta-visual-cliente/leaf-texture.jpg", IMAGE_PRESETS.large);
 
 
-/* ───── types ───── */
-type Proposal = {
-  id: string; title: string; status: string; notes: string | null;
-  num_people: number; num_days: number; start_date: string | null; end_date: string | null;
-  subtotal: number; discount_percent: number; discount_fixed: number; tax_percent: number; total: number;
-  valid_until: string | null; language: string; published_at: string | null;
-  share_token?: string | null;
-  prospects?: { name: string; email: string | null } | null;
-  sellers?: { name: string; phone: string | null } | null;
-  atmos_service?: { price_per_person_day: number; description: string; internal_costs?: any[]; num_courtesies?: number } | null;
-  payment_terms?: { installments: { label: string; percent: number; due_rule: string }[] } | null;
-  contract_url?: string | null;
-  proposal_accommodations?: any[];
-  proposal_costs?: any[];
-  proposal_days?: any[];
-  proposal_day_items?: any[];
-};
+/* ───── types ─────
+ * Proposal is the RPC-shaped public projection (see src/lib/publicProposal.ts);
+ * this page never queries proposals/proposal_day_items/etc. directly. */
+type Proposal = PublicProposal;
 type DayItem = {
   id?: string;
   day_number: number; day_label: string; category: string;
@@ -308,6 +296,7 @@ export default function ProposalPublic() {
   const [savingContract, setSavingContract] = useState(false);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [togglingBreakdown, setTogglingBreakdown] = useState(false);
   const proposalIdRef = useRef<string | null>(null);
   const [contractDialogOpen, setContractDialogOpen] = useState(false);
   const [contractUrlInput, setContractUrlInput] = useState("");
@@ -338,54 +327,25 @@ export default function ProposalPublic() {
   useEffect(() => {
     if (!token) return;
     (async () => {
-      // 1. Try fetching by slug (standard)
-      const { data: prop, error: propError } = await supabase
-        .from("proposals")
-        .select(`
-          *,
-          prospects (*),
-          sellers (*),
-          proposal_days (*),
-          proposal_day_items (*),
-          proposal_accommodations (*),
-          proposal_costs (*)
-        `)
-        .eq("slug", token)
-        .single();
+      // Public/shared reads go exclusively through this RPC: it enforces
+      // published_at for non-admins and returns an explicit, public-safe
+      // column projection (never proposal_costs, sellers, cost_price,
+      // commission_percent, supplier_id or atmos_service.internal_costs).
+      const { data, error: rpcError } = await supabase.rpc("get_public_proposal", { p_token: token });
 
-      let finalProp = prop;
-      
-      // 2. Fallback to share_token if slug failed or not found
-      if (propError || !prop) {
-        const { data: propShare, error: shareError } = await supabase
-          .from("proposals")
-          .select(`
-            *,
-            prospects (*),
-            sellers (*),
-            proposal_days (*),
-            proposal_day_items (*),
-            proposal_accommodations (*),
-            proposal_costs (*)
-          `)
-          .eq("share_token", token)
-          .single();
-        
-        if (propShare) {
-          finalProp = propShare;
-        } else {
-          setLoading(false);
-          setError(true);
-          return;
-        }
+      const finalProp = parsePublicProposal(data);
+      if (rpcError || !finalProp) {
+        setLoading(false);
+        setError(true);
+        return;
       }
 
-      // 3. Populate state with finalProp
-      setProposal(finalProp as any);
+      setProposal(finalProp);
       proposalIdRef.current = finalProp.id;
-      
+
       const sortedItems = (finalProp.proposal_day_items || [])
-        .sort((a: any, b: any) => {
+        .slice()
+        .sort((a, b) => {
           if (a.day_number !== b.day_number) return a.day_number - b.day_number;
           return (a.item_index || 0) - (b.item_index || 0);
         });
@@ -393,18 +353,29 @@ export default function ProposalPublic() {
 
       const obsMap: Record<number, string> = {};
       const descMap: Record<number, string> = {};
-      (finalProp.proposal_days || []).forEach((d: any) => {
+      (finalProp.proposal_days || []).forEach((d) => {
         obsMap[d.day_number] = d.observation || "";
         descMap[d.day_number] = d.description || "";
       });
       setDayObservations(obsMap);
       setDayDescriptions(descMap);
 
-      const { data: prods } = await supabase
-        .from("products")
-        .select("id, source_id, type, name, variables");
-      setProducts(prods || []);
-      
+      // Public catalog read: goes through get_public_products (safe, explicit
+      // projection -- id/source_id/name/type/category/segment/description/
+      // unit_price/currency/is_active/variables, no cost_price/supplier_id).
+      // No direct `.from("products")` select and no insecure fallback: if the
+      // RPC errors (e.g. not deployed yet), we fail closed to an empty list
+      // rather than reading the unrestricted table.
+      // TODO(codex): drop the `as any` casts once get_public_products lands
+      // in the generated Supabase types.
+      const { data: prods, error: prodsError } = await (supabase.rpc as any)("get_public_products", { p_type: null });
+      if (prodsError) {
+        console.error("Error loading public products:", prodsError);
+        setProducts([]);
+      } else {
+        setProducts((prods as Product[]) || []);
+      }
+
       trackProposalView(finalProp.id);
       setLoading(false);
     })();
@@ -537,6 +508,21 @@ export default function ProposalPublic() {
       console.error("Error toggling publish:", e);
     } finally {
       setPublishing(false);
+    }
+  };
+
+  const toggleShowBreakdown = async () => {
+    const propId = proposalIdRef.current;
+    if (!propId || !proposal) return;
+    setTogglingBreakdown(true);
+    try {
+      const newVal = !proposal.show_price_breakdown;
+      await supabase.from("proposals").update({ show_price_breakdown: newVal }).eq("id", propId);
+      setProposal((prev: Proposal | null) => prev ? { ...prev, show_price_breakdown: newVal } : prev);
+    } catch (e) {
+      console.error("Error toggling price breakdown:", e);
+    } finally {
+      setTogglingBreakdown(false);
     }
   };
 
@@ -821,33 +807,20 @@ export default function ProposalPublic() {
   const atmos = proposal.atmos_service;
   const atmosPPD = atmos?.price_per_person_day || 0;
   const days = [...new Set(items.map(i => i.day_number))].sort((a, b) => a - b);
+  // Itemized per-line pricing is hidden from clients by default; only staff
+  // can flip show_price_breakdown on for a given proposal (admins always see it).
+  const showBreakdown = canShowPriceBreakdown(proposal, isAdmin);
 
-  const dayPerPersonTotal = (dayNum: number) => {
-    const dayItems2 = items.filter(i => i.day_number === dayNum);
-    const nonGuide = dayItems2.filter(i => i.category !== "Diária Guia ATMOS");
-    const guideItems = dayItems2.filter(i => i.category === "Diária Guia ATMOS");
-    let perPerson = 0;
-    for (const i of nonGuide) perPerson += i.value;
-    if (guideItems.length > 0) {
-      const guideTotal = guideItems.reduce((s, i) => s + i.value * (i.quantity || 1), 0);
-      perPerson += guideTotal / (proposal.num_people || 1);
-    }
-    return perPerson + atmosPPD;
-  };
-
-  // Use saved proposal values as source of truth
-  const numCourtesies = (atmos as any)?.num_courtesies || 0;
-  const numPaying = Math.max(1, proposal.num_people - numCourtesies);
+  // Public per-person/per-day totals come from the RPC (get_public_proposal),
+  // computed server-side so they stay correct even when show_price_breakdown
+  // is off and raw item values/atmos_service.price_per_person_day are null.
+  const dayPerPersonTotal = (dayNum: number) => findDayTotal(proposal, dayNum);
+  const numCourtesies = proposal.num_courtesies;
+  const numPaying = proposal.num_paying;
   const grandTotal = proposal.total;
-  const netPerPerson = numPaying > 0 ? grandTotal / numPaying : 0;
-  const subtotalPerPerson = proposal.subtotal > 0
-    ? proposal.subtotal / proposal.num_people + atmosPPD * (proposal.num_days || days.length)
-    : days.reduce((sum, d) => sum + dayPerPersonTotal(d), 0);
-  const discountAmt = proposal.discount_percent > 0
-    ? subtotalPerPerson * (proposal.discount_percent / 100)
-    : proposal.discount_fixed > 0
-      ? proposal.discount_fixed / proposal.num_people
-      : 0;
+  const netPerPerson = proposal.net_per_person;
+  const subtotalPerPerson = proposal.subtotal_per_person;
+  const discountAmt = proposal.discount_amount_per_person;
 
   const getDayWaterfallInfo = (dayNum: number) => {
     const dayItems2 = items.filter(i => i.day_number === dayNum);
@@ -1097,6 +1070,16 @@ export default function ProposalPublic() {
                   <Globe className="w-3.5 h-3.5" />
                   {publishing ? "..." : proposal.published_at ? "Recolher" : "Publicar"}
                 </button>
+                <button
+                  onClick={toggleShowBreakdown}
+                  disabled={togglingBreakdown}
+                  title="Mostrar/ocultar o detalhamento de preços por item para o cliente"
+                  className="px-3 py-1.5 text-[10px] uppercase tracking-widest font-bold transition-all flex items-center gap-1.5"
+                  style={{ background: proposal.show_price_breakdown ? "#556952" : "#fff", color: proposal.show_price_breakdown ? "#fff" : "#2e2019", border: proposal.show_price_breakdown ? "none" : "1px solid #e4dbcc" }}
+                >
+                  {proposal.show_price_breakdown ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                  {togglingBreakdown ? "..." : proposal.show_price_breakdown ? "Detalhamento Visível" : "Detalhamento Oculto"}
+                </button>
               </>
             ) : (
               <>
@@ -1116,6 +1099,16 @@ export default function ProposalPublic() {
                 >
                   <Globe className="w-3.5 h-3.5" />
                   {publishing ? "..." : proposal.published_at ? "Recolher" : "Publicar"}
+                </button>
+                <button
+                  onClick={toggleShowBreakdown}
+                  disabled={togglingBreakdown}
+                  title="Mostrar/ocultar o detalhamento de preços por item para o cliente"
+                  className="px-3 py-1.5 text-[10px] uppercase tracking-widest font-bold transition-all flex items-center gap-1.5"
+                  style={{ background: proposal.show_price_breakdown ? "#556952" : "#fff", color: proposal.show_price_breakdown ? "#fff" : "#2e2019", border: proposal.show_price_breakdown ? "none" : "1px solid #e4dbcc" }}
+                >
+                  {proposal.show_price_breakdown ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                  {togglingBreakdown ? "..." : proposal.show_price_breakdown ? "Detalhamento Visível" : "Detalhamento Oculto"}
                 </button>
               </>
             )}
@@ -1614,37 +1607,53 @@ export default function ProposalPublic() {
                 const dayLabel = dayItemsSorted[0]?.day_label || `${t.day} ${dayNum}`;
                 const isExpanded = expandedDays.includes(dayNum);
                 
-                return (
-                  <div key={dayNum} className="border-b border-white/5">
-                    <button 
-                      onClick={() => setExpandedDays(prev => 
-                        prev.includes(dayNum) ? prev.filter(d => d !== dayNum) : [...prev, dayNum]
-                      )}
-                      className="w-full flex flex-col md:flex-row md:items-center justify-between py-8 gap-4 hover:bg-white/5 transition-all text-left group"
-                    >
-                      <div className="flex items-baseline gap-6">
-                        <span className="text-xl font-black font-outfit text-[#c4a97d] w-12 group-hover:scale-110 transition-transform">{String(dayNum).padStart(2, "0")}</span>
-                        <div className="flex flex-col">
-                          <span className="text-xs uppercase tracking-[0.2em] font-black text-white/40 mb-1">
-                            {proposal.start_date
-                              ? (() => { const d = new Date(proposal.start_date + "T12:00:00"); d.setDate(d.getDate() + dayNum - 1); return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${String(d.getFullYear()).slice(-2)}`; })()
-                              : `${t.day} ${dayNum}`}
-                          </span>
-                          <span className="text-xl text-white/80 uppercase tracking-tight font-outfit">{dayLabel}</span>
+                const dayHeaderContent = (
+                  <>
+                    <div className="flex items-baseline gap-6">
+                      <span className="text-xl font-black font-outfit text-[#c4a97d] w-12 group-hover:scale-110 transition-transform">{String(dayNum).padStart(2, "0")}</span>
+                      <div className="flex flex-col">
+                        <span className="text-xs uppercase tracking-[0.2em] font-black text-white/40 mb-1">
+                          {proposal.start_date
+                            ? (() => { const d = new Date(proposal.start_date + "T12:00:00"); d.setDate(d.getDate() + dayNum - 1); return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${String(d.getFullYear()).slice(-2)}`; })()
+                            : `${t.day} ${dayNum}`}
+                        </span>
+                        <span className="text-xl text-white/80 uppercase tracking-tight font-outfit">{dayLabel}</span>
+                        {showBreakdown && (
                           <span className="text-[9px] uppercase tracking-widest text-[#c4a97d] font-black mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                             {isExpanded ? "Clique para recolher" : "Clique para ver detalhes"}
                           </span>
-                        </div>
+                        )}
                       </div>
-                      <div className="flex items-center gap-8">
-                        <span className="text-2xl font-black font-outfit text-white tabular-nums tracking-tighter">{fmt(dayPP)}</span>
+                    </div>
+                    <div className="flex items-center gap-8">
+                      <span className="text-2xl font-black font-outfit text-white tabular-nums tracking-tighter">{fmt(dayPP)}</span>
+                      {showBreakdown && (
                         <div className={`p-2 border border-white/10 transition-all ${isExpanded ? "bg-[#c4a97d] border-[#c4a97d]" : "group-hover:border-[#c4a97d]"}`}>
                           <ChevronDown className={`w-4 h-4 ${isExpanded ? "text-white rotate-180" : "text-[#c4a97d]"} transition-transform duration-500`} />
                         </div>
-                      </div>
-                    </button>
+                      )}
+                    </div>
+                  </>
+                );
 
-                    {isExpanded && (
+                return (
+                  <div key={dayNum} className="border-b border-white/5">
+                    {showBreakdown ? (
+                      <button
+                        onClick={() => setExpandedDays(prev =>
+                          prev.includes(dayNum) ? prev.filter(d => d !== dayNum) : [...prev, dayNum]
+                        )}
+                        className="w-full flex flex-col md:flex-row md:items-center justify-between py-8 gap-4 hover:bg-white/5 transition-all text-left group"
+                      >
+                        {dayHeaderContent}
+                      </button>
+                    ) : (
+                      <div className="w-full flex flex-col md:flex-row md:items-center justify-between py-8 gap-4 group">
+                        {dayHeaderContent}
+                      </div>
+                    )}
+
+                    {showBreakdown && isExpanded && (
                       <div className="pb-10 pl-16 pr-10 space-y-4 animate-fade-in">
                         {dayItemsSorted
                           .filter(i => i.item_name || i.value > 0)
@@ -1866,6 +1875,7 @@ export default function ProposalPublic() {
         open={feedbackOpen}
         onOpenChange={setFeedbackOpen}
         proposalId={proposal.id}
+        shareToken={proposal.share_token}
         lang={lang}
       />
       {/* ══════════════════════ VERSION MARKER ══════════════════════ */}

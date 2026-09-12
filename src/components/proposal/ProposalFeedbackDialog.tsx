@@ -7,14 +7,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Trash2, Send, HelpCircle, PenLine } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-const db = supabase as any;
-
 type FeedbackItem = { type: "question" | "change_request"; content: string };
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   proposalId: string;
+  /** Required to submit: the RPC verifies this matches the proposal and that it's published. */
+  shareToken: string | null;
   lang?: string;
 }
 
@@ -66,7 +66,7 @@ const i18n: Record<string, Record<string, string>> = {
   },
 };
 
-export default function ProposalFeedbackDialog({ open, onOpenChange, proposalId, lang = "pt" }: Props) {
+export default function ProposalFeedbackDialog({ open, onOpenChange, proposalId, shareToken, lang = "pt" }: Props) {
   const t = i18n[lang] || i18n.pt;
   const { toast } = useToast();
   const [questions, setQuestions] = useState<string[]>([""]);
@@ -93,15 +93,23 @@ export default function ProposalFeedbackDialog({ open, onOpenChange, proposalId,
       toast({ title: t.empty, variant: "destructive" });
       return;
     }
+    if (!shareToken) {
+      toast({ title: "Erro ao enviar", variant: "destructive" });
+      return;
+    }
     setSending(true);
     try {
-      const payload = allItems.map(item => ({
-        proposal_id: proposalId,
-        type: item.type,
-        content: item.content,
-      }));
-      const { error } = await db.from("proposal_feedback").insert(payload);
-      if (error) throw error;
+      // Goes through submit_proposal_feedback: verifies proposal_id + share_token
+      // match a published proposal server-side, instead of a direct table insert.
+      for (const item of allItems) {
+        const { data: ok, error } = await supabase.rpc("submit_proposal_feedback", {
+          p_proposal_id: proposalId,
+          p_share_token: shareToken,
+          p_type: item.type,
+          p_content: item.content,
+        });
+        if (error || !ok) throw error || new Error("feedback rejected");
+      }
       toast({ title: t.success, className: "border-white/20 text-white [&>div]:text-white", style: { background: "rgba(0,0,0,0.08)", backdropFilter: "blur(20px)" } } as any);
       setQuestions([""]);
       setChanges([""]);

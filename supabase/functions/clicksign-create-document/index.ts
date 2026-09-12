@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
     // Validate proposal
     const { data: proposal, error: pErr } = await supabase
       .from("proposals")
-      .select("id, title, status, share_token, contract_url, prospect_id, prospects(name, email)")
+      .select("id, title, status, share_token, contract_url, prospect_id, published_at, prospects(name, email)")
       .eq("id", proposal_id)
       .single();
 
@@ -54,6 +54,12 @@ Deno.serve(async (req) => {
     if (proposal.share_token !== share_token)
       return new Response(JSON.stringify({ error: "Invalid token" }), {
         status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+
+    if (!proposal.published_at)
+      return new Response(JSON.stringify({ error: "Proposal is not published" }), {
+        status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
 

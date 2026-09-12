@@ -1374,6 +1374,7 @@ export type Database = {
           segment: string
           seller_id: string | null
           share_token: string | null
+          show_price_breakdown: boolean
           slug: string | null
           start_date: string | null
           status: string
@@ -1407,6 +1408,7 @@ export type Database = {
           segment?: string
           seller_id?: string | null
           share_token?: string | null
+          show_price_breakdown?: boolean
           slug?: string | null
           start_date?: string | null
           status?: string
@@ -1440,6 +1442,7 @@ export type Database = {
           segment?: string
           seller_id?: string | null
           share_token?: string | null
+          show_price_breakdown?: boolean
           slug?: string | null
           start_date?: string | null
           status?: string
@@ -1935,6 +1938,11 @@ export type Database = {
       save_proposal_bundle: {
         Args: { p_id: string | null; p_proposal: Json; p_items: Json; p_costs: Json; p_days: Json; p_accommodations: Json; p_commissions: Json }
         Returns: Json
+      }
+      get_public_proposal: { Args: { p_token: string }; Returns: Json }
+      submit_proposal_feedback: {
+        Args: { p_content: string; p_proposal_id: string; p_share_token: string; p_type: string }
+        Returns: boolean
       }
       has_role: {
         Args: {

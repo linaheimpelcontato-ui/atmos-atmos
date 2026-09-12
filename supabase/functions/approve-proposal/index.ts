@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     // Validate proposal exists and share_token matches
     const { data: proposal, error: fetchErr } = await supabase
       .from("proposals")
-      .select("id, status, prospect_id, share_token")
+      .select("id, status, prospect_id, share_token, published_at, valid_until")
       .eq("id", proposal_id)
       .single();
 
@@ -44,6 +44,20 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({ error: "Invalid token" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!proposal.published_at) {
+      return new Response(
+        JSON.stringify({ error: "Proposal is not published" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (proposal.valid_until && new Date(proposal.valid_until) < new Date()) {
+      return new Response(
+        JSON.stringify({ error: "Proposal has expired" }),
+        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
