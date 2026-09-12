@@ -4,6 +4,10 @@ Este registro atualiza o encerramento de 11/09. A branch continua `codex/atmos-s
 
 ## O que o painel permitiu descobrir
 
+Atualização após o envio dos IDs pelo Gustavo: o CLI Supabase está agora autenticado. `supabase projects list` confirmou `ekbsqckzelabjabuodmo` como **atmos-PRD**, ACTIVE_HEALTHY, e `zjavxhmxrbpidvssrbca` como **atmos-DEV**, INACTIVE (pausado na captura). Ambos em São Paulo. `.env` e `.env.production` apontam para PRD. A pendência anterior de autenticação do CLI foi superada.
+
+Consultas administrativas concluídas: 15 funções listadas em PRD e 14 em DEV; isso é inventário, não validação de execução. `supabase migration list --linked` conectou ao banco PRD e mostrou histórico correspondente ao local até `20260330233228`. Treze migrations locais não têm registro remoto: as três de abril (`20260410000000`, `20260421113744`, `20260430000000`) e as dez de setembro. Ausência no histórico não prova ausência dos objetos SQL: comparar schema antes de aplicar ou reparar histórico. Nenhuma migration foi aplicada e DEV não foi reativado nesta consulta. Acesso ao banco DEV ainda não foi testado por estar pausado.
+
 | Área inspecionada | Evidência no painel publicado |
 | --- | --- |
 | Painel do Site | Métricas, filtros e funis existentes; não é uma página vazia. |
