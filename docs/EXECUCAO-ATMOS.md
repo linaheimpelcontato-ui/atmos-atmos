@@ -74,3 +74,15 @@ Consulte `HOMOLOGACAO-E-PENDENCIAS.md` para o limite exato desta entrega e os en
 ## Inventário inicial de mídia
 
 `docs/MEDIA-INVENTORY.json` registra 286 arquivos de mídia versionados no repositório, somando 431.069.663 bytes, com SHA-256 por arquivo. O campo `target_object_key` permanece nulo até definição do destino. Esse inventário não inclui objetos remotos de Cloudflare/Supabase nem originais ainda não fornecidos; nenhuma mídia foi migrada. A fonte e o hash permitem conferir cópia e preservar os nomes exatos, inclusive Unicode.
+
+## Validação da integração final
+
+Código integrado até `b6a72ca`, incluindo catálogo, cálculos, rastreabilidade, identidade de conferências, portal de guias, privacidade e callbacks do widget. As revisões de código estão em `docs/revisoes/`. Conflitos da integração de privacidade ficaram apenas nas declarações de RPCs em types.ts; todos os contratos foram preservados. Tipos ainda precisam regeneração com o schema homologado.
+
+- Vitest: **171 testes em 28 arquivos aprovados** (8,22 s).
+- TypeScript: `npx tsc --noEmit -p tsconfig.app.json` aprovado.
+- Build completo: `npm run build` aprovado em **18,43 s**. Persistem avisos de chunks grandes, sobretudo a biblioteca de localidades carregada sob demanda.
+- Preview final da home: 123 imagens presentes, nenhuma imagem com carregamento concluído e naturalWidth zero.
+- Fixtures SQL: **não executadas**. Mesmo após recuperar mais de 5 GB livres, a nova tentativa local falhou por I/O em `io.containerd.metadata.v1.bolt/meta.db` do Docker e foi interrompida. Nenhuma migration foi aplicada.
+
+Build e testes JavaScript não comprovam políticas RLS, instalação SQL, autorização efetiva em produção ou funcionamento dos provedores externos. Seguir HOMOLOGACAO-E-PENDENCIAS.md antes da publicação.

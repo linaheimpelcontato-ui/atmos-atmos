@@ -4,7 +4,7 @@
 
 As correções estão em branches de desenvolvimento. Nenhuma migration, função remota, alteração de dados reais ou publicação em produção foi executada. A inspeção de políticas no repositório não comprova o estado das permissões do banco em produção.
 
-O PostgreSQL local não iniciou: o pull Docker falhou por falta de espaço e erro de I/O. O disco chegou a 128 MB livres; foram removidos apenas builds gerados nesta sessão. Nenhum volume Docker ou arquivo pessoal preexistente foi apagado. As fixtures SQL são código de teste ainda não executado.
+O PostgreSQL local não iniciou: o pull Docker falhou inicialmente por falta de espaço e erro de I/O. Uma nova tentativa, após recuperar mais de 5 GB livres, continuou falhando no metadata interno do Docker e foi interrompida. É necessário recuperar o Docker ou fornecer homologação isolada. O disco chegou a 128 MB livres; foram removidos apenas builds gerados nesta sessão. Nenhum volume Docker ou arquivo pessoal preexistente foi apagado. As fixtures SQL são código de teste ainda não executado.
 
 ## Antes de promover a branch
 
@@ -13,7 +13,7 @@ O PostgreSQL local não iniciou: o pull Docker falhou por falta de espaço e err
 3. Exercitar leitura como anon, cliente dono, cliente não dono e administrador. Nenhum cliente deve obter linhas internas de produtos/propostas/itens/vendedores. Conferir publicação, despublicação, detalhamento e feedback.
 4. Validar editor → salvamento → reabertura → proposta pública → financeiro com a planilha Melhor aos 50. Confirmar custo zero, comissão histórica ausente, cortesias, quartos diferentes, impostos, descontos, cancelados/pagos e falhas com rollback.
 5. Conferir rastreabilidade NF/competência/fornecedor/grupo em criação, edição, lista e exportação; testar fornecedores inativos e acesso administrativo.
-6. Executar build integrado com espaço suficiente e teste de navegação desktop e aparelho móvel real, inclusive Safari/iOS no dispositivo afetado pelo stack overflow relatado. A verificação em iframe de 390 px não substitui esse teste.
+6. O build integrado passou (18,43 s, commit funcional b6a72ca). Completar teste de navegação desktop com o novo backend e aparelho móvel real, inclusive Safari/iOS no dispositivo afetado pelo stack overflow relatado. A verificação em iframe de 390 px não substitui esse teste.
 7. Configurar variáveis de ambiente e publicar frontend/funções em conjunto com suas migrations. Sem a RPC de catálogo, a tela informa indisponibilidade e oferece retry; não restaura leitura insegura. Preparar retorno sem reabrir políticas de acesso a dados internos.
 
 ## Funcionalidades que ainda exigem desenvolvimento/validação
@@ -33,6 +33,6 @@ A nota `tasks for Gustavo` contém somente acessos, informações e decisões qu
 
 ## Edição visual da proposta
 
-`save_public_proposal_edits` salva observações, títulos dos dias, descrições e ordem de itens em uma transação administrativa. Atualiza apenas a observação em `proposal_days`, preservando ID/descrição e sem excluir dias. Itens precisam pertencer à proposta. A interface será integrada na frente de privacidade; não publicar a UI sem a migration.
+`save_public_proposal_edits` salva observações, títulos dos dias, descrições e ordem de itens em uma transação administrativa. Atualiza apenas a observação em `proposal_days`, preservando ID/descrição e sem excluir dias. Itens precisam pertencer à proposta. A interface está integrada e salva em uma única RPC; não publicar a UI sem a migration. Descrições usam UUID do item e os retornos assíncronos são descartados ao trocar proposta ou sessão.
 
 A migration 20260912020000_verified_cost_identity.sql vincula novas conferências ao UUID e ao estado do item, preserva histórico e serializa gravações pelo mesmo lock da proposta. O editor visual mantém uma proteção conservadora: não reordena enquanto houver custos conferidos. Desmarcar é uma operação explícita e persistida; após reorganizar, o checklist não reaproveita custo/nota de outra identidade. Registros legados não recebem associação presumida e exigem revisão manual. Consulte VERIFIED-COST-IDENTITY.md para contratos e limites, inclusive hospedagens e concorrência. Fixtures SQL preparadas, ainda não executadas.
