@@ -33,6 +33,7 @@ Não foi necessário reenviar login do painel, cadastros existentes nem exemplos
 - `save_proposal_bundle` deriva subtotal e total da composição resolvida no servidor, sob o mesmo lock/transação. Campos de totais enviados pelo navegador não são confiáveis. Não há recálculo em massa de propostas históricas.
 - Imposto, desconto, ocupação e valores inválidos são rejeitados no cálculo. Preview e salvamento usam total arredondado em centavos antes do rateio; financeiro arredonda as mesmas etapas monetárias.
 - Ranking de guias usa quantidade e custo salvo e calcula resultado com todos os custos das propostas associadas. A tela esclarece que propostas com vários guias aparecem em mais de uma linha e que as linhas não são somáveis.
+- Editor preserva o slug salvo ao editar/renomear propostas e usa o endereço persistido nos botões de compartilhamento/edição visual. Antes, derivava o endereço do título e podia quebrar links já compartilhados.
 
 Regra comercial preservada: desconto percentual/fixo sobre os itens do roteiro; somar serviço Atmos e hospedagem paga à Atmos; aplicar o imposto configurado por dentro. Isso descreve a implementação existente, não uma validação tributária. Base/ordem comerciais ainda precisam da conferência com cliente/contabilidade.
 
@@ -44,6 +45,7 @@ Exemplo sem imposto/desconto: R$ 93.000 divididos por 18 pagantes = média de R$
 - Nove suítes SQL executadas com `psql -v ON_ERROR_STOP=1`, todas aprovadas: atomic_proposal_bundle, guide_portal, legacy_write_security, public_catalog_projection, public_proposal_edits, public_proposal_privacy, request_pipeline_segments, server_proposal_totals, verified_cost_identity.
 - Testes usam anon, authenticated, dono, estranho e admin conforme cada fluxo; fixtures SQL terminam em rollback.
 - API HTTP local real: três contas fictícias confirmadas localmente, solicitação B2C autenticada, solicitação B2B pública, criação de CRM, salvamento administrativo, publicação local e leitura pública. B2C persistiu R$ 300; B2B R$ 3.000, com 18 pagantes. Cliente obteve o próprio link; leitura de CRM e salvamento administrativo foram negados.
+- UI desktop no portal “Atmos — homologação isolada”: login administrativo fictício; B2B editado de R$ 50 para R$ 60 de serviço por pessoa/dia, salvo e confirmado na lista e página pública com total R$ 3.200, 18 pagantes e duas cortesias. B2C renomeado e salvo pela interface; endereço original continuou abrindo o novo título e R$ 300 de total. Nenhuma mensagem externa enviada.
 - 183 testes Vitest em 29 arquivos aprovados, incluindo leitura de XLSX real em memória com acentos, centavos, custo zero e vínculo de fornecedor.
 - TypeScript aprovado. Build Vite 7 aprovado em 8,23 s. Persistem avisos de chunks grandes, especialmente biblioteca de localidades.
 - Instalação limpa `npm ci --ignore-scripts`: zero vulnerabilidades reportadas pelo npm, contra 25 inicialmente (uma crítica). Isso não é garantia de ausência de falhas na aplicação ou no banco remoto.
@@ -67,8 +69,8 @@ Referências oficiais consultadas: [SheetJS](https://docs.sheetjs.com/docs/getti
 
 ## Limitações e próximos trabalhos
 
-O portal Maestri antigo manteve a página/módulo anterior em memória: comandos de navegação/reload não produziram o estado esperado. O novo portal “Atmos — homologação isolada” foi registrado no canvas, mas a automação retornou `portal not found`; a tentativa de navegador independente também falhou por timeout. Portanto, o fluxo visual completo com o novo banco NÃO está aprovado. A configuração servida pelo Vite foi verificada como local e os fluxos foram exercitados pela API local, sem criar cadastros no backend publicado. O portal antigo fez uma tentativa de login inválida com credencial fictícia no backend anterior; nenhuma conta foi criada ali.
+O portal Maestri antigo manteve a página/módulo anterior em memória. O novo portal “Atmos — homologação isolada” inicialmente falhou, mas ficou acessível após a recuperação do servidor. O módulo Supabase carregado nesse portal foi conferido como `http://127.0.0.1:54321` antes dos testes visuais descritos acima. Usar esse novo portal para homologação. O portal antigo fez uma tentativa de login inválida com credencial fictícia no backend anterior; nenhuma conta foi criada ali. A aprovação visual se limita aos fluxos desktop descritos, não a todos os módulos/mobile.
 
 Permanecem: acesso administrativo ao Supabase remoto e comparação de schema/migrations; deploy coordenado; revisão independente deste novo lote; homologação visual/mobile; contratos Clicksign e notificações; definição de mídias e origem dos arquivos; planilha real; conciliação e rateio comercial; permissões por módulo no servidor; completar fornecedores de custos operacionais e o fluxo financeiro/operacional; editor e mapa completos. O cadastro de teste administrativo já existente no painel publicado não foi revogado automaticamente.
 
-Nenhum contrato, e-mail ou WhatsApp real foi enviado. Nenhuma proposta publicada foi editada. Sem push, merge ou deploy nesta sessão. Não declarar o sistema 100% pronto nem invulnerável.
+Nenhum contrato, e-mail ou WhatsApp real foi enviado. Nenhuma proposta de produção foi editada; as propostas publicadas e editadas nos testes são fictícias e locais. Sem push, merge ou deploy nesta sessão. Não declarar o sistema 100% pronto nem invulnerável.

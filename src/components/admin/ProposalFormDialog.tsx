@@ -431,6 +431,7 @@ export default function ProposalFormDialog({
   const [newCategory, setNewCategory] = useState("");
   const [language, setLanguage] = useState("pt");
   const [shareToken, setShareToken] = useState<string | null>(null);
+  const [savedSlug, setSavedSlug] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
   const [openDays, setOpenDays] = useState<Record<number, boolean>>({});
@@ -695,7 +696,7 @@ export default function ProposalFormDialog({
       setCategories(DEFAULT_CATEGORIES);
       setGrid([]); setOriginalCostItems([]); setDayVehicleType({});
       setPartnerCommission(0);
-      setLanguage("pt"); setShareToken(null); setCopied(false);
+      setLanguage("pt"); setShareToken(null); setSavedSlug(null); setCopied(false);
       setCostItems([]);
       setAtmosService({ price_per_person_day: 0, description: "", internal_costs: [] });
       setDayDescriptions({});
@@ -727,6 +728,7 @@ export default function ProposalFormDialog({
         setTaxPercent(Number(prop.tax_percent));
         setLanguage((prop as any).language || "pt");
         setShareToken((prop as any).share_token || null);
+        setSavedSlug((prop as any).slug || null);
         const pt2 = (prop as any).payment_terms;
         if (pt2 && pt2.installments) {
           setPaymentTerms(pt2.installments);
@@ -1562,7 +1564,8 @@ export default function ProposalFormDialog({
         atmos_service: { ...atmosService, num_courtesies: numCourtesies,
           seller_commission_percent: partnerCommission,
         },
-        slug: baseSlug || null,
+        // Preserve existing public links, including when renaming a proposal.
+        ...(!proposalId ? { slug: baseSlug || null } : {}),
         payment_terms: paymentTerms.length > 0 ? { installments: paymentTerms } : null,
       };
 
@@ -2676,8 +2679,7 @@ export default function ProposalFormDialog({
               </Button>
             )}
             {proposalId && shareToken && (() => {
-              const slugify = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
-              const linkKey = slugify(title) || shareToken;
+              const linkKey = savedSlug || shareToken;
               return (
                 <Button
                   type="button"
@@ -2828,9 +2830,7 @@ export default function ProposalFormDialog({
 
           {/* Share link — use slug if available */}
           {shareToken && (() => {
-            const slugify = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
-            const displaySlug = slugify(title);
-            const linkKey = displaySlug || shareToken;
+            const linkKey = savedSlug || shareToken;
             const fullLink = `${window.location.origin}/proposta/${linkKey}`;
             return (
               <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2">
