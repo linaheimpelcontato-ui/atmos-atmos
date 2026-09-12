@@ -61,3 +61,11 @@ Ver nota `tasks for Gustavo` no Maestri: mídias/destino, acesso de desenvolvime
 - Modal de login: botão de fechar remove o diálogo e libera interação com a página; testes cobrem fechar e Escape sem logout involuntário.
 - Biblioteca de localidades adiada para a etapa de localização; bundle inicial caiu de aproximadamente 9,4 MB para 0,8 MB, antes de compressão. O chunk de localidades ainda é grande.
 - Erro de stack reportado pela cliente não foi reproduzido; não declarar sua causa resolvida sem teste no dispositivo afetado.
+
+## Segundo lote: catálogo
+
+Commit `7717250`: projeção pública com whitelist aninhada, separação de contatos públicos, tratamento explícito de falha e remoção da restauração automática de catálogos desativados. Parecer do Revisor em `docs/revisoes/catalogo-publico.md`.
+
+Validação local após o lote: 31 testes Vitest passaram; TypeScript e `git diff --check` passaram. Preview da home: 109 imagens, nenhuma com carregamento concluído e largura natural zero. Preview de catálogo sem migration: mensagem de indisponibilidade e retry, sem consulta de fallback à tabela interna. Isso valida o tratamento de ausência do backend novo, não o conteúdo retornado pela futura RPC.
+
+Consulte `HOMOLOGACAO-E-PENDENCIAS.md` para o limite exato desta entrega e os ensaios ainda necessários. As fixtures SQL ainda não foram executadas.
