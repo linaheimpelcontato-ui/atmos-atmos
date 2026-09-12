@@ -7,7 +7,8 @@ import { storageUrl, optimizedUrl, IMAGE_PRESETS } from "@/lib/storage";
 import { fetchStorageImages } from "@/hooks/useStorageImages";
 import { getDayImage } from "@/components/itineraries/dayImages";
 import { trackProposalView } from "@/lib/analytics";
-import { parsePublicProposal, canShowPriceBreakdown, findDayTotal, type PublicProposal } from "@/lib/publicProposal";
+import { parsePublicProposal, canShowPriceBreakdown, type PublicProposal } from "@/lib/publicProposal";
+import { isProposalExpired } from "@/lib/dateRules";
 import {
   Check, MapPin, Users, CalendarDays,
   Sunrise, Mountain, Compass, Sparkles, Leaf, MessageCircle,
@@ -18,6 +19,7 @@ import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type D
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { useToast } from "@/hooks/use-toast";
 import ProposalFeedbackDialog from "@/components/proposal/ProposalFeedbackDialog";
 /* dnd-kit reordering */
 const logoAtmos = optimizedUrl("home/logo-atmos.png", IMAGE_PRESETS.card);
@@ -279,6 +281,7 @@ function SortableDayItemWrapper({ id, children }: { id: string; children: React.
 export default function ProposalPublic() {
   const { token } = useParams<{ token: string }>();
   const { user } = useAuth();
+  const { toast } = useToast();
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [items, setItems] = useState<DayItem[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -312,26 +315,41 @@ export default function ProposalPublic() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  // Check admin status
+  // Check admin status. Guarded against stale/out-of-order responses (e.g.
+  // user A's check resolves after logout/switch to user B) and always sets
+  // isAdmin explicitly either way -- a previous `true` must not survive a
+  // false/error response for the new user.
   useEffect(() => {
+    let cancelled = false;
     if (!user) { setIsAdmin(false); return; }
     (async () => {
-      const { data: roleOk } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
-      if (roleOk) {
+      const { data: roleOk, error } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
+      if (cancelled) return;
+      if (!error && roleOk) {
         setIsAdmin(true);
         if (searchParams.get("edit") === "1") setEditMode(true);
+      } else {
+        setIsAdmin(false);
       }
     })();
+    return () => { cancelled = true; };
   }, [user, searchParams]);
 
   useEffect(() => {
+    let cancelled = false;
     if (!token) return;
+    // Reset immediately: a stale proposal/admin-controls render for the
+    // previous token must not stay on screen while the new one loads.
+    setLoading(true);
+    setError(false);
+    setProposal(null);
     (async () => {
       // Public/shared reads go exclusively through this RPC: it enforces
       // published_at for non-admins and returns an explicit, public-safe
       // column projection (never proposal_costs, sellers, cost_price,
       // commission_percent, supplier_id or atmos_service.internal_costs).
       const { data, error: rpcError } = await supabase.rpc("get_public_proposal", { p_token: token });
+      if (cancelled) return;
 
       const finalProp = parsePublicProposal(data);
       if (rpcError || !finalProp) {
@@ -369,6 +387,7 @@ export default function ProposalPublic() {
       // TODO(codex): drop the `as any` casts once get_public_products lands
       // in the generated Supabase types.
       const { data: prods, error: prodsError } = await (supabase.rpc as any)("get_public_products", { p_type: null });
+      if (cancelled) return;
       if (prodsError) {
         console.error("Error loading public products:", prodsError);
         setProducts([]);
@@ -379,6 +398,7 @@ export default function ProposalPublic() {
       trackProposalView(finalProp.id);
       setLoading(false);
     })();
+    return () => { cancelled = true; };
   }, [token]);
 
   // Sync edit state when items load after edit mode was already activated via URL
@@ -430,8 +450,11 @@ export default function ProposalPublic() {
       const oldIdx = dayItems2.findIndex(i => `${dayNum}-${i.item_index}` === active.id);
       const newIdx = dayItems2.findIndex(i => `${dayNum}-${i.item_index}` === over.id);
       if (oldIdx === -1 || newIdx === -1) return prev;
-      const reordered = arrayMove(dayItems2, oldIdx, newIdx);
-      reordered.forEach((item, i) => { item.item_index = i; });
+      // New objects, not mutated in place: these items are the same
+      // references as in `items`/`renderItems` elsewhere, and item_index is
+      // read when building the save payload -- mutating shared objects here
+      // would silently corrupt state outside of this reorder.
+      const reordered = arrayMove(dayItems2, oldIdx, newIdx).map((item, i) => ({ ...item, item_index: i }));
       return [...otherItems, ...reordered];
     });
   };
@@ -441,56 +464,58 @@ export default function ProposalPublic() {
     if (!propId) return;
     setSaving(true);
     try {
-      // Save observations
-      await supabase.from("proposal_days").delete().eq("proposal_id", propId);
-      const allDayNums = [...new Set(Object.keys(editObservations).map(Number))];
-      const obsPayload = allDayNums
-        .filter(d => editObservations[d] && editObservations[d].trim())
-        .map(d => ({
-          proposal_id: propId,
-          day_number: d,
-          description: "",
-          observation: editObservations[d] || "",
-        }));
-      if (obsPayload.length > 0) {
-        await supabase.from("proposal_days").insert(obsPayload);
+      // Single atomic call: save_public_proposal_edits (admin RPC, role +
+      // proposal-ownership checked + transactional server-side). Replaces
+      // the previous sequence of unchecked delete/insert/update calls,
+      // which could wipe every day's description (admin-authored via the
+      // other editor) or leave partial writes on a mid-sequence failure.
+      // Snapshotted from state up front so nothing here depends on item
+      // object identity/mutation during drag-and-drop reordering.
+      const dayNumsTouched = [...new Set([
+        ...editItemOrder.map(i => i.day_number),
+        ...Object.keys(editObservations).map(Number),
+        ...Object.keys(editLabels).map(Number),
+      ])];
+      const daysPayload = dayNumsTouched.map(d => ({
+        day_number: d,
+        observation: editObservations[d] || "",
+        day_label: editLabels[d] || `${t.day} ${d}`,
+      }));
+
+      const itemsPayload = editItemOrder
+        .filter(item => !!item.id)
+        .map((item, idx) => {
+          const descKey = `${item.day_number}-${items.indexOf(item)}`;
+          const origIdx = items.indexOf(item);
+          const altDescKey = `${item.day_number}-${origIdx}`;
+          const desc = editDescriptions[descKey] ?? editDescriptions[altDescKey] ?? item.description;
+          return { id: item.id, description: desc || null, item_index: item.item_index };
+        });
+
+      const { data, error } = await supabase.rpc(
+        "save_public_proposal_edits",
+        { p_proposal_id: propId, p_days: daysPayload, p_items: itemsPayload }
+      );
+
+      if (error || data !== true) {
+        console.error("Error saving edits:", error);
+        toast({ title: "Erro ao salvar", description: "As alterações não foram salvas. Tente novamente.", variant: "destructive" });
+        return;
       }
+
       setDayObservations({ ...editObservations });
-
-      // Save day labels
-      for (const [dayNumStr, label] of Object.entries(editLabels)) {
-        const dayNum = parseInt(dayNumStr);
-        await supabase.from("proposal_day_items")
-          .update({ day_label: label })
-          .eq("proposal_id", propId)
-          .eq("day_number", dayNum);
-      }
-
-      // Save descriptions and item_index per item
-      const updatedItems: DayItem[] = [];
-      for (let idx = 0; idx < editItemOrder.length; idx++) {
-        const item = editItemOrder[idx];
+      const updatedItems: DayItem[] = editItemOrder.map(item => {
         const descKey = `${item.day_number}-${items.indexOf(item)}`;
         const origIdx = items.indexOf(item);
         const altDescKey = `${item.day_number}-${origIdx}`;
         const desc = editDescriptions[descKey] ?? editDescriptions[altDescKey] ?? item.description;
-        
-        if (item.id) {
-          await supabase.from("proposal_day_items")
-            .update({ description: desc || null, item_index: item.item_index })
-            .eq("id", item.id);
-        }
-        updatedItems.push({
-          ...item,
-          description: desc || null,
-          day_label: editLabels[item.day_number] || item.day_label,
-        });
-      }
-
+        return { ...item, description: desc || null, day_label: editLabels[item.day_number] || item.day_label };
+      });
       setItems(updatedItems);
       setEditMode(false);
     } catch (e) {
       console.error("Error saving edits:", e);
+      toast({ title: "Erro ao salvar", description: "As alterações não foram salvas. Tente novamente.", variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -498,14 +523,25 @@ export default function ProposalPublic() {
 
   const togglePublish = async () => {
     const propId = proposalIdRef.current;
-    if (!propId) return;
+    if (!propId || !proposal) return;
     setPublishing(true);
     try {
-      const newVal = proposal?.published_at ? null : new Date().toISOString();
-      await supabase.from("proposals").update({ published_at: newVal }).eq("id", propId);
-      setProposal((prev: Proposal | null) => prev ? { ...prev, published_at: newVal, status: newVal ? 'sent' : prev.status } : prev);
+      const newVal = proposal.published_at ? null : new Date().toISOString();
+      const { data, error } = await supabase
+        .from("proposals")
+        .update({ published_at: newVal })
+        .eq("id", propId)
+        .select("published_at, status")
+        .single();
+      if (error || !data) {
+        console.error("Error toggling publish:", error);
+        toast({ title: "Erro ao publicar/recolher", description: "A alteração não foi salva. Tente novamente.", variant: "destructive" });
+        return;
+      }
+      setProposal((prev: Proposal | null) => prev ? { ...prev, published_at: data.published_at, status: data.status } : prev);
     } catch (e) {
       console.error("Error toggling publish:", e);
+      toast({ title: "Erro ao publicar/recolher", description: "A alteração não foi salva. Tente novamente.", variant: "destructive" });
     } finally {
       setPublishing(false);
     }
@@ -517,10 +553,21 @@ export default function ProposalPublic() {
     setTogglingBreakdown(true);
     try {
       const newVal = !proposal.show_price_breakdown;
-      await supabase.from("proposals").update({ show_price_breakdown: newVal }).eq("id", propId);
-      setProposal((prev: Proposal | null) => prev ? { ...prev, show_price_breakdown: newVal } : prev);
+      const { data, error } = await supabase
+        .from("proposals")
+        .update({ show_price_breakdown: newVal })
+        .eq("id", propId)
+        .select("show_price_breakdown")
+        .single();
+      if (error || !data) {
+        console.error("Error toggling price breakdown:", error);
+        toast({ title: "Erro ao alterar detalhamento", description: "A alteração não foi salva. Tente novamente.", variant: "destructive" });
+        return;
+      }
+      setProposal((prev: Proposal | null) => prev ? { ...prev, show_price_breakdown: data.show_price_breakdown } : prev);
     } catch (e) {
       console.error("Error toggling price breakdown:", e);
+      toast({ title: "Erro ao alterar detalhamento", description: "A alteração não foi salva. Tente novamente.", variant: "destructive" });
     } finally {
       setTogglingBreakdown(false);
     }
@@ -532,11 +579,22 @@ export default function ProposalPublic() {
     setSavingContract(true);
     try {
       const url = contractUrlInput.trim() || null;
-      await supabase.from("proposals").update({ contract_url: url }).eq("id", propId);
-      setProposal((prev: Proposal | null) => prev ? { ...prev, contract_url: url } : prev);
+      const { data, error } = await supabase
+        .from("proposals")
+        .update({ contract_url: url })
+        .eq("id", propId)
+        .select("contract_url")
+        .single();
+      if (error || !data) {
+        console.error("Error saving contract URL:", error);
+        toast({ title: "Erro ao vincular contrato", description: "A alteração não foi salva. Tente novamente.", variant: "destructive" });
+        return;
+      }
+      setProposal((prev: Proposal | null) => prev ? { ...prev, contract_url: data.contract_url } : prev);
       setContractDialogOpen(false);
     } catch (e) {
       console.error("Error saving contract URL:", e);
+      toast({ title: "Erro ao vincular contrato", description: "A alteração não foi salva. Tente novamente.", variant: "destructive" });
     } finally {
       setSavingContract(false);
     }
@@ -810,17 +868,25 @@ export default function ProposalPublic() {
   // Itemized per-line pricing is hidden from clients by default; only staff
   // can flip show_price_breakdown on for a given proposal (admins always see it).
   const showBreakdown = canShowPriceBreakdown(proposal, isAdmin);
+  // Same rule approve-proposal enforces server-side (Sao Paulo calendar
+  // date, inclusive of the whole named day) -- kept in sync so the button
+  // isn't shown as clickable only to fail once the request reaches the server.
+  const proposalExpired = isProposalExpired(proposal.valid_until);
 
-  // Public per-person/per-day totals come from the RPC (get_public_proposal),
-  // computed server-side so they stay correct even when show_price_breakdown
-  // is off and raw item values/atmos_service.price_per_person_day are null.
-  const dayPerPersonTotal = (dayNum: number) => findDayTotal(proposal, dayNum);
+  // Public aggregates come from the RPC (get_public_proposal). There is no
+  // day-level or per-person rollup of raw item values here on purpose: the
+  // admin-side pricing pipeline (atmos/accommodation revenue, courtesy-
+  // adjusted allocation, tax) isn't something this page can safely
+  // reconstruct, so only the already-persisted, unambiguous numbers are
+  // used. items_subtotal/items_discount_amount are GROUP-level and
+  // items-only -- never divided by num_people. net_per_person is the one
+  // per-person figure, derived from the authoritative persisted `total`.
   const numCourtesies = proposal.num_courtesies;
   const numPaying = proposal.num_paying;
   const grandTotal = proposal.total;
   const netPerPerson = proposal.net_per_person;
-  const subtotalPerPerson = proposal.subtotal_per_person;
-  const discountAmt = proposal.discount_amount_per_person;
+  const itemsSubtotal = proposal.items_subtotal;
+  const itemsDiscountAmount = proposal.items_discount_amount;
 
   const getDayWaterfallInfo = (dayNum: number) => {
     const dayItems2 = items.filter(i => i.day_number === dayNum);
@@ -967,7 +1033,7 @@ export default function ProposalPublic() {
           style={{ background: "rgba(0,0,0,0.08)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}>
           <img loading="lazy" src={logoAtmos} alt="ATMOS" className="h-16 md:h-20 brightness-0 invert drop-shadow-xl" />
           <div className="flex items-center gap-2">
-            {["sent", "negotiating"].includes(proposal.status) && (
+            {["sent", "negotiating"].includes(proposal.status) && !proposalExpired && (
               <button
                 onClick={handleApprove}
                 disabled={approving}
@@ -981,6 +1047,14 @@ export default function ProposalPublic() {
                     : lang === "en" ? "Approve Proposal" : lang === "es" ? "Aprobar Propuesta" : "Aprovar Proposta"}
                 </span>
               </button>
+            )}
+            {["sent", "negotiating"].includes(proposal.status) && proposalExpired && (
+              <span
+                className="flex items-center gap-2 px-4 py-1.5 rounded-none text-xs font-black uppercase tracking-widest shadow-lg"
+                style={{ background: "#7a1f1f", color: "#fff" }}
+              >
+                {lang === "en" ? "Proposal Expired" : lang === "es" ? "Propuesta Vencida" : "Proposta Expirada"}
+              </span>
             )}
             {proposal.status === "approved" && (
               <>
@@ -1594,66 +1668,53 @@ export default function ProposalPublic() {
               </div>
             )}
 
-            {/* Day-by-day breakdown — more impact, less 'webby' */}
+            {/* Day-by-day breakdown — more impact, less 'webby'. Hidden entirely
+                (not just the itemized list) when showBreakdown is off: the
+                per-day rolled-up total itself is computed client-side from raw
+                item values, which are only present in the payload when the
+                breakdown is actually meant to be visible. */}
+            {showBreakdown && (
             <div className="space-y-8 mb-16">
               <p className="text-[10px] font-black uppercase tracking-[0.3em] mb-4 text-white/40">
                 {lang === "pt" ? "Resumo Financeiro Diário" : lang === "es" ? "Resumen Financiero Diario" : "Daily Financial Summary"}
               </p>
               {days.map(dayNum => {
-                const dayPP = dayPerPersonTotal(dayNum);
                 const dayItemsSorted = items
                   .filter(i => i.day_number === dayNum)
                   .sort((a, b) => (a.item_index ?? 0) - (b.item_index ?? 0));
                 const dayLabel = dayItemsSorted[0]?.day_label || `${t.day} ${dayNum}`;
                 const isExpanded = expandedDays.includes(dayNum);
                 
-                const dayHeaderContent = (
-                  <>
-                    <div className="flex items-baseline gap-6">
-                      <span className="text-xl font-black font-outfit text-[#c4a97d] w-12 group-hover:scale-110 transition-transform">{String(dayNum).padStart(2, "0")}</span>
-                      <div className="flex flex-col">
-                        <span className="text-xs uppercase tracking-[0.2em] font-black text-white/40 mb-1">
-                          {proposal.start_date
-                            ? (() => { const d = new Date(proposal.start_date + "T12:00:00"); d.setDate(d.getDate() + dayNum - 1); return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${String(d.getFullYear()).slice(-2)}`; })()
-                            : `${t.day} ${dayNum}`}
-                        </span>
-                        <span className="text-xl text-white/80 uppercase tracking-tight font-outfit">{dayLabel}</span>
-                        {showBreakdown && (
+                return (
+                  <div key={dayNum} className="border-b border-white/5">
+                    <button
+                      onClick={() => setExpandedDays(prev =>
+                        prev.includes(dayNum) ? prev.filter(d => d !== dayNum) : [...prev, dayNum]
+                      )}
+                      className="w-full flex flex-col md:flex-row md:items-center justify-between py-8 gap-4 hover:bg-white/5 transition-all text-left group"
+                    >
+                      <div className="flex items-baseline gap-6">
+                        <span className="text-xl font-black font-outfit text-[#c4a97d] w-12 group-hover:scale-110 transition-transform">{String(dayNum).padStart(2, "0")}</span>
+                        <div className="flex flex-col">
+                          <span className="text-xs uppercase tracking-[0.2em] font-black text-white/40 mb-1">
+                            {proposal.start_date
+                              ? (() => { const d = new Date(proposal.start_date + "T12:00:00"); d.setDate(d.getDate() + dayNum - 1); return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${String(d.getFullYear()).slice(-2)}`; })()
+                              : `${t.day} ${dayNum}`}
+                          </span>
+                          <span className="text-xl text-white/80 uppercase tracking-tight font-outfit">{dayLabel}</span>
                           <span className="text-[9px] uppercase tracking-widest text-[#c4a97d] font-black mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                             {isExpanded ? "Clique para recolher" : "Clique para ver detalhes"}
                           </span>
-                        )}
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-8">
-                      <span className="text-2xl font-black font-outfit text-white tabular-nums tracking-tighter">{fmt(dayPP)}</span>
-                      {showBreakdown && (
+                      <div className="flex items-center gap-8">
                         <div className={`p-2 border border-white/10 transition-all ${isExpanded ? "bg-[#c4a97d] border-[#c4a97d]" : "group-hover:border-[#c4a97d]"}`}>
                           <ChevronDown className={`w-4 h-4 ${isExpanded ? "text-white rotate-180" : "text-[#c4a97d]"} transition-transform duration-500`} />
                         </div>
-                      )}
-                    </div>
-                  </>
-                );
-
-                return (
-                  <div key={dayNum} className="border-b border-white/5">
-                    {showBreakdown ? (
-                      <button
-                        onClick={() => setExpandedDays(prev =>
-                          prev.includes(dayNum) ? prev.filter(d => d !== dayNum) : [...prev, dayNum]
-                        )}
-                        className="w-full flex flex-col md:flex-row md:items-center justify-between py-8 gap-4 hover:bg-white/5 transition-all text-left group"
-                      >
-                        {dayHeaderContent}
-                      </button>
-                    ) : (
-                      <div className="w-full flex flex-col md:flex-row md:items-center justify-between py-8 gap-4 group">
-                        {dayHeaderContent}
                       </div>
-                    )}
+                    </button>
 
-                    {showBreakdown && isExpanded && (
+                    {isExpanded && (
                       <div className="pb-10 pl-16 pr-10 space-y-4 animate-fade-in">
                         {dayItemsSorted
                           .filter(i => i.item_name || i.value > 0)
@@ -1688,20 +1749,24 @@ export default function ProposalPublic() {
                 );
               })}
             </div>
+            )}
 
-            {/* Summary totals */}
+            {/* Summary totals — items_subtotal/items_discount_amount are
+                GROUP-level and items-only (exclude atmos/accommodation
+                revenue), labeled as such; net_per_person below is the one
+                unambiguous per-person figure, from the authoritative total. */}
             <div className="space-y-4 pt-10 border-t border-white/20">
               <div className="flex justify-between items-center text-white/40 uppercase tracking-widest text-[10px] font-black">
-                <span>{lang === "pt" ? "Subtotal por pessoa" : lang === "es" ? "Subtotal por persona" : "Subtotal per person"}</span>
-                <span className="tabular-nums text-sm">{fmt(subtotalPerPerson)}</span>
+                <span>{lang === "pt" ? "Subtotal dos itens (grupo)" : lang === "es" ? "Subtotal de los ítems (grupo)" : "Items subtotal (group)"}</span>
+                <span className="tabular-nums text-sm">{fmt(itemsSubtotal)}</span>
               </div>
-              {discountAmt > 0 && (
+              {itemsDiscountAmount > 0 && (
                 <div className="flex justify-between items-center text-red-400 uppercase tracking-widest text-[10px] font-black">
                   <span>
-                    {t.discount}
+                    {lang === "pt" ? "Desconto dos itens (grupo)" : lang === "es" ? "Descuento de los ítems (grupo)" : "Items discount (group)"}
                     {proposal.discount_percent > 0 ? ` (${proposal.discount_percent}%)` : ""}
                   </span>
-                  <span className="tabular-nums text-sm">- {fmt(discountAmt)}</span>
+                  <span className="tabular-nums text-sm">- {fmt(itemsDiscountAmount)}</span>
                 </div>
               )}
             </div>
@@ -1711,10 +1776,18 @@ export default function ProposalPublic() {
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
                   <span className="text-white/40 text-xs uppercase tracking-[0.4em] font-black mb-4 block">
-                    {lang === "pt" ? "Valor Final por Pessoa" : lang === "es" ? "Valor Final por Persona" : "Final Per Person"}
+                    {/* Average, not an exact per-person price: with heterogeneous
+                        room/accommodation splits, individual amounts can differ
+                        from total/num_paying. Per-person apportionment across
+                        mixed modalities is explicitly not solved here. */}
+                    {lang === "pt" ? "Valor Médio por Pagante" : lang === "es" ? "Valor Medio por Pagante" : "Average per Paying Guest"}
                   </span>
                   <span className="text-6xl md:text-8xl font-black text-[#c4a97d] font-outfit tabular-nums leading-none tracking-tighter">
-                    {fmt(netPerPerson)}
+                    {/* null (not a fabricated 0/free) when there's no valid
+                        paying headcount -- e.g. courtesies >= num_people. */}
+                    {netPerPerson === null
+                      ? (lang === "pt" ? "Indisponível" : lang === "es" ? "No disponible" : "Unavailable")
+                      : fmt(netPerPerson)}
                   </span>
                 </div>
                   <div className="text-left md:text-right">

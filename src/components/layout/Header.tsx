@@ -45,26 +45,22 @@ export default function Header() {
   const isAdmin = useIsAdmin();
   const isGuide = useIsGuide();
 
-  // Fetch user's published proposal... (logic kept)
+  // Fetch user's published proposal link via RPC (ownership + published_at
+  // enforced server-side; no direct proposals/prospects select from the
+  // client). Guarded against a stale response resolving after logout/switch
+  // to a different user -- otherwise user A's link could get set into state
+  // after B is already logged in.
   useEffect(() => {
+    let cancelled = false;
     if (!user?.email) { setMyProposalSlug(null); return; }
     (async () => {
-      const { data: prospect } = await supabase
-        .from("prospects")
-        .select("id")
-        .eq("email", user.email)
-        .limit(1)
-        .maybeSingle();
-      if (!prospect?.id) { setMyProposalSlug(null); return; }
-      const { data: proposal } = await supabase
-        .from("proposals")
-        .select("slug, share_token")
-        .eq("prospect_id", prospect.id)
-        .not("published_at", "is", null)
-        .limit(1)
-        .maybeSingle();
-      setMyProposalSlug(proposal ? (proposal.slug || proposal.share_token) : null);
+      const { data, error } = await supabase.rpc("get_my_published_proposal_link");
+      if (cancelled) return;
+      if (error || !data) { setMyProposalSlug(null); return; }
+      const link = data as { slug: string | null; share_token: string | null };
+      setMyProposalSlug(link.slug || link.share_token || null);
     })();
+    return () => { cancelled = true; };
   }, [user]);
   
   // Auto-open login if redirected from a protected route

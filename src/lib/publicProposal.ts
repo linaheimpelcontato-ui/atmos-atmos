@@ -39,11 +39,6 @@ export type PublicProposalAccommodation = {
   is_selected: boolean;
 };
 
-export type PublicProposalDayTotal = {
-  day_number: number;
-  total_per_person: number;
-};
-
 export type PublicProposal = {
   id: string;
   title: string;
@@ -71,14 +66,19 @@ export type PublicProposal = {
   proposal_days: PublicProposalDay[];
   proposal_day_items: PublicProposalDayItem[];
   proposal_accommodations: PublicProposalAccommodation[];
-  // Public aggregates: always present regardless of show_price_breakdown --
-  // these are "what the customer pays", not a line-item cost/margin breakdown.
+  // Public aggregates: always present regardless of show_price_breakdown.
+  // items_subtotal/items_discount_amount are GROUP-level and items-only (do
+  // NOT include atmos_service/accommodation revenue -- do not divide these
+  // by num_people and present the result as a per-person price). The one
+  // unambiguous per-person figure is net_per_person, derived from the fully
+  // authoritative persisted `total`. None of this re-derives the admin-side
+  // pricing pipeline (owned by ProposalFormDialog/financeCalcs).
   num_paying: number;
   num_courtesies: number;
-  subtotal_per_person: number;
-  discount_amount_per_person: number;
-  net_per_person: number;
-  day_totals: PublicProposalDayTotal[];
+  items_subtotal: number;
+  items_discount_amount: number;
+  /** Null (never a fabricated 0) when there's no valid paying headcount -- render as unavailable, not free. */
+  net_per_person: number | null;
 };
 
 /**
@@ -121,16 +121,13 @@ export function parsePublicProposal(raw: unknown): PublicProposal | null {
     proposal_accommodations: Array.isArray(r.proposal_accommodations) ? r.proposal_accommodations : [],
     num_paying: r.num_paying ?? 1,
     num_courtesies: r.num_courtesies ?? 0,
-    subtotal_per_person: r.subtotal_per_person ?? 0,
-    discount_amount_per_person: r.discount_amount_per_person ?? 0,
-    net_per_person: r.net_per_person ?? 0,
-    day_totals: Array.isArray(r.day_totals) ? r.day_totals : [],
+    items_subtotal: r.items_subtotal ?? 0,
+    items_discount_amount: r.items_discount_amount ?? 0,
+    // Distinguish "RPC didn't send this field" (undefined -> default 0,
+    // defensive) from an explicit null ("no valid paying headcount" -- must
+    // stay null, not collapse into a fabricated free price).
+    net_per_person: r.net_per_person === undefined ? 0 : r.net_per_person,
   };
-}
-
-/** Looks up the precomputed per-day rolled-up total for a given day number. */
-export function findDayTotal(proposal: Pick<PublicProposal, "day_totals">, dayNumber: number): number {
-  return proposal.day_totals.find((d) => d.day_number === dayNumber)?.total_per_person ?? 0;
 }
 
 /** Whether the itemized per-line price breakdown may be shown. Hidden from

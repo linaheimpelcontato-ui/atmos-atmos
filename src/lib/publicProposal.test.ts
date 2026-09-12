@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parsePublicProposal, canShowPriceBreakdown, findDayTotal, type PublicProposal } from "./publicProposal";
+import { parsePublicProposal, canShowPriceBreakdown, type PublicProposal } from "./publicProposal";
 
 function makeRaw(overrides: Record<string, unknown> = {}) {
   return {
@@ -12,10 +12,9 @@ function makeRaw(overrides: Record<string, unknown> = {}) {
     num_people: 4,
     num_courtesies: 0,
     num_paying: 4,
-    subtotal_per_person: 1000,
-    discount_amount_per_person: 0,
+    items_subtotal: 4000,
+    items_discount_amount: 0,
     net_per_person: 1000,
-    day_totals: [{ day_number: 1, total_per_person: 500 }],
     atmos_service: { price_per_person_day: null, description: "Curadoria", num_courtesies: 0 },
     proposal_day_items: [{ day_number: 1, value: null, value_text: null, item_name: "Cachoeira" }],
     ...overrides,
@@ -40,14 +39,30 @@ describe("parsePublicProposal", () => {
     expect(parsed).not.toHaveProperty("sellers");
   });
 
+  it("carries the raw saved show_price_breakdown flag as-is (not OR'd with admin)", () => {
+    // The admin toggle needs to see the real client-facing state; the RPC
+    // must never fold `is_admin_view` into this field (regression: an
+    // earlier version of get_public_proposal did exactly that, which made
+    // the toggle appear permanently "on" for admins regardless of the saved value).
+    const raw = makeRaw({ show_price_breakdown: false, is_admin_view: true });
+    const parsed = parsePublicProposal(raw)!;
+    expect(parsed.show_price_breakdown).toBe(false);
+  });
+
   it("defaults arrays and aggregates when the RPC omits them", () => {
     const raw = makeRaw();
-    delete (raw as any).day_totals;
     delete (raw as any).proposal_day_items;
     const parsed = parsePublicProposal(raw)!;
-    expect(parsed.day_totals).toEqual([]);
     expect(parsed.proposal_day_items).toEqual([]);
     expect(parsed.num_paying).toBe(4); // still present from raw in this case
+  });
+
+  it("keeps net_per_person as null (never fabricates a 0/free price)", () => {
+    // e.g. courtesies >= num_people: an inconsistent state that should read
+    // as "price unavailable", not as a free trip.
+    const raw = makeRaw({ net_per_person: null });
+    const parsed = parsePublicProposal(raw)!;
+    expect(parsed.net_per_person).toBeNull();
   });
 });
 
@@ -65,17 +80,5 @@ describe("canShowPriceBreakdown", () => {
   it("is always visible for admins, regardless of the flag", () => {
     const proposal = { show_price_breakdown: false } as Pick<PublicProposal, "show_price_breakdown">;
     expect(canShowPriceBreakdown(proposal, true)).toBe(true);
-  });
-});
-
-describe("findDayTotal", () => {
-  it("returns the precomputed per-day total without needing raw item values", () => {
-    const proposal = parsePublicProposal(makeRaw())!;
-    expect(findDayTotal(proposal, 1)).toBe(500);
-  });
-
-  it("returns 0 for a day with no data", () => {
-    const proposal = parsePublicProposal(makeRaw())!;
-    expect(findDayTotal(proposal, 99)).toBe(0);
   });
 });

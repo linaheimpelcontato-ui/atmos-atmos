@@ -6,6 +6,19 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+// Same rule the UI uses to gray out the Approve button: "today" as the
+// calendar date currently showing in America/Sao_Paulo, not UTC.
+function todaySaoPauloISODate(): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const get = (type: string) => parts.find((p) => p.type === type)!.value;
+  return `${get("year")}-${get("month")}-${get("day")}`;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -54,7 +67,14 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (proposal.valid_until && new Date(proposal.valid_until) < new Date()) {
+    // valid_until is a `date` column (YYYY-MM-DD) with no timezone of its
+    // own; the business operates in America/Sao_Paulo, so "valid through
+    // this day" means through the end of that day in that timezone, not
+    // UTC (UTC midnight, or even 23:59:59Z, both expire the proposal hours
+    // before the day is actually over locally). Compare ISO date strings
+    // directly -- lexicographic order matches chronological order for
+    // YYYY-MM-DD -- against today's date as seen in Sao Paulo.
+    if (proposal.valid_until && proposal.valid_until < todaySaoPauloISODate()) {
       return new Response(
         JSON.stringify({ error: "Proposal has expired" }),
         { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }

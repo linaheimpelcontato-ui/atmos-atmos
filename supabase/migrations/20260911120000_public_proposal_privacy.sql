@@ -54,6 +54,18 @@ DROP POLICY IF EXISTS "Anon view shared proposal_days" ON public.proposal_days;
 DROP POLICY IF EXISTS "Anon view shared proposal_day_items" ON public.proposal_day_items;
 DROP POLICY IF EXISTS "Anon view shared proposal_accommodations" ON public.proposal_accommodations;
 
+-- "Customer view published proposals/proposal_days/proposal_day_items"
+-- correctly scoped OWNERSHIP (published_at + prospect.email = auth.email())
+-- but still granted SELECT * on the full row to `authenticated`, same
+-- column-level leak (cost_price/commission_percent/supplier_id/
+-- internal_costs) via a different path: a logged-in customer viewing their
+-- OWN published proposal. The only consumer was Header.tsx (fetches the
+-- customer's own proposal slug/share_token for a nav link); replaced below
+-- by get_my_published_proposal_link(), which returns just those two fields.
+DROP POLICY IF EXISTS "Customer view published proposals" ON public.proposals;
+DROP POLICY IF EXISTS "Customer view published proposal_days" ON public.proposal_days;
+DROP POLICY IF EXISTS "Customer view published proposal_day_items" ON public.proposal_day_items;
+
 -- proposal_feedback: drop the anon-facing policies entirely. Nothing in the
 -- current frontend actually SELECTs proposal_feedback as anon (only admin
 -- screens read it, under the existing "Admins can manage proposal_feedback"
@@ -65,6 +77,16 @@ DROP POLICY IF EXISTS "Anyone can view feedback on shared proposals" ON public.p
 -- ============ sellers: was fully public (USING (true)), unrelated to any ============
 -- ============ proposal or token. Not used by the public proposal page.   ============
 DROP POLICY IF EXISTS "Public can read sellers for proposals" ON public.sellers;
+
+-- ============ prospects: "Customer can view own prospect" let a logged-in ============
+-- ============ customer SELECT * on their own CRM record -- notes, tags,   ============
+-- ============ stage_id, priority/potential, source, etc: internal sales   ============
+-- ============ annotations, not customer-facing data. No replacement RPC   ============
+-- ============ needed here: the client-side reads that relied on it        ============
+-- ============ (AuthModal/WishlistReservationForm/ItineraryReservationForm) ============
+-- ============ are being removed in favor of the existing                  ============
+-- ============ auto_create_prospect_from_quote trigger on quote_requests.  ============
+DROP POLICY IF EXISTS "Customer can view own prospect" ON public.prospects;
 
 -- ============ get_public_proposal(p_token): the only path for public reads ============
 CREATE OR REPLACE FUNCTION public.get_public_proposal(p_token text)
@@ -81,11 +103,9 @@ DECLARE
   v_atmos_ppd numeric;
   v_num_courtesies int;
   v_num_paying numeric;
-  v_num_days_calc numeric;
-  v_day_totals jsonb;
-  v_subtotal_per_person numeric;
-  v_discount_amount_per_person numeric;
-  v_net_per_person numeric;
+  v_items_subtotal numeric;
+  v_items_discount_amount numeric;
+  v_net_per_person numeric; -- NULL, not 0, when there is no valid paying headcount
   v_result jsonb;
 BEGIN
   IF p_token IS NULL OR p_token = '' THEN
@@ -111,53 +131,45 @@ BEGIN
     RETURN NULL;
   END IF;
 
+  -- v_show_breakdown: EFFECTIVE visibility for THIS response only (decides
+  -- which fields to include below). It is intentionally NOT the same value
+  -- as the 'show_price_breakdown' key returned in the payload -- that key
+  -- must reflect the raw saved column so the admin toggle can show/flip the
+  -- real client-facing state, not "always true because I'm an admin".
   v_show_breakdown := v_is_admin OR v_proposal.show_price_breakdown;
-  v_atmos_ppd := COALESCE((v_proposal.atmos_service->>'price_per_person_day')::numeric, 0);
-  v_num_courtesies := COALESCE((v_proposal.atmos_service->>'num_courtesies')::int, 0);
-  v_num_paying := GREATEST(1, COALESCE(v_proposal.num_people, 1) - v_num_courtesies);
+  -- Type-checked before casting: a malformed/legacy atmos_service blob where
+  -- price_per_person_day or num_courtesies is itself an object/array would
+  -- otherwise either crash this call (bad ::numeric/::int cast) or, for the
+  -- JSON text extraction further down, serialize nested content through ->>.
+  v_atmos_ppd := CASE WHEN jsonb_typeof(v_proposal.atmos_service->'price_per_person_day') = 'number'
+    THEN (v_proposal.atmos_service->>'price_per_person_day')::numeric ELSE 0 END;
+  v_num_courtesies := CASE WHEN jsonb_typeof(v_proposal.atmos_service->'num_courtesies') = 'number'
+    THEN (v_proposal.atmos_service->>'num_courtesies')::int ELSE 0 END;
+  v_num_paying := GREATEST(COALESCE(v_proposal.num_people, 1) - v_num_courtesies, 0);
 
-  -- Per-day rolled-up total per person (same formula the page used to
-  -- compute client-side from raw item values). Always safe to return in
-  -- full -- it's the price the customer pays for that day, not a line-item
-  -- cost/margin breakdown -- so the bottom-line figures keep working even
-  -- when show_price_breakdown is off and the itemized list is hidden.
-  SELECT COALESCE(jsonb_agg(jsonb_build_object(
-    'day_number', dn.day_number,
-    'total_per_person',
-      COALESCE(dn.non_guide_sum, 0)
-      + COALESCE(dn.guide_sum, 0) / GREATEST(COALESCE(v_proposal.num_people, 1), 1)
-      + v_atmos_ppd
-  ) ORDER BY dn.day_number), '[]'::jsonb)
-  INTO v_day_totals
-  FROM (
-    SELECT
-      i.day_number,
-      SUM(i.value) FILTER (WHERE i.category <> 'Diária Guia ATMOS') AS non_guide_sum,
-      SUM(i.value * COALESCE(i.quantity, 1)) FILTER (WHERE i.category = 'Diária Guia ATMOS') AS guide_sum
-    FROM public.proposal_day_items i
-    WHERE i.proposal_id = v_proposal.id
-    GROUP BY i.day_number
-  ) dn;
-
-  v_num_days_calc := COALESCE(
-    v_proposal.num_days,
-    (SELECT COUNT(DISTINCT day_number) FROM public.proposal_day_items WHERE proposal_id = v_proposal.id),
-    1
-  );
-
-  v_subtotal_per_person := CASE
-    WHEN v_proposal.subtotal > 0
-      THEN v_proposal.subtotal / GREATEST(COALESCE(v_proposal.num_people, 1), 1) + v_atmos_ppd * v_num_days_calc
-    ELSE COALESCE((SELECT SUM((dt->>'total_per_person')::numeric) FROM jsonb_array_elements(v_day_totals) dt), 0)
-  END;
-
-  v_net_per_person := CASE WHEN v_num_paying > 0 THEN v_proposal.total / v_num_paying ELSE 0 END;
-
-  v_discount_amount_per_person := CASE
-    WHEN v_proposal.discount_percent > 0 THEN v_subtotal_per_person * (v_proposal.discount_percent / 100)
-    WHEN v_proposal.discount_fixed > 0 THEN v_proposal.discount_fixed / GREATEST(COALESCE(v_proposal.num_people, 1), 1)
-    ELSE 0
-  END;
+  -- Deliberately NOT re-deriving a per-person/per-day pricing pipeline here.
+  -- Per the authoritative admin-side formula (ProposalFormDialog):
+  --   subtotal      = SUM(lineTotal(value, qty)) over items ONLY -- it does
+  --                    NOT include atmos_service or accommodation revenue.
+  --   items_discount = subtotal * discount_percent/100 + discount_fixed
+  --                    (both components apply together, not either/or).
+  --   total          = (subtotal - items_discount + atmos revenue +
+  --                    accommodation revenue) with tax applied -- a pipeline
+  --                    this RPC does not have full visibility into (guide
+  --                    proportional split, courtesy-adjusted atmos
+  --                    allocation, per-room accommodation pricing) and must
+  --                    not try to reconstruct.
+  -- So `subtotal` is surfaced as an ITEMS-ONLY, GROUP-level figure (labeled
+  -- as such in the UI, never divided by num_people as if it were a
+  -- per-person "what you pay" number), and the only per-person price shown
+  -- is net_per_person, derived from the one number that IS already fully
+  -- authoritative end-to-end: the persisted `total`.
+  v_items_subtotal := v_proposal.subtotal;
+  v_items_discount_amount := v_items_subtotal * (v_proposal.discount_percent / 100) + v_proposal.discount_fixed;
+  -- NULL (not a fabricated 0) when there's no valid paying headcount --
+  -- e.g. courtesies >= num_people, an inconsistent state that should read
+  -- as "price unavailable", never as "free".
+  v_net_per_person := CASE WHEN v_num_paying > 0 THEN v_proposal.total / v_num_paying ELSE NULL END;
 
   SELECT jsonb_build_object(
     'id', v_proposal.id,
@@ -178,22 +190,56 @@ BEGIN
     'published_at', v_proposal.published_at,
     'share_token', v_proposal.share_token,
     'contract_url', v_proposal.contract_url,
-    'payment_terms', v_proposal.payment_terms,
-    'show_price_breakdown', v_show_breakdown,
+    -- Whitelisted: payment_terms is admin-authored jsonb: only the three
+    -- fields the UI renders travel to the client, nothing else that might
+    -- get added to that blob later. Each field is type-checked before
+    -- extraction -- ->> on a JSON value that is itself an object/array
+    -- serializes that whole nested structure to text, which would smuggle
+    -- through anything hidden under an allowed key (e.g. label: {public:
+    -- "...", secret: "..."}). installments itself is checked to actually be
+    -- an array (jsonb_array_elements raises on non-array input), and each
+    -- element must be a JSON object, not a stray scalar.
+    'payment_terms', CASE WHEN v_proposal.payment_terms IS NULL THEN NULL ELSE jsonb_build_object(
+      'installments', (
+        SELECT COALESCE(jsonb_agg(jsonb_build_object(
+          'label', CASE WHEN jsonb_typeof(inst->'label') = 'string' THEN inst->>'label' ELSE NULL END,
+          'percent', CASE WHEN jsonb_typeof(inst->'percent') = 'number' THEN (inst->>'percent')::numeric ELSE NULL END,
+          'due_rule', CASE WHEN jsonb_typeof(inst->'due_rule') = 'string' THEN inst->>'due_rule' ELSE NULL END
+        )), '[]'::jsonb)
+        FROM jsonb_array_elements(
+          CASE WHEN jsonb_typeof(v_proposal.payment_terms->'installments') = 'array'
+            THEN v_proposal.payment_terms->'installments'
+            ELSE '[]'::jsonb
+          END
+        ) inst
+        WHERE jsonb_typeof(inst) = 'object'
+      )
+    ) END,
+    -- Raw saved flag (NOT OR'd with is_admin_view): the admin toggle needs
+    -- to see and flip the real client-facing state, not "always true".
+    'show_price_breakdown', v_proposal.show_price_breakdown,
     'is_admin_view', v_is_admin,
     -- Public aggregates: always present, regardless of show_price_breakdown.
+    -- items_subtotal/items_discount_amount are GROUP-level and items-only
+    -- (see comment above v_items_subtotal) -- never divide these by
+    -- num_people/num_paying and present the result as a per-person price.
+    -- net_per_person is the one unambiguous per-person figure: the fully
+    -- authoritative persisted `total`, divided by paying headcount.
     'num_paying', v_num_paying,
     'num_courtesies', v_num_courtesies,
-    'subtotal_per_person', v_subtotal_per_person,
-    'discount_amount_per_person', v_discount_amount_per_person,
+    'items_subtotal', v_items_subtotal,
+    'items_discount_amount', v_items_discount_amount,
     'net_per_person', v_net_per_person,
-    'day_totals', v_day_totals,
     'atmos_service', CASE WHEN v_proposal.atmos_service IS NULL THEN NULL ELSE jsonb_build_object(
       -- price_per_person_day is a per-line figure (feeds the itemized
       -- "Curadoria & Logística" row) -- only returned when the breakdown is
       -- actually visible. internal_costs is never returned, admin or not.
       'price_per_person_day', CASE WHEN v_show_breakdown THEN v_atmos_ppd ELSE NULL END,
-      'description', v_proposal.atmos_service->>'description',
+      -- Type-checked for the same reason as payment_terms above: a
+      -- description value that is itself an object would otherwise
+      -- serialize (and leak) whatever is nested inside it.
+      'description', CASE WHEN jsonb_typeof(v_proposal.atmos_service->'description') = 'string'
+        THEN v_proposal.atmos_service->>'description' ELSE NULL END,
       'num_courtesies', v_num_courtesies
     ) END,
     'prospects', (
@@ -260,7 +306,7 @@ REVOKE ALL ON FUNCTION public.get_public_proposal(text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_public_proposal(text) TO anon, authenticated;
 
 COMMENT ON FUNCTION public.get_public_proposal(text) IS
-  'Public/token-based read path for the shared proposal page. Enforces published_at for non-admins, verifies the token, and returns an explicit column projection only -- never proposal_costs, sellers, cost_price, commission_percent, supplier_id, atmos_service.internal_costs, or proposal_accommodations.rooms. Per-item value/value_text and atmos_service.price_per_person_day are gated by show_price_breakdown (admin always sees them); the public per-person/per-day totals are precomputed here and always returned.';
+  'Public/token-based read path for the shared proposal page. Enforces published_at for non-admins, verifies the token, and returns an explicit column projection only -- never proposal_costs, sellers, cost_price, commission_percent, supplier_id, atmos_service.internal_costs, or proposal_accommodations.rooms. Per-item value/value_text and atmos_service.price_per_person_day are gated by show_price_breakdown (raw saved flag, never OR'd with admin). Public aggregates (items_subtotal/items_discount_amount, group-level and items-only; net_per_person, from the authoritative persisted total) are always returned and deliberately do not re-derive the admin-side pricing pipeline (atmos/accommodation revenue, courtesy-adjusted allocation).';
 
 -- ============ submit_proposal_feedback: the only path for public writes to ============
 -- ============ proposal_feedback (the "Solicitar Ajustes" dialog).         ============
@@ -310,3 +356,41 @@ GRANT EXECUTE ON FUNCTION public.submit_proposal_feedback(uuid, text, text, text
 
 COMMENT ON FUNCTION public.submit_proposal_feedback(uuid, text, text, text) IS
   'Public write path for the "Solicitar Ajustes" dialog. Requires proposal_id + share_token to match a published proposal; anon/authenticated have no direct INSERT grant on proposal_feedback anymore.';
+
+-- ============ get_my_published_proposal_link(): replaces the dropped ============
+-- ============ "Customer view published *" policies for Header.tsx.       ============
+CREATE OR REPLACE FUNCTION public.get_my_published_proposal_link()
+RETURNS jsonb
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_result jsonb;
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RETURN NULL;
+  END IF;
+
+  -- Same ownership rule the dropped policies used: published proposal whose
+  -- prospect's email matches the caller's own auth email. Only slug and
+  -- share_token travel back -- never subtotal/atmos_service/cost fields.
+  SELECT jsonb_build_object('slug', pr.slug, 'share_token', pr.share_token)
+  INTO v_result
+  FROM public.proposals pr
+  JOIN public.prospects p ON p.id = pr.prospect_id
+  WHERE pr.published_at IS NOT NULL
+    AND p.email = auth.email()
+  ORDER BY pr.created_at DESC
+  LIMIT 1;
+
+  RETURN v_result;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.get_my_published_proposal_link() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_my_published_proposal_link() TO authenticated;
+
+COMMENT ON FUNCTION public.get_my_published_proposal_link() IS
+  'Returns {slug, share_token} for the caller''s own most recent published proposal (ownership via auth.email() = prospects.email, same rule the dropped "Customer view published proposals" policy used), or NULL. Used by Header.tsx instead of a direct proposals/prospects select.';
