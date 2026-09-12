@@ -19,6 +19,9 @@ DECLARE
   v_current public.proposals;
   v_row jsonb;
   v_ids uuid[];
+  v_child_ids jsonb := '{}'::jsonb;
+  v_sources text[] := '{}'::text[];
+  v_source text;
   v_child_id uuid;
   v_item public.proposal_day_items;
   v_cost public.proposal_costs;
@@ -36,6 +39,36 @@ BEGIN
     OR jsonb_typeof(p_commissions) IS DISTINCT FROM 'array' THEN
     RAISE EXCEPTION 'Complete proposal bundle required';
   END IF;
+  -- Explicit boolean only. Missing means leave UPDATE unchanged / use CREATE default.
+  IF p_proposal ? 'show_price_breakdown' AND jsonb_typeof(p_proposal->'show_price_breakdown') IS DISTINCT FROM 'boolean' THEN
+    RAISE EXCEPTION 'show_price_breakdown must be boolean' USING ERRCODE = '22023';
+  END IF;
+  -- Validate before any writes and even when legacy financial rows suspend synchronization.
+  FOR v_comm IN SELECT value FROM jsonb_array_elements(p_commissions) LOOP
+    IF jsonb_typeof(v_comm) IS DISTINCT FROM 'object'
+      OR jsonb_typeof(v_comm->'source_key') IS DISTINCT FROM 'string'
+      OR jsonb_typeof(v_comm->'amount') IS DISTINCT FROM 'number'
+      OR jsonb_typeof(v_comm->'description') IS DISTINCT FROM 'string'
+      OR jsonb_typeof(v_comm->'due_date') IS DISTINCT FROM 'string' THEN
+      RAISE EXCEPTION 'Commission fields must be present and non-null' USING ERRCODE = '22023';
+    END IF;
+    v_source := v_comm->>'source_key';
+    IF v_source !~ '^accommodation:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+      OR (v_comm->>'amount')::numeric <= 0 OR btrim(v_comm->>'description') = ''
+      OR (v_comm->>'due_date') !~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN
+      RAISE EXCEPTION 'Invalid commission values' USING ERRCODE = '22023';
+    END IF;
+    PERFORM (v_comm->>'due_date')::date;
+    IF v_source = ANY(v_sources) THEN
+      RAISE EXCEPTION 'Duplicate commission source_key' USING ERRCODE = '22023';
+    END IF;
+    v_sources := array_append(v_sources, v_source);
+    IF NOT EXISTS(SELECT 1 FROM jsonb_array_elements(p_accommodations) a
+      WHERE (a->>'id')::uuid = substring(v_source from 15)::uuid
+        AND (a->>'is_selected')::boolean IS TRUE AND a->>'payment_type' = 'hospedagem') THEN
+      RAISE EXCEPTION 'Commission source must identify a selected supplier-paid accommodation in this bundle' USING ERRCODE = '22023';
+    END IF;
+  END LOOP;
   IF EXISTS (
     SELECT 1 FROM jsonb_array_elements(p_accommodations) a
     CROSS JOIN LATERAL jsonb_array_elements(a->'rooms') u
@@ -52,6 +85,14 @@ BEGIN
     v_id := v_current.id;
     UPDATE public.proposals SET (title, status, segment, contract_status, payment_status, prospect_id, seller_id, guide_id, subtotal, discount_percent, discount_fixed, tax_percent, total, notes, valid_until, num_people, num_days, start_date, end_date, language, atmos_service, slug, payment_terms) =
       (SELECT title, status, segment, contract_status, payment_status, prospect_id, seller_id, guide_id, subtotal, discount_percent, discount_fixed, tax_percent, total, notes, valid_until, num_people, num_days, start_date, end_date, language, atmos_service, slug, payment_terms FROM jsonb_populate_record(v_current, p_proposal)) WHERE id = v_id;
+  END IF;
+  IF p_proposal ? 'show_price_breakdown' THEN
+    IF NOT EXISTS(SELECT 1 FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'proposals' AND column_name = 'show_price_breakdown') THEN
+      RAISE EXCEPTION 'Apply the show_price_breakdown migration before saving this setting' USING ERRCODE = '42703';
+    END IF;
+    EXECUTE 'UPDATE public.proposals SET show_price_breakdown = $1 WHERE id = $2'
+      USING (p_proposal->>'show_price_breakdown')::boolean, v_id;
   END IF;
   -- Upsert stable IDs; update only editor-owned fields. Public observations, flags and metadata survive.
   v_ids := '{}'::uuid[];
@@ -71,6 +112,7 @@ BEGIN
     v_ids := array_append(v_ids, v_child_id);
   END LOOP;
   DELETE FROM public.proposal_day_items WHERE proposal_id = v_id AND NOT(id = ANY(v_ids));
+  v_child_ids := v_child_ids || jsonb_build_object('items', to_jsonb(v_ids));
   v_ids := '{}'::uuid[];
   FOR v_row IN SELECT value FROM jsonb_array_elements(p_costs) LOOP
     v_cost := NULL;
@@ -88,6 +130,7 @@ BEGIN
     v_ids := array_append(v_ids, v_child_id);
   END LOOP;
   DELETE FROM public.proposal_costs WHERE proposal_id = v_id AND NOT(id = ANY(v_ids));
+  v_child_ids := v_child_ids || jsonb_build_object('costs', to_jsonb(v_ids));
   v_ids := '{}'::uuid[];
   FOR v_row IN SELECT value FROM jsonb_array_elements(p_days) LOOP
     v_day := NULL;
@@ -105,6 +148,7 @@ BEGIN
     v_ids := array_append(v_ids, v_child_id);
   END LOOP;
   DELETE FROM public.proposal_days WHERE proposal_id = v_id AND NOT(id = ANY(v_ids));
+  v_child_ids := v_child_ids || jsonb_build_object('days', to_jsonb(v_ids));
   v_ids := '{}'::uuid[];
   FOR v_row IN SELECT value FROM jsonb_array_elements(p_accommodations) LOOP
     v_acc := NULL;
@@ -122,6 +166,16 @@ BEGIN
     v_ids := array_append(v_ids, v_child_id);
   END LOOP;
   DELETE FROM public.proposal_accommodations WHERE proposal_id = v_id AND NOT(id = ANY(v_ids));
+  v_child_ids := v_child_ids || jsonb_build_object('accommodations', to_jsonb(v_ids));
+
+  -- A cancelled origin can be a deliberate manual decision. Never silently resurrect it
+  -- or report success with a desired commission still cancelled, even in legacy mode.
+  PERFORM id FROM public.financial_transactions WHERE proposal_id = v_id FOR UPDATE;
+  IF EXISTS(SELECT 1 FROM public.financial_transactions t
+    JOIN jsonb_array_elements(p_commissions) c ON c->>'source_key' = t.source_key
+    WHERE t.proposal_id = v_id AND t.status = 'cancelled') THEN
+    RAISE EXCEPTION 'Comissão cancelada reapareceu. Reconcilie ou reabra manualmente o recebível antes de salvar a proposta.' USING ERRCODE = '55000';
+  END IF;
 
   -- A textual legacy description is not a reliable origin key. Leave these records intact,
   -- skip automatic commission synchronization, and report the need for manual mapping.
@@ -146,9 +200,6 @@ BEGIN
       END IF;
     END LOOP;
     FOR v_comm IN SELECT value FROM jsonb_array_elements(p_commissions) LOOP
-      IF (v_comm->>'amount')::numeric <= 0 OR v_comm->>'source_key' NOT LIKE 'accommodation:%' THEN
-        RAISE EXCEPTION 'Invalid commission';
-      END IF;
       IF NOT EXISTS(SELECT 1 FROM public.financial_transactions WHERE proposal_id = v_id AND source_key = v_comm->>'source_key') THEN
         INSERT INTO public.financial_transactions(type, description, amount, due_date, proposal_id, prospect_id, status, source_key)
           VALUES ('receivable', v_comm->>'description', (v_comm->>'amount')::numeric,
@@ -176,7 +227,7 @@ BEGIN
       END IF;
     END IF;
   END IF;
-  RETURN jsonb_build_object('id', v_id, 'legacy_commissions', v_legacy);
+  RETURN jsonb_build_object('id', v_id, 'legacy_commissions', v_legacy, 'child_ids', v_child_ids);
 END;
 $$;
 REVOKE ALL ON FUNCTION public.save_proposal_bundle(uuid,jsonb,jsonb,jsonb,jsonb,jsonb,jsonb) FROM PUBLIC, anon;

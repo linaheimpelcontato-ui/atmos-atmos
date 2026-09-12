@@ -1,3 +1,4 @@
+import { requestedPriceBreakdown, validateBundleCommissions } from "@/lib/proposalBundleContract";
 import { accommodationAmounts, normalizeSavedRooms, hasMissingCommission } from "@/lib/accommodationCalcs";
 import { lineTotal, money, supplierCommission, splitGroupTotal, resizeFixedPrice, operatingProfit, recordedCost } from "@/lib/proposalCalcs";
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
@@ -1577,6 +1578,8 @@ export default function ProposalFormDialog({
           description: `Comissão hospedagem: ${a.product_name}`, amount,
           due_date: a.checkin_date || startDate || new Date().toISOString().slice(0, 10) }];
       });
+      requestedPriceBreakdown(payload);
+      validateBundleCommissions(commissions, accommodationsPayload);
       const { data, error } = await db.rpc("save_proposal_bundle", {
         p_id: proposalId || null, p_proposal: payload, p_items: itemsPayload,
         p_costs: costsPayload, p_days: daysPayload, p_accommodations: accommodationsPayload,
@@ -1587,6 +1590,8 @@ export default function ProposalFormDialog({
 
     },
     onSuccess: () => {
+      // This editor closes after save. Reopening runs the database loader (open + proposalId),
+      // so all generated child IDs are rehydrated; no second save uses the old in-memory IDs.
       setIsDirty(false);
       qc.invalidateQueries({ queryKey: ["admin-proposals", segment] });
       onOpenChange(false);
