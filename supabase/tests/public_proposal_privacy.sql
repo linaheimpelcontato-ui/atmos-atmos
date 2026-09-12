@@ -37,8 +37,8 @@ INSERT INTO public.user_roles (user_id, role) VALUES
   ('33333333-3333-3333-3333-333333333333', 'admin')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO public.prospects (id, name, email) VALUES
-  ('aaaaaaaa-0000-0000-0000-000000000001', 'Owner Prospect', 'owner@example.com')
+INSERT INTO public.prospects (id, segment, name, email) VALUES
+  ('aaaaaaaa-0000-0000-0000-000000000001', 'b2c', 'Owner Prospect', 'owner@example.com')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.sellers (id, name, email, phone) VALUES
@@ -226,9 +226,23 @@ BEGIN
 
   PERFORM pg_temp.as_user('22222222-2222-2222-2222-222222222222', 'stranger@example.com');
   PERFORM pg_temp.assert(public.get_my_published_proposal_link() IS NULL, 'stranger (authenticated, non-owner, non-admin) gets null, not the owner''s link');
+END $$;
 
+-- anon has no EXECUTE grant on this function at all (GRANT ... TO
+-- authenticated only) -- the call itself must be denied at the ACL layer
+-- (SQLSTATE 42501 insufficient_privilege), not merely return null as if
+-- auth.uid() were evaluated and found empty. Asserting "returns null" here
+-- would have silently passed even if PUBLIC/anon accidentally kept EXECUTE.
+DO $$
+BEGIN
   PERFORM pg_temp.as_anon();
-  PERFORM pg_temp.assert(public.get_my_published_proposal_link() IS NULL, 'anon gets null (auth.uid() is null)');
+  BEGIN
+    PERFORM public.get_my_published_proposal_link();
+    RAISE EXCEPTION 'FAILED: anon call should have been denied at the ACL layer, but it executed';
+  EXCEPTION
+    WHEN insufficient_privilege THEN
+      RAISE NOTICE 'OK: anon is denied EXECUTE on get_my_published_proposal_link (42501), not just returned null';
+  END;
 END $$;
 
 -- ---------------------------------------------------------------------

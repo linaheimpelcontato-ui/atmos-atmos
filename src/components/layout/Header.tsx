@@ -52,7 +52,11 @@ export default function Header() {
   // after B is already logged in.
   useEffect(() => {
     let cancelled = false;
-    if (!user?.email) { setMyProposalSlug(null); return; }
+    // Clear immediately, not just cancel the fetch: otherwise user A's
+    // already-loaded link stays on screen (as B's nav link) for however
+    // long B's own request takes to resolve.
+    setMyProposalSlug(null);
+    if (!user?.email) { return; }
     (async () => {
       const { data, error } = await supabase.rpc("get_my_published_proposal_link");
       if (cancelled) return;

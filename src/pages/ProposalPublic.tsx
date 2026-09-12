@@ -9,6 +9,8 @@ import { getDayImage } from "@/components/itineraries/dayImages";
 import { trackProposalView } from "@/lib/analytics";
 import { parsePublicProposal, canShowPriceBreakdown, type PublicProposal } from "@/lib/publicProposal";
 import { isProposalExpired } from "@/lib/dateRules";
+import { buildProposalEditsPayload, resolveItemDescription } from "@/lib/proposalEdits";
+import { createLatestRequestGuard } from "@/lib/requestGuard";
 import {
   Check, MapPin, Users, CalendarDays,
   Sunrise, Mountain, Compass, Sparkles, Leaf, MessageCircle,
@@ -301,6 +303,7 @@ export default function ProposalPublic() {
   const [publishing, setPublishing] = useState(false);
   const [togglingBreakdown, setTogglingBreakdown] = useState(false);
   const proposalIdRef = useRef<string | null>(null);
+  const requestGuardRef = useRef(createLatestRequestGuard());
   const [contractDialogOpen, setContractDialogOpen] = useState(false);
   const [contractUrlInput, setContractUrlInput] = useState("");
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -333,23 +336,67 @@ export default function ProposalPublic() {
       }
     })();
     return () => { cancelled = true; };
-  }, [user, searchParams]);
+    // Also re-runs on token change: navigating to a different proposal
+    // shouldn't leave a previous token's admin check standing in for the
+    // new one (see the token effect below, which clears isAdmin
+    // synchronously the moment the token changes -- this re-establishes it
+    // once freshly verified).
+  }, [user, searchParams, token]);
 
   useEffect(() => {
-    let cancelled = false;
-    if (!token) return;
-    // Reset immediately: a stale proposal/admin-controls render for the
-    // previous token must not stay on screen while the new one loads.
+    // Started unconditionally, before the `!token` early return, so that
+    // path also invalidates cleanly (and still returns a cleanup) instead
+    // of skipping the guard entirely.
+    const request = requestGuardRef.current.start();
+
+    // Reset immediately, synchronously -- before the `!token` early return,
+    // not after it -- so navigating away from a valid token doesn't leave
+    // the previous proposal/admin controls/edit buffer on screen. isAdmin
+    // is cleared here rather than waiting on the admin-check effect's RPC
+    // round trip -- that effect also re-runs on token change (see its
+    // dependency array) and re-establishes it once freshly verified.
     setLoading(true);
     setError(false);
     setProposal(null);
+    setItems([]);
+    setIsAdmin(false);
+    setEditMode(false);
+    setEditLabels({});
+    setEditObservations({});
+    setEditDescriptions({});
+    setEditItemOrder([]);
+    setExpandedDays([]);
+    setSaving(false);
+    setPublishing(false);
+    setTogglingBreakdown(false);
+    setSavingContract(false);
+    setApproving(false);
+    setContractDialogOpen(false);
+    setContractUrlInput("");
+    setFeedbackOpen(false);
+    setClicksignKey(null);
+    setLoadingContract(false);
+    proposalIdRef.current = null;
+    if (!token) {
+      request.invalidate();
+      return () => request.invalidate();
+    }
+
+    // get_public_proposal's result depends on who's calling (auth.uid()
+    // inside the RPC decides admin-only visibility), not just the URL
+    // token -- so a request started while logged in as an admin must be
+    // discarded if it resolves after logout/switching users for the same
+    // token. Tracked by generation, not by comparing a token+user "key":
+    // navigating token A -> B -> back to A must not let the first (now
+    // twice-stale) A response become "current" again just because a later
+    // request happens to share its key.
     (async () => {
       // Public/shared reads go exclusively through this RPC: it enforces
       // published_at for non-admins and returns an explicit, public-safe
       // column projection (never proposal_costs, sellers, cost_price,
       // commission_percent, supplier_id or atmos_service.internal_costs).
       const { data, error: rpcError } = await supabase.rpc("get_public_proposal", { p_token: token });
-      if (cancelled) return;
+      if (!request.isCurrent()) return;
 
       const finalProp = parsePublicProposal(data);
       if (rpcError || !finalProp) {
@@ -387,7 +434,7 @@ export default function ProposalPublic() {
       // TODO(codex): drop the `as any` casts once get_public_products lands
       // in the generated Supabase types.
       const { data: prods, error: prodsError } = await (supabase.rpc as any)("get_public_products", { p_type: null });
-      if (cancelled) return;
+      if (!request.isCurrent()) return;
       if (prodsError) {
         console.error("Error loading public products:", prodsError);
         setProducts([]);
@@ -398,8 +445,8 @@ export default function ProposalPublic() {
       trackProposalView(finalProp.id);
       setLoading(false);
     })();
-    return () => { cancelled = true; };
-  }, [token]);
+    return () => request.invalidate();
+  }, [token, user?.id]);
 
   // Sync edit state when items load after edit mode was already activated via URL
   useEffect(() => {
@@ -411,8 +458,12 @@ export default function ProposalPublic() {
         const first = items.find(i => i.day_number === d);
         lbls[d] = first?.day_label || `Dia ${d}`;
       });
-      items.forEach((item, idx) => {
-        descs[`${item.day_number}-${idx}`] = item.description || "";
+      // Keyed by the stable row id, not array position: position shifts
+      // under drag-and-drop reordering (and handleDayDragEnd now clones
+      // items instead of mutating in place, so `items.indexOf(item)` on a
+      // reordered clone would return -1 and silently drop the edit).
+      items.forEach((item) => {
+        if (item.id) descs[item.id] = item.description || "";
       });
       setEditLabels(lbls);
       setEditDescriptions(descs);
@@ -430,8 +481,8 @@ export default function ProposalPublic() {
       const first = items.find(i => i.day_number === d);
       lbls[d] = first?.day_label || `Dia ${d}`;
     });
-    items.forEach((item, idx) => {
-      descs[`${item.day_number}-${idx}`] = item.description || "";
+    items.forEach((item) => {
+      if (item.id) descs[item.id] = item.description || "";
     });
     setEditLabels(lbls);
     setEditDescriptions(descs);
@@ -462,6 +513,11 @@ export default function ProposalPublic() {
   const saveEdits = async () => {
     const propId = proposalIdRef.current;
     if (!propId) return;
+    // Snapshot, not a new fetch: if the admin navigates to a different
+    // proposal before this resolves, the write already happened (or will)
+    // server-side regardless -- it just must not then mutate whatever is
+    // now on screen for a different token/proposal.
+    const context = requestGuardRef.current.snapshot();
     setSaving(true);
     try {
       // Single atomic call: save_public_proposal_edits (admin RPC, role +
@@ -471,31 +527,19 @@ export default function ProposalPublic() {
       // other editor) or leave partial writes on a mid-sequence failure.
       // Snapshotted from state up front so nothing here depends on item
       // object identity/mutation during drag-and-drop reordering.
-      const dayNumsTouched = [...new Set([
-        ...editItemOrder.map(i => i.day_number),
-        ...Object.keys(editObservations).map(Number),
-        ...Object.keys(editLabels).map(Number),
-      ])];
-      const daysPayload = dayNumsTouched.map(d => ({
-        day_number: d,
-        observation: editObservations[d] || "",
-        day_label: editLabels[d] || `${t.day} ${d}`,
-      }));
-
-      const itemsPayload = editItemOrder
-        .filter(item => !!item.id)
-        .map((item, idx) => {
-          const descKey = `${item.day_number}-${items.indexOf(item)}`;
-          const origIdx = items.indexOf(item);
-          const altDescKey = `${item.day_number}-${origIdx}`;
-          const desc = editDescriptions[descKey] ?? editDescriptions[altDescKey] ?? item.description;
-          return { id: item.id, description: desc || null, item_index: item.item_index };
-        });
+      const { p_days, p_items } = buildProposalEditsPayload({
+        editItemOrder,
+        editObservations,
+        editLabels,
+        editDescriptions,
+        fallbackDayLabel: (d) => `${t.day} ${d}`,
+      });
 
       const { data, error } = await supabase.rpc(
         "save_public_proposal_edits",
-        { p_proposal_id: propId, p_days: daysPayload, p_items: itemsPayload }
+        { p_proposal_id: propId, p_days, p_items }
       );
+      if (!context.isCurrent()) return;
 
       if (error || data !== true) {
         console.error("Error saving edits:", error);
@@ -504,26 +548,26 @@ export default function ProposalPublic() {
       }
 
       setDayObservations({ ...editObservations });
-      const updatedItems: DayItem[] = editItemOrder.map(item => {
-        const descKey = `${item.day_number}-${items.indexOf(item)}`;
-        const origIdx = items.indexOf(item);
-        const altDescKey = `${item.day_number}-${origIdx}`;
-        const desc = editDescriptions[descKey] ?? editDescriptions[altDescKey] ?? item.description;
-        return { ...item, description: desc || null, day_label: editLabels[item.day_number] || item.day_label };
-      });
+      const updatedItems: DayItem[] = editItemOrder.map(item => ({
+        ...item,
+        description: resolveItemDescription(item, editDescriptions),
+        day_label: editLabels[item.day_number] || item.day_label,
+      }));
       setItems(updatedItems);
       setEditMode(false);
     } catch (e) {
+      if (!context.isCurrent()) return;
       console.error("Error saving edits:", e);
       toast({ title: "Erro ao salvar", description: "As alterações não foram salvas. Tente novamente.", variant: "destructive" });
     } finally {
-      setSaving(false);
+      if (context.isCurrent()) setSaving(false);
     }
   };
 
   const togglePublish = async () => {
     const propId = proposalIdRef.current;
     if (!propId || !proposal) return;
+    const context = requestGuardRef.current.snapshot();
     setPublishing(true);
     try {
       const newVal = proposal.published_at ? null : new Date().toISOString();
@@ -533,6 +577,8 @@ export default function ProposalPublic() {
         .eq("id", propId)
         .select("published_at, status")
         .single();
+      if (!context.isCurrent()) return;
+
       if (error || !data) {
         console.error("Error toggling publish:", error);
         toast({ title: "Erro ao publicar/recolher", description: "A alteração não foi salva. Tente novamente.", variant: "destructive" });
@@ -540,16 +586,18 @@ export default function ProposalPublic() {
       }
       setProposal((prev: Proposal | null) => prev ? { ...prev, published_at: data.published_at, status: data.status } : prev);
     } catch (e) {
+      if (!context.isCurrent()) return;
       console.error("Error toggling publish:", e);
       toast({ title: "Erro ao publicar/recolher", description: "A alteração não foi salva. Tente novamente.", variant: "destructive" });
     } finally {
-      setPublishing(false);
+      if (context.isCurrent()) setPublishing(false);
     }
   };
 
   const toggleShowBreakdown = async () => {
     const propId = proposalIdRef.current;
     if (!propId || !proposal) return;
+    const context = requestGuardRef.current.snapshot();
     setTogglingBreakdown(true);
     try {
       const newVal = !proposal.show_price_breakdown;
@@ -559,6 +607,8 @@ export default function ProposalPublic() {
         .eq("id", propId)
         .select("show_price_breakdown")
         .single();
+      if (!context.isCurrent()) return;
+
       if (error || !data) {
         console.error("Error toggling price breakdown:", error);
         toast({ title: "Erro ao alterar detalhamento", description: "A alteração não foi salva. Tente novamente.", variant: "destructive" });
@@ -566,16 +616,18 @@ export default function ProposalPublic() {
       }
       setProposal((prev: Proposal | null) => prev ? { ...prev, show_price_breakdown: data.show_price_breakdown } : prev);
     } catch (e) {
+      if (!context.isCurrent()) return;
       console.error("Error toggling price breakdown:", e);
       toast({ title: "Erro ao alterar detalhamento", description: "A alteração não foi salva. Tente novamente.", variant: "destructive" });
     } finally {
-      setTogglingBreakdown(false);
+      if (context.isCurrent()) setTogglingBreakdown(false);
     }
   };
 
   const saveContractUrl = async () => {
     const propId = proposalIdRef.current;
     if (!propId) return;
+    const context = requestGuardRef.current.snapshot();
     setSavingContract(true);
     try {
       const url = contractUrlInput.trim() || null;
@@ -585,6 +637,8 @@ export default function ProposalPublic() {
         .eq("id", propId)
         .select("contract_url")
         .single();
+      if (!context.isCurrent()) return;
+
       if (error || !data) {
         console.error("Error saving contract URL:", error);
         toast({ title: "Erro ao vincular contrato", description: "A alteração não foi salva. Tente novamente.", variant: "destructive" });
@@ -593,15 +647,17 @@ export default function ProposalPublic() {
       setProposal((prev: Proposal | null) => prev ? { ...prev, contract_url: data.contract_url } : prev);
       setContractDialogOpen(false);
     } catch (e) {
+      if (!context.isCurrent()) return;
       console.error("Error saving contract URL:", e);
       toast({ title: "Erro ao vincular contrato", description: "A alteração não foi salva. Tente novamente.", variant: "destructive" });
     } finally {
-      setSavingContract(false);
+      if (context.isCurrent()) setSavingContract(false);
     }
   };
 
   const handleApprove = async () => {
     if (!proposal || approving) return;
+    const context = requestGuardRef.current.snapshot();
     setApproving(true);
     try {
       const res = await fetch(
@@ -612,6 +668,8 @@ export default function ProposalPublic() {
           body: JSON.stringify({ proposal_id: proposal.id, share_token: proposal.share_token }),
         }
       );
+      if (!context.isCurrent()) return;
+
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         console.error("Approve error:", body);
@@ -623,9 +681,10 @@ export default function ProposalPublic() {
         document.getElementById("contract-section")?.scrollIntoView({ behavior: "smooth" });
       });
     } catch (e) {
+      if (!context.isCurrent()) return;
       console.error("Approve error:", e);
     } finally {
-      setApproving(false);
+      if (context.isCurrent()) setApproving(false);
     }
   };
 
@@ -636,6 +695,7 @@ export default function ProposalPublic() {
       setClicksignKey(proposal.contract_url.replace("clicksign:", ""));
       return;
     }
+    const context = requestGuardRef.current.snapshot();
     setLoadingContract(true);
     try {
       const res = await fetch(
@@ -646,12 +706,15 @@ export default function ProposalPublic() {
           body: JSON.stringify({ proposal_id: proposal.id, share_token: proposal.share_token }),
         }
       );
+      if (!context.isCurrent()) return;
+
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         console.error("Clicksign error:", body);
         return;
       }
       const data = await res.json();
+      if (!context.isCurrent()) return;
       if (data.widget_key) {
         setClicksignKey(data.widget_key);
         setProposal((prev: Proposal | null) =>
@@ -659,9 +722,10 @@ export default function ProposalPublic() {
         );
       }
     } catch (e) {
+      if (!context.isCurrent()) return;
       console.error("Clicksign error:", e);
     } finally {
-      setLoadingContract(false);
+      if (context.isCurrent()) setLoadingContract(false);
     }
   };
 
@@ -1478,8 +1542,9 @@ export default function ProposalPublic() {
                     const itemContent = visibleItems.map((item, localIdx) => {
                       const Icon = CATEGORY_ICONS[item.category] || MapPin;
                       const catLabel = CATEGORY_LABELS[item.category]?.[lang] || item.category;
-                      const globalIdx = items.indexOf(item);
-                      const descKey = `${item.day_number}-${globalIdx}`;
+                      // Stable row id, not array position: position breaks
+                      // under drag-and-drop reordering elsewhere on the page.
+                      const descKey = item.id ?? "";
                       const sortableId = `${dayNum}-${item.item_index}`;
 
                       const inner = (
