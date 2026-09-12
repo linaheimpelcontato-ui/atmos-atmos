@@ -11,6 +11,7 @@ import { parsePublicProposal, canShowPriceBreakdown, type PublicProposal } from 
 import { isProposalExpired } from "@/lib/dateRules";
 import { buildProposalEditsPayload, resolveItemDescription } from "@/lib/proposalEdits";
 import { createLatestRequestGuard } from "@/lib/requestGuard";
+import { mountClicksignWidget } from "@/lib/clicksignWidget";
 import {
   Check, MapPin, Users, CalendarDays,
   Sunrise, Mountain, Compass, Sparkles, Leaf, MessageCircle,
@@ -730,29 +731,21 @@ export default function ProposalPublic() {
   };
 
   useEffect(() => {
-    if (!clicksignKey || !clicksignContainerRef.current) return;
-    const container = clicksignContainerRef.current;
-    container.innerHTML = "";
-    const script = document.createElement("script");
-    script.src = "https://app.clicksign.com/js/widget.js";
-    script.async = true;
-    script.onload = () => {
-      if ((window as any).Clicksign) {
-        (window as any).Clicksign.configure({
-          container: "clicksign-widget-container",
-          key: clicksignKey,
-          signer: { display_name: proposal?.prospects?.name || "Cliente" },
-          onSigned: () => {
-            setProposal((prev: Proposal | null) =>
-              prev ? { ...prev, contract_status: "signed" } : prev
-            );
-          },
-        });
-      }
-    };
-    document.head.appendChild(script);
-    return () => { try { document.head.removeChild(script); } catch (_) {} };
-  }, [clicksignKey]);
+    if (!clicksignKey || !clicksignContainerRef.current || !proposal?.id) return;
+    const context = requestGuardRef.current.snapshot();
+    const proposalId = proposal.id;
+    return mountClicksignWidget({
+      container: clicksignContainerRef.current,
+      key: clicksignKey,
+      signerName: proposal.prospects?.name || "Cliente",
+      isCurrent: context.isCurrent,
+      onSigned: () => {
+        setProposal((prev: Proposal | null) =>
+          prev?.id === proposalId ? { ...prev, contract_status: "signed" } : prev
+        );
+      },
+    });
+  }, [clicksignKey, token, user?.id, proposal?.id]);
 
   useEffect(() => {
     if (proposal?.status === "approved" && proposal.contract_url?.startsWith("clicksign:")) {
