@@ -48,3 +48,14 @@ Concluir migrations de aprovação/recebíveis e transição Clicksign, revisar 
 - Nenhum job existe em `cron.job` de produção. `MEETING_REMINDERS_SECRET` não consta nos nomes de secrets consultados; configurar o agendador autenticado antes de ativar lembretes. Agendadores externos não foram comprovados.
 - A conta com módulo legado desconhecido precisa ser revisada por um administrador total. Não altera os outros dois administradores sem restrição registrada.
 - Regras comerciais que dependem de planilha real, contabilidade/DRE e mapa geográfico de fase2 não foram inventadas nem declaradas completas.
+
+## Backup e revisão final — 18:03 BRT
+
+- Commit de implementação `a509b53` enviado para `origin/codex/atmos-stabilization`; SHA remoto conferido.
+- GitHub/Vercel tentou preview e retornou **Deployment was blocked**, deployment `6414286543`, [registro Vercel](https://vercel.com/studio-78/atmos-atmos/CPBKtrxci7PYCSYWEhfjTs8t4Kqv). Não houve publicação de frontend, migrations ou functions em PRD. A causa detalhada ainda requer sessão do titular; não presumir problema de plano/autoria. Solicitação de sessão autenticada enviada ao Gustavo.
+- Teste real de navegador com conta admin fictícia restrita a B2C confirmou propostas B2C disponíveis e B2B/financeiro bloqueados por URL direta. Conta temporária removida e sessão local administrativa restaurada.
+- Revisão independente do Claude confirmou RLS por segmento. Uma tentativa da suíte em banco populado falhou por execução fora do contrato documentado (clone descartável vazio); repetida no ambiente exigido, passou. Nenhum defeito funcional foi confirmado nesse caso e nenhum teste/migration24 precisou ser alterado.
+- Exceção histórica de segurança: migration de abril ainda pendente em PRD agora cria `force_insert` e revoga EXECUTE de PUBLIC/anon/authenticated na mesma transação, impedindo janela de exposição antes de sua remoção em setembro. Ensaio local confirmou privilégios false/false; helper removido do clone depois. Consulta PRD confirmou que essa função não existe atualmente. Isso não é uma alteração de histórico já aplicado em PRD.
+- Procedimento assistido de Clicksign disponível em [CLICKSIGN-OPERACAO.md](CLICKSIGN-OPERACAO.md); guia de integração/recuperação em [PUBLICACAO-COORDENADA.md](PUBLICACAO-COORDENADA.md). Documentos operacionais não representam deploy nem comprovação de configuração dos provedores.
+
+Revisão final do Claude: nenhum bypass ou lockout confirmado como bug na24. Suíte independente passou em clone vazio; consulta adicional no banco de QA confirmou B2C sem leitura de B2B. Permissões legadas e contas com papéis combinados continuam sujeitos ao preflight documentado.
