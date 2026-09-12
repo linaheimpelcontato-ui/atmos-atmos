@@ -1,3 +1,5 @@
+import TransactionTraceabilityFields from "@/components/admin/TransactionTraceabilityFields";
+import { readTraceability, traceabilityPayload, traceabilityExport, proposalLabel, supplierLabel } from "./finance/transactionTraceability";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -47,6 +49,8 @@ export default function AdminFinanceDespesas() {
   const { toast } = useToast();
   const [transactions, setTransactions] = useState<any[]>([]);
   const [accounts, setAccounts] = useState<any[]>([]);
+  const [proposals, setProposals] = useState<any[]>([]);
+  const [suppliers, setSuppliers] = useState<any[]>([]);
   const [sellers, setSellers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState("all");
@@ -55,6 +59,7 @@ export default function AdminFinanceDespesas() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({
+    ...readTraceability(),
     type: "payable", description: "", amount: 0, due_date: format(new Date(), "yyyy-MM-dd"),
     paid_date: "", status: "pending", account_id: "", seller_id: "", is_recurring: false, recurrence_day: 0, notes: "",
   });
@@ -69,11 +74,22 @@ export default function AdminFinanceDespesas() {
       .order("due_date", { ascending: false });
     if (filterStatus !== "all") q = q.eq("status", filterStatus);
 
-    const [{ data: txs }, { data: accs }, { data: sls }] = await Promise.all([
+    const results = await Promise.all([
       q,
       db.from("chart_of_accounts").select("id, code, name, type").eq("is_active", true).order("code"),
       db.from("sellers").select("id, name").eq("is_active", true).order("name"),
+      db.from("proposals").select("id, title, code").order("created_at", { ascending: false }),
+      db.from("suppliers").select("id, name, is_active").order("name"),
     ]);
+    const error = results.find(result => result.error)?.error;
+    if (error) {
+      toast({ title: "Falha ao carregar lançamentos", description: error.message, variant: "destructive" });
+      setLoading(false);
+      return;
+    }
+    const [{ data: txs }, { data: accs }, { data: sls }, { data: props }, { data: sups }] = results;
+    setProposals(props || []);
+    setSuppliers(sups || []);
     setTransactions(txs || []);
     setAccounts(accs || []);
     setSellers(sls || []);
@@ -82,16 +98,16 @@ export default function AdminFinanceDespesas() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  const resetForm = () => setForm({ type: "payable", description: "", amount: 0, due_date: format(new Date(), "yyyy-MM-dd"), paid_date: "", status: "pending", account_id: "", seller_id: "", is_recurring: false, recurrence_day: 0, notes: "" });
+  const resetForm = () => setForm({ ...readTraceability(), type: "payable", description: "", amount: 0, due_date: format(new Date(), "yyyy-MM-dd"), paid_date: "", status: "pending", account_id: "", seller_id: "", is_recurring: false, recurrence_day: 0, notes: "" });
   const openNew = () => { resetForm(); setEditingId(null); setDialogOpen(true); };
   const openEdit = (tx: any) => {
     setEditingId(tx.id);
-    setForm({ type: tx.type, description: tx.description, amount: tx.amount, due_date: tx.due_date, paid_date: tx.paid_date || "", status: tx.status, account_id: tx.account_id || "", seller_id: tx.seller_id || "", is_recurring: tx.is_recurring, recurrence_day: tx.recurrence_day || 0, notes: tx.notes || "" });
+    setForm({ ...readTraceability(tx), type: tx.type, description: tx.description, amount: tx.amount, due_date: tx.due_date, paid_date: tx.paid_date || "", status: tx.status, account_id: tx.account_id || "", seller_id: tx.seller_id || "", is_recurring: tx.is_recurring, recurrence_day: tx.recurrence_day || 0, notes: tx.notes || "" });
     setDialogOpen(true);
   };
 
   const handleSave = async () => {
-    const payload = { type: form.type, description: form.description, amount: form.amount, due_date: form.due_date, paid_date: form.paid_date || null, status: form.status, account_id: form.account_id || null, seller_id: form.seller_id || null, is_recurring: form.is_recurring, recurrence_day: form.is_recurring ? form.recurrence_day : null, notes: form.notes || null };
+    const payload = { ...traceabilityPayload(form), type: form.type, description: form.description, amount: form.amount, due_date: form.due_date, paid_date: form.paid_date || null, status: form.status, account_id: form.account_id || null, seller_id: form.seller_id || null, is_recurring: form.is_recurring, recurrence_day: form.is_recurring ? form.recurrence_day : null, notes: form.notes || null };
     const { error } = editingId ? await db.from("financial_transactions").update(payload).eq("id", editingId) : await db.from("financial_transactions").insert(payload);
     if (error) { toast({ title: "Erro", description: String(error.message), variant: "destructive" }); return; }
     toast({ title: editingId ? "Despesa atualizada" : "Despesa criada" });
@@ -262,7 +278,15 @@ export default function AdminFinanceDespesas() {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="p-4 text-muted-foreground font-medium max-w-[200px] truncate">{tx.description}</TableCell>
+                    <TableCell className="p-4 text-muted-foreground font-medium min-w-[220px]">
+                      <div>{tx.description}</div>
+                      <div className="mt-1 text-xs space-y-1">
+                        <div>Proposta / grupo: {proposalLabel(tx.proposal_id, proposals) || "Sem vínculo"}</div>
+                        <div>Fornecedor: {supplierLabel(tx.supplier_id, suppliers) || "Não informado"}</div>
+                        <div>NF: {tx.invoice_number || "Não informada"}</div>
+                        <div>Competência: {tx.competence_date || "Não informada"}</div>
+                      </div>
+                    </TableCell>
                     <TableCell className="p-4 text-[11px] font-mono text-muted-foreground/60">{acc ? `${acc.code} ${acc.name}` : "—"}</TableCell>
                     <TableCell className="p-4 text-right font-black text-destructive tabular-nums text-base">{fmt(Number(tx.amount))}</TableCell>
                     <TableCell className="p-4 text-center">
@@ -333,6 +357,7 @@ export default function AdminFinanceDespesas() {
         onExport={() => {
           const rows = filteredTxs.filter((t: any) => selection.selectedIds.has(t.id));
           const ws = XLSX.utils.json_to_sheet(rows.map((t: any) => ({
+            ...traceabilityExport(t, proposals, suppliers),
             Vencimento: t.due_date, Tipo: typeLabels[t.type], Descrição: t.description, Valor: t.amount, Status: statusLabels[t.status],
           })));
           const wb = XLSX.utils.book_new();
@@ -472,6 +497,13 @@ export default function AdminFinanceDespesas() {
                 )}
               </div>
             </div>
+
+            <TransactionTraceabilityFields
+              value={form}
+              onChange={patch => setForm(current => ({ ...current, ...patch }))}
+              proposals={proposals}
+              suppliers={suppliers}
+            />
 
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">Observações Internas</Label>

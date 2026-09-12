@@ -1,3 +1,5 @@
+import TransactionTraceabilityFields from "@/components/admin/TransactionTraceabilityFields";
+import { readTraceability, traceabilityPayload, traceabilityExport, proposalLabel } from "./finance/transactionTraceability";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -56,6 +58,7 @@ export default function AdminFinanceReceitas() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({
+    ...readTraceability(),
     type: "receivable", description: "", amount: 0, due_date: format(new Date(), "yyyy-MM-dd"),
     paid_date: "", status: "pending", account_id: "", proposal_id: "", seller_id: "", notes: "",
   });
@@ -70,12 +73,19 @@ export default function AdminFinanceReceitas() {
       .order("due_date", { ascending: false });
     if (filterStatus !== "all") q = q.eq("status", filterStatus);
 
-    const [{ data: txs }, { data: accs }, { data: sls }, { data: props }] = await Promise.all([
+    const results = await Promise.all([
       q,
       db.from("chart_of_accounts").select("id, code, name, type").eq("is_active", true).order("code"),
       db.from("sellers").select("id, name").eq("is_active", true).order("name"),
       db.from("proposals").select("id, title, code, total, status, prospect_id").order("created_at", { ascending: false }),
     ]);
+    const error = results.find(result => result.error)?.error;
+    if (error) {
+      toast({ title: "Falha ao carregar lançamentos", description: error.message, variant: "destructive" });
+      setLoading(false);
+      return;
+    }
+    const [{ data: txs }, { data: accs }, { data: sls }, { data: props }] = results;
     setTransactions(txs || []);
     setAccounts(accs || []);
     setSellers(sls || []);
@@ -88,16 +98,16 @@ export default function AdminFinanceReceitas() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  const resetForm = () => setForm({ type: "receivable", description: "", amount: 0, due_date: format(new Date(), "yyyy-MM-dd"), paid_date: "", status: "pending", account_id: "", proposal_id: "", seller_id: "", notes: "" });
+  const resetForm = () => setForm({ ...readTraceability(), type: "receivable", description: "", amount: 0, due_date: format(new Date(), "yyyy-MM-dd"), paid_date: "", status: "pending", account_id: "", proposal_id: "", seller_id: "", notes: "" });
   const openNew = () => { resetForm(); setEditingId(null); setDialogOpen(true); };
   const openEdit = (tx: any) => {
     setEditingId(tx.id);
-    setForm({ type: tx.type, description: tx.description, amount: tx.amount, due_date: tx.due_date, paid_date: tx.paid_date || "", status: tx.status, account_id: tx.account_id || "", proposal_id: tx.proposal_id || "", seller_id: tx.seller_id || "", notes: tx.notes || "" });
+    setForm({ ...readTraceability(tx), type: tx.type, description: tx.description, amount: tx.amount, due_date: tx.due_date, paid_date: tx.paid_date || "", status: tx.status, account_id: tx.account_id || "", proposal_id: tx.proposal_id || "", seller_id: tx.seller_id || "", notes: tx.notes || "" });
     setDialogOpen(true);
   };
 
   const handleSave = async () => {
-    const payload = { type: form.type, description: form.description, amount: form.amount, due_date: form.due_date, paid_date: form.paid_date || null, status: form.status, account_id: form.account_id || null, proposal_id: form.proposal_id || null, seller_id: form.seller_id || null, notes: form.notes || null };
+    const payload = { ...traceabilityPayload(form), type: form.type, description: form.description, amount: form.amount, due_date: form.due_date, paid_date: form.paid_date || null, status: form.status, account_id: form.account_id || null, proposal_id: form.proposal_id || null, seller_id: form.seller_id || null, notes: form.notes || null };
     const { error } = editingId ? await db.from("financial_transactions").update(payload).eq("id", editingId) : await db.from("financial_transactions").insert(payload);
     if (error) { toast({ title: "Erro", description: String(error.message), variant: "destructive" }); return; }
     toast({ title: editingId ? "Receita atualizada" : "Receita criada" });
@@ -315,7 +325,14 @@ export default function AdminFinanceReceitas() {
                         {tx.type === "commission_in" ? "Comissão" : "Receita"}
                       </span>
                     </TableCell>
-                    <TableCell className="p-4 text-muted-foreground font-medium max-w-[200px] truncate">{tx.description}</TableCell>
+                    <TableCell className="p-4 text-muted-foreground font-medium min-w-[220px]">
+                      <div>{tx.description}</div>
+                      <div className="mt-1 text-xs space-y-1">
+                        <div>Proposta / grupo: {proposalLabel(tx.proposal_id, proposals) || "Sem vínculo"}</div>
+                        <div>NF: {tx.invoice_number || "Não informada"}</div>
+                        <div>Competência: {tx.competence_date || "Não informada"}</div>
+                      </div>
+                    </TableCell>
                     <TableCell className="p-4 text-[11px] font-mono text-muted-foreground/60">{prop?.code || "—"}</TableCell>
                     <TableCell className="p-4 text-right font-black text-admin-primary tabular-nums text-base">{fmt(Number(tx.amount))}</TableCell>
                     <TableCell className="p-4 text-center">
@@ -386,6 +403,7 @@ export default function AdminFinanceReceitas() {
         onExport={() => {
           const rows = filteredTxs.filter((t: any) => selection.selectedIds.has(t.id));
           const ws = XLSX.utils.json_to_sheet(rows.map((t: any) => ({
+            ...traceabilityExport(t, proposals),
             Vencimento: t.due_date, Tipo: typeLabels[t.type], Descrição: t.description, Valor: t.amount, Status: statusLabels[t.status],
           })));
           const wb = XLSX.utils.book_new();
@@ -491,13 +509,7 @@ export default function AdminFinanceReceitas() {
                   <SelectContent className="rounded-xl border-none shadow-xl">{accounts.map((a: any) => <SelectItem key={a.id} value={a.id}>{a.code} — {a.name}</SelectItem>)}<SelectItem value="none">Nenhuma</SelectItem></SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">Vincular Proposta</Label>
-                <Select value={form.proposal_id || "none"} onValueChange={v => setForm({ ...form, proposal_id: v === "none" ? "" : v })}>
-                  <SelectTrigger className="h-11 rounded-xl bg-admin-muted/50 border-none text-xs font-bold"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
-                  <SelectContent className="rounded-xl border-none shadow-xl">{proposals.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.code || p.title}</SelectItem>)}<SelectItem value="none">Nenhuma</SelectItem></SelectContent>
-                </Select>
-              </div>
+
             </div>
 
             <div className="space-y-2">
@@ -507,6 +519,12 @@ export default function AdminFinanceReceitas() {
                 <SelectContent className="rounded-xl border-none shadow-xl">{sellers.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}<SelectItem value="none">Nenhum</SelectItem></SelectContent>
               </Select>
             </div>
+
+            <TransactionTraceabilityFields
+              value={form}
+              onChange={patch => setForm(current => ({ ...current, ...patch }))}
+              proposals={proposals}
+            />
 
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">Observações Internas</Label>

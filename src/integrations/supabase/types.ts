@@ -372,6 +372,9 @@ export type Database = {
       }
       financial_transactions: {
         Row: {
+          supplier_id: string | null
+          invoice_number: string | null
+          competence_date: string | null
           account_id: string | null
           amount: number
           bank_account_id: string | null
@@ -395,6 +398,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          supplier_id?: string | null
+          invoice_number?: string | null
+          competence_date?: string | null
           account_id?: string | null
           amount?: number
           bank_account_id?: string | null
@@ -418,6 +424,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          supplier_id?: string | null
+          invoice_number?: string | null
+          competence_date?: string | null
           account_id?: string | null
           amount?: number
           bank_account_id?: string | null
@@ -441,6 +450,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "financial_transactions_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "financial_transactions_account_id_fkey"
             columns: ["account_id"]

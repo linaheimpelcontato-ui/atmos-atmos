@@ -122,6 +122,7 @@ export type ProposalCost = {
 export type Guide = { id: string; name: string; is_active: boolean };
 export type Product = { id: string; name: string; type: string; category: string | null };
 export type Transaction = {
+  supplier_id: string | null; invoice_number: string | null; competence_date: string | null;
   id: string; type: string; description: string; amount: number;
   due_date: string; paid_date: string | null; status: string;
   proposal_id: string | null; account_id: string | null; seller_id: string | null;
