@@ -270,31 +270,8 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
         }
       }
 
-      // Sync with prospects table using a robust lookup-then-action pattern
-      try {
-        const normalizedEmail = email.toLowerCase();
-        const { data: existing } = await supabase.from("prospects").select("id").eq("email", normalizedEmail).maybeSingle();
-
-        const prospectData = {
-          name: fullName,
-          email: normalizedEmail,
-          phone: phone,
-          birth_date: bDate,
-          city: city,
-          country: country === "BR" ? "Brasil" : country,
-          source: "site",
-          segment: "b2c",
-          updated_at: new Date().toISOString(),
-        };
-
-        if (existing) {
-          await supabase.from("prospects").update(prospectData).eq("id", existing.id);
-        } else {
-          await supabase.from("prospects").insert(prospectData);
-        }
-      } catch (prospectErr) {
-        console.error("Error syncing with prospects table:", prospectErr);
-      }
+      // Personal registration writes the authenticated profile. CRM lead creation
+      // belongs to the server-side quote request trigger, never client-side CRM access.
 
       setStep("success");
       trackSignup();

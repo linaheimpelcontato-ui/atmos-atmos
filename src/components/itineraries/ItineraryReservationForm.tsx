@@ -351,6 +351,7 @@ export default function ItineraryReservationForm({ itinerary, language, onClose 
   const [currentStep, setCurrentStep] = useState(0);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Filter visible questions based on conditionals
   const visibleQuestions = questions.filter(
@@ -413,6 +414,7 @@ export default function ItineraryReservationForm({ itinerary, language, onClose 
   };
 
   const handleOnboardingConfirm = async () => {
+    setSubmitError(null);
     setIsSubmitting(true);
     try {
       const normalizedEmail = answers.email.toLowerCase();
@@ -434,38 +436,17 @@ export default function ItineraryReservationForm({ itinerary, language, onClose 
 
       const { error } = await supabase.from("quote_requests").insert(quoteData as any);
 
-      if (error) {
-        console.error("Error saving quote request:", error);
-      } else {
-        // Update the prospect's tags to include this itinerary's tag
-        setTimeout(async () => {
-          try {
-            const { data: prospect } = await supabase
-              .from("prospects")
-              .select("id, tags")
-              .eq("email", normalizedEmail)
-              .maybeSingle();
-
-            if (prospect) {
-              const existingTags = prospect.tags || [];
-              const newTags = Array.from(new Set([...existingTags, "turista", itinerary.id]));
-              await supabase
-                .from("prospects")
-                .update({
-                  name: answers.name,
-                  phone: answers.phone,
-                  tags: newTags,
-                  notes: `Solicitou reserva para o roteiro: ${itinerary.name.pt}`
-                })
-                .eq("id", prospect.id);
-            }
-          } catch (err) {
-            console.error("Error updating prospect tags:", err);
-          }
-        }, 1000);
-      }
+      if (error) throw error;
+      // The quote trigger creates the CRM lead internally. Clients never read
+      // CRM tags/notes or attempt to overwrite them after the request.
     } catch (e) {
-      console.error("Exception in onboarding confirm:", e);
+      console.error("Error saving quote request:", e);
+      setSubmitError(txt(language,
+        "Não foi possível salvar sua solicitação. Seus dados foram mantidos; tente novamente.",
+        "We could not save your request. Your answers are preserved; please try again.",
+        "No fue posible guardar su solicitud. Sus respuestas se conservaron; inténtelo de nuevo."));
+      setIsSubmitting(false);
+      return;
     }
 
     const message = buildWhatsAppMessage(itinerary, answers, language);
@@ -484,6 +465,7 @@ export default function ItineraryReservationForm({ itinerary, language, onClose 
 
   return (
     <div className="text-[#2e2019]">
+      {submitError && <p role="alert" className="mb-4 border border-red-300 p-3 text-sm text-red-800">{submitError}</p>}
       <AnimatePresence mode="wait">
         {!showOnboarding ? (
           <motion.div

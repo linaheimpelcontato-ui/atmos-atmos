@@ -396,6 +396,7 @@ export default function WishlistReservationForm({ items, language, onClose }: Pr
   const [currentStep, setCurrentStep] = useState(0);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const visibleQuestions = questions.filter(
     (q) => !q.conditional || q.conditional(answers)
@@ -457,6 +458,7 @@ export default function WishlistReservationForm({ items, language, onClose }: Pr
   };
 
   const handleOnboardingConfirm = async () => {
+    setSubmitError(null);
     setIsSubmitting(true);
     try {
       const normalizedEmail = answers.email.toLowerCase();
@@ -478,38 +480,17 @@ export default function WishlistReservationForm({ items, language, onClose }: Pr
 
       const { error } = await supabase.from("quote_requests").insert(quoteData as any);
 
-      if (error) {
-        console.error("Error saving quote request:", error);
-      } else {
-        // Sync with prospects table
-        setTimeout(async () => {
-          try {
-            const { data: prospect } = await supabase
-              .from("prospects")
-              .select("id, tags")
-              .eq("email", normalizedEmail)
-              .maybeSingle();
-
-            if (prospect) {
-              const existingTags = prospect.tags || [];
-              const newTags = Array.from(new Set([...existingTags, "turista", "wishlist"]));
-              await supabase
-                .from("prospects")
-                .update({
-                  name: answers.name,
-                  phone: answers.phone,
-                  tags: newTags,
-                  notes: `Solicitação via Wishlist com ${items.length} itens.`
-                })
-                .eq("id", prospect.id);
-            }
-          } catch (err) {
-            console.error("Error syncing prospect:", err);
-          }
-        }, 1000);
-      }
+      if (error) throw error;
+      // The quote trigger creates the CRM lead internally. Clients never read
+      // CRM tags/notes or attempt to overwrite them after the request.
     } catch (e) {
-      console.error("Exception in onboarding confirm:", e);
+      console.error("Error saving quote request:", e);
+      setSubmitError(txt(language,
+        "Não foi possível salvar sua solicitação. Seus dados foram mantidos; tente novamente.",
+        "We could not save your request. Your answers are preserved; please try again.",
+        "No fue posible guardar su solicitud. Sus respuestas se conservaron; inténtelo de nuevo."));
+      setIsSubmitting(false);
+      return;
     }
 
     const message = buildWhatsAppMessage(items, answers, language);
@@ -528,6 +509,7 @@ export default function WishlistReservationForm({ items, language, onClose }: Pr
 
   return (
     <div className="text-[#2e2019]">
+      {submitError && <p role="alert" className="mb-4 border border-red-300 p-3 text-sm text-red-800">{submitError}</p>}
       <AnimatePresence mode="wait">
         {!showOnboarding ? (
           <motion.div
