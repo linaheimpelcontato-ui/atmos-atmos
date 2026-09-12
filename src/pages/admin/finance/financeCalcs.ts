@@ -1,5 +1,6 @@
+import { isApprovedProposalStatus } from "@/lib/proposalStatus";
 import { accommodationAmounts, normalizeSavedRooms } from "@/lib/accommodationCalcs";
-import { lineTotal, money, supplierCommission, operatingProfit } from "@/lib/proposalCalcs";
+import { lineTotal, money, moneySum, moneyProduct, proposalDiscount, supplierCommission, operatingProfit } from "@/lib/proposalCalcs";
 import type { Proposal, DayItem, ProposalCost, Guide, Product } from "./useFinanceData";
 import { format, startOfMonth, endOfMonth, subMonths, eachMonthOfInterval, addDays, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -12,12 +13,12 @@ export function calcProposalProfit(
 
   const isGuide = (category: string) => ["Guia ATMOS", "Diária Guia ATMOS", "Guia"].includes(category);
   const billableItems = pItems.filter(i => i.category !== "Hospedagens");
-  const itemProfit = (i: DayItem) => lineTotal(Number(i.value), i.quantity ?? 1) - lineTotal(Number(i.cost_price), i.quantity ?? 1);
-  const guideProfit = billableItems.filter(i => isGuide(i.category)).reduce((s, i) => s + itemProfit(i), 0);
-  const markupProfit = billableItems.filter(i => !isGuide(i.category)).reduce((s, i) => s + itemProfit(i), 0);
-  const commissionProfit = billableItems.reduce((s, i) => s + supplierCommission(lineTotal(Number(i.cost_price), i.quantity ?? 1), Number(i.commission_percent)), 0);
+  const itemProfit = (i: DayItem) => moneySum(lineTotal(Number(i.value), i.quantity ?? 1), -lineTotal(Number(i.cost_price), i.quantity ?? 1));
+  const guideProfit = billableItems.filter(i => isGuide(i.category)).reduce((s, i) => moneySum(s, itemProfit(i)), 0);
+  const markupProfit = billableItems.filter(i => !isGuide(i.category)).reduce((s, i) => moneySum(s, itemProfit(i)), 0);
+  const commissionProfit = billableItems.reduce((s, i) => moneySum(s, supplierCommission(lineTotal(Number(i.cost_price), i.quantity ?? 1), Number(i.commission_percent || 0))), 0);
   const atmos = p.atmos_service || {};
-  const atmosRevenue = money(Number(atmos.price_per_person_day || 0) * Number(p.num_people ?? 1) * Number(p.num_days ?? 1));
+  const atmosRevenue = moneyProduct(Number(atmos.price_per_person_day || 0), Number(p.num_people ?? 1), Number(p.num_days ?? 1));
   const atmosInternalCosts = (atmos.internal_costs || []).reduce((s: number, ic: any) => s + Number(ic.amount || 0), 0);
   const directCosts = costs.filter(c => c.proposal_id === p.id).reduce((s, c) => s + Number(c.amount), 0);
   let accommodationProfit = 0;
@@ -29,15 +30,15 @@ export function calcProposalProfit(
     accommodationProfit += (acc.payment_type === "atmos" ? amounts.revenue - amounts.cost : 0) + amounts.commission;
   }
 
-  const discount = money(Number(p.subtotal || 0) * Number(p.discount_percent || 0) / 100 + Number(p.discount_fixed || 0));
+  const discount = proposalDiscount(Number(p.subtotal || 0), Number(p.discount_percent || 0), Number(p.discount_fixed || 0));
   // Seller commission is an outgoing commission, separate from supplier commission.
-  const sellerCommission = money(Number(p.total) * Number(atmos.seller_commission_percent || 0) / 100);
-  const profit = operatingProfit(guideProfit + markupProfit + atmosRevenue + accommodationProfit, 0, commissionProfit,
-    atmosInternalCosts + directCosts + discount + sellerCommission);
+  const sellerCommission = supplierCommission(Number(p.total), Number(atmos.seller_commission_percent || 0));
+  const profit = operatingProfit(moneySum(guideProfit, markupProfit, atmosRevenue, accommodationProfit), 0, commissionProfit,
+    moneySum(atmosInternalCosts, directCosts, discount, sellerCommission));
   const revenue = Number(p.total);
   const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
 
-  return { revenue, profit, margin, missingAccommodationCommissions, guideProfit, markupProfit, commissionProfit, atmosRevenue, atmosInternalCosts, directCosts };
+  return { revenue, profit, margin, resultIncomplete: missingAccommodationCommissions > 0, missingAccommodationCommissions, guideProfit, markupProfit, commissionProfit, atmosRevenue, atmosInternalCosts, directCosts };
 }
 
 export function getProposalCost(p: Proposal, costs: ProposalCost[], items?: DayItem[]) {
@@ -69,7 +70,7 @@ export function filterProposals(
     if (segment !== "all" && p.segment !== segment) return false;
     return true;
   });
-  const accepted = inRange.filter(p => p.status === "accepted");
+  const accepted = inRange.filter(p => isApprovedProposalStatus(p.status));
   const rejected = inRange.filter(p => p.status === "rejected");
   const acceptedIds = new Set(accepted.map(p => p.id));
   const filteredItems = dayItems.filter(i => acceptedIds.has(i.proposal_id));
@@ -77,11 +78,13 @@ export function filterProposals(
 }
 
 export function calcOverviewKPIs(fd: FilteredData, costs: ProposalCost[]) {
-  let totalRevenue = 0, totalProfit = 0;
+  let totalRevenue = 0, totalProfit = 0, incompleteProposals = 0, missingAccommodationCommissions = 0;
   for (const p of fd.accepted) {
     const pf = calcProposalProfit(p, fd.dayItems, costs);
     totalRevenue += pf.revenue;
     totalProfit += pf.profit;
+    if (pf.resultIncomplete) incompleteProposals++;
+    missingAccommodationCommissions += pf.missingAccommodationCommissions;
   }
   const totalCost = totalRevenue - totalProfit;
   const margin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
@@ -94,7 +97,7 @@ export function calcOverviewKPIs(fd: FilteredData, costs: ProposalCost[]) {
   const ticketB2B = b2b.length > 0 ? b2b.reduce((s, p) => s + Number(p.total), 0) / b2b.length : 0;
   const closed = fd.accepted.length + fd.rejected.length;
   const cancelRate = closed > 0 ? (fd.rejected.length / closed) * 100 : 0;
-  return { revenue: totalRevenue, totalCost, profit: totalProfit, margin, roi, clients, avgTicket, ticketB2C, ticketB2B, cancelRate };
+  return { resultIncomplete: incompleteProposals > 0, incompleteProposals, missingAccommodationCommissions, revenue: totalRevenue, totalCost, profit: totalProfit, margin, roi, clients, avgTicket, ticketB2C, ticketB2B, cancelRate };
 }
 
 export function calcMonthlyEvolution(
@@ -112,13 +115,14 @@ export function calcMonthlyEvolution(
       const d = p.created_at.slice(0, 10);
       if (d < ms || d > me) return false;
       if (segment !== "all" && p.segment !== segment) return false;
-      return p.status === "accepted";
+      return isApprovedProposalStatus(p.status);
     });
-    let rev = 0, profit = 0;
+    let rev = 0, profit = 0, incompleteProposals = 0;
     for (const p of mp) {
       const pf = calcProposalProfit(p, dayItems, costs);
       rev += pf.revenue;
       profit += pf.profit;
+      if (pf.resultIncomplete) incompleteProposals++;
     }
     return {
       name: format(m, "MMM/yy", { locale: ptBR }),
@@ -126,6 +130,7 @@ export function calcMonthlyEvolution(
       custos: rev - profit,
       lucro: profit,
       clientes: mp.length,
+      resultIncomplete: incompleteProposals > 0, incompleteProposals,
     };
   });
 }
@@ -153,14 +158,18 @@ export function calcGuideRanking(
       .reduce((s, p) => s + Number(p.total), 0);
     const count = g.proposalIds.size;
     const avgTicket = count > 0 ? proposalRevenues / count : 0;
-    const profit = money(fd.accepted.filter(p => g.proposalIds.has(p.id))
-      .reduce((sum, p) => sum + calcProposalProfit(p, fd.dayItems, costs).profit, 0));
+    const results = fd.accepted.filter(p => g.proposalIds.has(p.id))
+      .map(p => calcProposalProfit(p, fd.dayItems, costs));
+    const profit = moneySum(...results.map(p => p.profit));
+    const incompleteProposals = results.filter(p => p.resultIncomplete).length;
+    const missingAccommodationCommissions = results.reduce((sum, p) => sum + p.missingAccommodationCommissions, 0);
     const margin = proposalRevenues > 0 ? (profit / proposalRevenues) * 100 : 0;
     const proposalCost = money(proposalRevenues - profit);
     const roiVal = proposalCost > 0 ? (profit / proposalCost) * 100 : 0;
     return {
       id, name: g.name, proposals: count, revenue: proposalRevenues,
       guideCost: money(g.cost), profit, margin, roi: roiVal, avgTicket,
+      resultIncomplete: incompleteProposals > 0, incompleteProposals, missingAccommodationCommissions,
     };
   });
 
@@ -230,18 +239,26 @@ export function calcCashFlow(transactions: any[], dateFrom: string, dateTo: stri
   });
 }
 
-export function calcCashForecast(transactions: any[]) {
-  const now = new Date();
+/** Open obligations only. Past-due balances are actionable now (week one),
+ * including old pending rows. Future pending/overdue rows retain their due date.
+ * Approval of a proposal is neither a cash transaction nor proof of payment.
+ */
+export function calcCashForecast(transactions: any[], now = new Date()) {
   const today = format(now, "yyyy-MM-dd");
-  const weeks: { name: string; entradas: number; saidas: number }[] = [];
-  for (let i = 0; i < 4; i++) {
-    const ws = format(addDays(startOfWeek(now, { weekStartsOn: 1 }), i * 7), "yyyy-MM-dd");
-    const we = format(addDays(startOfWeek(now, { weekStartsOn: 1 }), i * 7 + 6), "yyyy-MM-dd");
-    const weekIn = transactions.filter((t: any) => (t.type === "receivable" || t.type === "commission_in") && t.status === "pending" && t.due_date >= ws && t.due_date <= we).reduce((s: number, t: any) => s + Number(t.amount), 0);
-    const weekOut = transactions.filter((t: any) => (t.type === "payable" || t.type === "commission_out") && t.status === "pending" && t.due_date >= ws && t.due_date <= we).reduce((s: number, t: any) => s + Number(t.amount), 0);
-    weeks.push({ name: `Sem ${i + 1}`, entradas: weekIn, saidas: weekOut });
-  }
-  return weeks;
+  const start = startOfWeek(now, { weekStartsOn: 1 });
+  return Array.from({ length: 4 }, (_, i) => {
+    const ws = format(addDays(start, i * 7), "yyyy-MM-dd");
+    const we = format(addDays(start, i * 7 + 6), "yyyy-MM-dd");
+    const due = transactions.filter(t => {
+      if (t.status !== "pending" && t.status !== "overdue") return false;
+      if (typeof t.due_date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(t.due_date)) return false;
+      if (t.due_date < today) return i === 0;
+      return t.due_date >= ws && t.due_date <= we;
+    });
+    const entradas = moneySum(...due.filter(t => t.type === "receivable" || t.type === "commission_in").map(t => Number(t.amount)));
+    const saidas = moneySum(...due.filter(t => t.type === "payable" || t.type === "commission_out").map(t => Number(t.amount)));
+    return { name: `Sem ${i + 1}`, entradas, saidas };
+  });
 }
 
 export const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });

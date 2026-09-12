@@ -1,3 +1,4 @@
+import { isApprovedProposalStatus } from "@/lib/proposalStatus";
 import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -279,13 +280,13 @@ export default function AdminProposals({ segment }: { segment: "b2c" | "b2b" }) 
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
   const alertCounts = useMemo(() => {
-    const approvedNoDate = proposals.filter(p => p.status === "approved" && !p.start_date).length;
-    const approvedNoContract = proposals.filter(p => p.status === "approved" && !p.contract_status).length;
+    const approvedNoDate = proposals.filter(p => isApprovedProposalStatus(p.status) && !p.start_date).length;
+    const approvedNoContract = proposals.filter(p => isApprovedProposalStatus(p.status) && !p.contract_status).length;
     const signedNoPayment = proposals.filter(p => p.contract_status === "signed" && !p.payment_status).length;
     const sentNoReturn = proposals.filter(p => p.status === "sent" && p.updated_at && new Date(p.updated_at) < sevenDaysAgo).length;
     const contractSentNotSigned = proposals.filter(p => p.contract_status === "sent").length;
     const partialPayment = proposals.filter(p => p.payment_status === "partial").length;
-    const expired = proposals.filter(p => p.valid_until && new Date(p.valid_until) < now && !["approved", "rejected", "expired"].includes(p.status)).length;
+    const expired = proposals.filter(p => p.valid_until && new Date(p.valid_until) < now && !isApprovedProposalStatus(p.status) && !["rejected", "expired"].includes(p.status)).length;
     return { approvedNoDate, approvedNoContract, signedNoPayment, sentNoReturn, contractSentNotSigned, partialPayment, expired };
   }, [proposals]);
 
@@ -354,9 +355,6 @@ export default function AdminProposals({ segment }: { segment: "b2c" | "b2b" }) 
     { key: "status", label: "Status", type: "select", options: Object.entries(statusMap).map(([k, v]) => ({ value: k, label: v.label })) },
     { key: "valid_until", label: "Validade (AAAA-MM-DD)", type: "text" },
     { key: "language", label: "Idioma", type: "select", options: [{ value: "pt", label: "Português" }, { value: "en", label: "English" }, { value: "es", label: "Español" }] },
-    { key: "discount_percent", label: "Desconto (%)", type: "number" },
-    { key: "discount_fixed", label: "Desconto Fixo (R$)", type: "number" },
-    { key: "tax_percent", label: "Imposto (%)", type: "number" },
     { key: "notes", label: "Observações", type: "text" },
   ];
 
@@ -414,9 +412,19 @@ export default function AdminProposals({ segment }: { segment: "b2c" | "b2b" }) 
   };
 
   const handleBulkUpdate = async (field: string, value: unknown) => {
+    // Financial fields require save_proposal_bundle to recalculate atomically.
+    // Allowlist here as well as in the UI, including stale dialog submissions.
+    if (!BULK_FIELDS.some(option => option.key === field)) {
+      toast({ title: "Campo não permitido na edição em massa", description: "Altere valores financeiros no editor da proposta.", variant: "destructive" });
+      return;
+    }
     const ids = [...selection.selectedIds];
-    const parsed = ["discount_percent", "discount_fixed", "tax_percent"].includes(field) ? (parseFloat(String(value)) || 0) : value;
-    for (const id of ids) await supabase.from("proposals").update({ [field]: parsed }).eq("id", id);
+    if (ids.length === 0) return;
+    const { error } = await supabase.from("proposals").update({ [field]: value }).in("id", ids);
+    if (error) {
+      toast({ title: "Erro ao atualizar propostas", description: error.message, variant: "destructive" });
+      return;
+    }
     selection.clear();
     qc.invalidateQueries({ queryKey: ["admin-proposals", segment] });
     toast({ title: `${ids.length} proposta(s) atualizada(s)` });

@@ -1,3 +1,4 @@
+import { isApprovedProposalStatus } from "@/lib/proposalStatus";
 import { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -173,7 +174,7 @@ export default function ProspectDetailDialog({ open, onOpenChange, prospectId, s
   const stage = stages.find(s => s.id === prospect.stage_id);
   const isB2B = segment === "b2b";
 
-  const acceptedProposals = purchaseHistory.filter((p: any) => p.status === "accepted");
+  const acceptedProposals = purchaseHistory.filter((p: any) => isApprovedProposalStatus(p.status));
   const tripCount = acceptedProposals.length;
   const totalSpent = acceptedProposals.reduce((sum: number, p: any) => sum + (p.total ?? 0), 0);
   const recurrenceLabel = tripCount === 0 ? "Novo Lead" : tripCount === 1 ? "1º Roteiro" : `${tripCount}º Roteiro`;
@@ -233,7 +234,7 @@ export default function ProspectDetailDialog({ open, onOpenChange, prospectId, s
                   <div className="p-3 bg-admin-primary/5 rounded-2xl">
                     <ShoppingBag className="h-5 w-5 text-admin-primary" />
                   </div>
-                  <span className="font-black text-xs uppercase tracking-[0.2em] text-admin-primary">Histórico de Consumo</span>
+                  <span className="font-black text-xs uppercase tracking-[0.2em] text-admin-primary">Histórico de Propostas</span>
                   {isRecurrent && (
                     <Badge variant="default" className="gap-2 ml-auto text-[10px] font-black uppercase tracking-widest h-9 px-4 bg-admin-primary shadow-lg shadow-admin-primary/20">
                       <RotateCcw className="h-3.5 w-3.5" /> Cliente Recorrente
@@ -244,11 +245,11 @@ export default function ProspectDetailDialog({ open, onOpenChange, prospectId, s
                 <div className="grid grid-cols-2 gap-6 mb-8">
                   <div className="p-6 rounded-2xl bg-white border border-admin-border/40 shadow-sm transition-all hover:border-admin-primary/20">
                     <div className="text-3xl font-black text-admin-primary tracking-tight">{tripCount}</div>
-                    <div className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest mt-2">{tripCount === 1 ? "Reserva" : "Reservas Realizadas"}</div>
+                    <div className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest mt-2">{tripCount === 1 ? "Proposta aprovada" : "Propostas aprovadas"}</div>
                   </div>
                   <div className="p-6 rounded-2xl bg-white border border-admin-border/40 shadow-sm transition-all hover:border-admin-primary/20">
                     <div className="text-3xl font-black text-admin-primary tracking-tight">R$ {totalSpent.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}</div>
-                    <div className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest mt-1">LTV Estimado</div>
+                    <div className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest mt-1">Valor aprovado</div>
                   </div>
                 </div>
 
@@ -256,8 +257,8 @@ export default function ProspectDetailDialog({ open, onOpenChange, prospectId, s
                   {purchaseHistory.map((p: any) => (
                     <div key={p.id} className="flex items-center justify-between py-3 px-4 rounded-xl border border-admin-border/30 bg-white hover:border-admin-border/60 transition-all hover:shadow-sm group">
                       <div className="flex items-center gap-3 min-w-0">
-                        <Badge variant={p.status === "accepted" ? "default" : "outline"} className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 border-none ${p.status === "accepted" ? "bg-emerald-500 text-white" : "bg-admin-muted text-muted-foreground"}`}>
-                          {p.status === "accepted" ? "Aceita" : p.status === "sent" ? "Enviada" : p.status === "draft" ? "Rascunho" : p.status}
+                        <Badge variant={isApprovedProposalStatus(p.status) ? "default" : "outline"} className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 border-none ${isApprovedProposalStatus(p.status) ? "bg-emerald-500 text-white" : "bg-admin-muted text-muted-foreground"}`}>
+                          {isApprovedProposalStatus(p.status) ? "Aprovada" : p.status === "sent" ? "Enviada" : p.status === "draft" ? "Rascunho" : p.status}
                         </Badge>
                         <span className="text-xs font-bold text-admin-primary truncate">{p.title}</span>
                         {(p.from_phone_match || p.from_doc_match) && <span className="text-[10px] text-muted-foreground font-medium italic">via {p.matched_name}</span>}

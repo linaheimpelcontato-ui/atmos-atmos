@@ -8,6 +8,19 @@ const room = { type: "single", available: true, units: 1, capacity: 1, pricing_t
 const unit = { unit_label: "Hotel", rooms: [room] };
 
 describe("historical accommodation commissions", () => {
+  it("keeps subcent room operands exact before rounding each room line", () => {
+    for (const pricing_type of ['per_room','per_person']) {
+      const units = normalizeSavedRooms([{ ...room, price: 0.145, cost: 0.145, units: 3, capacity: 1, pricing_type }]);
+      expect(accommodationAmounts(units, 1)).toMatchObject({ revenue: 0.44, cost: 0.44, commission: 0.04 });
+      expect(calcAccommodationTotals([{ unit_configs: units, num_nights: 1, is_selected: true, payment_type: 'atmos' }] as any))
+        .toMatchObject({ atmosRevenue: 0.44, atmosCost: 0.44 });
+    }
+  });
+  it("sums raw decimal commissions before rounding the lodging total", () => {
+    const units = normalizeSavedRooms([{ ...room, cost: 1.45, commission_percent: 30 }, { ...room, cost: 0.05, commission_percent: 10 }]);
+    // 0.435 + 0.005 = 0.44, not 0.44 + 0.01 = 0.45.
+    expect(accommodationAmounts(units, 1).commission).toBe(0.44);
+  });
   it.each([[unit], [room], { unit_label: "Hotel", modalities: [room] }])("preserves saved rate in each legacy room layout", raw => {
     const loaded = normalizeSavedRooms(raw);
     expect(loaded[0].rooms[0].commission_percent).toBe(10);

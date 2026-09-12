@@ -105,10 +105,10 @@ export function ProspectFilters({
             className="h-11 px-4 hover:bg-admin-muted hover:text-admin-primary transition-all rounded-xl gap-2 text-[10px] font-black uppercase tracking-widest rounded-l-none"
             onClick={onSync}
             disabled={isSyncing}
-            title="Sincronizar Dados"
+            title="Atualizar lista de clientes"
           >
             <RefreshCw className={`h-4 w-4 ${isSyncing ? "animate-spin text-admin-primary" : ""}`} />
-            Sincronizar
+            Atualizar
           </Button>
         </div>
       </div>

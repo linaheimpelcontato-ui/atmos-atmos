@@ -35,6 +35,8 @@ export default function AdminFinanceDashboard() {
   const kpis = useMemo(() => calcOverviewKPIs(fd, proposalCosts), [fd, proposalCosts]);
   const monthlyData = useMemo(() => calcMonthlyEvolution(proposals, proposalCosts, dayItems, dateFrom, dateTo, segment), [proposals, proposalCosts, dayItems, dateFrom, dateTo, segment]);
 
+  const hasIncompleteResults = kpis.resultIncomplete || monthlyData.some(m => m.resultIncomplete);
+
   // Alerts
   const today = format(now, "yyyy-MM-dd");
   const overdue = useMemo(() => 
@@ -53,6 +55,9 @@ export default function AdminFinanceDashboard() {
       return (
         <div className="bg-white/90 backdrop-blur-md border border-admin-border/40 p-4 rounded-2xl shadow-xl">
           <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">{label}</p>
+          {payload.some((p: any) => p.payload?.resultIncomplete) && (
+            <p className="mb-2 text-xs font-bold text-amber-800">Resultado incompleto: comissão de hospedagem sem dado.</p>
+          )}
           <div className="space-y-1.5">
             {payload.map((p: any, i: number) => (
               <div key={i} className="flex items-center justify-between gap-8">
@@ -112,10 +117,17 @@ export default function AdminFinanceDashboard() {
           </div>
           <p className="text-muted-foreground text-sm font-medium ml-14">Visão consolidada e inteligência de performance</p>
         </div>
-        <Button size="sm" variant="ghost" className="h-10 px-4 rounded-xl bg-admin-primary/5 text-admin-primary hover:bg-admin-primary hover:text-white transition-all font-bold text-xs uppercase tracking-widest flex items-center gap-2" onClick={() => exportOverview(kpis, monthlyData)}>
+        <Button size="sm" variant="ghost" className="h-10 px-4 rounded-xl bg-admin-primary/5 text-admin-primary hover:bg-admin-primary hover:text-white transition-all font-bold text-xs uppercase tracking-widest flex items-center gap-2" disabled={hasIncompleteResults} title={hasIncompleteResults ? "Complete as comissões de hospedagem antes de exportar o resultado consolidado." : undefined} onClick={() => exportOverview(kpis, monthlyData)}>
           <Download className="h-4 w-4" /> Exportar Relatórios
         </Button>
       </div>
+
+      {hasIncompleteResults && (
+        <div role="status" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
+          <strong>Resultado incompleto</strong> — Há comissões de hospedagem sem dado nas propostas ou no histórico exibido.
+          Lucro, custos derivados, margem e ROI são parciais; os valores não comprovam o lucro final.
+        </div>
+      )}
 
       <div className="flex flex-col lg:flex-row gap-4 items-center bg-white/50 backdrop-blur-sm p-4 rounded-[2rem] border border-admin-border/40 shadow-sm">
         <div className="flex items-center gap-3 px-4 border-r border-admin-border/40">
@@ -146,9 +158,9 @@ export default function AdminFinanceDashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-        <KPICard icon={DollarSign} label="Faturamento" value={fmt(kpis.revenue)} sub="Receita Total Gerada" />
+        <KPICard icon={DollarSign} label="Valor aprovado" value={fmt(kpis.revenue)} sub="Propostas aprovadas; não indica recebimento" />
         <KPICard icon={TrendingUp} label="Custo Total" value={fmt(kpis.totalCost)} color="text-destructive" sub="Operacional + Comissões" />
-        <KPICard icon={Activity} label="Lucro Líquido" value={fmt(kpis.profit)} color={kpis.profit >= 0 ? "text-green-600" : "text-destructive"} sub="EBITDA Ajustado" />
+        <KPICard icon={Activity} label={kpis.resultIncomplete ? "Lucro parcial" : "Lucro Líquido"} value={fmt(kpis.profit)} color={kpis.profit >= 0 ? "text-green-600" : "text-destructive"} sub={kpis.resultIncomplete ? "Resultado incompleto" : "EBITDA Ajustado"} />
         <KPICard icon={Percent} label="Margem" value={fmtPct(kpis.margin)} color={kpis.margin >= 0 ? "text-green-600" : "text-destructive"} sub="Eficiência Operacional" />
         <KPICard icon={Target} label="ROI" value={fmtPct(kpis.roi)} color={kpis.roi >= 0 ? "text-green-600" : "text-destructive"} sub="Retorno sobre Custo" />
       </div>

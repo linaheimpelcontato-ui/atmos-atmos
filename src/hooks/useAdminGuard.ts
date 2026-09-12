@@ -8,56 +8,80 @@ const db = supabase as any;
 
 export function useAdminGuard() {
   const { user, loading } = useAuth();
+  // Auth events can replace the User object without changing the signed-in identity.
+  const userId = user?.id;
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [checking, setChecking] = useState(true);
   const [allowedModules, setAllowedModules] = useState<string[]>([]);
 
   useEffect(() => {
+    let cancelled = false;
+    setIsAdmin(null);
+    setChecking(true);
+    setAllowedModules([]);
     if (loading) return;
 
-    if (!user) {
+    if (!userId) {
+      setIsAdmin(false);
+      setChecking(false);
       navigate("/");
       return;
     }
 
     (async () => {
-      const { data: roleOk, error } = await db.rpc("has_role", { _user_id: user.id, _role: "admin" });
+      const { data: roleOk, error } = await db.rpc("has_role", { _user_id: userId, _role: "admin" });
+      if (cancelled) return;
       if (error || !roleOk) {
+        setIsAdmin(false);
         navigate("/");
         setChecking(false);
         return;
       }
 
       // Fetch allowed modules
-      const { data: perms } = await db
+      const { data: perms, error: permissionsError } = await db
         .from("admin_permissions")
         .select("allowed_modules")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .maybeSingle();
 
+      if (cancelled) return;
+      // Only an absent row means full access; a failed read must never mean full.
+      if (permissionsError) {
+        setIsAdmin(false);
+        setChecking(false);
+        navigate("/");
+        return;
+      }
       setAllowedModules(perms?.allowed_modules ?? []);
       setIsAdmin(true);
       setChecking(false);
     })();
-  }, [user, loading, navigate]);
+    return () => { cancelled = true; };
+  }, [userId, loading, navigate]);
 
   return { isAdmin, checking, allowedModules };
 }
 
 export function useIsAdmin() {
   const { user, loading } = useAuth();
+  // Auth events can replace the User object without changing the signed-in identity.
+  const userId = user?.id;
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    if (loading || !user) return;
+    let cancelled = false;
+    setIsAdmin(false);
+    if (loading || !userId) return;
 
-    db.rpc("has_role", { _user_id: user.id, _role: "admin" }).then(
-      ({ data }: { data: boolean | null }) => {
-        setIsAdmin(!!data);
+    db.rpc("has_role", { _user_id: userId, _role: "admin" }).then(
+      ({ data, error }: { data: boolean | null; error: unknown }) => {
+        if (!cancelled) setIsAdmin(!error && data === true);
       }
     );
-  }, [user, loading]);
+    return () => { cancelled = true; };
+  }, [userId, loading]);
 
   return isAdmin;
 }

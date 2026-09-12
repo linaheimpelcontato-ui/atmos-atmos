@@ -1,4 +1,4 @@
-import { money } from "./proposalCalcs";
+import { moneyProduct, moneySum, moneySumProducts } from "./proposalCalcs";
 import type { ProposalUnit } from "@/components/admin/proposals/ProposalAccommodationsSection";
 
 /** Accept all three saved room layouts without filling historical commission from today's catalog. */
@@ -20,18 +20,19 @@ export function normalizeSavedRooms(raw: unknown): ProposalUnit[] {
 
 /** Round once per accommodation, after summing the commission bases of all room lines. */
 export function accommodationAmounts(units: ProposalUnit[], nights: number) {
-  let revenue = 0, cost = 0, commissionRaw = 0, people = 0, missingCommissions = 0;
+  let revenue = 0, cost = 0, people = 0, missingCommissions = 0;
+  const commissionTerms: number[][] = [];
   for (const room of units.flatMap(unit => unit.rooms)) {
     if (!room.available || room.units <= 0) continue;
-    const quantity = room.units * nights * (room.pricing_type === "per_person" ? room.capacity : 1);
-    const roomCost = money(room.cost * quantity);
-    cost += roomCost;
-    revenue += money(room.price * quantity);
+    const capacity = room.pricing_type === "per_person" ? room.capacity : 1;
+    const roomCost = moneyProduct(room.cost, room.units, nights, capacity);
+    cost = moneySum(cost, roomCost);
+    revenue = moneySum(revenue, moneyProduct(room.price, room.units, nights, capacity));
     people += room.units * room.capacity;
     if (room.commission_percent == null) missingCommissions++;
-    else commissionRaw += roomCost * room.commission_percent / 100;
+    else commissionTerms.push([roomCost, room.commission_percent, 0.01]);
   }
-  return { revenue: money(revenue), cost: money(cost), commission: money(commissionRaw), people, missingCommissions };
+  return { revenue, cost, commission: moneySumProducts(commissionTerms), people, missingCommissions };
 }
 
 export function hasMissingCommission(units: ProposalUnit[]) {

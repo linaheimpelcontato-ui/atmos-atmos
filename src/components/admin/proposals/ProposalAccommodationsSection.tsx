@@ -1,5 +1,5 @@
 import { accommodationAmounts } from "@/lib/accommodationCalcs";
-import { money } from "@/lib/proposalCalcs";
+import { money, moneyProduct, moneySum } from "@/lib/proposalCalcs";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,17 +73,17 @@ const MODALITY_LABELS: Record<string, string> = {
 function calcRoomSubtotal(room: ProposalRoom, nights: number): number {
   if (!room.available) return 0;
   if (room.pricing_type === "per_person") {
-    return money(room.units * room.capacity * room.price * nights);
+    return moneyProduct(room.units, room.capacity, room.price, nights);
   }
-  return money(room.units * room.price * nights);
+  return moneyProduct(room.units, room.price, nights);
 }
 
 function calcRoomCostTotal(room: ProposalRoom, nights: number): number {
   if (!room.available) return 0;
   if (room.pricing_type === "per_person") {
-    return money(room.units * room.capacity * room.cost * nights);
+    return moneyProduct(room.units, room.capacity, room.cost, nights);
   }
-  return money(room.units * room.cost * nights);
+  return moneyProduct(room.units, room.cost, nights);
 }
 
 function calcNights(checkin: string, checkout: string): number {
@@ -116,18 +116,20 @@ export function calcAccommodationTotals(accommodations: ProposalAccommodation[])
   let hospedagemCommission = 0;
   for (const acc of selected) {
     const amounts = accommodationAmounts(acc.unit_configs, acc.num_nights);
-    totalRevenue += amounts.revenue;
-    totalCost += amounts.cost;
+    totalRevenue = moneySum(totalRevenue, amounts.revenue);
+    totalCost = moneySum(totalCost, amounts.cost);
     totalPeople += amounts.people;
-    totalCommission += amounts.commission;
+    totalCommission = moneySum(totalCommission, amounts.commission);
     if (acc.payment_type === "atmos") {
-      atmosRevenue += amounts.revenue;
-      atmosCost += amounts.cost;
-      atmosCommission += amounts.commission;
-    } else hospedagemCommission += amounts.commission;
+      atmosRevenue = moneySum(atmosRevenue, amounts.revenue);
+      atmosCost = moneySum(atmosCost, amounts.cost);
+      atmosCommission = moneySum(atmosCommission, amounts.commission);
+    } else hospedagemCommission = moneySum(hospedagemCommission, amounts.commission);
   }
 
-  return { totalRevenue, totalCost, totalPeople, totalCommission, atmosRevenue, atmosCost, atmosCommission, hospedagemCommission };
+  return { totalRevenue: money(totalRevenue), totalCost: money(totalCost), totalPeople,
+    totalCommission: money(totalCommission), atmosRevenue: money(atmosRevenue), atmosCost: money(atmosCost),
+    atmosCommission: money(atmosCommission), hospedagemCommission: money(hospedagemCommission) };
 }
 
 /** Collect unique unit+modality variants across all ATMOS-type accommodations */
@@ -145,7 +147,7 @@ export function getAccommodationVariants(accommodations: ProposalAccommodation[]
         const modalityLabel = MODALITY_LABELS[room.type] || room.type;
         const label = `${unit.unit_label} ${modalityLabel}`;
         const prev = variantTotals.get(key) || { label, totalRev: 0, totalPax: 0 };
-        variantTotals.set(key, { label, totalRev: prev.totalRev + rev, totalPax: prev.totalPax + pax });
+        variantTotals.set(key, { label, totalRev: moneySum(prev.totalRev, rev), totalPax: prev.totalPax + pax });
       }
     }
   }
@@ -496,7 +498,7 @@ export default function ProposalAccommodationsSection({
                         <span>·</span>
                         <span>{accPeople} pax</span>
                         <span>·</span>
-                        <span className="font-medium text-foreground tabular-nums">R$ {accTotal.toFixed(0)}</span>
+                        <span className="font-medium text-foreground tabular-nums">R$ {accTotal.toFixed(2)}</span>
                       </>
                     )}
                     <AccommodationCostChecklistButton
@@ -632,7 +634,7 @@ export default function ProposalAccommodationsSection({
                               <Label className="text-[10px] text-muted-foreground">Custo</Label>
                               <Input
                                 className="h-7 w-20 text-xs text-right tabular-nums"
-                                type="number" step="0.01" min={0}
+                                type="number" step="any" min={0}
                                 value={room.cost || ""}
                                 onChange={(e) => updateRoom(accIdx, unitIdx, rIdx, { cost: parseFloat(e.target.value) || 0 })}
                               />
@@ -647,7 +649,7 @@ export default function ProposalAccommodationsSection({
                               <Label className="text-[10px] text-muted-foreground">Venda</Label>
                               <Input
                                 className="h-7 w-20 text-xs text-right tabular-nums"
-                                type="number" step="0.01" min={0}
+                                type="number" step="any" min={0}
                                 value={room.price || ""}
                                 onChange={(e) => updateRoom(accIdx, unitIdx, rIdx, { price: parseFloat(e.target.value) || 0 })}
                               />
@@ -656,7 +658,7 @@ export default function ProposalAccommodationsSection({
                               {room.pricing_type === "per_person" ? "/pax" : "/quarto"}
                             </span>
                             <span className="text-xs tabular-nums font-medium ml-auto">
-                              {room.available ? `R$ ${calcRoomSubtotal(room, acc.num_nights).toFixed(0)}` : "—"}
+                              {room.available ? `R$ ${calcRoomSubtotal(room, acc.num_nights).toFixed(2)}` : "—"}
                             </span>
                             <Button type="button" size="icon" variant="ghost" className="h-6 w-6 text-destructive shrink-0" onClick={() => removeRoom(accIdx, unitIdx, rIdx)}>
                               <Trash2 className="h-3 w-3" />
@@ -728,11 +730,11 @@ export default function ProposalAccommodationsSection({
                       {accommodationAmounts(acc.unit_configs, acc.num_nights).missingCommissions > 0 && <span className="ml-2 text-amber-700">Comissão histórica não informada: confirme por modalidade antes de salvar.</span>}
                     </span>
                     <div className="flex gap-4">
-                      <span className="text-muted-foreground">Custo: <span className="tabular-nums text-destructive">R$ {accCost.toFixed(0)}</span></span>
+                      <span className="text-muted-foreground">Custo: <span className="tabular-nums text-destructive">R$ {accCost.toFixed(2)}</span></span>
                       {acc.payment_type === "hospedagem" && (
                         <span className="text-green-600">Comissão a receber: <span className="tabular-nums">R$ {accommodationAmounts(acc.unit_configs, acc.num_nights).commission.toFixed(2)}</span></span>
                       )}
-                      <span className="font-semibold">Total: <span className="tabular-nums">R$ {accTotal.toFixed(0)}</span></span>
+                      <span className="font-semibold">Total: <span className="tabular-nums">R$ {accTotal.toFixed(2)}</span></span>
                     </div>
                   </div>
                   {acc.payment_type === "atmos" && (
@@ -760,17 +762,17 @@ export default function ProposalAccommodationsSection({
             {selectedAccs.length} hospedagem{selectedAccs.length !== 1 ? "ns" : ""} selecionada{selectedAccs.length !== 1 ? "s" : ""}
           </span>
           <div className="flex gap-4 flex-wrap">
-            <span className="text-xs text-muted-foreground">Custo: <span className="tabular-nums text-destructive">R$ {totalCost.toFixed(0)}</span></span>
+            <span className="text-xs text-muted-foreground">Custo: <span className="tabular-nums text-destructive">R$ {totalCost.toFixed(2)}</span></span>
             {totalCommission > 0 && (
-              <span className="text-xs text-green-600">Comissão: <span className="tabular-nums">R$ {totalCommission.toFixed(0)}</span></span>
+              <span className="text-xs text-green-600">Comissão: <span className="tabular-nums">R$ {totalCommission.toFixed(2)}</span></span>
             )}
             {summaryTotals.atmosRevenue > 0 && (
-              <span className="text-xs text-primary font-medium">ATMOS: <span className="tabular-nums">R$ {summaryTotals.atmosRevenue.toFixed(0)}</span></span>
+              <span className="text-xs text-primary font-medium">ATMOS: <span className="tabular-nums">R$ {summaryTotals.atmosRevenue.toFixed(2)}</span></span>
             )}
             {summaryTotals.hospedagemCommission > 0 && (
-              <span className="text-xs text-green-600">Comissão a receber: <span className="tabular-nums">R$ {summaryTotals.hospedagemCommission.toFixed(0)}</span></span>
+              <span className="text-xs text-green-600">Comissão a receber: <span className="tabular-nums">R$ {summaryTotals.hospedagemCommission.toFixed(2)}</span></span>
             )}
-            <span className="font-semibold">Total hospedagens: <span className="tabular-nums">R$ {totalRevenue.toFixed(0)}</span></span>
+            <span className="font-semibold">Total hospedagens: <span className="tabular-nums">R$ {totalRevenue.toFixed(2)}</span></span>
           </div>
         </div>
       )}

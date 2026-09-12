@@ -1,3 +1,4 @@
+import { isApprovedProposalStatus, APPROVED_PROPOSAL_STATUSES } from "@/lib/proposalStatus";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -369,7 +370,8 @@ function AtendimentoTab() {
   };
 
   const statusLabel = (s: string) => {
-    const map: Record<string, string> = { draft: "Rascunho", sent: "Enviada", accepted: "Aceita", rejected: "Recusada", cancelled: "Cancelada" };
+    if (isApprovedProposalStatus(s)) return "Aprovada";
+    const map: Record<string, string> = { draft: "Rascunho", sent: "Enviada", rejected: "Recusada", cancelled: "Cancelada" };
     return map[s] || s;
   };
 
@@ -730,7 +732,7 @@ function RoteirosTab() {
     let q = db.from("proposals")
       .select("id, title, code, start_date, end_date, num_days, num_people, segment, status, prospect_id, guide_id, prospects(name, company_name), guides(name)")
       .not("start_date", "is", null)
-      .eq("status", "accepted")
+      .in("status", APPROVED_PROPOSAL_STATUSES)
       .or(`and(start_date.lte.${format(monthEnd, "yyyy-MM-dd")},end_date.gte.${format(monthStart, "yyyy-MM-dd")}),and(start_date.gte.${format(monthStart, "yyyy-MM-dd")},start_date.lte.${format(monthEnd, "yyyy-MM-dd")})`)
       .order("start_date");
     if (filterSegment !== "all") q = q.eq("segment", filterSegment);
@@ -1202,7 +1204,7 @@ function GeralTab() {
     const { data: rData } = await db.from("proposals")
       .select("id, title, code, start_date, end_date, segment, prospect_id, prospects(name, company_name)")
       .not("start_date", "is", null)
-      .eq("status", "accepted")
+      .in("status", APPROVED_PROPOSAL_STATUSES)
       .or(`and(start_date.lte.${format(monthEnd, "yyyy-MM-dd")},end_date.gte.${format(monthStart, "yyyy-MM-dd")}),and(start_date.gte.${format(monthStart, "yyyy-MM-dd")},start_date.lte.${format(monthEnd, "yyyy-MM-dd")})`);
     setRoteiroItems((rData ?? []).map((r: any) => ({ ...r, _source: "roteiro" })));
   }, [monthStart.toISOString(), monthEnd.toISOString()]);

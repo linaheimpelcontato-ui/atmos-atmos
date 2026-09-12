@@ -665,7 +665,7 @@ export default function ProposalPublic() {
     setApproving(true);
     try {
       const res = await fetch(
-        `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/approve-proposal`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/approve-proposal`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -677,6 +677,7 @@ export default function ProposalPublic() {
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         console.error("Approve error:", body);
+        toast({ title: "Não foi possível aprovar a proposta", description: "Recarregue a página para conferir o status e a validade. Se o problema persistir, fale com a ATMOS.", variant: "destructive" });
         return;
       }
       setProposal((prev: Proposal | null) => prev ? { ...prev, status: "approved" } : prev);
@@ -687,6 +688,7 @@ export default function ProposalPublic() {
     } catch (e) {
       if (!context.isCurrent()) return;
       console.error("Approve error:", e);
+      toast({ title: "Falha de conexão ao aprovar", description: "Confira sua conexão e tente novamente.", variant: "destructive" });
     } finally {
       if (context.isCurrent()) setApproving(false);
     }
@@ -703,7 +705,7 @@ export default function ProposalPublic() {
     setLoadingContract(true);
     try {
       const res = await fetch(
-        `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/clicksign-create-document`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/clicksign-create-document`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1718,7 +1720,7 @@ export default function ProposalPublic() {
             <p className="text-[12px] uppercase tracking-[0.5em] font-bold mb-4" style={{ color: "#c4a97d" }}>
               {t.packagesValues}
             </p>
-            <h2 className="text-5xl md:text-8xl font-black text-white font-outfit uppercase tracking-tighter leading-none">{t.investmentTitle}</h2>
+            <h2 className="text-4xl sm:text-5xl md:text-8xl font-black text-white font-outfit uppercase tracking-tighter leading-none break-words">{t.investmentTitle}</h2>
           </div>
 
           <div className="border border-white/10 p-8 md:p-16 text-left bg-[#1a130f]">

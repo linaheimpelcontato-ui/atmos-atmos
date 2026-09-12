@@ -1,3 +1,4 @@
+import { isApprovedProposalStatus } from "@/lib/proposalStatus";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -88,17 +89,17 @@ export default function AdminFinanceReports() {
     return Object.values(map).sort((a, b) => a.code.localeCompare(b.code));
   }, [transactions, accounts]);
 
-  const acceptedRevenue = proposals.filter(p => p.status === "accepted").reduce((s: number, p: any) => s + Number(p.total), 0);
+  const acceptedRevenue = proposals.filter(p => isApprovedProposalStatus(p.status)).reduce((s: number, p: any) => s + Number(p.total), 0);
   const pipelineData = stages.map(s => ({ name: s.name, value: prospects.filter((p: any) => p.stage_id === s.id).length, color: s.color })).filter(d => d.value > 0);
   const sellerRevenue: Record<string, number> = {};
-  proposals.filter(p => p.status === "accepted").forEach(p => { if (p.seller_id) sellerRevenue[p.seller_id] = (sellerRevenue[p.seller_id] || 0) + Number(p.total); });
+  proposals.filter(p => isApprovedProposalStatus(p.status)).forEach(p => { if (p.seller_id) sellerRevenue[p.seller_id] = (sellerRevenue[p.seller_id] || 0) + Number(p.total); });
   const sellerRanking = sellers.map(s => ({ name: s.name, value: sellerRevenue[s.id] || 0 })).sort((a, b) => b.value - a.value).slice(0, 5);
 
   const handleExportExcel = () => {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["DRE"], ["Receita Bruta", dre.revenue], ["(-) Custos", dre.costs], ["(-) Comissões", dre.commissions], ["Lucro", dre.profit], ["Margem %", dre.margin.toFixed(1)],]), "DRE");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["Código", "Nome", "Tipo", "Total"], ...byAccount.map(a => [a.code, a.name, a.type, a.total])]), "Por Conta");
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["Comercial"], ["Total Prospects", prospects.length], ["Total Propostas", proposals.length], ["Receita Aceitas", acceptedRevenue],]), "Comercial");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["Comercial"], ["Total Prospects", prospects.length], ["Total Propostas", proposals.length], ["Valor aprovado", acceptedRevenue],]), "Comercial");
     XLSX.writeFile(wb, "relatorios-financeiros.xlsx");
   };
 
@@ -338,11 +339,11 @@ export default function AdminFinanceReports() {
             </div>
             <div className="bg-white rounded-3xl p-6 border border-admin-border/40 shadow-sm text-center">
               <p className="text-3xl font-black text-green-600 tracking-tighter">{fmt(acceptedRevenue)}</p>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 mt-1">Receita Aceita</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 mt-1">Valor aprovado</p>
             </div>
             <div className="bg-white rounded-3xl p-6 border border-admin-border/40 shadow-sm text-center">
               <p className="text-3xl font-black text-admin-primary tracking-tighter">
-                {proposals.length > 0 ? ((proposals.filter(p => p.status === "accepted").length / proposals.length) * 100).toFixed(0) : 0}%
+                {proposals.length > 0 ? ((proposals.filter(p => isApprovedProposalStatus(p.status)).length / proposals.length) * 100).toFixed(0) : 0}%
               </p>
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 mt-1">Taxa Conversão</p>
             </div>

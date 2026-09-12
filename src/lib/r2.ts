@@ -15,13 +15,17 @@ export const r2 = {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
     const functionUrl = `${supabaseUrl}/functions/v1/r2-storage`;
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    const accessToken = sessionData?.session?.access_token;
+    if (sessionError || !accessToken) throw new Error('Entre com sua conta para enviar imagens.');
     
     let response;
     try {
       response = await fetch(functionUrl, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${supabaseKey}`,
+          'Authorization': `Bearer ${accessToken}`,
+          'apikey': supabaseKey,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ 

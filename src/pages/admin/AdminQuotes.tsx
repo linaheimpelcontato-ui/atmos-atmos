@@ -1,4 +1,5 @@
-import { useEffect, useState, useMemo } from "react";
+import { findRequestProspect } from "@/lib/requestProspect";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -176,7 +177,15 @@ export default function AdminQuotes({ segment }: { segment: "b2c" | "b2b" }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [selected, setSelected] = useState<UnifiedLead | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
-  const [sendingToPipeline, setSendingToPipeline] = useState(false);
+  const [creatingProposal, setCreatingProposal] = useState(false);
+  const creatingProposalRef = useRef(false);
+  const selectedRef = useRef(selected);
+  selectedRef.current = selected;
+  const [prospectLookupError, setProspectLookupError] = useState<string | null>(null);
+  useEffect(() => {
+    selectedRef.current = selected;
+    return () => { selectedRef.current = null; };
+  }, [selected]);
   const [quickSearch, setQuickSearch] = useState("");
   const filterState = useSmartFilters();
   const { toast } = useToast();
@@ -249,58 +258,58 @@ export default function AdminQuotes({ segment }: { segment: "b2c" | "b2b" }) {
 
   // Lookup linked prospect, proposal & pipeline stage when a lead is selected
   useEffect(() => {
-    if (!selected?.email) {
-      setLinkedProposal(null);
-      setLinkedProspectId(null);
-      setPipelineStageName(null);
-      return;
-    }
-    let cancelled = false;
     setLinkedProposal(null);
     setLinkedProspectId(null);
     setPipelineStageName(null);
+    setProspectLookupError(null);
+    if (!selected) {
+      setLoadingProposal(false);
+      setLoadingStage(false);
+      return;
+    }
+    let cancelled = false;
     setLoadingProposal(true);
     setLoadingStage(true);
     (async () => {
-      const { data: prospect } = await (supabase as any)
-        .from("prospects")
-        .select("id, stage_id")
-        .eq("segment", selected.origin === "turista" ? "b2c" : "b2b")
-        .ilike("email", selected.email.trim().replace(/[\\%_]/g, "\\$&"))
-        .limit(1)
-        .maybeSingle();
-      if (cancelled) return;
-      if (prospect) {
-        setLinkedProspectId(prospect.id);
-        const { data: proposal } = await (supabase as any)
-          .from("proposals")
-          .select("id, code")
-          .eq("prospect_id", prospect.id)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
+      try {
+        const prospect = await findRequestProspect(supabase, selected);
         if (cancelled) return;
-        setLinkedProposal(proposal ? { id: proposal.id, code: proposal.code || "—" } : null);
-
-        // Fetch pipeline stage name
-        if (prospect.stage_id) {
-          const { data: stage } = await (supabase as any)
-            .from("pipeline_stages")
-            .select("name")
-            .eq("id", prospect.stage_id)
+        if (prospect) {
+          setLinkedProspectId(prospect.id);
+          const { data: proposal, error: proposalLookupError } = await (supabase as any)
+            .from("proposals")
+            .select("id, code")
+            .eq("prospect_id", prospect.id)
+            .order("created_at", { ascending: false })
+            .limit(1)
             .maybeSingle();
           if (cancelled) return;
-          setPipelineStageName(stage?.name || null);
+          if (proposalLookupError) throw proposalLookupError;
+          setLinkedProposal(proposal ? { id: proposal.id, code: proposal.code || "—" } : null);
+
+          // Fetch pipeline stage name
+          if (prospect.stage_id) {
+            const { data: stage, error: stageLookupError } = await (supabase as any)
+              .from("pipeline_stages")
+              .select("name")
+              .eq("id", prospect.stage_id)
+              .maybeSingle();
+            if (cancelled) return;
+            if (stageLookupError) throw stageLookupError;
+            setPipelineStageName(stage?.name || null);
+          } else {
+            setPipelineStageName(null);
+          }
         } else {
+          setLinkedProspectId(null);
+          setLinkedProposal(null);
           setPipelineStageName(null);
         }
-      } else {
-        setLinkedProspectId(null);
-        setLinkedProposal(null);
-        setPipelineStageName(null);
+      } catch (error) {
+        if (!cancelled) setProspectLookupError(error instanceof Error ? error.message : "Falha ao verificar vínculo no CRM.");
+      } finally {
+        if (!cancelled) { setLoadingProposal(false); setLoadingStage(false); }
       }
-      setLoadingProposal(false);
-      setLoadingStage(false);
     })();
     return () => { cancelled = true; };
   }, [selected]);
@@ -466,66 +475,6 @@ export default function AdminQuotes({ segment }: { segment: "b2c" | "b2b" }) {
       setSelected((prev) => prev ? { ...prev, status: newStatus } : null);
     }
     setUpdatingStatus(false);
-  };
-
-  const handleSendToPipeline = async (lead: UnifiedLead) => {
-    setSendingToPipeline(true);
-    const segment = lead.origin === "turista" ? "b2c" : "b2b";
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const db = supabase as any;
-
-    // Route site leads to "Aguardando Atendimento" stage
-    const { data: stages } = await db
-      .from("pipeline_stages")
-      .select("id, name")
-      .eq("segment", segment)
-      .order("position", { ascending: true });
-
-    const awaitingStage = stages?.find((s: Record<string, unknown>) =>
-      (s.name as string).toLowerCase().includes("aguardando atendimento")
-    );
-    const stageId = awaitingStage?.id || stages?.[0]?.id || null;
-
-    const prospectData: Record<string, unknown> = {
-      name: lead.name || "Sem nome",
-      email: lead.email,
-      phone: lead.phone,
-      segment,
-      source: "site",
-      stage_id: stageId,
-      tags: [lead.origin === "turista" ? "turista" : "imersão"],
-    };
-
-    if (lead.origin === "imersao") {
-      prospectData.company_name = lead.empresa;
-      prospectData.notes = [
-        lead.cargo && `Cargo: ${lead.cargo}`,
-        lead.tipo_grupo && `Tipo grupo: ${lead.tipo_grupo}`,
-        lead.num_participantes && `Participantes: ${lead.num_participantes}`,
-        lead.quando && `Quando: ${lead.quando}`,
-        lead.orcamento && `Orçamento: ${lead.orcamento}`,
-        lead.observacoes,
-      ].filter(Boolean).join("\n");
-    } else {
-      const answers = getAnswers(lead);
-      const items = getItems(lead);
-      prospectData.notes = [
-        answers.groupSize && `Grupo: ${answers.groupSize} pessoas`,
-        answers.startDate && `Data: ${answers.startDate}`,
-        answers.transport && `Transporte: ${answers.transport}`,
-        items.length > 0 && `Itens: ${items.map(i => i.name).join(", ")}`,
-      ].filter(Boolean).join("\n");
-    }
-
-    const { error } = await db.from("prospects").insert(prospectData);
-
-    if (error) {
-      toast({ title: "Erro ao enviar para pipeline", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Lead enviado para o pipeline!", description: `Segmento: ${segment.toUpperCase()}` });
-    }
-    setSendingToPipeline(false);
   };
 
   const buildWhatsAppUrl = (lead: UnifiedLead) => {
@@ -1021,7 +970,9 @@ export default function AdminQuotes({ segment }: { segment: "b2c" | "b2b" }) {
               {/* Auto-pipeline indicator */}
               <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground bg-muted rounded-lg px-4 py-3">
                 <ArrowRight className="h-4 w-4 text-accent shrink-0" />
-                <span>Este lead já foi enviado automaticamente para o Pipeline {selected.origin === "turista" ? "B2C" : "B2B"} na etapa <strong>Aguardando Orçamento</strong>.</span>
+                <span>{loadingStage ? "Verificando vínculo no CRM..." : prospectLookupError || (linkedProspectId
+                  ? `Cliente vinculado ao Pipeline ${selected.origin === "turista" ? "B2C" : "B2B"}${pipelineStageName ? ` — ${pipelineStageName}` : " — sem etapa definida"}.`
+                  : "Cliente ainda não vinculado neste segmento. Confira o cadastro no CRM; nenhum cliente será criado automaticamente por esta tela.")}</span>
               </div>
 
               {/* Proposal status indicator */}
@@ -1059,62 +1010,68 @@ export default function AdminQuotes({ segment }: { segment: "b2c" | "b2b" }) {
                   className="flex-1 gap-1.5"
                   onClick={async () => {
                     if (!selected) return;
-                    // Find or create prospect
-                    let prospectIdToUse = linkedProspectId;
-                    if (!prospectIdToUse && selected.email) {
-                      // create prospect
-                      const { data: newProspect } = await (supabase as any)
-                        .from("prospects")
+                    if (creatingProposalRef.current) return;
+                    const lead = selected;
+                    creatingProposalRef.current = true;
+                    setCreatingProposal(true);
+                    try {
+                      // Recheck at action time; never trust a stale linked id or
+                      // create a duplicate while the request trigger is running.
+                      const prospect = await findRequestProspect(supabase, lead);
+                      if (selectedRef.current !== lead) return;
+                      if (!prospect) {
+                        toast({ title: "Cliente não vinculado", description: "Confira o cadastro no CRM deste segmento antes de criar a proposta.", variant: "destructive" });
+                        return;
+                      }
+                      const prospectIdToUse = prospect.id;
+                      setLinkedProspectId(prospect.id);
+                      // Pre-fill data
+                      const answers = selected.origin === "turista" ? getAnswers(selected) : {};
+                      const numPeople = selected.origin === "turista"
+                        ? parseInt(String(answers.groupSize)) || 1
+                        : parseInt(selected.num_participantes || "1") || 1;
+                      const startDateVal = selected.origin === "turista"
+                        ? (answers.startDate ? String(answers.startDate) : "")
+                        : (selected.data_especifica || "");
+                      const endDateVal = selected.origin === "turista"
+                        ? (answers.endDate ? String(answers.endDate) : "")
+                        : (selected.data_especifica_fim || "");
+                      const numDaysVal = selected.origin === "turista"
+                        ? parseInt(String(answers.numDays)) || 1
+                        : 1;
+                      const lang = selected.language || "pt";
+
+                      // Create proposal with pre-filled data
+                      const { data: newProp, error: proposalError } = await (supabase as any)
+                        .from("proposals")
                         .insert({
-                          name: selected.name || "Lead Site",
-                          email: selected.email,
-                          phone: selected.phone,
+                          title: `Proposta — ${selected.name || "Lead"}`,
                           segment: selected.origin === "turista" ? "b2c" : "b2b",
-                          source: "site",
-                          tags: [selected.origin === "turista" ? "turista" : "imersão"],
+                          prospect_id: prospectIdToUse,
+                          num_people: numPeople,
+                          start_date: startDateVal || null,
+                          end_date: endDateVal || null,
+                          num_days: numDaysVal,
+                          language: lang,
+                          status: "draft",
                         })
                         .select("id")
                         .single();
-                      if (newProspect) prospectIdToUse = newProspect.id;
-                    }
-                    // Pre-fill data
-                    const answers = selected.origin === "turista" ? getAnswers(selected) : {};
-                    const numPeople = selected.origin === "turista"
-                      ? parseInt(String(answers.groupSize)) || 1
-                      : parseInt(selected.num_participantes || "1") || 1;
-                    const startDateVal = selected.origin === "turista"
-                      ? (answers.startDate ? String(answers.startDate) : "")
-                      : (selected.data_especifica || "");
-                    const endDateVal = selected.origin === "turista"
-                      ? (answers.endDate ? String(answers.endDate) : "")
-                      : (selected.data_especifica_fim || "");
-                    const numDaysVal = selected.origin === "turista"
-                      ? parseInt(String(answers.numDays)) || 1
-                      : 1;
-                    const lang = selected.language || "pt";
 
-                    // Create proposal with pre-filled data
-                    const { data: newProp } = await (supabase as any)
-                      .from("proposals")
-                      .insert({
-                        title: `Proposta — ${selected.name || "Lead"}`,
-                        segment: selected.origin === "turista" ? "b2c" : "b2b",
-                        prospect_id: prospectIdToUse,
-                        num_people: numPeople,
-                        start_date: startDateVal || null,
-                        end_date: endDateVal || null,
-                        num_days: numDaysVal,
-                        language: lang,
-                        status: "draft",
-                      })
-                      .select("id")
-                      .single();
-
-                    if (newProp) {
-                      setProposalEditingId(newProp.id);
-                      setProposalDialogOpen(true);
+                      if (proposalError) throw proposalError;
+                      if (selectedRef.current !== lead) return;
+                      if (newProp) {
+                        setProposalEditingId(newProp.id);
+                        setProposalDialogOpen(true);
+                      }
+                    } catch (error) {
+                      if (selectedRef.current === lead) toast({ title: "Erro ao criar proposta", description: error instanceof Error ? error.message : "Não foi possível criar a proposta.", variant: "destructive" });
+                    } finally {
+                      creatingProposalRef.current = false;
+                      setCreatingProposal(false);
                     }
                   }}
+                  disabled={creatingProposal || loadingProposal}
                 >
                   <PlusCircle className="h-3.5 w-3.5" />
                   Criar Proposta

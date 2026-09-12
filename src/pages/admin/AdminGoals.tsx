@@ -1,3 +1,4 @@
+import { APPROVED_PROPOSAL_STATUSES } from "@/lib/proposalStatus";
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -67,9 +68,9 @@ export default function AdminGoals() {
   });
 
   const { data: acceptedProposals = [] } = useQuery({
-    queryKey: ["accepted-proposals-totals"],
+    queryKey: ["approved-proposals-totals"],
     queryFn: async () => {
-      const { data } = await db.from("proposals").select("total, seller_id, created_at, segment").eq("status", "accepted");
+      const { data } = await db.from("proposals").select("total, seller_id, created_at, segment").in("status", APPROVED_PROPOSAL_STATUSES);
       return (data || []) as { total: number; seller_id: string | null; created_at: string; segment: string }[];
     },
   });

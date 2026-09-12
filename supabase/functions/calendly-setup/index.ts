@@ -1,3 +1,5 @@
+import { authorizeAdminRequest } from "../_shared/adminModuleAuth.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -11,6 +13,14 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const denied = await authorizeAdminRequest(req, {
+    createClient,
+    supabaseUrl: Deno.env.get("SUPABASE_URL"),
+    anonKey: Deno.env.get("SUPABASE_ANON_KEY"),
+    fullAdmin: true,
+  });
+  if (denied) return denied;
 
   const TOKEN = Deno.env.get("CALENDLY_API_TOKEN");
   const SIGNING_KEY = Deno.env.get("CALENDLY_WEBHOOK_SIGNING_KEY");
@@ -61,7 +71,7 @@ Deno.serve(async (req) => {
         JSON.stringify({
           status: "already_active",
           organization_uri: orgUri,
-          existing_subscription: existing,
+          existing_subscription: { uri: existing.uri, callback_url: existing.callback_url, state: existing.state, events: existing.events },
           request_payload: null,
           calendly_response: null,
           webhook_uri: existing.uri,
@@ -93,8 +103,8 @@ Deno.serve(async (req) => {
           status: "error",
           organization_uri: orgUri,
           existing_subscription: null,
-          request_payload: payload,
-          calendly_response: createData,
+          request_payload: { url: payload.url, events: payload.events, organization: payload.organization, user: payload.user, scope: payload.scope },
+          calendly_response: { status: createRes.status, uri: createData.resource?.uri ?? null },
           webhook_uri: null,
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -106,8 +116,8 @@ Deno.serve(async (req) => {
         status: "created",
         organization_uri: orgUri,
         existing_subscription: null,
-        request_payload: payload,
-        calendly_response: createData,
+        request_payload: { url: payload.url, events: payload.events, organization: payload.organization, user: payload.user, scope: payload.scope },
+        calendly_response: { status: createRes.status, uri: createData.resource?.uri ?? null },
         webhook_uri: createData.resource?.uri || null,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }

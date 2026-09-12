@@ -1,7 +1,7 @@
 import { assertVerifiedCostIdentity, verifiedCheckForCell, type CostIdentity, type CostCheck } from "@/lib/verifiedCostIdentity";
 import { requestedPriceBreakdown, validateBundleCommissions } from "@/lib/proposalBundleContract";
 import { accommodationAmounts, normalizeSavedRooms, hasMissingCommission } from "@/lib/accommodationCalcs";
-import { lineTotal, money, proposalPriceTotals, supplierCommission, splitGroupTotal, resizeFixedPrice, operatingProfit, recordedCost } from "@/lib/proposalCalcs";
+import { lineTotal, money, moneyProduct, moneySum, proposalPriceTotals, supplierCommission, splitGroupTotal, resizeFixedPrice, operatingProfit, recordedCost } from "@/lib/proposalCalcs";
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -96,7 +96,7 @@ function SearchableCatalogCombobox({ value, onSelect, options, placeholder, clas
                     </div>
                     {o.price !== undefined && (
                       <span className="text-[10px] text-muted-foreground ml-2">
-                        R$ {typeof o.price === 'number' ? o.price.toFixed(0) : o.price}
+                        R$ {typeof o.price === 'number' ? o.price.toFixed(2) : o.price}
                       </span>
                     )}
                   </div>
@@ -129,7 +129,7 @@ function VariationSelect({ productId, value, onSelect, catalogItems, className }
       <SelectContent>
         {variations.map(v => (
           <SelectItem key={v.id} value={v.id} className="text-xs">
-            {v.name} — R$ {Number(v.unit_price).toFixed(0)}
+            {v.name} — R$ {Number(v.unit_price).toFixed(2)}
           </SelectItem>
         ))}
       </SelectContent>
@@ -1387,7 +1387,7 @@ export default function ProposalFormDialog({
   const dayTotals = useMemo(() => {
     const totals: Record<number, number> = {};
     for (let d = 1; d <= numDays; d++) {
-      totals[d] = grid.filter((c) => c.day_number === d).reduce((s, c) => s + lineTotal(c.value, c.qty), 0);
+      totals[d] = grid.filter((c) => c.day_number === d).reduce((s, c) => moneySum(s, lineTotal(c.value, c.qty)), 0);
     }
     return totals;
   }, [grid, numDays]);
@@ -1395,18 +1395,18 @@ export default function ProposalFormDialog({
   const catTotals = useMemo(() => {
     const totals: Record<string, number> = {};
     categories.forEach((cat) => {
-      totals[cat] = grid.filter((c) => c.category === cat).reduce((s, c) => s + lineTotal(c.value, c.qty), 0);
+      totals[cat] = grid.filter((c) => c.category === cat).reduce((s, c) => moneySum(s, lineTotal(c.value, c.qty)), 0);
     });
     return totals;
   }, [grid, categories]);
 
   const subtotal = useMemo(() => grid.reduce((s, c) => {
-    return s + lineTotal(c.value, c.qty);
+    return moneySum(s, lineTotal(c.value, c.qty));
   }, 0), [grid]);
   const numPaying = Math.max(numPeople - numCourtesies, 0);
 
   // Atmos revenue on FULL group
-  const atmosRevenue = money(atmosService.price_per_person_day * numPeople * numDays);
+  const atmosRevenue = moneyProduct(atmosService.price_per_person_day, numPeople, numDays);
 
   // Accommodation totals + variants
   const accTotals = useMemo(() => calcAccommodationTotals(proposalAccommodations), [proposalAccommodations]);
@@ -1510,11 +1510,11 @@ export default function ProposalFormDialog({
       const rev = lineTotal(cell.value, cell.qty);
       const cost = lineTotal(effCost, cell.qty);
       const comm = supplierCommission(cost, cell.comissao);
-      const profit = rev - cost + comm;
+      const profit = moneySum(rev, -cost, comm);
 
-      totalItemRevenue += rev;
-      totalItemCost += cost;
-      totalCommission += comm;
+      totalItemRevenue = moneySum(totalItemRevenue, rev);
+      totalItemCost = moneySum(totalItemCost, cost);
+      totalCommission = moneySum(totalCommission, comm);
 
       perItem.push({ cell, revenue: rev, cost, commission: comm, profit });
     }
@@ -1522,13 +1522,13 @@ export default function ProposalFormDialog({
     return { totalItemRevenue, totalItemCost, totalCommission, perItem };
   }, [grid, getEffectiveCost]);
 
-  const totalCosts = costItems.reduce((s, c) => s + c.amount, 0);
-  const commissionValue = money(totalCharged * (partnerCommission / 100));
+  const totalCosts = moneySum(...costItems.map(c => c.amount));
+  const commissionValue = supplierCommission(totalCharged, partnerCommission);
   const grossProfit = operatingProfit(
-    profitAnalysis.totalItemRevenue + atmosRevenue + accTotals.atmosRevenue,
-    profitAnalysis.totalItemCost + accTotals.atmosCost,
-    profitAnalysis.totalCommission + accTotals.atmosCommission + accTotals.hospedagemCommission,
-    atmosInternalCosts + totalCosts + commissionValue + discountValue,
+    moneySum(profitAnalysis.totalItemRevenue, atmosRevenue, accTotals.atmosRevenue),
+    moneySum(profitAnalysis.totalItemCost, accTotals.atmosCost),
+    moneySum(profitAnalysis.totalCommission, accTotals.atmosCommission, accTotals.hospedagemCommission),
+    moneySum(atmosInternalCosts, totalCosts, commissionValue, discountValue),
   );
   const totalRevenue = totalCharged;
   const margin = totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0;
@@ -1703,7 +1703,7 @@ export default function ProposalFormDialog({
               key={cat}
               className={`${CATEGORY_COLORS[cat] || "bg-muted-foreground"} transition-all`}
               style={{ width: `${pct}%` }}
-              title={`${cat}: R$ ${(catTotals[cat] || 0).toFixed(0)} (${pct.toFixed(0)}%)`}
+              title={`${cat}: R$ ${(catTotals[cat] || 0).toFixed(2)} (${pct.toFixed(0)}%)`}
             />
           );
         })}
@@ -1711,7 +1711,7 @@ export default function ProposalFormDialog({
           <div
             className="bg-primary transition-all"
             style={{ width: `${(atmosRevenue / totalWithAtmos) * 100}%` }}
-            title={`Serviço ATMOS: R$ ${atmosRevenue.toFixed(0)} (${((atmosRevenue / totalWithAtmos) * 100).toFixed(0)}%)`}
+            title={`Serviço ATMOS: R$ ${atmosRevenue.toFixed(2)} (${((atmosRevenue / totalWithAtmos) * 100).toFixed(0)}%)`}
           />
         )}
       </div>
@@ -1816,7 +1816,7 @@ export default function ProposalFormDialog({
                 </div>
                 <div className="text-right">
                   <Badge variant="outline" className="tabular-nums text-xs">
-                    Total: R$ {dayTotal.toFixed(0)}
+                    Total: R$ {dayTotal.toFixed(2)}
                   </Badge>
                   {numPeople > 1 && (
                     <div className="text-[10px] text-muted-foreground tabular-nums mt-0.5">
@@ -1886,7 +1886,7 @@ export default function ProposalFormDialog({
                                           const waterfallProduct = waterfallId ? catalogItems.find((c: any) => c.id === waterfallId) : null;
                                           const vt = dayVehicleType[dayNum] || "carroTurista";
                                           const salePrice = getGuideSalePrice(waterfallProduct, vt, cell.qty) || Number(g.daily_rate);
-                                          return { id: g.id, label: `${g.name}${!g.is_active ? " (Rascunho)" : ""}`, price: salePrice.toFixed(0) };
+                                          return { id: g.id, label: `${g.name}${!g.is_active ? " (Rascunho)" : ""}`, price: salePrice.toFixed(2) };
                                         })
                                       ]}
                                       onSelect={(v) => v === "custom"
@@ -2116,7 +2116,7 @@ export default function ProposalFormDialog({
                                     const waterfallProduct = wId ? catalogItems.find((c: any) => c.id === wId) : null;
                                     const vt = dayVehicleType[dayNum] || "carroTurista";
                                     const salePrice = getGuideSalePrice(waterfallProduct, vt, cell.qty) || Number(g.daily_rate);
-                                    return { id: g.id, label: `${g.name}${!g.is_active ? " (Rascunho)" : ""}`, price: salePrice.toFixed(0) };
+                                    return { id: g.id, label: `${g.name}${!g.is_active ? " (Rascunho)" : ""}`, price: salePrice.toFixed(2) };
                                   })
                                 ]}
                                 onSelect={(v) => v === "custom"
@@ -2211,16 +2211,16 @@ export default function ProposalFormDialog({
                 );
               })}
               <td className="p-2 text-right font-semibold align-top text-sm">
-                R$ {(dayTotals[dayNum] || 0).toFixed(0)}
+                R$ {(dayTotals[dayNum] || 0).toFixed(2)}
               </td>
             </tr>
           ))}
           <tr className="border-t-2 border-border bg-muted/30 font-medium">
             <td className="p-2 sticky left-0 bg-muted/30 text-sm">Totais</td>
             {categories.map((cat) => (
-              <td key={cat} className="p-2 text-center text-sm">R$ {(catTotals[cat] || 0).toFixed(0)}</td>
+              <td key={cat} className="p-2 text-center text-sm">R$ {(catTotals[cat] || 0).toFixed(2)}</td>
             ))}
-            <td className="p-2 text-right font-bold text-sm">R$ {subtotal.toFixed(0)}</td>
+            <td className="p-2 text-right font-bold text-sm">R$ {subtotal.toFixed(2)}</td>
           </tr>
         </tbody>
       </table>
@@ -2268,7 +2268,7 @@ export default function ProposalFormDialog({
                     <span className={`w-2 h-2 rounded-full ${CATEGORY_COLORS[cat] || "bg-muted-foreground"}`} />
                     {cat}
                   </span>
-                  <span className="tabular-nums">R$ {val.toFixed(0)} <span className="text-muted-foreground">({pct.toFixed(0)}%)</span></span>
+                  <span className="tabular-nums">R$ {val.toFixed(2)} <span className="text-muted-foreground">({pct.toFixed(0)}%)</span></span>
                 </div>
               );
             })}
@@ -2278,7 +2278,7 @@ export default function ProposalFormDialog({
                   <span className="w-2 h-2 rounded-full bg-primary" />
                   Serviço ATMOS
                 </span>
-                <span className="tabular-nums">R$ {atmosRevenue.toFixed(0)} <span className="text-muted-foreground">({totalWithAtmos > 0 ? ((atmosRevenue / totalWithAtmos) * 100).toFixed(0) : 0}%)</span></span>
+                <span className="tabular-nums">R$ {atmosRevenue.toFixed(2)} <span className="text-muted-foreground">({totalWithAtmos > 0 ? ((atmosRevenue / totalWithAtmos) * 100).toFixed(0) : 0}%)</span></span>
               </div>
             )}
             {accTotals.atmosRevenue > 0 && (
@@ -2287,7 +2287,7 @@ export default function ProposalFormDialog({
                   <span className="w-2 h-2 rounded-full bg-primary" />
                   Hospedagem (ATMOS)
                 </span>
-                <span className="tabular-nums">R$ {accTotals.atmosRevenue.toFixed(0)} <span className="text-muted-foreground">({totalWithAtmos > 0 ? ((accTotals.atmosRevenue / totalWithAtmos) * 100).toFixed(0) : 0}%)</span></span>
+                <span className="tabular-nums">R$ {accTotals.atmosRevenue.toFixed(2)} <span className="text-muted-foreground">({totalWithAtmos > 0 ? ((accTotals.atmosRevenue / totalWithAtmos) * 100).toFixed(0) : 0}%)</span></span>
               </div>
             )}
           </div>
@@ -2380,18 +2380,18 @@ export default function ProposalFormDialog({
             <div className="space-y-1 text-xs">
               <div className="flex justify-between font-medium">
                 <span>Receita dos itens</span>
-                <span className="tabular-nums">R$ {profitAnalysis.totalItemRevenue.toFixed(0)}</span>
+                <span className="tabular-nums">R$ {profitAnalysis.totalItemRevenue.toFixed(2)}</span>
               </div>
               {atmosRevenue > 0 && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">+ Receita Serviço ATMOS</span>
-                  <span className="tabular-nums">R$ {atmosRevenue.toFixed(0)}</span>
+                  <span className="tabular-nums">R$ {atmosRevenue.toFixed(2)}</span>
                 </div>
               )}
               {accTotals.totalRevenue > 0 && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">+ Receita Hospedagem</span>
-                  <span className="tabular-nums">R$ {accTotals.totalRevenue.toFixed(0)}</span>
+                  <span className="tabular-nums">R$ {accTotals.totalRevenue.toFixed(2)}</span>
                 </div>
               )}
 
@@ -2418,26 +2418,26 @@ export default function ProposalFormDialog({
                           <span className={`w-2 h-2 rounded-full ${CATEGORY_COLORS[cat] || "bg-muted-foreground"}`} />
                           {cat}
                         </span>
-                        <span className="tabular-nums">− R$ {(costsByCategory[cat]).toFixed(0)}</span>
+                        <span className="tabular-nums">− R$ {(costsByCategory[cat]).toFixed(2)}</span>
                       </div>
                     ))}
                     {totalCosts > 0 && (
                       <div className="flex justify-between text-destructive text-xs">
                         <span>Custos operacionais</span>
-                        <span className="tabular-nums">− R$ {totalCosts.toFixed(0)}</span>
+                        <span className="tabular-nums">− R$ {totalCosts.toFixed(2)}</span>
                       </div>
                     )}
 
                     {segment === "b2b" && commissionValue > 0 && (
                       <div className="flex justify-between text-destructive text-xs">
                         <span>Comissão Vendedor ({partnerCommission}%)</span>
-                        <span className="tabular-nums">− R$ {commissionValue.toFixed(0)}</span>
+                        <span className="tabular-nums">− R$ {commissionValue.toFixed(2)}</span>
                       </div>
                     )}
                     {discountValue > 0 && (
                       <div className="flex justify-between text-destructive text-xs">
                         <span>Desconto concedido</span>
-                        <span className="tabular-nums">− R$ {discountValue.toFixed(0)}</span>
+                        <span className="tabular-nums">− R$ {discountValue.toFixed(2)}</span>
                       </div>
                     )}
 
@@ -2463,7 +2463,7 @@ export default function ProposalFormDialog({
                         </div>
                         <ul className="list-disc list-inside pl-1 space-y-0.5">
                           {itemsWithCostNoSale.map((c, idx) => (
-                            <li key={idx}>D{c.day_number} — {c.item_name || c.category} (custo: R$ {(getEffectiveCost(c) * c.qty).toFixed(0)})</li>
+                            <li key={idx}>D{c.day_number} — {c.item_name || c.category} (custo: R$ {lineTotal(getEffectiveCost(c), c.qty).toFixed(2)})</li>
                           ))}
                         </ul>
                       </div>
@@ -2480,13 +2480,13 @@ export default function ProposalFormDialog({
                 {profitAnalysis.totalCommission > 0 && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Comissões fornecedores (itens)</span>
-                    <span className="tabular-nums text-green-600">+ R$ {profitAnalysis.totalCommission.toFixed(0)}</span>
+                    <span className="tabular-nums text-green-600">+ R$ {profitAnalysis.totalCommission.toFixed(2)}</span>
                   </div>
                 )}
                 {accTotals.totalCommission > 0 && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Comissões fornecedores (hospedagem)</span>
-                    <span className="tabular-nums text-green-600">+ R$ {accTotals.totalCommission.toFixed(0)}</span>
+                    <span className="tabular-nums text-green-600">+ R$ {accTotals.totalCommission.toFixed(2)}</span>
                   </div>
                 )}
               </div>
@@ -2495,7 +2495,7 @@ export default function ProposalFormDialog({
             {/* Final profit */}
             <div className={`flex justify-between font-bold text-sm pt-2 mt-2 border-t-2 border-border ${grossProfit >= 0 ? "text-green-600" : "text-destructive"}`}>
               <span>Lucro ATMOS</span>
-              <span className="tabular-nums">R$ {grossProfit.toFixed(0)} ({margin.toFixed(1)}%)</span>
+              <span className="tabular-nums">R$ {grossProfit.toFixed(2)} ({margin.toFixed(1)}%)</span>
             </div>
             {margin < 20 && totalRevenue > 0 && (
               <div className="flex items-start gap-2 mt-2 p-2 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-xs">
@@ -2538,10 +2538,10 @@ export default function ProposalFormDialog({
                             <span className={`w-2 h-2 rounded-full shrink-0 ${CATEGORY_COLORS[cat] || "bg-muted-foreground"}`} />
                             {cat} <span className="text-muted-foreground font-normal">({g.items.length})</span>
                           </span>
-                          <span className="tabular-nums text-right whitespace-nowrap">R$ {g.rev.toFixed(0)}</span>
-                          <span className="tabular-nums text-right whitespace-nowrap">R$ {g.cost.toFixed(0)}</span>
-                          <span className="tabular-nums text-right whitespace-nowrap">{g.comm > 0 ? `R$ ${g.comm.toFixed(0)}` : "—"}</span>
-                          <span className={`tabular-nums text-right whitespace-nowrap ${g.profit >= 0 ? "text-green-600" : "text-destructive"}`}>R$ {g.profit.toFixed(0)}</span>
+                          <span className="tabular-nums text-right whitespace-nowrap">R$ {g.rev.toFixed(2)}</span>
+                          <span className="tabular-nums text-right whitespace-nowrap">R$ {g.cost.toFixed(2)}</span>
+                          <span className="tabular-nums text-right whitespace-nowrap">{g.comm > 0 ? `R$ ${g.comm.toFixed(2)}` : "—"}</span>
+                          <span className={`tabular-nums text-right whitespace-nowrap ${g.profit >= 0 ? "text-green-600" : "text-destructive"}`}>R$ {g.profit.toFixed(2)}</span>
                         </div>
                       ) : (
                         <div className="grid grid-cols-[1fr_minmax(56px,auto)_minmax(56px,auto)] gap-x-2 py-1 px-1 rounded hover:bg-muted/50 font-medium">
@@ -2550,8 +2550,8 @@ export default function ProposalFormDialog({
                             <span className={`w-2 h-2 rounded-full shrink-0 ${CATEGORY_COLORS[cat] || "bg-muted-foreground"}`} />
                             {cat} <span className="text-muted-foreground font-normal">({g.items.length})</span>
                           </span>
-                          <span className="tabular-nums text-right whitespace-nowrap">R$ {g.cost.toFixed(0)}</span>
-                          <span className="tabular-nums text-right whitespace-nowrap">{g.comm > 0 ? `R$ ${g.comm.toFixed(0)}` : "—"}</span>
+                          <span className="tabular-nums text-right whitespace-nowrap">R$ {g.cost.toFixed(2)}</span>
+                          <span className="tabular-nums text-right whitespace-nowrap">{g.comm > 0 ? `R$ ${g.comm.toFixed(2)}` : "—"}</span>
                         </div>
                       )}
                     </CollapsibleTrigger>
@@ -2566,10 +2566,10 @@ export default function ProposalFormDialog({
                                   D{p.cell.day_number} {p.cell.item_name || p.cell.category}
                                   {p.cell.qty > 1 && <span className="ml-0.5">×{p.cell.qty}</span>}
                                 </span>
-                                <span className="tabular-nums text-right whitespace-nowrap">R$ {p.revenue.toFixed(0)}</span>
-                                <span className="tabular-nums text-right whitespace-nowrap">R$ {p.cost.toFixed(0)}</span>
-                                <span className="tabular-nums text-right whitespace-nowrap">{p.commission > 0 ? `R$ ${p.commission.toFixed(0)}` : "—"}</span>
-                                <span className="tabular-nums text-right whitespace-nowrap">R$ {p.profit.toFixed(0)}</span>
+                                <span className="tabular-nums text-right whitespace-nowrap">R$ {p.revenue.toFixed(2)}</span>
+                                <span className="tabular-nums text-right whitespace-nowrap">R$ {p.cost.toFixed(2)}</span>
+                                <span className="tabular-nums text-right whitespace-nowrap">{p.commission > 0 ? `R$ ${p.commission.toFixed(2)}` : "—"}</span>
+                                <span className="tabular-nums text-right whitespace-nowrap">R$ {p.profit.toFixed(2)}</span>
                               </div>
                             ) : (
                               <div key={i} className="grid grid-cols-[1fr_minmax(56px,auto)_minmax(56px,auto)] gap-x-2 py-0.5 text-muted-foreground">
@@ -2580,8 +2580,8 @@ export default function ProposalFormDialog({
                                     <TooltipProvider><Tooltip><TooltipTrigger asChild><AlertTriangle className="h-3 w-3 text-amber-500 shrink-0" /></TooltipTrigger><TooltipContent><p className="text-xs">Custo não cadastrado</p></TooltipContent></Tooltip></TooltipProvider>
                                   )}
                                 </span>
-                                <span className="tabular-nums text-right whitespace-nowrap">R$ {p.cost.toFixed(0)}</span>
-                                <span className="tabular-nums text-right whitespace-nowrap">{p.commission > 0 ? `R$ ${p.commission.toFixed(0)}` : "—"}</span>
+                                <span className="tabular-nums text-right whitespace-nowrap">R$ {p.cost.toFixed(2)}</span>
+                                <span className="tabular-nums text-right whitespace-nowrap">{p.commission > 0 ? `R$ ${p.commission.toFixed(2)}` : "—"}</span>
                               </div>
                             )
                           )}
@@ -3025,12 +3025,12 @@ export default function ProposalFormDialog({
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               <div className="space-y-1">
                 <Label className="text-xs">Valor por pessoa/dia (R$) *</Label>
-                <Input className="h-8 text-sm tabular-nums" type="number" step="0.01" min={0} value={atmosService.price_per_person_day || ""} onChange={(e) => setAtmosService((s) => ({ ...s, price_per_person_day: parseFloat(e.target.value) || 0 }))} required />
+                <Input className="h-8 text-sm tabular-nums" type="number" step="any" min={0} value={atmosService.price_per_person_day || ""} onChange={(e) => setAtmosService((s) => ({ ...s, price_per_person_day: parseFloat(e.target.value) || 0 }))} required />
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Receita Serviço</Label>
                 <p className="text-sm font-semibold mt-1 tabular-nums">R$ {atmosRevenue.toFixed(2)}</p>
-                <p className="text-xs text-muted-foreground">{numPeople} pax × {numDays} dias × R$ {atmosService.price_per_person_day.toFixed(2)}</p>
+                <p className="text-xs text-muted-foreground">{numPeople} pax × {numDays} dias × R$ {atmosService.price_per_person_day.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 20 })}</p>
               </div>
             </div>
             <div className="space-y-1">
@@ -3073,13 +3073,13 @@ export default function ProposalFormDialog({
                   }} />
                   <Input className="h-8 text-sm tabular-nums text-center" type="number" min={0.5} step="0.5" placeholder="Dias" value={ci.days || 1} onChange={(e) => {
                     const d = parseFloat(e.target.value) || 1;
-                    const arr = [...costItems]; arr[idx] = { ...arr[idx], days: d, amount: d * arr[idx].unit_amount }; setCostItems(arr);
+                    const arr = [...costItems]; arr[idx] = { ...arr[idx], days: d, amount: moneyProduct(d, arr[idx].unit_amount) }; setCostItems(arr);
                   }} />
                   <Input className="h-8 text-sm tabular-nums" type="number" step="0.01" placeholder="R$/dia" value={ci.unit_amount || ""} onChange={(e) => {
                     const ua = parseFloat(e.target.value) || 0;
-                    const arr = [...costItems]; arr[idx] = { ...arr[idx], unit_amount: ua, amount: (arr[idx].days || 1) * ua }; setCostItems(arr);
+                    const arr = [...costItems]; arr[idx] = { ...arr[idx], unit_amount: ua, amount: moneyProduct(arr[idx].days || 1, ua) }; setCostItems(arr);
                   }} />
-                  <span className="h-8 flex items-center text-xs tabular-nums text-muted-foreground">= R$ {ci.amount.toFixed(0)}</span>
+                  <span className="h-8 flex items-center text-xs tabular-nums text-muted-foreground">= R$ {ci.amount.toFixed(2)}</span>
                   <Select value={ci.account_id || "none"} onValueChange={(v) => {
                     const arr = [...costItems]; arr[idx] = { ...arr[idx], account_id: v === "none" ? null : v }; setCostItems(arr);
                   }}>

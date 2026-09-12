@@ -1,3 +1,4 @@
+import { isApprovedProposalStatus } from "@/lib/proposalStatus";
 import TransactionTraceabilityFields from "@/components/admin/TransactionTraceabilityFields";
 import { readTraceability, traceabilityPayload, traceabilityExport, proposalLabel } from "./finance/transactionTraceability";
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -51,6 +52,7 @@ export default function AdminFinanceReceitas() {
   const [sellers, setSellers] = useState<any[]>([]);
   const [proposals, setProposals] = useState<any[]>([]);
   const [unlinkedProposals, setUnlinkedProposals] = useState<any[]>([]);
+  const [generatingId, setGeneratingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterFrom, setFilterFrom] = useState(format(new Date(new Date().getFullYear(), 0, 1), "yyyy-MM-dd"));
@@ -78,6 +80,11 @@ export default function AdminFinanceReceitas() {
       db.from("chart_of_accounts").select("id, code, name, type").eq("is_active", true).order("code"),
       db.from("sellers").select("id, name").eq("is_active", true).order("name"),
       db.from("proposals").select("id, title, code, total, status, prospect_id").order("created_at", { ascending: false }),
+      // Deliberately NOT date-filtered: a proposal whose existing
+      // receivable/commission falls outside [filterFrom, filterTo] must
+      // still count as "already linked" here, or it reappears below as
+      // "awaiting launch" and can be launched again (FIN-03).
+      db.from("financial_transactions").select("proposal_id").in("type", ["receivable", "commission_in"]).not("proposal_id", "is", null),
     ]);
     const error = results.find(result => result.error)?.error;
     if (error) {
@@ -85,14 +92,14 @@ export default function AdminFinanceReceitas() {
       setLoading(false);
       return;
     }
-    const [{ data: txs }, { data: accs }, { data: sls }, { data: props }] = results;
+    const [{ data: txs }, { data: accs }, { data: sls }, { data: props }, { data: allLinks }] = results;
     setTransactions(txs || []);
     setAccounts(accs || []);
     setSellers(sls || []);
     setProposals(props || []);
 
-    const linkedIds = new Set((txs || []).map((t: any) => t.proposal_id).filter(Boolean));
-    setUnlinkedProposals((props || []).filter((p: any) => p.status === "accepted" && !linkedIds.has(p.id)));
+    const linkedIds = new Set((allLinks || []).map((t: any) => t.proposal_id).filter(Boolean));
+    setUnlinkedProposals((props || []).filter((p: any) => isApprovedProposalStatus(p.status) && !linkedIds.has(p.id)));
     setLoading(false);
   }, [filterStatus, filterFrom, filterTo]);
 
@@ -119,13 +126,32 @@ export default function AdminFinanceReceitas() {
   const handleMarkPaid = async (id: string) => { await db.from("financial_transactions").update({ status: "paid", paid_date: format(new Date(), "yyyy-MM-dd") }).eq("id", id); fetchAll(); };
 
   const handleGenerateFromProposal = async (p: any) => {
-    const { error } = await db.from("financial_transactions").insert({
-      type: "receivable", description: `Proposta ${p.code || p.title}`, amount: Number(p.total),
-      due_date: format(new Date(), "yyyy-MM-dd"), status: "pending", proposal_id: p.id,
-    });
-    if (error) { toast({ title: "Erro", description: String(error.message), variant: "destructive" }); return; }
-    toast({ title: "Receita gerada", description: `Lançamento criado para ${p.code || p.title}` });
-    fetchAll();
+    if (generatingId) return;
+    setGeneratingId(p.id);
+    try {
+      // generate_proposal_receivable (migration
+      // 20260912220000_generate_proposal_receivable.sql) does the
+      // existence check and insert atomically under a lock on the
+      // proposal row, so concurrent clicks / concurrent admins can't
+      // duplicate this receivable (FIN-03). Verified with 15 real
+      // concurrent calls against an isolated database: exactly one row
+      // created, every other caller reported the same id back.
+      const { data, error } = await db.rpc("generate_proposal_receivable", { p_proposal_id: p.id });
+      if (error) { toast({ title: "Erro", description: String(error.message), variant: "destructive" }); return; }
+      if (data?.created) {
+        toast({ title: "Receita gerada", description: `Lançamento criado para ${p.code || p.title}` });
+      } else if (data?.reason === "legacy_unlinked") {
+        toast({
+          title: "Lançamento legado encontrado",
+          description: `${p.code || p.title} já tem um recebível lançado manualmente antes deste fluxo existir. Nada foi duplicado — reconcilie manualmente se necessário.`,
+        });
+      } else {
+        toast({ title: "Já havia lançamento", description: `${p.code || p.title} já tinha um recebível gerado; nada foi duplicado.` });
+      }
+      fetchAll();
+    } finally {
+      setGeneratingId(null);
+    }
   };
 
   const getProposalCode = (tx: any) => {
@@ -229,13 +255,14 @@ export default function AdminFinanceReceitas() {
                       <p className="font-bold text-admin-primary text-sm">{p.code || p.title}</p>
                       <p className="text-xs font-black text-muted-foreground/60">{fmt(Number(p.total))}</p>
                     </div>
-                    <Button 
-                      size="sm" 
-                      variant="ghost" 
-                      className="h-8 rounded-xl bg-admin-primary/5 text-admin-primary hover:bg-admin-primary hover:text-white transition-all font-bold text-[10px] uppercase tracking-wider"
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={generatingId === p.id}
+                      className="h-8 rounded-xl bg-admin-primary/5 text-admin-primary hover:bg-admin-primary hover:text-white transition-all font-bold text-[10px] uppercase tracking-wider disabled:opacity-50"
                       onClick={() => handleGenerateFromProposal(p)}
                     >
-                      Lançar
+                      {generatingId === p.id ? "Lançando..." : "Lançar"}
                     </Button>
                   </motion.div>
                 ))}

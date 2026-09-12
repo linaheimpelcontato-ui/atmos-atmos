@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { lineTotal, operatingProfit, proposalPriceTotals, resizeFixedPrice, splitGroupTotal, supplierCommission } from "./proposalCalcs";
+import { money, moneySum, moneyProduct, proposalDiscount, lineTotal, operatingProfit, proposalPriceTotals, resizeFixedPrice, splitGroupTotal, supplierCommission } from "./proposalCalcs";
 import { calcProposalProfit, calcCategoryBreakdown, calcProductRanking, calcGuideRanking } from "@/pages/admin/finance/financeCalcs";
 import type { Proposal, DayItem } from "@/pages/admin/finance/useFinanceData";
 
@@ -80,5 +80,81 @@ describe("finance matches saved proposal components", () => {
     const fd = { accepted: [proposal()], rejected: [], all: [proposal()], dayItems: [item()], costs: [] };
     expect(calcCategoryBreakdown(fd)[0].revenue).toBe(2000);
     expect(calcProductRanking(fd, [], "all")[0].revenue).toBe(2000);
+  });
+});
+
+
+describe("decimal parity with PostgreSQL numeric", () => {
+  it("matches the review's SQL result for 100.75 with a 10% discount", () => {
+    expect(proposalPriceTotals({ subtotal: 100.75, serviceRevenue: 0, accommodationRevenue: 0,
+      discountPercent: 10, discountFixed: 0, taxPercent: 0 })).toEqual({
+      discountValue: 10.08, afterDiscount: 90.67, base: 90.67, total: 90.67, taxValue: 0,
+    });
+    const result = calcProposalProfit(proposal({ subtotal: 100.75, total: 90.67, discount_percent: 10 }),
+      [item({ value: 100.75, cost_price: 0, quantity: 1 })], []);
+    expect(result.profit).toBe(90.67);
+  });
+
+  it.each([[1.005, 1.01], [10.075, 10.08], [-1.005, -1.01], [-10.075, -10.08],
+    [0.005, 0.01], [-0.005, -0.01], [1.004999999999, 1], [1.005000000001, 1.01],
+    [1e-7, 0], [99999999.99, 99999999.99]])("rounds %s to %s, with ties away from zero", (input, expected) => {
+    expect(money(input)).toBe(expected);
+  });
+
+  it("retains sub-cent unit prices until the line boundary", () => {
+    expect(lineTotal(0.335, 3)).toBe(1.01);
+    expect(lineTotal(1.005, 3)).toBe(3.02);
+    expect(lineTotal(-0.335, 3)).toBe(-1.01);
+    expect(moneyProduct(1e-7, 100000)).toBe(0.01);
+    expect(moneyProduct(1e21, 1e-21)).toBe(1);
+    expect(moneyProduct(0.1005, 5, 2)).toBe(1.01);
+  });
+
+  it("adds fixed discounts before rounding and computes commissions exactly", () => {
+    expect(proposalDiscount(100.75, 10, 0.01)).toBe(10.09);
+    expect(supplierCommission(100.75, 10)).toBe(10.08);
+    expect(moneySum(0.004, 0.004)).toBe(0.01);
+    expect(operatingProfit(1.005, 0, 0, 0)).toBe(1.01);
+    expect(operatingProfit(0, 1.005, 0, 0)).toBe(-1.01);
+  });
+
+  it("grosses up decimal tax without binary division at the rounding boundary", () => {
+    expect(proposalPriceTotals({ subtotal: 1.03, serviceRevenue: 0, accommodationRevenue: 0,
+      discountPercent: 0, discountFixed: 0, taxPercent: 60 })).toMatchObject({ total: 2.58, taxValue: 1.55 });
+    expect(proposalPriceTotals({ subtotal: 0.01, serviceRevenue: 0, accommodationRevenue: 0,
+      discountPercent: 0, discountFixed: 0, taxPercent: 99.99 }).total).toBe(100);
+  });
+
+  it("checks every cent in a range against integer tenths-of-a-cent discount rounding", () => {
+    for (let cents = 1; cents <= 20000; cents++) {
+      const discountCents = Math.floor((cents + 5) / 10);
+      const result = proposalPriceTotals({ subtotal: cents / 100, serviceRevenue: 0, accommodationRevenue: 0,
+        discountPercent: 10, discountFixed: 0, taxPercent: 0 });
+      expect(result.discountValue).toBe(discountCents / 100);
+      expect(result.total).toBe((cents - discountCents) / 100);
+    }
+  });
+
+  it("allocates the rounded total, including its per-person average", () => {
+    expect(splitGroupTotal(1.005, 2, 0)).toEqual({ total: 1.01, paying: 2, perPerson: 0.505,
+      lowerAmount: 0.5, lowerCount: 1, upperAmount: 0.51, upperCount: 1 });
+  });
+
+  it.each([NaN, Infinity, -Infinity, 1e20])("rejects money outside the finite, safe cent range: %s", value => {
+    expect(() => money(value)).toThrow();
+  });
+
+  it("rejects fractional discount/tax digits without an epsilon allowance", () => {
+    expect(() => proposalPriceTotals({ subtotal: 100, serviceRevenue: 0, accommodationRevenue: 0,
+      discountPercent: 10.0000000001, discountFixed: 0, taxPercent: 0 })).toThrow();
+  });
+
+  it("uses exact decimal stages for service revenue and seller commissions in finance", () => {
+    const service = calcProposalProfit(proposal({ subtotal: 0, total: 1.01, num_people: 5, num_days: 2,
+      atmos_service: { price_per_person_day: 0.1005 } }), [], []);
+    expect(service.atmosRevenue).toBe(1.01);
+    const seller = calcProposalProfit(proposal({ subtotal: 100.75, total: 100.75,
+      atmos_service: { seller_commission_percent: 10 } }), [item({ value: 100.75, cost_price: 0, quantity: 1 })], []);
+    expect(seller.profit).toBe(90.67);
   });
 });

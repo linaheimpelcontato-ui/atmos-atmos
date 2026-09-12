@@ -1,3 +1,5 @@
+import { authorizeAdminRequest } from "../_shared/adminModuleAuth.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -7,6 +9,14 @@ const corsHeaders = {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  const denied = await authorizeAdminRequest(req, {
+    createClient,
+    supabaseUrl: Deno.env.get("SUPABASE_URL"),
+    anonKey: Deno.env.get("SUPABASE_ANON_KEY"),
+    modules: ["cadastros", "b2b", "b2c"],
+  });
+  if (denied) return denied;
 
   try {
     const { name, company_name, website, country } = await req.json();

@@ -2,22 +2,18 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { X, AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 import EditorColorPicker from "./EditorColorPicker";
+import { textEditorId } from '@/lib/siteTextOverrides';
 
 interface Props {
   element: HTMLElement;
-  onOverride: (selector: string, styles: Record<string, string>, textContent?: string, device?: string) => void;
+  onOverride: (selector: string, styles: Record<string, string>, textContent?: string, device?: string, originalText?: string) => void;
   onClose: () => void;
   initialDevice?: "desktop" | "mobile";
 }
 
 function ensureEditorId(el: HTMLElement): string {
   if (el.dataset.editorId) return el.dataset.editorId;
-  const tag = el.tagName.toLowerCase();
-  const parent = el.closest("section, [data-section]");
-  const sectionId = parent?.getAttribute("data-section") || parent?.id || "unknown";
-  const siblings = parent ? Array.from(parent.querySelectorAll(tag)) : [];
-  const idx = siblings.indexOf(el);
-  const id = `${sectionId}.${tag}[${idx}]`;
+  const id = textEditorId(el);
   el.dataset.editorId = id;
   return id;
 }
@@ -48,6 +44,9 @@ const alignOptions = [
 const MANAGED_PROPS = ["color", "maxWidth", "textAlign", "fontSize"] as const;
 
 export default function TextEditPanel({ element, onOverride, onClose, initialDevice = "desktop" }: Props) {
+  // A draft belongs to the device on which this panel was opened, even if the
+  // parent changes its current viewport before the draft is confirmed.
+  const editingDevice = useRef(initialDevice).current;
   const computed = window.getComputedStyle(element);
   const [color, setColor] = useState(rgbToHex(computed.color));
   const [fontSize, setFontSize] = useState(parseFloat(computed.fontSize));
@@ -61,6 +60,13 @@ export default function TextEditPanel({ element, onOverride, onClose, initialDev
   // Save original inline styles on mount so we can restore on cancel
   const originals = useRef<Record<string, string>>({});
   const originalText = useRef(element.innerText);
+  const sourceText = useRef(element.dataset.editorOriginalText ?? element.textContent ?? '');
+  const canEditText = element.children.length === 0;
+  useEffect(() => {
+    element.dataset.editorOriginalText = sourceText.current;
+    element.setAttribute('data-editor-text-editing','');
+    return () => element.removeAttribute('data-editor-text-editing');
+  }, [element]);
   useEffect(() => {
     const saved: Record<string, string> = {};
     for (const prop of MANAGED_PROPS) {
@@ -79,7 +85,7 @@ export default function TextEditPanel({ element, onOverride, onClose, initialDev
   useEffect(() => { element.style.color = color; }, [color, element]);
   useEffect(() => { element.style.fontSize = `${fontSize}px`; }, [fontSize, element]);
   useEffect(() => { element.style.textAlign = textAlign; }, [textAlign, element]);
-  useEffect(() => { element.innerText = textContent; }, [textContent, element]);
+  useEffect(() => { if (canEditText) element.innerText = textContent; }, [textContent, element, canEditText]);
 
   // Drag handlers
   useEffect(() => {
@@ -122,7 +128,10 @@ export default function TextEditPanel({ element, onOverride, onClose, initialDev
 
   const handleConfirm = useCallback(() => {
     // Keep text content change
-    element.innerText = textContent;
+    if (canEditText) {
+      element.innerText = textContent;
+      element.setAttribute('data-editor-text-pending','');
+    }
 
     // Clear inline styles so CSS media-query overrides take effect
     clearInlineStyles();
@@ -134,21 +143,21 @@ export default function TextEditPanel({ element, onOverride, onClose, initialDev
       fontSize: `${fontSize}px`,
     };
 
-    // Send override scoped to the active device
-    onOverride(selector, styles, textContent, initialDevice);
+    // Keep both persisted and pending overrides scoped to this editing session.
+    onOverride(selector, styles, canEditText ? textContent : undefined, editingDevice, sourceText.current);
 
     // Inject a pending-override style tag for immediate visual feedback
-    injectPendingOverride(selector, styles, initialDevice);
+    injectPendingOverride(selector, styles, editingDevice);
 
     onClose();
-  }, [color, fontSize, widthPx, textAlign, textContent, element, selector, onOverride, initialDevice, onClose, clearInlineStyles]);
+  }, [color, fontSize, widthPx, textAlign, textContent, element, selector, onOverride, editingDevice, onClose, clearInlineStyles, canEditText]);
 
   const handleCancel = useCallback(() => {
     // Restore everything
     clearInlineStyles();
-    element.innerText = originalText.current;
+    if (canEditText) element.innerText = originalText.current;
     onClose();
-  }, [element, clearInlineStyles, onClose]);
+  }, [element, clearInlineStyles, onClose, canEditText]);
 
   const handleStyle = "absolute top-0 w-3 h-full cursor-col-resize z-[9999] group";
   const handleLine = "absolute top-0 bottom-0 w-0.5 bg-blue-400 group-hover:bg-blue-300 group-hover:w-1 transition-all";
@@ -207,12 +216,15 @@ export default function TextEditPanel({ element, onOverride, onClose, initialDev
           <label className="text-[11px] font-medium text-white/70 uppercase tracking-wide">Conteúdo</label>
           <textarea
             data-editor-ui
+            disabled={!canEditText}
+            maxLength={10000}
             value={textContent}
             onChange={(e) => setTextContent(e.target.value)}
             rows={4}
             className="w-full mt-1 bg-white/10 border border-white/20 rounded-lg text-white text-sm px-3 py-2 resize-y focus:outline-none focus:border-blue-400 placeholder:text-white/30"
             placeholder="Digite o texto..."
           />
+          {!canEditText && <p className="mt-1 text-xs text-white/70">Selecione um trecho de texto simples para editar o conteúdo; os estilos deste bloco continuam disponíveis.</p>}
         </div>
 
         {/* Alignment */}
@@ -241,7 +253,7 @@ export default function TextEditPanel({ element, onOverride, onClose, initialDev
         {/* Font size */}
         <div>
           <label className="text-[11px] font-medium text-white/70 uppercase tracking-wide mb-1.5 block">
-            Tamanho da fonte ({initialDevice === "mobile" ? "Mobile" : "Desktop"})
+            Tamanho da fonte ({editingDevice === "mobile" ? "Mobile" : "Desktop"})
           </label>
           <div className="flex items-center gap-2">
             <input

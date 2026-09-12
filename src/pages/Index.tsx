@@ -2,6 +2,11 @@ import React, { Suspense, lazy } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import HeroMain from "@/components/home/HeroMain";
+import { useSearchParams } from "react-router-dom";
+import { useApplySiteOverrides } from "@/hooks/useSiteOverrides";
+import { useApplyFocalPoints } from "@/hooks/useApplyFocalPoints";
+
+const EditorModeListener = lazy(() => import("@/components/editor/EditorModeListener"));
 
 // Below the fold components - Lazy Loaded
 const HeroScratch = lazy(() => import("@/components/home/HeroScratch"));
@@ -16,6 +21,10 @@ const ExperienceEcosystem = lazy(() => import("@/components/home/ExperienceEcosy
 import SEO from "@/components/SEO";
 
 const Index = () => {
+  const [searchParams] = useSearchParams();
+  const isEditorMode = searchParams.get("editor") === "true";
+  useApplySiteOverrides();
+  useApplyFocalPoints();
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
       <SEO 
@@ -23,7 +32,7 @@ const Index = () => {
         description="A ATMOS oferece a melhor curadoria de experiências, roteiros personalizados e guias bilingues na Chapada dos Veadeiros. Descubra o turismo de luxo consciente."
         keywords="Chapada dos Veadeiros, turismo de luxo, guia bilingue, roteiros personalizados, experiências exclusivas, Alto Paraíso"
       />
-      <Header />
+      {!isEditorMode && <Header />}
       <main className="overflow-hidden">
         {/* TOP HERO: VIDEO EXCLUSIVE - LOADED IMMEDIATELY */}
         <HeroMain 
@@ -49,7 +58,8 @@ const Index = () => {
           />
         </Suspense>
       </main>
-      <Footer />
+      {!isEditorMode && <Footer />}
+      {isEditorMode && <Suspense fallback={null}><EditorModeListener /></Suspense>}
     </div>
   );
 };

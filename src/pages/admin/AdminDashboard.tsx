@@ -1,3 +1,4 @@
+import { isApprovedProposalStatus } from "@/lib/proposalStatus";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -179,7 +180,7 @@ export default function AdminDashboard() {
   const funnelB2B = useMemo(() => {
     const totalLeads = imersaoLeads.length;
     const b2bProposalsCount = proposals.filter(p => p.segment === "b2b").length;
-    const b2bClosed = proposals.filter(p => p.segment === "b2b" && ["accepted", "closed"].includes(p.status)).length;
+    const b2bClosed = proposals.filter(p => p.segment === "b2b" && isApprovedProposalStatus(p.status)).length;
     return [
       { step: "Leads Recebidos", value: totalLeads, pct: 100 },
       { step: "Propostas Enviadas", value: b2bProposalsCount, pct: totalLeads > 0 ? (b2bProposalsCount / totalLeads) * 100 : 0 },

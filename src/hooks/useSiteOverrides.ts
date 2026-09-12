@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
+import { useApplySiteTextOverrides } from './useSiteTextOverrides';
+import { resolveEditorElement } from '@/lib/siteTextOverrides';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any;
@@ -29,6 +31,7 @@ export function useSiteOverrides() {
 
 /** Apply overrides to the DOM (used in Layout on public site) */
 export function useApplySiteOverrides() {
+  useApplySiteTextOverrides();
   const { data: overrides } = useSiteOverrides();
 
   useEffect(() => {
@@ -43,7 +46,10 @@ export function useApplySiteOverrides() {
     const desktopRules: string[] = [];
 
     overrides.forEach((o) => {
-      const sel = `[data-editor-id="${o.element_selector}"]`;
+      const target = resolveEditorElement(document,o.element_selector);
+      if (target) target.dataset.editorId = o.element_selector;
+      const escaped = o.element_selector.replace(/\\/g,'\\\\').replace(/"/g,'\\"');
+      const sel = `[data-editor-id="${escaped}"]`;
       const props = Object.entries(o.styles)
         .map(([k, v]) => `${camelToKebab(k)}: ${v} !important`)
         .join("; ");
@@ -72,7 +78,15 @@ export function useApplySiteOverrides() {
     document.getElementById("site-overrides")?.remove();
     document.head.appendChild(styleEl);
 
+    const identify = () => overrides.forEach(o => {
+      const target = resolveEditorElement(document,o.element_selector);
+      if (target) target.dataset.editorId = o.element_selector;
+    });
+    const observer = new MutationObserver(identify);
+    observer.observe(document.body,{childList:true,subtree:true});
+
     return () => {
+      observer.disconnect();
       document.getElementById("site-overrides")?.remove();
     };
   }, [overrides]);

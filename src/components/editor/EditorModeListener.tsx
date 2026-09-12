@@ -7,10 +7,14 @@ import ImageEditPanel from "./ImageEditPanel";
 import TextEditPanel from "./TextEditPanel";
 import BackgroundEditPanel from "./BackgroundEditPanel";
 import GridOverlay from "./GridOverlay";
+import { clearSavedEditorPreviews, mergeSavedTextRows, savedTextRows, type SavedPreview } from '@/lib/editorSavedPreviews';
+import { resolveEditorElement, type SiteTextOverride } from '@/lib/siteTextOverrides';
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const R2_DOMAIN = import.meta.env.VITE_R2_DOMAIN || "";
 
 export default function EditorModeListener() {
+  const { language } = useLanguage();
   const [enabled, setEnabled] = useState(false);
   const [showGrid, setShowGrid] = useState(false);
   const [currentDevice, setCurrentDevice] = useState<"desktop" | "mobile">("desktop");
@@ -41,6 +45,7 @@ export default function EditorModeListener() {
 
   useEffect(() => {
     const handler = (e: MessageEvent) => {
+      if (e.origin !== window.location.origin || e.source !== window.parent || window.parent === window) return;
       if (e.data?.type === "SET_EDITOR_MODE") {
         setEnabled(e.data.enabled);
         if (!e.data.enabled) { setPopup(null); setPanel(null); }
@@ -48,6 +53,7 @@ export default function EditorModeListener() {
       if (e.data?.type === "FOCAL_POINTS_SAVED") {
         qc.invalidateQueries({ queryKey: ["focal-points"] });
         qc.invalidateQueries({ queryKey: ["site-overrides"] });
+        qc.invalidateQueries({ queryKey: ["site-text-overrides"] });
       }
       if (e.data?.type === "SET_GRID_OVERLAY") {
         setShowGrid(e.data.enabled);
@@ -55,18 +61,37 @@ export default function EditorModeListener() {
       if (e.data?.type === "SET_VIEWPORT_MODE") {
         setCurrentDevice(e.data.mode);
       }
-      if (e.data?.type === "CLEAR_PENDING_OVERRIDES") {
-        // Remove pending preview styles — saved overrides now come from DB
-        const pendingStyle = document.getElementById("editor-pending-overrides");
-        if (pendingStyle) {
-          pendingStyle.removeAttribute("data-pending");
-          pendingStyle.textContent = "";
-        }
+      if (e.data?.type === "EDITOR_CHANGES_SAVED" && Array.isArray(e.data.changes)) {
+        const changes = e.data.changes as SavedPreview[];
+        void (async () => {
+          // Cancel older reads before merging the authoritative values just saved.
+          await qc.cancelQueries({ queryKey: ['site-text-overrides'] });
+          const saved = savedTextRows(changes);
+          for (const row of saved) {
+            qc.setQueryData<SiteTextOverride[]>(['site-text-overrides',row.pathname,row.language],
+              previous => mergeSavedTextRows(previous,[row]));
+          }
+          clearSavedEditorPreviews(document,changes,window.location.pathname,language);
+          await Promise.all([
+            qc.invalidateQueries({ queryKey: ['focal-points'] }),
+            qc.invalidateQueries({ queryKey: ['site-overrides'] }),
+            qc.invalidateQueries({ queryKey: ['site-text-overrides'] }),
+          ]);
+        })().catch(error => console.error('Falha ao atualizar a prévia salva',error));
       }
     };
     window.addEventListener("message", handler);
+    if (window.parent !== window) {
+      window.parent.postMessage({ type: "EDITOR_READY" }, window.location.origin);
+    }
     return () => window.removeEventListener("message", handler);
-  }, [qc]);
+  }, [qc,language]);
+
+  useEffect(() => {
+    if (window.parent === window) return;
+    window.parent.postMessage({ type: 'TEXT_EDITOR_STATE', active: panel?.type === 'edit-text' }, window.location.origin);
+    return () => window.parent.postMessage({ type: 'TEXT_EDITOR_STATE', active: false }, window.location.origin);
+  }, [panel?.type]);
 
   const extractPath = useCallback((src: string): string => {
     // Legacy Supabase
@@ -89,7 +114,9 @@ export default function EditorModeListener() {
       const style = window.getComputedStyle(el);
       if (style.objectFit === "cover" || el.hasAttribute("data-editable-image") || (el as HTMLImageElement).src.includes("/storage/") || (R2_DOMAIN && (el as HTMLImageElement).src.includes(R2_DOMAIN))) return "image";
     }
-    // Before checking text/bg, look for a nearby cover image (handles overlays)
+    // A click on text edits that text, even when it overlays a cover image.
+    if (["h1", "h2", "h3", "h4", "p", "span", "a", "li"].includes(tag) && el.textContent?.trim()) return "text";
+    // Blank overlays can still target the underlying cover image.
     if (["div", "section", "span", "p", "h1", "h2", "h3", "h4", "a"].includes(tag)) {
       const parent = el.closest("[class*='relative']") || el.parentElement;
       if (parent) {
@@ -212,6 +239,7 @@ export default function EditorModeListener() {
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       if (e.data?.type === "VIEWPORT_READY" && pendingMeasureRef.current) {
+        if (e.origin !== window.location.origin || e.source !== window.parent || window.parent === window) return;
         const { img: originalImg, device } = pendingMeasureRef.current;
         pendingMeasureRef.current = null;
 
@@ -276,12 +304,12 @@ export default function EditorModeListener() {
         }
         fileInputRef.current.click();
       } else if (action === "edit-text") {
-        setPanel({ type: "edit-text", element: el });
+        setPanel({ type: "edit-text", element: el, device: currentDevice });
       } else if (action === "edit-bg") {
         setPanel({ type: "edit-bg", element: el });
       }
     },
-    [popup, focalPoints, extractPath]
+    [popup, focalPoints, extractPath, currentDevice]
   );
 
   const handleFileSelect = useCallback(
@@ -358,12 +386,16 @@ export default function EditorModeListener() {
   );
 
   const handleOverride = useCallback(
-    (selector: string, styles: Record<string, string>, textContent?: string, device?: string) => {
+    (selector: string, styles: Record<string, string>, textContent?: string, device?: string, originalText?: string) => {
       window.parent.postMessage({ type: "STYLE_OVERRIDE", selector, styles, overrideType: "text_style", device: device || "all" }, "*");
       if (textContent !== undefined) {
-        window.parent.postMessage({ type: "TEXT_CONTENT_OVERRIDE", selector, content: textContent }, "*");
+        const change = { type: 'text-content' as const, selector, content: textContent,
+          originalText: originalText ?? '', device: device || 'all', pathname: window.location.pathname, language };
+        const element = resolveEditorElement(document,selector);
+        if (element) element.setAttribute('data-editor-text-pending',JSON.stringify(change));
+        window.parent.postMessage({ ...change, type: 'TEXT_CONTENT_OVERRIDE' }, window.location.origin);
       }
-    }, []
+    }, [language]
   );
 
   const handleBgOverride = useCallback(
@@ -423,7 +455,7 @@ export default function EditorModeListener() {
         />
       )}
       {panel?.type === "edit-text" && (
-        <TextEditPanel element={panel.element} onOverride={handleOverride} onClose={() => setPanel(null)} initialDevice={currentDevice} />
+        <TextEditPanel element={panel.element} onOverride={handleOverride} onClose={() => setPanel(null)} initialDevice={panel.device || currentDevice} />
       )}
       {panel?.type === "edit-bg" && (
         <BackgroundEditPanel element={panel.element} onOverride={handleBgOverride} onClose={() => setPanel(null)} currentDevice={currentDevice} />

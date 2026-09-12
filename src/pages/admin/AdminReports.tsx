@@ -1,3 +1,4 @@
+import { isApprovedProposalStatus } from "@/lib/proposalStatus";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -69,7 +70,7 @@ export default function AdminReports() {
   const countryData = Object.entries(countryCounts).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([name, value]) => ({ name, value }));
 
   // Revenue & potential
-  const acceptedRevenue = proposals.filter(p => p.status === "accepted").reduce((s, p) => s + Number(p.total), 0);
+  const acceptedRevenue = proposals.filter(p => isApprovedProposalStatus(p.status)).reduce((s, p) => s + Number(p.total), 0);
   const potentialCounts: Record<string, number> = { high: 0, medium: 0, low: 0 };
   prospects.forEach(p => { potentialCounts[p.potential || "medium"]++; });
   const potentialData = [
@@ -80,7 +81,7 @@ export default function AdminReports() {
 
   // Seller ranking
   const sellerRevenue: Record<string, number> = {};
-  proposals.filter(p => p.status === "accepted").forEach(p => {
+  proposals.filter(p => isApprovedProposalStatus(p.status)).forEach(p => {
     if (p.seller_id) sellerRevenue[p.seller_id] = (sellerRevenue[p.seller_id] || 0) + Number(p.total);
   });
   const sellerRanking = sellers.map(s => ({ name: s.name, value: sellerRevenue[s.id] || 0 })).sort((a, b) => b.value - a.value).slice(0, 5);
@@ -99,7 +100,7 @@ export default function AdminReports() {
         totalProspects: prospects.length,
         totalProposals: proposals.length,
         acceptedRevenue,
-        conversionRate: proposals.length > 0 ? ((proposals.filter(p => p.status === "accepted").length / proposals.length) * 100).toFixed(1) : "0",
+        conversionRate: proposals.length > 0 ? ((proposals.filter(p => isApprovedProposalStatus(p.status)).length / proposals.length) * 100).toFixed(1) : "0",
         topCountries: countryData.slice(0, 5),
         topSources: sourceData.slice(0, 5),
         sellerRanking: sellerRanking.slice(0, 3),
@@ -181,7 +182,7 @@ export default function AdminReports() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card><CardContent className="pt-6 text-center"><p className="text-3xl font-bold">{prospects.length}</p><p className="text-sm text-muted-foreground">Total Prospects</p></CardContent></Card>
         <Card><CardContent className="pt-6 text-center"><p className="text-3xl font-bold">{proposals.length}</p><p className="text-sm text-muted-foreground">Total Propostas</p></CardContent></Card>
-        <Card><CardContent className="pt-6 text-center"><p className="text-3xl font-bold">{fmt(acceptedRevenue)}</p><p className="text-sm text-muted-foreground">Receita (aceitas)</p></CardContent></Card>
+        <Card><CardContent className="pt-6 text-center"><p className="text-3xl font-bold">{fmt(acceptedRevenue)}</p><p className="text-sm text-muted-foreground">Valor aprovado</p></CardContent></Card>
         <Card><CardContent className="pt-6 text-center"><p className="text-3xl font-bold">{Object.keys(countryCounts).length}</p><p className="text-sm text-muted-foreground">Países</p></CardContent></Card>
       </div>
 
@@ -242,7 +243,7 @@ export default function AdminReports() {
                   <XAxis type="number" tickFormatter={v => `R$${(v/1000).toFixed(0)}k`} />
                   <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={80} />
                   <Tooltip formatter={(v: number) => fmt(v)} />
-                  <Bar dataKey="value" fill="hsl(142 71% 45%)" radius={[0, 4, 4, 0]} name="Receita" />
+                  <Bar dataKey="value" fill="hsl(142 71% 45%)" radius={[0, 4, 4, 0]} name="Valor aprovado" />
                 </BarChart>
               </ResponsiveContainer>
             )}

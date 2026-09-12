@@ -33,6 +33,11 @@ DO $$ DECLARE result jsonb; payload jsonb; items jsonb; rejected boolean; BEGIN
     '[{"value":100.05,"quantity":1}]','[{"is_selected":true,"payment_type":"atmos","num_nights":1,"rooms":[{"rooms":[{"price":30,"units":1,"capacity":1,"available":true}]}]}]');
   IF (result->>'total')::numeric IS DISTINCT FROM 148.98 THEN RAISE EXCEPTION 'Cent rounding differs from frontend'; END IF;
   -- Same lodging amount paid directly to supplier must not enter the ATMOS invoice.
+  result := public.proposal_pricing_from_bundle('{"num_people":3,"num_days":1,"atmos_service":{"price_per_person_day":0.145}}','[]','[]');
+  IF (result->>'total')::numeric IS DISTINCT FROM 0.44 THEN RAISE EXCEPTION 'Subcent service operands rounded before multiplication'; END IF;
+  result := public.proposal_pricing_from_bundle('{"num_people":3,"num_days":1}', '[]',
+    '[{"is_selected":true,"payment_type":"atmos","num_nights":1,"rooms":[{"rooms":[{"price":0.145,"units":3,"capacity":1,"available":true}]}]}]');
+  IF (result->>'total')::numeric IS DISTINCT FROM 0.44 THEN RAISE EXCEPTION 'Subcent lodging differs from frontend'; END IF;
   result := public.proposal_pricing_from_bundle('{"num_people":1,"num_days":1}',
     '[{"value":100,"quantity":1}]','[{"is_selected":true,"payment_type":"hospedagem","num_nights":1,"rooms":[{"rooms":[{"price":30,"units":1,"capacity":1,"available":true}]}]}]');
   IF (result->>'total')::numeric IS DISTINCT FROM 100 THEN RAISE EXCEPTION 'Supplier-paid lodging entered invoice'; END IF;

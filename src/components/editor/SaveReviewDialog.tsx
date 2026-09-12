@@ -25,7 +25,11 @@ interface PendingImageReplace {
   imagePath: string;
 }
 
-type PendingChange = PendingFocal | PendingOverride | PendingImageReplace;
+interface PendingText {
+  type: "text-content"; selector: string; content: string; originalText: string;
+  device: string; pathname: string; language: string;
+}
+type PendingChange = PendingFocal | PendingOverride | PendingImageReplace | PendingText;
 
 interface Props {
   pending: PendingChange[];
@@ -34,6 +38,7 @@ interface Props {
 }
 
 function getLabel(item: PendingChange): string {
+  if (item.type === 'text-content') return `Texto (${item.language}): ${item.content.slice(0,60)}`;
   if (item.type === "focal") return `📐 Enquadramento: ${shortenPath(item.imagePath)}`;
   if (item.type === "override") {
     const typeLabel = item.overrideType === "text_style" ? "🎨 Texto" : "🎨 Fundo";
@@ -47,7 +52,7 @@ function getDeviceIcon(item: PendingChange) {
   if (item.type === "focal") {
     return item.device === "mobile" ? <Smartphone className="w-3.5 h-3.5" /> : <Monitor className="w-3.5 h-3.5" />;
   }
-  if (item.type === "override") {
+  if (item.type === "override" || item.type === 'text-content') {
     if (item.device === "mobile") return <Smartphone className="w-3.5 h-3.5" />;
     if (item.device === "desktop") return <Monitor className="w-3.5 h-3.5" />;
     return <Layers className="w-3.5 h-3.5" />;

@@ -6,7 +6,13 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-const CLICKSIGN_API = "https://app.clicksign.com/api/v1";
+// Optional override so this function can be pointed at Clicksign's real
+// sandbox host (https://sandbox.clicksign.com, per
+// developers.clicksign.com/v1.0/docs/visualizar-documento) for safe testing
+// without touching production. Unset by default, which preserves the exact
+// prior behavior (always production).
+const CLICKSIGN_API_BASE = Deno.env.get("CLICKSIGN_API_BASE") || "https://app.clicksign.com";
+const CLICKSIGN_API = `${CLICKSIGN_API_BASE}/api/v1`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS")
@@ -216,12 +222,18 @@ Deno.serve(async (req) => {
     const listData = await listRes.json();
     const requestSignatureKey = listData.list.request_signature_key;
 
-    // 4. Save contract reference
+    // 4. Save contract reference. clicksign_document_key and
+    // clicksign_request_signature_key are the exact identifiers
+    // clicksign-webhook uses for matching (no substring/text parsing of
+    // contract_url) — see migration
+    // 20260912180000_clicksign_document_key_link.sql.
     await supabase
       .from("proposals")
       .update({
         contract_url: `clicksign:${requestSignatureKey}`,
         contract_status: "sent",
+        clicksign_document_key: documentKey,
+        clicksign_request_signature_key: requestSignatureKey,
       })
       .eq("id", proposal_id);
 

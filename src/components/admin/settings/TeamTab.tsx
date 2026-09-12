@@ -133,8 +133,10 @@ export default function TeamTab() {
 
     const { error } = await db
       .from("admin_permissions")
-      .update({ allowed_modules: editModules })
-      .eq("user_id", editingId);
+      // A missing row also means full access; create it when restricting legacy admins.
+      .upsert({ user_id: editingId, allowed_modules: editModules }, { onConflict: "user_id" })
+      .select("user_id")
+      .single();
 
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });

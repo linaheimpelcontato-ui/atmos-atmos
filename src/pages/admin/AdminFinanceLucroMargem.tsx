@@ -43,9 +43,11 @@ export default function AdminFinanceLucroMargem() {
   const proposalMargins = useMemo(() => {
     return fd.accepted.map(p => {
       const pf = calcProposalProfit(p, fd.dayItems, proposalCosts);
-      return { id: p.id, title: p.title, segment: p.segment, revenue: pf.revenue, cost: pf.revenue - pf.profit, profit: pf.profit, margin: pf.margin };
+      return { id: p.id, title: p.title, segment: p.segment, revenue: pf.revenue, cost: pf.revenue - pf.profit, profit: pf.profit, margin: pf.margin, resultIncomplete: pf.resultIncomplete, missingAccommodationCommissions: pf.missingAccommodationCommissions };
     }).sort((a, b) => b.profit - a.profit);
   }, [fd, proposalCosts]);
+
+  const hasIncompleteResults = kpis.resultIncomplete || monthlyData.some(m => m.resultIncomplete);
 
   const marginEvolution = useMemo(() => monthlyData.map(m => ({
     ...m,
@@ -57,6 +59,9 @@ export default function AdminFinanceLucroMargem() {
       return (
         <div className="bg-white/90 backdrop-blur-md border border-admin-border/40 p-4 rounded-2xl shadow-xl">
           <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">{label}</p>
+          {payload.some((p: any) => p.payload?.resultIncomplete) && (
+            <p className="mb-2 text-xs font-bold text-amber-800">Resultado incompleto: comissão de hospedagem sem dado.</p>
+          )}
           <div className="space-y-1.5">
             {payload.map((p: any, i: number) => (
               <div key={i} className="flex items-center justify-between gap-8">
@@ -87,12 +92,19 @@ export default function AdminFinanceLucroMargem() {
             </div>
             <h1 className="text-3xl font-black tracking-tight text-admin-primary">Lucro & Margem</h1>
           </div>
-          <p className="text-muted-foreground text-sm font-medium ml-14">Análise profunda de rentabilidade e DRE operacional</p>
+          <p className="text-muted-foreground text-sm font-medium ml-14">Rentabilidade das propostas aprovadas; os valores não representam recebimentos realizados.</p>
         </div>
-        <Button size="sm" variant="ghost" className="h-10 px-4 rounded-xl bg-admin-primary/5 text-admin-primary hover:bg-admin-primary hover:text-white transition-all font-bold text-xs uppercase tracking-widest flex items-center gap-2" onClick={() => exportOverview(kpis, monthlyData)}>
+        <Button size="sm" variant="ghost" className="h-10 px-4 rounded-xl bg-admin-primary/5 text-admin-primary hover:bg-admin-primary hover:text-white transition-all font-bold text-xs uppercase tracking-widest flex items-center gap-2" disabled={hasIncompleteResults} title={hasIncompleteResults ? "Complete as comissões de hospedagem antes de exportar o resultado consolidado." : undefined} onClick={() => exportOverview(kpis, monthlyData)}>
           <Download className="h-4 w-4" /> Exportar Análise
         </Button>
       </div>
+
+      {hasIncompleteResults && (
+        <div role="status" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
+          <strong>Resultado incompleto</strong> — Há comissões de hospedagem sem dado nas propostas ou no histórico exibido.
+          Lucro, custos derivados, margem e ROI são parciais; os valores não comprovam o lucro final.
+        </div>
+      )}
 
       <div className="flex flex-col lg:flex-row gap-4 items-center bg-white/50 backdrop-blur-sm p-4 rounded-[2rem] border border-admin-border/40 shadow-sm">
         <div className="flex items-center gap-3 px-4 border-r border-admin-border/40">
@@ -150,7 +162,7 @@ export default function AdminFinanceLucroMargem() {
               className="bg-admin-primary/[0.03] p-6 rounded-[2rem] border border-admin-primary/10"
             >
               <div className="flex justify-between items-baseline mb-4">
-                <span className="text-[10px] font-black uppercase tracking-widest text-admin-primary/60">Lucro Líquido</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-admin-primary/60">{kpis.resultIncomplete ? "Lucro parcial" : "Lucro Líquido"}</span>
                 <span className={`text-2xl font-black tabular-nums ${kpis.profit >= 0 ? "text-green-600" : "text-destructive"}`}>
                   {fmt(kpis.profit)}
                 </span>
@@ -240,7 +252,7 @@ export default function AdminFinanceLucroMargem() {
                   ) : (
                     proposalFilterState.applyFilters(proposalMargins).map((p: any) => (
                       <TableRow key={p.id} className="group transition-all duration-300 hover:bg-admin-muted/50">
-                        <TableCell className="p-4 font-bold text-admin-primary">{p.title}</TableCell>
+                        <TableCell className="p-4 font-bold text-admin-primary">{p.title}{p.resultIncomplete && <span className="block text-xs font-medium text-amber-800">Resultado incompleto — {p.missingAccommodationCommissions} comissão(ões) de hospedagem sem dado</span>}</TableCell>
                         <TableCell className="p-4">
                           <Badge variant="outline" className="rounded-lg bg-admin-muted/60 text-[10px] font-black text-admin-primary/60 px-2 uppercase tracking-tighter">
                             {p.segment}
@@ -281,7 +293,7 @@ export default function AdminFinanceLucroMargem() {
                   ) : (
                     guideFilterState.applyFilters(guideRanking).map((g: any) => (
                       <TableRow key={g.id} className="group transition-all duration-300 hover:bg-admin-muted/50">
-                        <TableCell className="p-4 font-bold text-admin-primary">{g.name}</TableCell>
+                        <TableCell className="p-4 font-bold text-admin-primary">{g.name}{g.resultIncomplete && <span className="block text-xs font-medium text-amber-800">Resultado incompleto — {g.incompleteProposals} proposta(s) com comissão de hospedagem sem dado</span>}</TableCell>
                         <TableCell className="p-4 text-right font-black text-admin-primary/40 tabular-nums">{g.proposals}</TableCell>
                         <TableCell className="p-4 text-right font-bold text-admin-primary/80 tabular-nums">{fmt(g.revenue)}</TableCell>
                         <TableCell className={`p-4 text-right font-black tabular-nums ${g.profit >= 0 ? "text-green-600" : "text-destructive"}`}>

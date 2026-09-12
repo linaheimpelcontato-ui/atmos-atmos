@@ -60,7 +60,8 @@ export default function AdminProspects({ segment: initialSegment }: AdminProspec
     if (activeTab !== "geral") {
       query = query.eq("segment", activeTab);
     }
-    const { data } = await query;
+    const { data, error } = await query;
+    if (error) throw error;
     setStages(data ?? []);
   }, [activeTab]);
 
@@ -72,7 +73,8 @@ export default function AdminProspects({ segment: initialSegment }: AdminProspec
       query = query.eq("segment", activeTab);
     }
 
-    const { data: prospectData } = await query;
+    const { data: prospectData, error } = await query;
+    if (error) { setLoading(false); throw error; }
     const rawProspects = prospectData ?? [];
     
     if (rawProspects.length === 0) {
@@ -86,6 +88,9 @@ export default function AdminProspects({ segment: initialSegment }: AdminProspec
       db.from("contacts").select("prospect_id, name").in("prospect_id", ids),
       db.from("proposals").select("prospect_id, title, status, total, code").in("prospect_id", ids).order("created_at", { ascending: false }),
     ]);
+
+    const readError = contactsRes.error || proposalsRes.error;
+    if (readError) { setLoading(false); throw readError; }
 
     const contactMap = new Map<string, { count: number; primary: string }>();
     (contactsRes.data ?? []).forEach((c: any) => {
@@ -134,138 +139,23 @@ export default function AdminProspects({ segment: initialSegment }: AdminProspec
   const handleSync = useCallback(async () => {
     setIsSyncing(true);
     try {
-      // 1. Fetch from all potential lead sources
-      const [quotesRes, imersaoRes, contactsRes, profilesRes, prospectsRes] = await Promise.all([
-        db.from("quote_requests").select("*"),
-        db.from("imersao_leads").select("*"),
-        db.from("contacts").select("*"),
-        db.from("profiles").select("*"),
-        db.from("prospects").select("id, email")
-      ]);
-
-      const existingEmailsMap = new Map((prospectsRes.data ?? []).map((p: any) => [p.email?.toLowerCase(), p.id]).filter(([email]) => !!email));
-      
-      let newCount = 0;
-      let updatedCount = 0;
-
-      // 2. Process Profiles (Signups)
-      // Since profiles don't always have email in the table, we'll try to match by name/phone if needed
-      // but usually the email is the key. Note: profiles table might need a join or manual sync.
-      for (const prof of (profilesRes.data ?? [])) {
-        // If we have an email in profile (added in some migrations) or can infer it
-        const email = (prof as any).email?.toLowerCase();
-        if (email && !existingEmailsMap.has(email)) {
-          await db.from("prospects").insert({
-            name: prof.full_name || "Usuário Registrado",
-            email: email,
-            phone: prof.phone,
-            segment: "b2c",
-            source: "site",
-            notes: "Usuário cadastrado via login/senha."
-          });
-          newCount++;
-          existingEmailsMap.set(email, "temp-id");
-        }
-      }
-
-      // 3. Process B2C Quotes
-      for (const q of (quotesRes.data ?? [])) {
-        const email = q.user_email?.toLowerCase();
-        if (!email) continue;
-        
-        const answers = typeof q.answers === 'string' ? JSON.parse(q.answers) : q.answers;
-        const prospectData = {
-          name: q.user_name || "Cliente Site",
-          email: q.user_email,
-          phone: q.user_phone,
-          segment: "b2c",
-          source: "site",
-          notes: `Solicitação via site. Status original: ${q.status}.`
-        };
-
-        if (existingEmailsMap.has(email)) {
-          // If it exists, we only update if it was a 'pending' one to avoid overwriting manual edits
-          if (q.status === "pending") {
-            await db.from("prospects").update(prospectData).eq("id", existingEmailsMap.get(email));
-            updatedCount++;
-          }
-        } else {
-          await db.from("prospects").insert(prospectData);
-          newCount++;
-          existingEmailsMap.set(email, "temp-id"); // Prevent double insert in same loop
-        }
-        if (q.status === "pending") await db.from("quote_requests").update({ status: "contacted" }).eq("id", q.id);
-      }
-
-      // 3. Process B2B Imersao Leads
-      for (const i of (imersaoRes.data ?? [])) {
-        const email = i.email?.toLowerCase();
-        if (!email) continue;
-
-        const prospectData = {
-          name: i.nome || "Lead Imersão",
-          email: i.email,
-          phone: i.telefone,
-          segment: "b2b",
-          source: "site",
-          company_name: i.empresa,
-          notes: `Interesse em imersão. Empresa: ${i.empresa}.`
-        };
-
-        if (existingEmailsMap.has(email)) {
-          if (i.status === "novo") {
-            await db.from("prospects").update(prospectData).eq("id", existingEmailsMap.get(email));
-            updatedCount++;
-          }
-        } else {
-          await db.from("prospects").insert(prospectData);
-          newCount++;
-          existingEmailsMap.set(email, "temp-id");
-        }
-        if (i.status === "novo") await db.from("imersao_leads").update({ status: "processado" }).eq("id", i.id);
-      }
-
-      // 4. Process Generic Contacts
-      for (const c of (contactsRes.data ?? [])) {
-        const email = c.email?.toLowerCase();
-        if (!email) continue;
-
-        if (!existingEmailsMap.has(email)) {
-          await db.from("prospects").insert({
-            name: c.name || "Contato Site",
-            email: c.email,
-            phone: c.phone,
-            segment: "b2c",
-            source: "site",
-            notes: `Contato genérico via site: ${c.subject || ""}`
-          });
-          newCount++;
-          existingEmailsMap.set(email, "temp-id");
-        }
-      }
-
-      if (newCount > 0 || updatedCount > 0) {
-        toast({ 
-          title: "Sincronização concluída", 
-          description: `${newCount} novos clientes e ${updatedCount} atualizados.` 
-        });
-        fetchProspects();
-      } else {
-        toast({ title: "Sincronização", description: "Todos os dados do site já estão sincronizados." });
-      }
+      // Request triggers own CRM creation. Opening/refreshing this screen must
+      // never backfill profiles/contacts or rewrite segment, notes or status.
+      await Promise.all([fetchStages(), fetchProspects()]);
+      toast({ title: "Lista de clientes atualizada" });
     } catch (error: any) {
       console.error("Sync error:", error);
-      toast({ title: "Erro na sincronização", description: error.message, variant: "destructive" });
+      toast({ title: "Erro ao atualizar clientes", description: error.message, variant: "destructive" });
     } finally {
       setIsSyncing(false);
     }
-  }, [fetchProspects, toast]);
+  }, [fetchStages, fetchProspects, toast]);
 
   useEffect(() => {
-    fetchStages();
-    fetchProspects();
-    handleSync();
-  }, [fetchStages, fetchProspects, handleSync]);
+    Promise.all([fetchStages(), fetchProspects()]).catch(error => {
+      toast({ title: "Erro ao carregar clientes", description: error.message, variant: "destructive" });
+    });
+  }, [fetchStages, fetchProspects, toast]);
 
   const valueExtractors = useMemo(() => {
     const extractors: Record<string, (row: any) => unknown> = {};
@@ -311,7 +201,7 @@ export default function AdminProspects({ segment: initialSegment }: AdminProspec
     } else if (data) {
       toast({ title: "Cliente criado com sucesso" });
       setSelectedProspectId(data.id);
-      fetchProspects();
+      fetchProspects().catch(error => toast({ title: "Erro ao atualizar clientes", description: error.message, variant: "destructive" }));
     }
   };
 
@@ -368,7 +258,7 @@ export default function AdminProspects({ segment: initialSegment }: AdminProspec
           toast({ title: "Erro na importação", description: error.message, variant: "destructive" });
         } else {
           toast({ title: "Importação concluída", description: `${prospectsToInsert.length} clientes importados.` });
-          fetchProspects();
+          fetchProspects().catch(error => toast({ title: "Erro ao atualizar clientes", description: error.message, variant: "destructive" }));
         }
       };
       reader.readAsBinaryString(file);
@@ -390,7 +280,7 @@ export default function AdminProspects({ segment: initialSegment }: AdminProspec
     } else {
       toast({ title: "Clientes atualizados" });
       selection.clear();
-      fetchProspects();
+      fetchProspects().catch(error => toast({ title: "Erro ao atualizar clientes", description: error.message, variant: "destructive" }));
     }
   };
 
@@ -479,7 +369,7 @@ export default function AdminProspects({ segment: initialSegment }: AdminProspec
           await db.from("prospects").delete().in("id", Array.from(selection.selectedIds));
           toast({ title: "Clientes excluídos" });
           selection.clear();
-          fetchProspects();
+          fetchProspects().catch(error => toast({ title: "Erro ao atualizar clientes", description: error.message, variant: "destructive" }));
         }}
         onExport={handleExport}
         bulkFields={bulkFields}
@@ -492,7 +382,7 @@ export default function AdminProspects({ segment: initialSegment }: AdminProspec
         prospectId={selectedProspectId}
         stages={stages}
         segment={(activeTab === "geral" ? "b2c" : activeTab) as "b2c" | "b2b"}
-        onUpdated={fetchProspects}
+        onUpdated={() => { fetchProspects().catch(error => toast({ title: "Erro ao atualizar clientes", description: error.message, variant: "destructive" })); }}
       />
     </motion.div>
   );

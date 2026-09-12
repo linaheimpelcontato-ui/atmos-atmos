@@ -43,7 +43,11 @@ interface PendingImageReplace {
   imagePath: string;
 }
 
-type PendingChange = PendingFocal | PendingOverride | PendingImageReplace;
+interface PendingText {
+  type: "text-content"; selector: string; content: string; originalText: string;
+  device: string; pathname: string; language: string;
+}
+type PendingChange = PendingFocal | PendingOverride | PendingImageReplace | PendingText;
 
 const PAGES = [
   { label: "Home", path: "/" },
@@ -68,9 +72,38 @@ export default function AdminVisualEditor() {
   const [gridMode, setGridMode] = useState<string | null>(null);
   const [viewportMode, setViewportMode] = useState<"desktop" | "mobile">("desktop");
   const [showReview, setShowReview] = useState(false);
+  const [textEditorOpen, setTextEditorOpen] = useState(false);
+  useEffect(() => { setTextEditorOpen(false); }, [currentPage.path]);
+  // Lazy editor code can mount after iframe.load; send current state when it
+  // explicitly announces readiness instead of relying on load timing.
+  useEffect(() => {
+    const ready = (event: MessageEvent) => {
+      const frame = iframeRef.current?.contentWindow;
+      if (event.origin !== window.location.origin || event.source !== frame || event.data?.type !== 'EDITOR_READY') return;
+      frame?.postMessage({ type: 'SET_EDITOR_MODE', enabled: editing }, window.location.origin);
+      frame?.postMessage({ type: 'SET_GRID_OVERLAY', enabled: showGrid }, window.location.origin);
+      frame?.postMessage({ type: 'SET_VIEWPORT_MODE', mode: viewportMode }, window.location.origin);
+    };
+    window.addEventListener('message', ready);
+    return () => window.removeEventListener('message', ready);
+  }, [editing, showGrid, viewportMode]);
   // Listen for postMessage from iframe
   useEffect(() => {
     const handler = (e: MessageEvent) => {
+      if (e.origin !== window.location.origin || e.source !== iframeRef.current?.contentWindow) return;
+      if (e.data?.type === 'TEXT_EDITOR_STATE' && typeof e.data.active === 'boolean') {
+        setTextEditorOpen(e.data.active);
+      }
+      if (e.data?.type === "TEXT_CONTENT_OVERRIDE") {
+        const { selector, content, originalText, device, pathname, language } = e.data;
+        if (![selector, content, originalText, pathname, language].every(v => typeof v === 'string')
+          || !['all','desktop','mobile'].includes(device) || !['pt','en','es'].includes(language)
+          || content.length > 10000 || originalText.length > 10000
+          || pathname !== iframeRef.current?.contentWindow?.location.pathname) return;
+        setPending(prev => [...prev.filter(p => !(p.type === 'text-content' && p.selector === selector
+          && p.device === device && p.pathname === pathname && p.language === language)),
+          { type: 'text-content', selector, content, originalText, device, pathname, language }]);
+      }
       if (e.data?.type === "FOCAL_POINT_CHANGED") {
         const { imagePath, focalX, focalY, device = "desktop", rotation, scale } = e.data;
         setPending((prev) => {
@@ -111,6 +144,7 @@ export default function AdminVisualEditor() {
   // Listen for grid mode done from iframe
   useEffect(() => {
     const handler = (e: MessageEvent) => {
+      if (e.origin !== window.location.origin || e.source !== iframeRef.current?.contentWindow) return;
       if (e.data?.type === "GRID_MODE_DONE") {
         setGridMode(null);
       }
@@ -126,6 +160,7 @@ export default function AdminVisualEditor() {
     let restoreTimer: ReturnType<typeof setTimeout> | null = null;
 
     const handler = (e: MessageEvent) => {
+      if (e.origin !== window.location.origin || e.source !== iframeRef.current?.contentWindow) return;
       if (e.data?.type === "REQUEST_MEASURE_VIEWPORT") {
         const { device } = e.data;
         const prevWidth = iframe.style.width;
@@ -159,6 +194,7 @@ export default function AdminVisualEditor() {
 
         // Listen for measurement complete to restore
         const restoreHandler = (ev: MessageEvent) => {
+          if (ev.origin !== window.location.origin || ev.source !== iframeRef.current?.contentWindow) return;
           if (ev.data?.type === "MEASURE_COMPLETE") {
             restore();
             window.removeEventListener("message", restoreHandler);
@@ -179,7 +215,7 @@ export default function AdminVisualEditor() {
       window.removeEventListener("message", handler);
       if (restoreTimer) clearTimeout(restoreTimer);
     };
-  }, []);
+  }, [currentPage.path]);
 
   const sendGridMode = useCallback((m: string) => {
     const iframe = iframeRef.current;
@@ -246,7 +282,7 @@ export default function AdminVisualEditor() {
 
       const overrideChanges = itemsToSave.filter((p) => p.type === "override") as PendingOverride[];
       if (overrideChanges.length > 0) {
-        await Promise.all(
+        const results = await Promise.all(
           overrideChanges.map((o) =>
             db.from("site_overrides").upsert(
               {
@@ -260,16 +296,27 @@ export default function AdminVisualEditor() {
             )
           )
         );
+        const failed = results.find(result => result.error);
+        if (failed) throw failed.error;
       }
 
-      iframeRef.current?.contentWindow?.postMessage({ type: "FOCAL_POINTS_SAVED" }, "*");
-      
+      const textChanges = itemsToSave.filter((p): p is PendingText => p.type === 'text-content');
+      if (textChanges.length) {
+        const { error } = await db.from('site_text_overrides').upsert(textChanges.map(o => ({
+          pathname: o.pathname, language: o.language, element_selector: o.selector,
+          content: o.content, original_text: o.originalText, device: o.device, updated_at: new Date().toISOString(),
+        })), { onConflict: 'pathname,language,element_selector,device' });
+        if (error) throw error;
+      }
+
       // Remove saved items from pending, keep unsaved ones
       const savedSet = new Set(itemsToSave);
       setPending((prev) => prev.filter((p) => !savedSet.has(p)));
 
-      // Tell iframe to clear pending preview styles (they're now persisted)
-      iframeRef.current?.contentWindow?.postMessage({ type: "CLEAR_PENDING_OVERRIDES" }, "*");
+      // Acknowledge only saved revisions; newer edits and unchecked previews survive.
+      iframeRef.current?.contentWindow?.postMessage({ type: 'EDITOR_CHANGES_SAVED',
+        changes: itemsToSave.filter(item => item.type === 'text-content' || item.type === 'override'),
+      }, window.location.origin);
 
       const count = itemsToSave.length;
       toast.success(`${count} alteração${count > 1 ? "ões" : ""} salva${count > 1 ? "s" : ""}! Visível no site público.`);
@@ -286,6 +333,7 @@ export default function AdminVisualEditor() {
   const focalCount = pending.filter((p) => p.type === "focal").length;
   const overrideCount = pending.filter((p) => p.type === "override").length;
   const replaceCount = pending.filter((p) => p.type === "image-replace").length;
+  const textCount = pending.filter((p) => p.type === "text-content").length;
 
   return (
     <div className="flex flex-col h-[calc(100vh-3.5rem)] md:h-screen">
@@ -314,6 +362,8 @@ export default function AdminVisualEditor() {
         {/* Viewport toggle */}
         <div className="flex items-center bg-muted rounded-lg p-0.5">
           <button
+            disabled={textEditorOpen || pending.some(p => p.type === 'text-content')}
+            title={textEditorOpen ? "Conclua a edição de texto antes de trocar o dispositivo" : "Salve as alterações de texto antes de trocar o dispositivo"}
             onClick={() => setViewportMode("desktop")}
             className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
               viewportMode === "desktop" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
@@ -322,6 +372,8 @@ export default function AdminVisualEditor() {
             <Monitor className="h-3.5 w-3.5" /> Desktop
           </button>
           <button
+            disabled={textEditorOpen || pending.some(p => p.type === 'text-content')}
+            title={textEditorOpen ? "Conclua a edição de texto antes de trocar o dispositivo" : "Salve as alterações de texto antes de trocar o dispositivo"}
             onClick={() => setViewportMode("mobile")}
             className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
               viewportMode === "mobile" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
@@ -338,6 +390,7 @@ export default function AdminVisualEditor() {
             {focalCount > 0 && <span>📐 {focalCount}</span>}
             {overrideCount > 0 && <span>🎨 {overrideCount}</span>}
             {replaceCount > 0 && <span>🖼 {replaceCount}</span>}
+            {textCount > 0 && <span>Texto: {textCount}</span>}
           </div>
         )}
 

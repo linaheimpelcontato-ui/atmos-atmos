@@ -1,9 +1,10 @@
+import { authorizeReminderRequest } from "../_shared/adminModuleAuth.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-scheduler-secret",
 };
 
 /* ── ManyChat sendFlow ── */
@@ -44,6 +45,14 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const denied = await authorizeReminderRequest(req, {
+    createClient,
+    supabaseUrl: Deno.env.get("SUPABASE_URL"),
+    anonKey: Deno.env.get("SUPABASE_ANON_KEY"),
+    fullAdmin: true,
+  }, Deno.env.get("MEETING_REMINDERS_SECRET"));
+  if (denied) return denied;
 
   const MANYCHAT_KEY = Deno.env.get("MANYCHAT_API_KEY");
   const FLOW_24H = Deno.env.get("MANYCHAT_FLOW_LEMBRETE_1DIA");

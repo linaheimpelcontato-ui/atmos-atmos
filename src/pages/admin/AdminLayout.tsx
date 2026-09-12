@@ -8,6 +8,7 @@ import {
   ArrowUpRight, Percent, Truck, Palette, MapPin, Bell, Search, LogOut
 } from "lucide-react";
 import { useAdminGuard } from "@/hooks/useAdminGuard";
+import { canAccessAdminRoute, hasInvalidAdminModules } from "@/lib/adminRouteAccess";
 import { storageUrl } from "@/lib/storage";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { motion, AnimatePresence } from "framer-motion";
@@ -94,7 +95,7 @@ const adminNavSections = [
 function NavLinks({ location, allowedModules, onNavigate }: { location: ReturnType<typeof useLocation>; allowedModules: string[]; onNavigate?: () => void }) {
   const isSuperAdmin = allowedModules.length === 0;
 
-  const visibleSections = adminNavSections.filter(section =>
+  const visibleSections = hasInvalidAdminModules(allowedModules) ? [] : adminNavSections.filter(section =>
     isSuperAdmin || allowedModules.includes(section.module)
   );
 
@@ -149,8 +150,10 @@ function NavLinks({ location, allowedModules, onNavigate }: { location: ReturnTy
 }
 
 export default function AdminLayout() {
-  const { isAdmin, checking, allowedModules } = useAdminGuard();
+  const { isAdmin, checking, allowedModules = [] } = useAdminGuard();
   const location = useLocation();
+  const invalidPermissions = hasInvalidAdminModules(allowedModules);
+  const routeAllowed = canAccessAdminRoute(location.pathname, location.search, allowedModules);
   const [mobileOpen, setMobileOpen] = useState(false);
   const mainRef = useRef<HTMLElement>(null);
 
@@ -259,7 +262,7 @@ export default function AdminLayout() {
           <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-admin-primary/[0.02] rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
           
           <div className="relative z-10 flex-1 flex flex-col">
-            <AnimatePresence mode="wait">
+            {routeAllowed ? <AnimatePresence mode="wait">
               <motion.div
                 key={location.pathname}
                 initial={{ opacity: 0, y: 10 }}
@@ -270,7 +273,14 @@ export default function AdminLayout() {
               >
                 <Outlet />
               </motion.div>
-            </AnimatePresence>
+            </AnimatePresence> : (
+              <div role="alert" className="m-6 rounded-2xl border border-admin-border bg-white p-6 space-y-2">
+                <h1 className="text-xl font-bold text-admin-primary">Acesso não permitido</h1>
+                <p className="text-sm text-muted-foreground">{invalidPermissions
+                  ? "As permissões deste perfil precisam de revisão. Solicite a um administrador com acesso total que revise os módulos permitidos."
+                  : "Seu perfil não tem permissão para acessar esta página. Escolha um módulo disponível no menu."}</p>
+              </div>
+            )}
           </div>
         </div>
       </main>

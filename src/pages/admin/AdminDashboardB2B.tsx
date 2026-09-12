@@ -1,3 +1,4 @@
+import { isApprovedProposalStatus } from "@/lib/proposalStatus";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -146,7 +147,7 @@ export default function AdminDashboardB2B() {
     const closed = closedStage ? filteredProspects.filter(p => p.stage_id === closedStage.id).length : 0;
     const convRate = total > 0 ? Math.round((closed / total) * 100) : 0;
 
-    const acceptedProposals = filteredProposals.filter(p => (p.status as string) === "accepted");
+    const acceptedProposals = filteredProposals.filter(p => isApprovedProposalStatus(p.status));
     const revenue = acceptedProposals.reduce((s, p) => s + Number(p.total ?? 0), 0);
     const avgTicket = acceptedProposals.length > 0 ? revenue / acceptedProposals.length : 0;
 
@@ -162,7 +163,7 @@ export default function AdminDashboardB2B() {
     );
     const goalTotal = monthGoals.reduce((s, g) => s + Number(g.goal_amount ?? 0), 0);
     const monthRevenue = proposals
-      .filter(p => (p.status as string) === "accepted" && isAfter(new Date(p.created_at as string), monthStart))
+      .filter(p => isApprovedProposalStatus(p.status) && isAfter(new Date(p.created_at as string), monthStart))
       .reduce((s, p) => s + Number(p.total ?? 0), 0);
     const goalPct = goalTotal > 0 ? Math.min(100, Math.round((monthRevenue / goalTotal) * 100)) : 0;
 
@@ -189,7 +190,7 @@ export default function AdminDashboardB2B() {
         }).length,
         aceitas: proposals.filter(p => {
           const c = new Date(p.created_at as string);
-          return c >= ms && c <= me && (p.status as string) === "accepted";
+          return c >= ms && c <= me && isApprovedProposalStatus(p.status);
         }).length,
       });
     }
@@ -220,7 +221,7 @@ export default function AdminDashboardB2B() {
       const src = ((prosp.source as string) ?? "outro").toLowerCase();
       const cur = map.get(src) || { prospects: 0, proposals: 0, accepted: 0, revenue: 0 };
       cur.proposals++;
-      if ((pr.status as string) === "accepted") {
+      if (isApprovedProposalStatus(pr.status)) {
         cur.accepted++;
         cur.revenue += Number(pr.total ?? 0);
       }
@@ -240,7 +241,7 @@ export default function AdminDashboardB2B() {
   // Top partners/clients
   const topClients = useMemo(() => {
     const map = new Map<string, { name: string; company: string; country: string; count: number; revenue: number }>();
-    filteredProposals.filter(p => (p.status as string) === "accepted").forEach(pr => {
+    filteredProposals.filter(p => isApprovedProposalStatus(p.status)).forEach(pr => {
       const prosp = prospects.find(p => p.id === pr.prospect_id);
       if (!prosp) return;
       const id = prosp.id as string;
@@ -257,7 +258,7 @@ export default function AdminDashboardB2B() {
     return sellers.map((s: Seller) => {
       const sp = filteredProspects.filter(p => p.seller_id === s.id);
       const spr = filteredProposals.filter(p => p.seller_id === s.id);
-      const accepted = spr.filter(p => (p.status as string) === "accepted");
+      const accepted = spr.filter(p => isApprovedProposalStatus(p.status));
       const revenue = accepted.reduce((sum, p) => sum + Number(p.total ?? 0), 0);
       return {
         name: s.name as string,
@@ -289,7 +290,7 @@ export default function AdminDashboardB2B() {
       month: format(new Date(2024, i, 1), "MMM", { locale: ptBR }),
       viagens: 0,
     }));
-    proposals.filter(p => (p.status as string) === "accepted" && p.start_date).forEach(p => {
+    proposals.filter(p => isApprovedProposalStatus(p.status) && p.start_date).forEach(p => {
       const m = new Date(p.start_date as string).getMonth();
       months[m].viagens++;
     });
@@ -298,7 +299,7 @@ export default function AdminDashboardB2B() {
 
   // Avg conversion time
   const avgConvDays = useMemo(() => {
-    const accepted = proposals.filter(p => (p.status as string) === "accepted" && p.prospect_id);
+    const accepted = proposals.filter(p => isApprovedProposalStatus(p.status) && p.prospect_id);
     if (accepted.length === 0) return 0;
     let totalDays = 0;
     let count = 0;
@@ -481,7 +482,7 @@ export default function AdminDashboardB2B() {
             desc: "Leads p/ Venda"
           },
           { 
-            title: "Faturamento", 
+            title: "Valor aprovado",
             value: fmt(kpis.revenue), 
             icon: DollarSign, 
             color: "text-emerald-500", 

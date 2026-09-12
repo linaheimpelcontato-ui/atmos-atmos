@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { verifySharedSecretHeader } from "../_shared/webhookAuth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -30,10 +31,17 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Validate webhook secret
-  const secret = Deno.env.get("MANYCHAT_WEBHOOK_SECRET");
-  const headerSecret = req.headers.get("x-webhook-secret");
-  if (!secret || headerSecret !== secret) {
+  // Validate webhook secret. ManyChat's "External Request" action has no
+  // documented request-signing/HMAC scheme for outbound calls — this
+  // fail-closed shared-secret comparison (rejects on missing secret,
+  // missing header, or mismatch) is the strongest verification available
+  // for this provider, not an improvised stand-in for a stronger one.
+  const auth = verifySharedSecretHeader(
+    req.headers.get("x-webhook-secret"),
+    Deno.env.get("MANYCHAT_WEBHOOK_SECRET"),
+  );
+  if (!auth.ok) {
+    console.error("[MANYCHAT-WH] Rejected:", auth.reason);
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -79,8 +87,13 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Clean phone for matching (remove spaces, keep + and digits)
-    const cleanPhone = phone.trim().replace(/[^\\d+]/g, "");
+    // Clean phone for matching (remove spaces, keep + and digits).
+    // Was `/[^\\d+]/g` (double backslash): in a JS/TS regex literal that
+    // excludes the literal characters `\`, `d`, `+` — not digits — so
+    // formatted numbers like "(11) 99999-9999" were never actually
+    // cleaned. Matches the correct pattern already used in
+    // clicksign-webhook for the same purpose.
+    const cleanPhone = phone.trim().replace(/[^\d+]/g, "");
 
     // Check if prospect with same phone already exists
     const { data: existing } = await supabase
