@@ -1,3 +1,4 @@
+import { CatalogStatus } from "@/components/CatalogStatus";
 import { useState, useRef, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
@@ -24,11 +25,7 @@ import {
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { getDayImage } from "@/components/itineraries/dayImages";
 
-const getLangVal = (field: any, lang: 'pt' | 'en' | 'es'): string => {
-  if (!field) return "";
-  if (typeof field === "string") return field;
-  return field[lang] || field.pt || field.en || field.es || "";
-};
+import { publicText as getLangVal } from "@/lib/publicText";
 
 const pageLabels = {
   pt: {
@@ -186,11 +183,11 @@ const ItineraryRow = ({ itinerary, language, l, navigate }: any) => {
                 {/* Content Overlay */}
                 <div className="absolute bottom-0 left-0 right-0 p-6 z-10">
                   <h4 className="text-white font-display text-2xl leading-tight mb-2 drop-shadow-md">
-                    {day.title?.[language] || (day.items?.[0]?.product_name ? `Dia ${dayIdx + 1} — ${day.items[0].product_name}` : `Dia ${dayIdx + 1}`)}
+                    {day.title?.[language] || (day.items?.[0]?.product_name ? `Dia ${dayIdx + 1} — ${getLangVal(day.items[0].product_name, language)}` : `Dia ${dayIdx + 1}`)}
                   </h4>
                   <div className="flex items-center gap-1.5 text-white/90 text-[10px] uppercase font-bold tracking-[0.15em]">
                     <MapPin className="w-3 h-3 text-[#C5A267]" />
-                    {day.attractions?.[language]?.[0] || day.items?.[0]?.product_name || "Atmos Expedition"}
+                    {day.attractions?.[language]?.[0] || getLangVal(day.items?.[0]?.product_name, language) || "Atmos Expedition"}
                   </div>
                 </div>
               </div>
@@ -228,7 +225,8 @@ const Itineraries = () => {
   const navigate = useNavigate();
   const [selectedDuration, setSelectedDuration] = useState<DurationDays>(3);
   
-  const { data: allProducts = [] } = useProducts();
+  const allProductsQuery = useProducts();
+  const { data: allProducts = [] } = allProductsQuery;
 
   const mergedItineraries = useMemo(() => {
     const itinerariesOnly = allProducts.filter(p => p.type === 'itinerary');
@@ -428,20 +426,20 @@ const Itineraries = () => {
           id: `${it.id}-item-${idx}`,
           dayNumber: item.dayNumber,
           title: { 
-            pt: getLangVal(item.product_name, 'pt'), 
-            en: getLangVal(item.product_name, 'en'), 
-            es: getLangVal(item.product_name, 'es') 
+            pt: getLangVal(item.product_name ?? item.item_name, 'pt'),
+            en: getLangVal(item.product_name ?? item.item_name, 'en'),
+            es: getLangVal(item.product_name ?? item.item_name, 'es')
           },
           description: { pt: "", en: "", es: "" },
           attractions: { 
-            pt: [getLangVal(item.product_name, 'pt')], 
-            en: [getLangVal(item.product_name, 'en')], 
-            es: [getLangVal(item.product_name, 'es')] 
+            pt: [getLangVal(item.product_name ?? item.item_name, 'pt')],
+            en: [getLangVal(item.product_name ?? item.item_name, 'en')],
+            es: [getLangVal(item.product_name ?? item.item_name, 'es')]
           },
           trailDistanceKm: item.product_variables?.trailDistanceKm,
           difficulty: (item.product_variables?.difficulty || "moderado") as any,
           images: itemImages,
-          resolvedTitle: getLangVal(item.product_name, 'pt')
+          resolvedTitle: getLangVal(item.product_name ?? item.item_name, 'pt')
         };
       });
 
@@ -488,6 +486,7 @@ const Itineraries = () => {
 
   return (
     <Layout hideWishlist>
+      <CatalogStatus queries={[allProductsQuery]} />
       <PageSEO
         title="Roteiros Personalizados e Curadoria Atmos | ATMOS"
         description="Explore nossa seleção exclusiva de roteiros clássicos e jurássicos na Chapada dos Veadeiros. Experiências planejadas para o máximo de imersão e conforto."

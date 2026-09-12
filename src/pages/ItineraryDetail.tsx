@@ -1,3 +1,4 @@
+import { CatalogStatus } from "@/components/CatalogStatus";
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -48,11 +49,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import ItineraryReservationForm from "@/components/itineraries/ItineraryReservationForm";
 
-const getLangVal = (field: any, lang: 'pt' | 'en' | 'es'): string => {
-  if (!field) return "";
-  if (typeof field === "string") return field;
-  return field[lang] || field.pt || field.en || field.es || "";
-};
+import { publicText as getLangVal } from "@/lib/publicText";
 
 const leafTexture = optimizedUrl("proposta-visual-cliente/leaf-texture - horizontal.jpg", IMAGE_PRESETS.large);
 const leafTextureAlt = optimizedUrl("proposta-visual-cliente/leaf-texture.jpg", IMAGE_PRESETS.large);
@@ -342,34 +339,14 @@ export default function ItineraryDetail() {
   const navigate = useNavigate();
   const { language = "pt" } = useLanguage();
   const { addItem, removeItem, isInWishlist } = useWishlist();
-  const { data: allProducts = EMPTY_PRODUCTS } = useProducts();
+  const allProductsQuery = useProducts();
+  const { data: allProducts = EMPTY_PRODUCTS } = allProductsQuery;
   const [heroImages, setHeroImages] = useState<string[]>([]);
   const [isReservationOpen, setIsReservationOpen] = useState(false);
 
   const mergedItineraries = useMemo(() => {
     // Se houver produtos no banco, eles são a fonte da verdade.
     const itinerariesOnly = allProducts.filter(p => p.type === 'itinerary');
-    
-    // Normalize static itineraries so they have day.images mapped from day.imageKey
-    const normalizedStatic = staticItineraries.map(st => ({
-      ...st,
-      favorites: st.favorites || [],
-      pricing: st.pricing || { 
-        atmos4x4: { individual: 0, dupla: 0, trio: 0 }, 
-        carroProprio: { individual: 0, dupla: 0, trio: 0 } 
-      },
-      extraCosts: st.extraCosts || { entranceFees: 0 },
-      inclusions: st.inclusions || { pt: [], en: [], es: [] },
-      days: st.days.map(day => ({
-        ...day,
-        images: (day.images && day.images.length > 0) ? day.images : (day.imageKey ? [day.imageKey] : [])
-      }))
-    }));
-
-    // If no database itineraries, use only normalized static
-    if (itinerariesOnly.length === 0) {
-      return normalizedStatic;
-    }
     
     // Transform into a flat list of items (one section per product)
     const dbMapped = itinerariesOnly.map(dbProduct => {
@@ -616,25 +593,25 @@ export default function ItineraryDetail() {
           return {
             ...item,
             id: `${dbProduct.id}-item-${itemIdx}`,
-            dayNumber: day.day,
+            dayNumber: day.day ?? day.dayNumber,
             itemNumber: itemIdx + 1,
             title: { 
-              pt: getLangVal(item.product_name, 'pt'), 
-              en: getLangVal(item.product_name, 'en'), 
-              es: getLangVal(item.product_name, 'es') 
+              pt: getLangVal(item.product_name ?? item.item_name, 'pt'),
+              en: getLangVal(item.product_name ?? item.item_name, 'en'),
+              es: getLangVal(item.product_name ?? item.item_name, 'es')
             },
             trailDistanceKm: item.product_variables?.trailDistanceKm,
             difficulty: (item.product_variables?.difficulty || "moderado") as any,
-            resolvedTitle: getLangVal(item.product_name, 'pt'),
+            resolvedTitle: getLangVal(item.product_name ?? item.item_name, 'pt'),
             attractions: { 
-              pt: [getLangVal(item.product_name, 'pt')], 
-              en: [getLangVal(item.product_name, 'en')], 
-              es: [getLangVal(item.product_name, 'es')] 
+              pt: [getLangVal(item.product_name ?? item.item_name, 'pt')],
+              en: [getLangVal(item.product_name ?? item.item_name, 'en')],
+              es: [getLangVal(item.product_name ?? item.item_name, 'es')]
             },
             description: { 
-              pt: getLangVal(item.product_description || "", 'pt'), 
-              en: getLangVal(item.product_description || "", 'en'),
-              es: getLangVal(item.product_description || "", 'es')
+              pt: getLangVal(item.product_description ?? item.description, 'pt'),
+              en: getLangVal(item.product_description ?? item.description, 'en'),
+              es: getLangVal(item.product_description ?? item.description, 'es')
             },
             hasGuide: day.items.some((it: any) => it.product_type === 'guide'),
             images: itemImages
@@ -691,15 +668,7 @@ export default function ItineraryDetail() {
       };
     });
 
-    // Merge both, with DB having priority if there are duplicate IDs
-    const merged = [...dbMapped];
-    normalizedStatic.forEach(st => {
-      if (!merged.some(m => m.id === st.id)) {
-        merged.push(st);
-      }
-    });
-
-    return merged;
+    return dbMapped;
   }, [allProducts]);
 
   const itinerary = id ? getItineraryById(id, mergedItineraries) : undefined;
@@ -797,8 +766,9 @@ export default function ItineraryDetail() {
   if (!itinerary) {
     return (
       <Layout hideWishlist>
+      <CatalogStatus queries={[allProductsQuery]} />
         <div className="bg-white min-h-screen container px-4 py-24 text-center">
-          <p className="text-[#1A261B]/40 text-lg">{l.notFound}</p>
+          {!allProductsQuery.isPending && !allProductsQuery.isError && <p className="text-[#1A261B]/40 text-lg">{l.notFound}</p>}
           <Button variant="outline" className="mt-4" onClick={() => navigate("/roteiros")}>
             <ArrowLeft className="h-4 w-4 mr-2" /> {l.back}
           </Button>
@@ -828,6 +798,7 @@ export default function ItineraryDetail() {
 
   return (
     <Layout hideWishlist>
+      <CatalogStatus queries={[allProductsQuery]} />
       <PageSEO 
         title={`${itinerary.name[language as keyof typeof itinerary.name]} | ATMOS`}
         description={itinerary.description[language as keyof typeof itinerary.description]}
@@ -944,7 +915,7 @@ export default function ItineraryDetail() {
           }}
         >
           {itinerary.days.map((day, idx) => {
-            const resolvedTitle = day.title?.[language] || ((day as any).items?.[0]?.product_name ? (day as any).items[0].product_name : `Dia ${idx + 1}`);
+            const resolvedTitle = getLangVal(day.title, language) || getLangVal((day as any).items?.[0]?.product_name ?? (day as any).items?.[0]?.item_name, language) || `Dia ${idx + 1}`;
             
             const productTypeToCategory: Record<string, string> = {
               waterfall: "Cachoeira",
@@ -958,7 +929,7 @@ export default function ItineraryDetail() {
 
             const guideNames = ((day as any).items || [])
               .filter((i: any) => i.product_type === 'guide')
-              .map((i: any) => i.product_name);
+              .map((i: any) => getLangVal(i.product_name ?? i.item_name, language)).filter(Boolean);
 
             const visibleItems = ((day as any).items || []).filter((item: any) => item.product_type !== 'guide');
             const isEven = idx % 2 === 0;
@@ -1081,8 +1052,8 @@ export default function ItineraryDetail() {
                           const catKey = productTypeToCategory[item.product_type] || "Experiência";
                           const Icon = CATEGORY_ICONS[catKey] || MapPin;
                           const catLabel = CATEGORY_LABELS[catKey]?.[language] || catKey;
-                          const itemTitle = item.product_name || item.name?.[language] || item.title?.[language] || "";
-                          const itemDesc = item.product_description || item.description?.[language] || "";
+                          const itemTitle = getLangVal(item.product_name ?? item.item_name ?? item.name ?? item.title, language);
+                          const itemDesc = getLangVal(item.product_description ?? item.description, language);
                           
                           return (
                             <div key={localIdx} className="flex items-start gap-4 pb-8 border-b border-[#e4dbcc] last:border-0 last:pb-0">

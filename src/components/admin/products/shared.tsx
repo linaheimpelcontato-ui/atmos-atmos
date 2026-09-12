@@ -288,6 +288,11 @@ export const typeFields: Record<string, FieldDef[]> = {
     { key: "comissao", label: "Comissão (%)", type: "percent" },
   ],
   accommodation: [
+    { key: "public_instagram", label: "Instagram público", type: "text", helpText: "Contato autorizado para aparecer no site. Deixe vazio para ocultar." },
+    { key: "public_website", label: "Site público", type: "text", helpText: "Contato autorizado para aparecer no site. Deixe vazio para ocultar." },
+    { key: "public_bookingUrl", label: "Link de reserva público", type: "text", helpText: "Contato autorizado para aparecer no site. Deixe vazio para ocultar." },
+    { key: "public_phone", label: "Telefone público", type: "text", helpText: "Contato autorizado para aparecer no site. Deixe vazio para ocultar." },
+    { key: "public_email", label: "E-mail público", type: "text", helpText: "Contato autorizado para aparecer no site. Deixe vazio para ocultar." },
     { key: "region", label: "Região", type: "select", options: regionLabels },
     { key: "responsavel", label: "Responsável", type: "text" },
     { key: "telefone", label: "Telefone", type: "text" },

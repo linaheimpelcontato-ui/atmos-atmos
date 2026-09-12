@@ -1,3 +1,4 @@
+import { CatalogStatus } from "@/components/CatalogStatus";
 import { useState, useMemo, useEffect } from "react";
 import PageSEO from "@/components/seo/PageSEO";
 
@@ -60,13 +61,12 @@ const Accommodations = () => {
 
   const l = pageLabels[language];
 
-  const { data: dbProducts = [] } = useProducts("accommodation");
+  const dbProductsQuery = useProducts("accommodation");
+  const { data: dbProducts = [] } = dbProductsQuery;
 
   const accommodations = useMemo(() => {
-    // If no products in DB, fallback to static list
-    if (!dbProducts || dbProducts.length === 0) {
-      return staticAccommodations;
-    }
+    // An empty catalog must not restore inactive static entries.
+    if (!dbProducts || dbProducts.length === 0) return [];
 
     // Use DB products as the base list
     return dbProducts.map(dbProduct => {
@@ -85,7 +85,7 @@ const Accommodations = () => {
         capacity: dbVars.capacity || (staticEntry ? staticEntry.capacity : "2"),
         units: Number(dbVars.units || (staticEntry ? staticEntry.units : 1)),
         totalCapacity: Number(dbVars.totalCapacity || (staticEntry ? staticEntry.totalCapacity : 2)),
-        instagram: dbVars.instagram || (staticEntry ? staticEntry.instagram : undefined),
+        instagram: dbVars.public_instagram ?? (staticEntry ? staticEntry.instagram : undefined),
         amenities: (dbVars.amenities || (staticEntry ? staticEntry.amenities : [])) as Amenity[],
         description: {
           pt: dbProduct.description || (staticEntry ? staticEntry.description?.pt || "" : ""),
@@ -93,10 +93,10 @@ const Accommodations = () => {
           es: (staticEntry ? staticEntry.description?.es || "" : dbProduct.description || ""),
         },
         imageIndex: staticEntry ? staticEntry.imageIndex : 1,
-        website: dbVars.website || (staticEntry ? staticEntry.website : undefined),
-        phone: dbVars.phone || (staticEntry ? staticEntry.phone : undefined),
-        email: dbVars.email || (staticEntry ? staticEntry.email : undefined),
-        bookingUrl: dbVars.bookingUrl || (staticEntry ? staticEntry.bookingUrl : undefined),
+        website: dbVars.public_website ?? (staticEntry ? staticEntry.website : undefined),
+        phone: dbVars.public_phone ?? (staticEntry ? staticEntry.phone : undefined),
+        email: dbVars.public_email ?? (staticEntry ? staticEntry.email : undefined),
+        bookingUrl: dbVars.public_bookingUrl ?? (staticEntry ? staticEntry.bookingUrl : undefined),
         longDescription: {
           pt: dbVars.longDescription_pt || (staticEntry ? staticEntry.longDescription?.pt || "" : ""),
           en: dbVars.longDescription_en || (staticEntry ? staticEntry.longDescription?.en || "" : ""),
@@ -152,6 +152,7 @@ const Accommodations = () => {
 
   return (
     <Layout>
+      <CatalogStatus queries={[dbProductsQuery]} />
       <PageSEO
         title="Hospedagens na Chapada dos Veadeiros"
         description="Pousadas, chalés e casas selecionadas pela ATMOS em Alto Paraíso, São Jorge e Cavalcante. Compare preços, comodidades e localização."

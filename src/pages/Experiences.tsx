@@ -1,3 +1,4 @@
+import { CatalogStatus } from "@/components/CatalogStatus";
 import { useState, useMemo, useEffect } from "react";
 import PageSEO from "@/components/seo/PageSEO";
 
@@ -49,13 +50,12 @@ const Experiences = () => {
 
   const l = pageLabels[language];
 
-  const { data: dbProducts = [] } = useProducts("experience");
+  const dbProductsQuery = useProducts("experience");
+  const { data: dbProducts = [] } = dbProductsQuery;
 
   const experiences = useMemo(() => {
-    // If no products in DB, fallback to static list
-    if (!dbProducts || dbProducts.length === 0) {
-      return staticExperiences;
-    }
+    // An empty catalog must not restore inactive static entries.
+    if (!dbProducts || dbProducts.length === 0) return [];
 
     // Use DB products as the base list
     return dbProducts.map(dbProduct => {
@@ -114,6 +114,7 @@ const Experiences = () => {
 
   return (
     <Layout>
+      <CatalogStatus queries={[dbProductsQuery]} />
       <PageSEO
         title="Experiências na Chapada dos Veadeiros"
         description="Passeios de bike, cavalgadas, voos de balão, mirantes e vivências culturais na Chapada dos Veadeiros. Atividades além das trilhas."

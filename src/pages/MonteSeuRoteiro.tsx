@@ -1,3 +1,4 @@
+import { CatalogStatus } from "@/components/CatalogStatus";
 import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -201,10 +202,14 @@ export default function MonteSeuRoteiro() {
   const [srvRegionFilter, setSrvRegionFilter] = useState<string[]>([]);
 
   // Dialog states
-  const { data: dbWaterfalls = [] } = useProducts("waterfall");
-  const { data: dbExperiences = [] } = useProducts("experience");
-  const { data: dbAccommodations = [] } = useProducts("accommodation");
-  const { data: dbServices = [] } = useProducts("service");
+  const dbWaterfallsQuery = useProducts("waterfall");
+  const { data: dbWaterfalls = [] } = dbWaterfallsQuery;
+  const dbExperiencesQuery = useProducts("experience");
+  const { data: dbExperiences = [] } = dbExperiencesQuery;
+  const dbAccommodationsQuery = useProducts("accommodation");
+  const { data: dbAccommodations = [] } = dbAccommodationsQuery;
+  const dbServicesQuery = useProducts("service");
+  const { data: dbServices = [] } = dbServicesQuery;
 
   useEffect(() => {
     const uniqueRegions = [...new Set(dbWaterfalls.map(d => d.segment).filter(Boolean))];
@@ -218,7 +223,7 @@ export default function MonteSeuRoteiro() {
   }, [dbWaterfalls, dbExperiences, dbAccommodations, dbServices]);
 
   const waterfalls = useMemo(() => {
-    if (!dbWaterfalls || dbWaterfalls.length === 0) return staticWaterfalls;
+    if (!dbWaterfalls || dbWaterfalls.length === 0) return [];
 
     return dbWaterfalls.map(db => {
       const staticEntry = staticWaterfalls.find(s => s.id === db.source_id || s.name.pt.toLowerCase() === getLangVal(db.name, 'pt').toLowerCase());
@@ -236,8 +241,8 @@ export default function MonteSeuRoteiro() {
         distanceCarKm: Number(vars.distanceCarKm || staticEntry?.distanceCarKm || 0),
         difficulty: (vars.difficulty || staticEntry?.difficulty || "facil") as any,
         seasonality: (vars.seasonality || staticEntry?.seasonality || "anual") as any,
-        requiresGuide: vars.requiresGuide === "true" || vars.requiresGuide === true || staticEntry?.requiresGuide || false,
-        requires4x4: vars.requires4x4 === "true" || vars.requires4x4 === true || staticEntry?.requires4x4 || false,
+        requiresGuide: vars.requiresGuide ?? staticEntry?.requiresGuide ?? false,
+        requires4x4: vars.requires4x4 ?? staticEntry?.requires4x4 ?? false,
         description: { 
           pt: getLangVal(db.description || "", 'pt') || staticEntry?.description.pt || "", 
           en: staticEntry?.description.en || getLangVal(db.description || "", 'en') || "", 
@@ -250,7 +255,7 @@ export default function MonteSeuRoteiro() {
   }, [dbWaterfalls]);
 
   const experiences = useMemo(() => {
-    if (!dbExperiences || dbExperiences.length === 0) return staticExperiences;
+    if (!dbExperiences || dbExperiences.length === 0) return [];
 
     return dbExperiences.map(db => {
       const staticEntry = staticExperiences.find(s => s.id === db.source_id || s.name.pt.toLowerCase() === getLangVal(db.name, 'pt').toLowerCase());
@@ -280,7 +285,7 @@ export default function MonteSeuRoteiro() {
   }, [dbExperiences]);
 
   const accommodations = useMemo(() => {
-    if (!dbAccommodations || dbAccommodations.length === 0) return staticAccommodations;
+    if (!dbAccommodations || dbAccommodations.length === 0) return [];
 
     return dbAccommodations.map(db => {
       const staticEntry = staticAccommodations.find(s => s.id === db.source_id || s.name.toLowerCase() === getLangVal(db.name, 'pt').toLowerCase());
@@ -303,17 +308,17 @@ export default function MonteSeuRoteiro() {
           es: staticEntry?.description.es || getLangVal(db.description || "", 'es') || "",
         },
         longDescription: staticEntry?.longDescription,
-        instagram: vars.instagram || staticEntry?.instagram,
-        website: vars.website || staticEntry?.website,
-        bookingUrl: vars.bookingUrl || staticEntry?.bookingUrl,
-        phone: vars.phone || staticEntry?.phone,
+        instagram: vars.public_instagram ?? staticEntry?.instagram,
+        website: vars.public_website ?? staticEntry?.website,
+        bookingUrl: vars.public_bookingUrl ?? staticEntry?.bookingUrl,
+        phone: vars.public_phone ?? staticEntry?.phone,
         storageId: staticEntry?.id || normalize(db.name),
       } as Accommodation;
     });
   }, [dbAccommodations]);
 
   const services = useMemo(() => {
-    if (!dbServices || dbServices.length === 0) return staticServices;
+    if (!dbServices || dbServices.length === 0) return [];
 
     return dbServices.map(db => {
       const staticEntry = staticServices.find(s => s.id === db.source_id);
@@ -375,6 +380,7 @@ export default function MonteSeuRoteiro() {
 
   return (
     <Layout hideWishlist={true}>
+      <CatalogStatus queries={[dbWaterfallsQuery, dbExperiencesQuery, dbAccommodationsQuery, dbServicesQuery]} />
       <PageSEO
         title={`${TABS.find(t => t.id === activeTab)?.label || "Monte seu Roteiro"} | ATMOS`}
         description={`Explore nossa seleção de ${activeTab} na Chapada dos Veadeiros e monte seu roteiro personalizado com a ATMOS.`}

@@ -1,3 +1,4 @@
+import { fetchPublicProducts } from "@/lib/publicProducts";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,16 +38,10 @@ export default function GuideWaterfalls() {
     enabled: !!guideId,
   });
 
-  const { data: products = [], isLoading } = useQuery({
+  const { data: products = [], isLoading, isError } = useQuery({
     queryKey: ["guide-waterfalls-catalog", guideId],
     queryFn: async () => {
-      // 1. Fetch all waterfall products
-      const { data: prods } = await db
-        .from("products")
-        .select("id, name")
-        .eq("type", "waterfall")
-        .eq("is_active", true)
-        .order("name");
+      const prods = await fetchPublicProducts("waterfall");
 
       // 2. Fetch prices set by this exact guide
       const { data: prices } = await db
@@ -77,8 +72,9 @@ export default function GuideWaterfalls() {
 
   const handleFieldChange = (productId: string, field: keyof WaterfallPrice, value: any) => {
     setDirtyRows((prev) => {
-      const row = prev[productId] || products.find((p: any) => p.product_id === productId) || {};
-      return { ...prev, [productId]: { ...row, [field]: value } };
+      const row = prev[productId] || products.find((p: any) => p.product_id === productId);
+      if (!row) return prev;
+      return { ...prev, [productId]: { ...row, [field]: value } as WaterfallPrice };
     });
   };
 
@@ -129,7 +125,7 @@ export default function GuideWaterfalls() {
         )}
       </div>
 
-      {isLoading ? (
+      {isError ? <p role="alert">Não foi possível carregar o catálogo e os preços. Recarregue a página para tentar novamente.</p> : isLoading ? (
         <div className="p-8 text-center text-muted-foreground animate-pulse">Carregando catálogo de cachoeiras...</div>
       ) : (
         <div className="bg-card border border-border/60 rounded-xl overflow-hidden shadow-sm">

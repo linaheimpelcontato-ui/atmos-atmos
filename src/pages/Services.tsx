@@ -1,3 +1,4 @@
+import { CatalogStatus } from "@/components/CatalogStatus";
 import { useState, useMemo } from "react";
 import PageSEO from "@/components/seo/PageSEO";
 
@@ -43,13 +44,12 @@ const Services = () => {
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const l = pageLabels[language];
 
-  const { data: dbProducts = [] } = useProducts("service");
+  const dbProductsQuery = useProducts("service");
+  const { data: dbProducts = [] } = dbProductsQuery;
 
   const services = useMemo(() => {
-    // If no products in DB, fallback to static list
-    if (!dbProducts || dbProducts.length === 0) {
-      return staticServices;
-    }
+    // An empty catalog must not restore inactive static entries.
+    if (!dbProducts || dbProducts.length === 0) return [];
 
     // Use DB products as the base list
     return dbProducts.map(dbProduct => {
@@ -88,6 +88,7 @@ const Services = () => {
 
   return (
     <Layout>
+      <CatalogStatus queries={[dbProductsQuery]} />
       <PageSEO
         title="Serviços Diferenciais para sua Viagem"
         description="Transfer, drone, lanches de trilha e serviços especiais para personalizar sua viagem à Chapada dos Veadeiros com conforto."

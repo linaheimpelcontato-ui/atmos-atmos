@@ -1,3 +1,4 @@
+import { CatalogStatus } from "@/components/CatalogStatus";
 import { useState, useMemo } from "react";
 import PageSEO from "@/components/seo/PageSEO";
 
@@ -55,13 +56,12 @@ const Waterfalls = () => {
 
   const l = pageLabels[language];
 
-  const { data: dbProducts = [] } = useProducts("waterfall");
+  const dbProductsQuery = useProducts("waterfall");
+  const { data: dbProducts = [] } = dbProductsQuery;
 
   const waterfalls = useMemo(() => {
-    // If no products in DB, fallback to static list
-    if (!dbProducts || dbProducts.length === 0) {
-      return staticWaterfalls;
-    }
+    // An empty catalog must not restore inactive static entries.
+    if (!dbProducts || dbProducts.length === 0) return [];
 
     // Use DB products as the base list
     return dbProducts.map(dbProduct => {
@@ -83,8 +83,8 @@ const Waterfalls = () => {
         seasonality: (dbVars.seasonality || (staticEntry ? staticEntry.seasonality : "anual")) as Seasonality,
         distanceKm: Number(dbVars.distanceKm || (staticEntry ? staticEntry.distanceKm : 0)),
         distanceCarKm: Number(dbVars.distanceCarKm || (staticEntry ? staticEntry.distanceCarKm : 0)),
-        requiresGuide: dbVars.requiresGuide === "true" || dbVars.requiresGuide === true || (staticEntry ? staticEntry.requiresGuide : false),
-        requires4x4: dbVars.requires4x4 === "true" || dbVars.requires4x4 === true || (staticEntry ? staticEntry.requires4x4 : false),
+        requiresGuide: dbVars.requiresGuide ?? staticEntry?.requiresGuide ?? false,
+        requires4x4: dbVars.requires4x4 ?? staticEntry?.requires4x4 ?? false,
         description: {
           pt: dbProduct.description || (staticEntry ? staticEntry.description.pt : ""),
           en: (staticEntry ? staticEntry.description.en : dbProduct.description || ""),
@@ -139,6 +139,7 @@ const Waterfalls = () => {
 
   return (
     <Layout>
+      <CatalogStatus queries={[dbProductsQuery]} />
       <PageSEO
         title="Cachoeiras e Atrativos da Chapada dos Veadeiros"
         description="Guia completo de cachoeiras da Chapada dos Veadeiros com dificuldade, distância, sazonalidade e fotos. Filtre e descubra os melhores atrativos."

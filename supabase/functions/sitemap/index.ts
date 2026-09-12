@@ -70,10 +70,7 @@ async function fetchActiveProducts(
   supabase: ReturnType<typeof createClient>
 ): Promise<SitemapEntry[]> {
   const { data, error } = await supabase
-    .from("products")
-    .select("source_id, updated_at, is_active")
-    .eq("is_active", true)
-    .not("source_id", "is", null);
+    .rpc("get_public_products");
 
   if (error || !data) return [];
 
