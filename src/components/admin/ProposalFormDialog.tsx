@@ -1,3 +1,4 @@
+import { assertVerifiedCostIdentity, verifiedCheckForCell, type CostIdentity, type CostCheck } from "@/lib/verifiedCostIdentity";
 import { requestedPriceBreakdown, validateBundleCommissions } from "@/lib/proposalBundleContract";
 import { accommodationAmounts, normalizeSavedRooms, hasMissingCommission } from "@/lib/accommodationCalcs";
 import { lineTotal, money, supplierCommission, splitGroupTotal, resizeFixedPrice, operatingProfit, recordedCost } from "@/lib/proposalCalcs";
@@ -425,6 +426,8 @@ export default function ProposalFormDialog({
   const [taxPercent, setTaxPercent] = useState(0);
   const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
   const [grid, setGrid] = useState<DayItem[]>([]);
+  const [originalCostItems, setOriginalCostItems] = useState<CostIdentity[]>([]);
+  const [identityLoadedFor, setIdentityLoadedFor] = useState<string | null>(null);
   const [newCategory, setNewCategory] = useState("");
   const [language, setLanguage] = useState("pt");
   const [shareToken, setShareToken] = useState<string | null>(null);
@@ -552,11 +555,12 @@ export default function ProposalFormDialog({
   }, [startDate, endDate]);
 
   // Cost checks — used to resolve effective cost (validated actual_cost vs catalog cost)
-  const { data: costChecks = [] } = useQuery<{ day_number: number; item_index: number; actual_cost: number; is_verified: boolean }[]>({
+  const { data: costChecks = [], isPending: costChecksPending, error: costChecksError } = useQuery<CostCheck[]>({
     queryKey: ["cost-checks", proposalId],
     enabled: !!proposalId,
     queryFn: async () => {
-      const { data } = await db.from("proposal_cost_checks").select("day_number, item_index, actual_cost, is_verified").eq("proposal_id", proposalId);
+      const { data, error } = await db.from("proposal_cost_checks").select("*").eq("proposal_id", proposalId);
+      if (error) throw error;
       return (data || []) as any[];
     },
   });
@@ -574,9 +578,15 @@ export default function ProposalFormDialog({
     return m;
   }, [guideWaterfallPrices]);
 
-  const getEffectiveCost = useCallback((cell: { day_number: number; item_index: number; cost: number; catalog_item_id?: string | null; variation_id?: string | null; category?: string; qty?: number }) => {
+  const costIdentityGrid = useMemo(() => grid.map(c => ({ ...c, vehicle_type: dayVehicleType[c.day_number] || "carroTurista" })), [grid, dayVehicleType]);
+  const costIdentityError = useMemo(() => {
+    try { assertVerifiedCostIdentity(originalCostItems, costIdentityGrid, costChecks); return null; }
+    catch (error) { return (error as Error).message; }
+  }, [originalCostItems, costIdentityGrid, costChecks]);
+
+  const getEffectiveCost = useCallback((cell: DayItem) => {
     // 1. Checklist verified → definitive source of truth
-    const check = costChecks.find(c => c.day_number === cell.day_number && c.item_index === cell.item_index && c.is_verified);
+    const check = verifiedCheckForCell({ ...cell, vehicle_type: dayVehicleType[cell.day_number] || "carroTurista" }, originalCostItems, costIdentityGrid, costChecks);
     if (check) {
       // For "total" pricing items, actual_cost is the group total
       // Normalize to per-unit so downstream code (× qty) works correctly
@@ -640,7 +650,7 @@ export default function ProposalFormDialog({
 
     // 4. Final fallback
     return cell.cost;
-  }, [costChecks, catalogItems, gwpMap, dayVehicleType, numPeople, grid]);
+  }, [costChecks, originalCostItems, costIdentityGrid, catalogItems, gwpMap, dayVehicleType, numPeople, grid]);
 
   // Build lookup: productId → Set of guideIds that serve it
   const waterfallGuideMap = useMemo(() => {
@@ -683,7 +693,7 @@ export default function ProposalFormDialog({
       setStartDate(""); setEndDate("");
       setDiscountPercent(0); setDiscountFixed(0); setTaxPercent(0);
       setCategories(DEFAULT_CATEGORIES);
-      setGrid([]); setDayVehicleType({});
+      setGrid([]); setOriginalCostItems([]); setDayVehicleType({});
       setPartnerCommission(0);
       setLanguage("pt"); setShareToken(null); setCopied(false);
       setCostItems([]);
@@ -694,6 +704,7 @@ export default function ProposalFormDialog({
       setIsDirty(false);
       return;
     }
+    setIdentityLoadedFor(null);
     (async () => {
       const { data: prop } = await supabase.from("proposals").select("*").eq("id", proposalId).single();
       if (prop) {
@@ -731,8 +742,15 @@ export default function ProposalFormDialog({
           setPartnerCommission(Number(as.seller_commission_percent) || 0);
         }
       }
-      const { data: dayItems } = await db.from("proposal_day_items").select("*").eq("proposal_id", proposalId).order("day_number, item_index");
-      if (dayItems && dayItems.length > 0) {
+      const { data: dayItems, error: identityLoadError } = await db.from("proposal_day_items").select("*").eq("proposal_id", proposalId).order("day_number, item_index");
+      if (identityLoadError || !dayItems) {
+        toast({ title: "Não foi possível carregar a identidade dos itens", description: "Reabra a proposta antes de salvar.", variant: "destructive" });
+        return;
+      }
+      setOriginalCostItems(dayItems.map((d: any) => ({ ...d })));
+      setIdentityLoadedFor(proposalId);
+      if (dayItems.length === 0) { setGrid([]); setDayVehicleType({}); }
+      if (dayItems.length > 0) {
         const cats = [...new Set(dayItems.map((d: any) => d.category))] as string[];
         // Map legacy categories to new names
         const mappedCats = cats.map((c) => LEGACY_CATEGORY_MAP[c] || c);
@@ -764,16 +782,6 @@ export default function ProposalFormDialog({
           qty: d.quantity || 1,
           supplier_id: d.supplier_id || null,
         }));
-        // Re-index items to be globally sequential per day
-        const byDay = new Map<number, typeof loaded>();
-        loaded.forEach(item => {
-          if (!byDay.has(item.day_number)) byDay.set(item.day_number, []);
-          byDay.get(item.day_number)!.push(item);
-        });
-        byDay.forEach(items => {
-          items.sort((a, b) => a.item_index - b.item_index);
-          items.forEach((item, i) => { item.item_index = i; });
-        });
         gridJustLoadedRef.current = true;
         // Detect manually-edited values: compare saved value vs catalog expected value
         const manualKeys = new Set<string>();
@@ -1521,6 +1529,9 @@ export default function ProposalFormDialog({
   // ─── Save ─────────────────────────────────────────────────────────
   const saveMutation = useMutation({
     mutationFn: async () => {
+      if (proposalId && (costChecksPending || costChecksError || identityLoadedFor !== proposalId)) throw new Error("Não foi possível validar as conferências de custo. Recarregue antes de salvar.");
+      // Validate the exact retained items before any effective-cost/payload calculation.
+      assertVerifiedCostIdentity(originalCostItems, costIdentityGrid.filter(c => c.value > 0 || c.item_name?.trim()), costChecks);
       splitGroupTotal(nfBase, numPeople, numCourtesies);
       // Generate slug from title
       const slugify = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
@@ -2687,6 +2698,7 @@ export default function ProposalFormDialog({
         <div className="overflow-y-auto flex-1 px-4 md:px-8 py-8 bg-stone-50/50">
         <DialogHeader className="sr-only"><DialogTitle>{proposalId ? "Editar Proposta" : "Nova Proposta"}</DialogTitle></DialogHeader>
         <form className="space-y-5" onChangeCapture={() => setIsDirty(true)} onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(); }}>
+          {costIdentityError && <p role="alert" className="text-destructive">{costIdentityError}</p>}
 
           {/* ── Section 1: Dados Gerais ─────────────────────────── */}
           <div className="space-y-4 bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-black/[0.04]">
@@ -3029,7 +3041,7 @@ export default function ProposalFormDialog({
             <h4 className="font-black text-sm uppercase tracking-widest flex items-center gap-2 mb-2">
               <TrendingUp className="h-4 w-4 text-primary" />
               Custos Operacionais
-              <ProposalCostChecklistButton proposalId={proposalId} grid={grid} onClick={() => setCostCheckOpen(true)} />
+              <ProposalCostChecklistButton proposalId={proposalId} grid={costIdentityGrid} onClick={() => setCostCheckOpen(true)} />
             </h4>
 
             <div className="space-y-2">
@@ -3152,7 +3164,7 @@ export default function ProposalFormDialog({
 
       <ProposalCostChecklist
         proposalId={proposalId}
-        grid={grid}
+        grid={costIdentityGrid}
         open={costCheckOpen}
         onOpenChange={setCostCheckOpen}
         catalogCostResolver={catalogCostResolver}

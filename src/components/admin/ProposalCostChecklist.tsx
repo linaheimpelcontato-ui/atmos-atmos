@@ -1,3 +1,5 @@
+import { requireSavedCostChecks } from "@/lib/costCheckSave";
+import { boundCheckMatches, checklistSavedValues, costSnapshot, type CostIdentity } from "@/lib/verifiedCostIdentity";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,7 +14,7 @@ import { ClipboardCheck, Save, Search, AlertTriangle, Filter } from "lucide-reac
 
 const db = supabase as any;
 
-type DayItem = {
+type DayItem = CostIdentity & {
   day_number: number;
   item_index: number;
   item_name: string;
@@ -24,6 +26,9 @@ type DayItem = {
 };
 
 type CheckRow = {
+  item_id?: string | null;
+  identity_snapshot?: CostIdentity | null;
+  expected_snapshot?: ReturnType<typeof costSnapshot>;
   id?: string;
   day_number: number;
   item_index: number;
@@ -33,6 +38,8 @@ type CheckRow = {
   is_verified: boolean;
   notes: string;
 };
+
+const EMPTY_CHECKS: CheckRow[] = [];
 
 type Props = {
   proposalId: string | null;
@@ -47,17 +54,19 @@ type Props = {
 export function ProposalCostChecklistButton({ proposalId, grid, onClick }: { proposalId: string | null; grid: DayItem[]; onClick: () => void }) {
   const costItems = grid.filter(i => !!i.catalog_item_id && i.category !== "Hospedagem");
 
-  const { data: checks = [] } = useQuery({
+  const { data: checks = EMPTY_CHECKS } = useQuery({
     queryKey: ["cost-checks", proposalId],
     queryFn: async () => {
       if (!proposalId) return [];
-      const { data } = await db.from("proposal_cost_checks").select("*").eq("proposal_id", proposalId).gte("day_number", 0);
+      const { data, error } = await db.from("proposal_cost_checks").select("*").eq("proposal_id", proposalId);
+      if (error) throw error;
       return (data || []) as CheckRow[];
     },
+    select: (data: CheckRow[]) => data.filter(c => c.day_number >= 0),
     enabled: !!proposalId,
   });
 
-  const pending = costItems.length - checks.filter(c => c.is_verified).length;
+  const pending = costItems.filter(item => !checks.some(c => c.is_verified && boundCheckMatches(item,c))).length;
 
   if (!proposalId || costItems.length === 0) return null;
 
@@ -79,13 +88,15 @@ export default function ProposalCostChecklist({ proposalId, grid, open, onOpenCh
   const qc = useQueryClient();
   const costItems = grid.filter(i => !!i.catalog_item_id && i.category !== "Hospedagem");
 
-  const { data: savedChecks = [], isLoading } = useQuery({
+  const { data: savedChecks = EMPTY_CHECKS, isLoading, error: loadError } = useQuery({
     queryKey: ["cost-checks", proposalId],
     queryFn: async () => {
       if (!proposalId) return [];
-      const { data } = await db.from("proposal_cost_checks").select("*").eq("proposal_id", proposalId).gte("day_number", 0);
+      const { data, error } = await db.from("proposal_cost_checks").select("*").eq("proposal_id", proposalId);
+      if (error) throw error;
       return (data || []) as (CheckRow & { id: string })[];
     },
+    select: (data: CheckRow[]) => data.filter(c => c.day_number >= 0),
     enabled: !!proposalId && open,
   });
 
@@ -97,35 +108,26 @@ export default function ProposalCostChecklist({ proposalId, grid, open, onOpenCh
   const costItemsKey = useMemo(() => {
     return costItems.map(item => {
       const catalogCost = catalogCostResolver ? catalogCostResolver(item) : item.cost;
-      return `${item.day_number}-${item.item_index}-${catalogCost}-${item.qty}`;
+      return `${JSON.stringify(costSnapshot(item))}-${catalogCost}-${item.cost}`;
     }).join("|");
   }, [costItems, catalogCostResolver]);
 
   useEffect(() => {
     if (!open) return;
     const merged = costItems.map(item => {
-      const existing = savedChecks.find(c => c.day_number === item.day_number && c.item_index === item.item_index);
+      const existing = checklistSavedValues(item,savedChecks) as CheckRow | undefined;
       const catalogCost = catalogCostResolver ? catalogCostResolver(item) : item.cost;
       const isTotal = isTotalCostResolver ? isTotalCostResolver(item) : false;
       
       const proposalCostTotal = isTotal ? (item.cost * (item.qty || 1)) : item.cost;
       
-      let actual = 0;
-      if (existing) {
-        actual = Number(existing.actual_cost);
-        // Heuristic: if it's a total item and the saved cost is exactly the unit cost, 
-        // and qty > 1, it was likely saved wrong (per person) before the fix.
-        if (isTotal && item.qty > 1 && Math.abs(actual - item.cost) < 0.01 && Math.abs(actual - proposalCostTotal) > 1) {
-          actual = proposalCostTotal;
-        } else if (actual === 0 && proposalCostTotal > 0) {
-          actual = proposalCostTotal;
-        }
-      } else {
-        actual = proposalCostTotal > 0 ? proposalCostTotal : catalogCost;
-      }
-      
+      // Never import amount/notes from an unrelated or unbound positional check. Zero is valid.
+      const actual = existing ? Number(existing.actual_cost) : proposalCostTotal;
+
       return {
         id: existing?.id,
+        item_id: item.id,
+        expected_snapshot: costSnapshot(item),
         day_number: item.day_number,
         item_index: item.item_index,
         catalog_cost: catalogCost,
@@ -193,32 +195,24 @@ export default function ProposalCostChecklist({ proposalId, grid, open, onOpenCh
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      if (!proposalId) return;
-      for (const r of rows) {
-        const payload = {
-          proposal_id: proposalId,
-          day_number: r.day_number,
-          item_index: r.item_index,
-          catalog_cost: r.catalog_cost,
-          proposal_cost: r.proposal_cost,
-          actual_cost: r.actual_cost,
-          is_verified: r.is_verified,
-          notes: r.notes || null,
-          updated_at: new Date().toISOString(),
-        };
-        if (r.id) {
-          await db.from("proposal_cost_checks").update(payload).eq("id", r.id);
-        } else {
-          await db.from("proposal_cost_checks").upsert(payload, { onConflict: "proposal_id,day_number,item_index" });
-        }
-      }
+      if (!proposalId || loadError || isLoading) throw new Error("Recarregue as conferências antes de salvar.");
+      const { data, error } = await db.rpc("save_proposal_cost_checks", { p_proposal_id: proposalId, p_checks: rows, p_release_ids: [] });
+      requireSavedCostChecks({data,error});
     },
+    onError: (error: Error) => toast({ title: "Conferência não salva", description: error.message, variant: "destructive" }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["cost-checks", proposalId] });
       toast({ title: "Validação de custos salva" });
       onOpenChange(false);
     },
   });
+
+  const unresolved = savedChecks.filter(c => !costItems.some(item => boundCheckMatches(item,c)));
+  const releaseMutation = useMutation({ mutationFn: async () => {
+    const { data, error } = await db.rpc("save_proposal_cost_checks", { p_proposal_id: proposalId, p_checks: [], p_release_ids: unresolved.filter(c => c.is_verified).map(c => c.id) });
+    requireSavedCostChecks({data,error});
+  }, onSuccess: () => qc.invalidateQueries({ queryKey: ["cost-checks", proposalId] }),
+    onError: (error: Error) => toast({ title: "Desmarcação não salva", description: error.message, variant: "destructive" }) });
 
   const verified = rows.filter(r => r.is_verified).length;
   const total = rows.length;
@@ -244,7 +238,7 @@ export default function ProposalCostChecklist({ proposalId, grid, open, onOpenCh
                   if (!item) return r;
                   const isTotal = isTotalCostResolver ? isTotalCostResolver(item) : false;
                   const targetCost = isTotal ? (item.cost * (item.qty || 1)) : item.cost;
-                  return { ...r, actual_cost: targetCost };
+                  return { ...r, actual_cost: targetCost, is_verified: false };
                 });
                 setRows(resetRows);
                 toast({ title: "Valores recalculados", description: "Todos os custos foram resetados para os valores sugeridos da proposta." });
@@ -255,6 +249,12 @@ export default function ProposalCostChecklist({ proposalId, grid, open, onOpenCh
           </SheetTitle>
         </SheetHeader>
 
+        {loadError && <p role="alert">Erro ao carregar conferências. Reabra o painel antes de salvar.</p>}
+        {unresolved.length > 0 && <div className="my-4 border p-3 text-sm">
+          <p>Conferências sem vínculo seguro ou com identidade antiga: revise manualmente. Valores e notas abaixo são históricos, não foram aplicados aos itens atuais.</p>
+          {unresolved.map(c => <p key={c.id}>Dia {c.day_number}, posição {c.item_index}: R$ {Number(c.actual_cost).toFixed(2)} — {c.notes || 'Sem nota'} {c.is_verified ? '(conferido antigo)' : '(não conferido)'}</p>)}
+          <Button type="button" disabled={releaseMutation.isPending || !unresolved.some(c=>c.is_verified)} onClick={()=>releaseMutation.mutate()}>Desmarcar conferências antigas preservando histórico</Button>
+        </div>}
         {isLoading ? (
           <p className="text-sm text-muted-foreground mt-4">Carregando...</p>
         ) : (
@@ -410,12 +410,10 @@ export default function ProposalCostChecklist({ proposalId, grid, open, onOpenCh
                           type="number"
                           step="0.01"
                           min={0}
-                          max={r.catalog_cost > 0 ? r.catalog_cost : undefined}
                           value={r.actual_cost}
                           onChange={(e) => {
                             const raw = Math.max(0, Number(e.target.value) || 0);
-                            const maxVal = r.catalog_cost > 0 ? r.catalog_cost + 0.05 : Infinity;
-                            const v = Math.min(raw, maxVal);
+                            const v = raw;
                             updateRow(r.day_number, r.item_index, { actual_cost: v });
                           }}
                           className="h-7 text-xs w-full"
@@ -439,7 +437,7 @@ export default function ProposalCostChecklist({ proposalId, grid, open, onOpenCh
                   type="button"
                   className="w-full mt-4 gap-2"
                   onClick={() => saveMutation.mutate()}
-                  disabled={saveMutation.isPending}
+                  disabled={saveMutation.isPending || !!loadError || isLoading}
                 >
                   <Save className="h-4 w-4" />
                   Salvar validação
