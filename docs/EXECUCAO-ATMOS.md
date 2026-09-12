@@ -8,6 +8,7 @@ Base examinada: 7d1f989ed826056d3a2c6fedd549c068f5c6b985.
 - `codex/atmos-stabilization`: integração e correções do site/painel.
 - `codex/atmos-calculos`: cálculos e rastreabilidade financeira, worktree independente.
 - `codex/atmos-privacidade`: projeção pública segura e migrações de acesso.
+- `codex/atmos-guias`: contexto, agenda e custos restritos ao guia atribuído; integrada à principal.
 
 A leitura, o clone e `git push --dry-run` para uma nova branch no origin funcionaram. Isso comprova a possibilidade de propor a branch, sem alterar main. Não implica autorização de merge em branch protegida. Credenciais de admin validadas no portal, sem serem copiadas para o repositório.
 
