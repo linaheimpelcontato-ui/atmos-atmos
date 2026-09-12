@@ -1930,6 +1930,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      save_public_proposal_edits: { Args: { p_proposal_id: string; p_days: Json; p_items: Json }; Returns: boolean }
       get_public_products: { Args: { p_type?: string | null }; Returns: Json }
       save_proposal_bundle: {
         Args: { p_id: string | null; p_proposal: Json; p_items: Json; p_costs: Json; p_days: Json; p_accommodations: Json; p_commissions: Json }

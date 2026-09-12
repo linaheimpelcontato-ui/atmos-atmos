@@ -30,3 +30,9 @@ O PostgreSQL local não iniciou: o pull Docker falhou por falta de espaço e err
 - Acessibilidade: auditoria adicional de textos alternativos, navegação e modais secundários; os espaços escuros em dúvidas/depoimento seguem hipóteses visuais, sem causa isolada.
 
 A nota `tasks for Gustavo` contém somente acessos, informações e decisões que dependem de Gustavo/cliente. Este arquivo também registra o trabalho técnico restante da equipe.
+
+## Edição visual da proposta
+
+`save_public_proposal_edits` salva observações, títulos dos dias, descrições e ordem de itens em uma transação administrativa. Atualiza apenas a observação em `proposal_days`, preservando ID/descrição e sem excluir dias. Itens precisam pertencer à proposta. A interface será integrada na frente de privacidade; não publicar a UI sem a migration.
+
+A conferência de custos antiga é vinculada a dia/posição. Por isso, o novo editor visual bloqueia reordenação quando há custos conferidos, exigindo desmarcar a conferência no editor administrativo e conferir novamente depois. Evoluir a referência para UUID de item é trabalho separado. Fixtures SQL preparadas, ainda não executadas.
