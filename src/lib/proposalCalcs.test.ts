@@ -1,12 +1,30 @@
 import { describe, expect, it } from "vitest";
-import { lineTotal, operatingProfit, resizeFixedPrice, splitGroupTotal, supplierCommission } from "./proposalCalcs";
-import { calcProposalProfit, calcCategoryBreakdown, calcProductRanking } from "@/pages/admin/finance/financeCalcs";
+import { lineTotal, operatingProfit, proposalPriceTotals, resizeFixedPrice, splitGroupTotal, supplierCommission } from "./proposalCalcs";
+import { calcProposalProfit, calcCategoryBreakdown, calcProductRanking, calcGuideRanking } from "@/pages/admin/finance/financeCalcs";
 import type { Proposal, DayItem } from "@/pages/admin/finance/useFinanceData";
 
 const proposal = (patch: Partial<Proposal> = {}): Proposal => ({ id: "p", title: "Grupo", code: null, total: 2000, subtotal: 2000, atmos_service: {}, created_at: "2026-01-01", num_people: 20, num_days: 1, segment: "b2c", status: "accepted", start_date: null, prospect_id: null, seller_id: null, ...patch });
 const item = (patch: Partial<DayItem> = {}): DayItem => ({ id: "i", proposal_id: "p", category: "Passeio", catalog_item_id: null, item_name: "Passeio", value: 100, cost_price: 100, quantity: 20, day_number: 1, commission_percent: 0, ...patch });
 
 describe("group pricing", () => {
+  it("reproduces the observed Melhor aos 50 itinerary without removing courtesy revenue", () => {
+    const price = proposalPriceTotals({ subtotal: 51000, serviceRevenue: 42000, accommodationRevenue: 0,
+      discountPercent: 0, discountFixed: 0, taxPercent: 0 });
+    expect(price.total).toBe(93000);
+    const split = splitGroupTotal(price.total, 20, 2);
+    expect(split).toMatchObject({ paying: 18, lowerAmount: 5166.66, lowerCount: 6, upperAmount: 5166.67, upperCount: 12 });
+    expect(split.lowerAmount * split.lowerCount + split.upperAmount * split.upperCount).toBe(93000);
+  });
+  it("rounds discount and grossed-up tax before saving and allocating", () => {
+    const price = proposalPriceTotals({ subtotal: 100.05, serviceRevenue: 20, accommodationRevenue: 30,
+      discountPercent: 10, discountFixed: 0, taxPercent: 6 });
+    expect(price).toEqual({ discountValue: 10.01, afterDiscount: 90.04, base: 140.04, total: 148.98, taxValue: 8.94 });
+  });
+  it.each([{taxPercent:100}, {taxPercent:101}, {taxPercent:-1}, {taxPercent:6.123},
+    {discountPercent:101}, {discountFixed:101}, {subtotal:NaN}, {serviceRevenue:Infinity}])("rejects invalid monetary inputs %o", patch => {
+    expect(() => proposalPriceTotals({ subtotal:100, serviceRevenue:0, accommodationRevenue:0,
+      discountPercent:0, discountFixed:0, taxPercent:0, ...patch })).toThrow();
+  });
   it("preserves all 20 travelers' costs when only 18 pay", () => {
     const total = lineTotal(100, 20);
     expect(splitGroupTotal(total, 20, 2)).toMatchObject({ total: 2000, paying: 18, perPerson: 2000 / 18 });
@@ -48,6 +66,15 @@ describe("finance matches saved proposal components", () => {
   it.each(["atmos", "hospedagem"])("respects lodging payment mode %s", payment_type => {
     const p = proposal({ subtotal: 0, proposal_accommodations: [{ is_selected: true, payment_type, num_nights: 2, products: { variables: { comissao: 10 } }, rooms: [{ rooms: [{ available: true, units: 1, capacity: 2, pricing_type: "per_person", cost: 100, price: 150, commission_percent: 10 }] }] }] });
     expect(calcProposalProfit(p, [], []).profit).toBe(payment_type === "atmos" ? 240 : 40);
+  });
+  it("guide ranking uses saved costs and the full proposal profit, including operational expenses", () => {
+    const p = proposal({subtotal:600,total:600});
+    const items = [item({category:"Guia ATMOS",catalog_item_id:"guide",quantity:2,value:150,cost_price:100}),
+      item({id:"other",quantity:1,value:300,cost_price:200})];
+    const costs = [{id:"c",proposal_id:"p",amount:50,description:"Operational"}];
+    const ranking = calcGuideRanking({accepted:[p],rejected:[],all:[p],dayItems:items,costs},
+      [{id:"guide",name:"Local guide"}] as any, costs);
+    expect(ranking[0]).toMatchObject({guideCost:200,revenue:600,profit:150,margin:25,proposals:1});
   });
   it("counts quantity in category and product reports", () => {
     const fd = { accepted: [proposal()], rejected: [], all: [proposal()], dayItems: [item()], costs: [] };

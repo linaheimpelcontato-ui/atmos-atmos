@@ -1,5 +1,5 @@
 import { accommodationAmounts, normalizeSavedRooms } from "@/lib/accommodationCalcs";
-import { lineTotal, supplierCommission, operatingProfit } from "@/lib/proposalCalcs";
+import { lineTotal, money, supplierCommission, operatingProfit } from "@/lib/proposalCalcs";
 import type { Proposal, DayItem, ProposalCost, Guide, Product } from "./useFinanceData";
 import { format, startOfMonth, endOfMonth, subMonths, eachMonthOfInterval, addDays, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -17,7 +17,7 @@ export function calcProposalProfit(
   const markupProfit = billableItems.filter(i => !isGuide(i.category)).reduce((s, i) => s + itemProfit(i), 0);
   const commissionProfit = billableItems.reduce((s, i) => s + supplierCommission(lineTotal(Number(i.cost_price), i.quantity ?? 1), Number(i.commission_percent)), 0);
   const atmos = p.atmos_service || {};
-  const atmosRevenue = Number(atmos.price_per_person_day || 0) * Number(p.num_people ?? 1) * Number(p.num_days ?? 1);
+  const atmosRevenue = money(Number(atmos.price_per_person_day || 0) * Number(p.num_people ?? 1) * Number(p.num_days ?? 1));
   const atmosInternalCosts = (atmos.internal_costs || []).reduce((s: number, ic: any) => s + Number(ic.amount || 0), 0);
   const directCosts = costs.filter(c => c.proposal_id === p.id).reduce((s, c) => s + Number(c.amount), 0);
   let accommodationProfit = 0;
@@ -29,9 +29,9 @@ export function calcProposalProfit(
     accommodationProfit += (acc.payment_type === "atmos" ? amounts.revenue - amounts.cost : 0) + amounts.commission;
   }
 
-  const discount = Number(p.subtotal || 0) * Number(p.discount_percent || 0) / 100 + Number(p.discount_fixed || 0);
+  const discount = money(Number(p.subtotal || 0) * Number(p.discount_percent || 0) / 100 + Number(p.discount_fixed || 0));
   // Seller commission is an outgoing commission, separate from supplier commission.
-  const sellerCommission = Number(p.total) * Number(atmos.seller_commission_percent || 0) / 100;
+  const sellerCommission = money(Number(p.total) * Number(atmos.seller_commission_percent || 0) / 100);
   const profit = operatingProfit(guideProfit + markupProfit + atmosRevenue + accommodationProfit, 0, commissionProfit,
     atmosInternalCosts + directCosts + discount + sellerCommission);
   const revenue = Number(p.total);
@@ -136,29 +136,31 @@ export function calcGuideRanking(
   const guideMap = new Map<string, { name: string; revenue: number; cost: number; count: number; proposalIds: Set<string> }>();
 
   for (const item of fd.dayItems) {
-    if (item.category !== "Guia" || !item.catalog_item_id) continue;
+    if (!["Guia", "Guia ATMOS", "Diária Guia ATMOS"].includes(item.category) || !item.catalog_item_id) continue;
     const guide = guides.find(g => g.id === item.catalog_item_id);
     if (!guide) continue;
     const existing = guideMap.get(guide.id) || { name: guide.name, revenue: 0, cost: 0, count: 0, proposalIds: new Set<string>() };
-    existing.revenue += Number(item.value);
+    existing.cost += lineTotal(Number(item.cost_price), item.quantity ?? 1);
     existing.proposalIds.add(item.proposal_id);
     guideMap.set(guide.id, existing);
   }
 
-  // Calculate guide-specific costs from proposal_day_items value as cost proxy
-  // The "value" in day items for guides IS the cost to the company
+  // Attribute each associated proposal once per guide, with its full cost model.
+  // A proposal with multiple guides appears in each row; rows are not additive.
   const result = Array.from(guideMap.entries()).map(([id, g]) => {
     const proposalRevenues = fd.accepted
       .filter(p => g.proposalIds.has(p.id))
       .reduce((s, p) => s + Number(p.total), 0);
     const count = g.proposalIds.size;
     const avgTicket = count > 0 ? proposalRevenues / count : 0;
-    const profit = proposalRevenues - g.revenue; // revenue to company minus guide cost
+    const profit = money(fd.accepted.filter(p => g.proposalIds.has(p.id))
+      .reduce((sum, p) => sum + calcProposalProfit(p, fd.dayItems, costs).profit, 0));
     const margin = proposalRevenues > 0 ? (profit / proposalRevenues) * 100 : 0;
-    const roiVal = g.revenue > 0 ? (profit / g.revenue) * 100 : 0;
+    const proposalCost = money(proposalRevenues - profit);
+    const roiVal = proposalCost > 0 ? (profit / proposalCost) * 100 : 0;
     return {
       id, name: g.name, proposals: count, revenue: proposalRevenues,
-      guideCost: g.revenue, profit, margin, roi: roiVal, avgTicket,
+      guideCost: money(g.cost), profit, margin, roi: roiVal, avgTicket,
     };
   });
 

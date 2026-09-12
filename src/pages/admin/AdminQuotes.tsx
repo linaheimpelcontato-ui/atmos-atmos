@@ -255,15 +255,21 @@ export default function AdminQuotes({ segment }: { segment: "b2c" | "b2b" }) {
       setPipelineStageName(null);
       return;
     }
+    let cancelled = false;
+    setLinkedProposal(null);
+    setLinkedProspectId(null);
+    setPipelineStageName(null);
     setLoadingProposal(true);
     setLoadingStage(true);
     (async () => {
       const { data: prospect } = await (supabase as any)
         .from("prospects")
         .select("id, stage_id")
-        .eq("email", selected.email)
+        .eq("segment", selected.origin === "turista" ? "b2c" : "b2b")
+        .ilike("email", selected.email.trim().replace(/[\\%_]/g, "\\$&"))
         .limit(1)
         .maybeSingle();
+      if (cancelled) return;
       if (prospect) {
         setLinkedProspectId(prospect.id);
         const { data: proposal } = await (supabase as any)
@@ -273,6 +279,7 @@ export default function AdminQuotes({ segment }: { segment: "b2c" | "b2b" }) {
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
+        if (cancelled) return;
         setLinkedProposal(proposal ? { id: proposal.id, code: proposal.code || "—" } : null);
 
         // Fetch pipeline stage name
@@ -282,6 +289,7 @@ export default function AdminQuotes({ segment }: { segment: "b2c" | "b2b" }) {
             .select("name")
             .eq("id", prospect.stage_id)
             .maybeSingle();
+          if (cancelled) return;
           setPipelineStageName(stage?.name || null);
         } else {
           setPipelineStageName(null);
@@ -294,6 +302,7 @@ export default function AdminQuotes({ segment }: { segment: "b2c" | "b2b" }) {
       setLoadingProposal(false);
       setLoadingStage(false);
     })();
+    return () => { cancelled = true; };
   }, [selected]);
 
   const getAnswers = (lead: UnifiedLead): Record<string, unknown> => {

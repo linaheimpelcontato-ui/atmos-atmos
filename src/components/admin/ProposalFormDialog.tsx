@@ -1,7 +1,7 @@
 import { assertVerifiedCostIdentity, verifiedCheckForCell, type CostIdentity, type CostCheck } from "@/lib/verifiedCostIdentity";
 import { requestedPriceBreakdown, validateBundleCommissions } from "@/lib/proposalBundleContract";
 import { accommodationAmounts, normalizeSavedRooms, hasMissingCommission } from "@/lib/accommodationCalcs";
-import { lineTotal, money, supplierCommission, splitGroupTotal, resizeFixedPrice, operatingProfit, recordedCost } from "@/lib/proposalCalcs";
+import { lineTotal, money, proposalPriceTotals, supplierCommission, splitGroupTotal, resizeFixedPrice, operatingProfit, recordedCost } from "@/lib/proposalCalcs";
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -1401,19 +1401,26 @@ export default function ProposalFormDialog({
   const subtotal = useMemo(() => grid.reduce((s, c) => {
     return s + lineTotal(c.value, c.qty);
   }, 0), [grid]);
-  const discountValue = subtotal * (discountPercent / 100) + discountFixed;
-  const afterDiscount = subtotal - discountValue;
   const numPaying = Math.max(numPeople - numCourtesies, 0);
 
   // Atmos revenue on FULL group
-  const atmosRevenue = atmosService.price_per_person_day * numPeople * numDays;
+  const atmosRevenue = money(atmosService.price_per_person_day * numPeople * numDays);
 
   // Accommodation totals + variants
   const accTotals = useMemo(() => calcAccommodationTotals(proposalAccommodations), [proposalAccommodations]);
   const accVariants = useMemo(() => getAccommodationVariants(proposalAccommodations), [proposalAccommodations]);
 
-  // Group total before tax: items + atmos + ATMOS-type accommodation revenue - discounts
-  const groupTotalPreTax = afterDiscount + atmosRevenue + accTotals.atmosRevenue;
+  const pricing = (() => {
+    try {
+      return { data: proposalPriceTotals({ subtotal, serviceRevenue: atmosRevenue,
+        accommodationRevenue: accTotals.atmosRevenue, discountPercent, discountFixed, taxPercent }), error: "" };
+    } catch (error) {
+      return { data: null, error: error instanceof Error ? error.message : "Revise os valores da proposta." };
+    }
+  })();
+  const discountValue = pricing.data?.discountValue ?? 0;
+  const afterDiscount = pricing.data?.afterDiscount ?? 0;
+  const groupTotalPreTax = pricing.data?.base ?? 0;
   const pricePerPersonPreTax = numPaying > 0 ? groupTotalPreTax / numPaying : 0;
 
   // Base per person WITHOUT accommodation (for variant calculation)
@@ -1474,10 +1481,9 @@ export default function ProposalFormDialog({
     : null;
   const nfBase = allocation?.total ?? money(groupTotalPreTax);
 
-  // Tax "por dentro": incide sobre o faturamento total (padrão NF Brasil)
-  // Total = Base ÷ (1 - taxa%)  →  taxValue = Total - Base
-  const totalCharged = taxPercent > 0 ? nfBase / (1 - taxPercent / 100) : nfBase;
-  const taxValue = totalCharged - nfBase;
+  // Use the same cent-rounded amount for preview, persisted total and rateio.
+  const totalCharged = pricing.data?.total ?? 0;
+  const taxValue = pricing.data?.taxValue ?? 0;
 
   // For backward compat: total saved to DB = NF value
   const total = totalCharged;
@@ -1515,7 +1521,7 @@ export default function ProposalFormDialog({
   }, [grid, getEffectiveCost]);
 
   const totalCosts = costItems.reduce((s, c) => s + c.amount, 0);
-  const commissionValue = totalCharged * (partnerCommission / 100);
+  const commissionValue = money(totalCharged * (partnerCommission / 100));
   const grossProfit = operatingProfit(
     profitAnalysis.totalItemRevenue + atmosRevenue + accTotals.atmosRevenue,
     profitAnalysis.totalItemCost + accTotals.atmosCost,
@@ -1532,6 +1538,7 @@ export default function ProposalFormDialog({
       if (proposalId && (costChecksPending || costChecksError || identityLoadedFor !== proposalId)) throw new Error("Não foi possível validar as conferências de custo. Recarregue antes de salvar.");
       // Validate the exact retained items before any effective-cost/payload calculation.
       assertVerifiedCostIdentity(originalCostItems, costIdentityGrid.filter(c => c.value > 0 || c.item_name?.trim()), costChecks);
+      if (pricing.error) throw new Error(pricing.error);
       splitGroupTotal(nfBase, numPeople, numCourtesies);
       // Generate slug from title
       const slugify = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
@@ -2217,8 +2224,26 @@ export default function ProposalFormDialog({
     </div>
   );
 
+  const renderPricingControls = () => (
+<div className="grid grid-cols-3 gap-2 pt-2">
+            <div className="space-y-1">
+              <Label className="text-xs">Desc. %</Label>
+              <Input className="h-8 text-sm tabular-nums" type="number" step="0.01" min={0} max={100} value={discountPercent || ""} onChange={(e) => setDiscountPercent(parseFloat(e.target.value) || 0)} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Desc. R$</Label>
+              <Input className="h-8 text-sm tabular-nums" type="number" step="0.01" min={0} value={discountFixed || ""} onChange={(e) => setDiscountFixed(parseFloat(e.target.value) || 0)} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Imp. %</Label>
+              <Input className="h-8 text-sm tabular-nums" type="number" step="0.01" min={0} max={99.99} value={taxPercent || ""} onChange={(e) => setTaxPercent(parseFloat(e.target.value) || 0)} />
+            </div>
+          </div>
+  );
+
   // ─── Sticky Financial Summary ─────────────────────────────────────
   const renderFinancialSummary = () => {
+    if (pricing.error) return <div className="border border-destructive rounded-lg p-4 space-y-3"><p role="alert" className="text-sm text-destructive">Total indisponível: {pricing.error}</p>{renderPricingControls()}</div>;
     const totalWithAtmos = subtotal + atmosRevenue + accTotals.atmosRevenue;
     return (
       <div className="border border-border rounded-lg p-4 space-y-4 bg-muted/20">
@@ -2338,21 +2363,7 @@ export default function ProposalFormDialog({
             )}
           </div>
 
-          {/* Discount/Tax inputs */}
-          <div className="grid grid-cols-3 gap-2 pt-2">
-            <div className="space-y-1">
-              <Label className="text-xs">Desc. %</Label>
-              <Input className="h-8 text-sm tabular-nums" type="number" step="0.01" min={0} max={100} value={discountPercent || ""} onChange={(e) => setDiscountPercent(parseFloat(e.target.value) || 0)} />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Desc. R$</Label>
-              <Input className="h-8 text-sm tabular-nums" type="number" step="0.01" min={0} value={discountFixed || ""} onChange={(e) => setDiscountFixed(parseFloat(e.target.value) || 0)} />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Imp. %</Label>
-              <Input className="h-8 text-sm tabular-nums" type="number" step="0.01" min={0} value={taxPercent || ""} onChange={(e) => setTaxPercent(parseFloat(e.target.value) || 0)} />
-            </div>
-          </div>
+          {renderPricingControls()}
         </div>
 
         {/* ── BLOCO 2: DRE — Análise de Lucro ATMOS ── */}
@@ -3154,7 +3165,7 @@ export default function ProposalFormDialog({
           </div>
 
           <div className="flex gap-2">
-            <Button type="submit" className="flex-1" disabled={saveMutation.isPending || atmosInsufficient}>
+            <Button type="submit" className="flex-1" disabled={saveMutation.isPending || atmosInsufficient || !!pricing.error}>
               {saveMutation.isPending ? "Salvando..." : "Salvar Proposta"}
             </Button>
           </div>

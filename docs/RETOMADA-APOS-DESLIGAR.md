@@ -1,5 +1,7 @@
 # Atmos — fechamento da sessão e retomada após desligar
 
+> Atualização 12/09/2026: o banco local foi recuperado; nove suítes SQL e 183 testes passaram, dependências atualizadas com zero alertas npm. Veja [o registro atual](HOMOLOGACAO-2026-09-12.md). As limitações de SQL abaixo descrevem a sessão anterior; produção e homologação visual completa continuam pendentes.
+
 Registro da sessão de 11/09/2026, aproximadamente duas horas de trabalho. Esta nota reúne entregas, atividades dos terminais, evidências, pendências e instruções para retomar.
 
 ## 1. Estado que fica salvo

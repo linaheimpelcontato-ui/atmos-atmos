@@ -1,5 +1,7 @@
 # Homologação e trabalho restante
 
+> Atualização 12/09/2026: o banco local foi recuperado; nove suítes SQL e 183 testes passaram, dependências atualizadas com zero alertas npm. Veja [o registro atual](HOMOLOGACAO-2026-09-12.md). As limitações de SQL abaixo descrevem a sessão anterior; produção e homologação visual completa continuam pendentes.
+
 ## Limite desta entrega
 
 As correções estão em branches de desenvolvimento. Nenhuma migration, função remota, alteração de dados reais ou publicação em produção foi executada. A inspeção de políticas no repositório não comprova o estado das permissões do banco em produção.

@@ -264,7 +264,7 @@ export default function AdminFinanceLucroMargem() {
             )}
 
             {tab === "guides" && (
-              <Table className="w-full text-sm border-collapse">
+              <><p className="px-4 py-3 text-xs text-muted-foreground">Resultado das propostas associadas a cada guia, incluindo os custos completos do roteiro. Propostas com mais de um guia aparecem em mais de uma linha; não some as linhas.</p><Table className="w-full text-sm border-collapse">
                 <TableHeader>
                   <TableRow className="border-b border-admin-border/60 bg-admin-muted/30 hover:bg-transparent">
                     <SmartTh label="Guia" sortKey="name" filterState={guideFilterState} data={guideRanking} className="text-admin-primary/40 font-black uppercase tracking-widest text-[10px]" />
@@ -297,7 +297,7 @@ export default function AdminFinanceLucroMargem() {
                     ))
                   )}
                 </TableBody>
-              </Table>
+              </Table></>
             )}
 
             {tab === "categories" && (
