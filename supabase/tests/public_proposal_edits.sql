@@ -37,8 +37,12 @@ DO $$ DECLARE ok boolean; rejected boolean := false; BEGIN
   IF rejected IS DISTINCT FROM true THEN RAISE EXCEPTION 'Collision with omitted item accepted'; END IF;
   IF (SELECT item_index FROM public.proposal_day_items WHERE id='00000000-0000-4000-8000-000000003301') IS DISTINCT FROM 1 THEN RAISE EXCEPTION 'Collision not rolled back'; END IF;
   rejected := false;
-  INSERT INTO public.proposal_cost_checks(proposal_id,day_number,item_index,actual_cost,is_verified)
-    VALUES('00000000-0000-4000-8000-000000003101',1,1,50,true);
+  -- Full migration chain forbids direct daily-check writes, even for admins.
+  SELECT public.save_proposal_cost_checks('00000000-0000-4000-8000-000000003101',
+    jsonb_build_array(jsonb_build_object('item_id',i.id,'expected_snapshot',public.cost_item_identity(i),
+      'actual_cost',50,'is_verified',true))) INTO ok
+    FROM public.proposal_day_items i WHERE i.id='00000000-0000-4000-8000-000000003301';
+  IF ok IS DISTINCT FROM true THEN RAISE EXCEPTION 'Cost check was not saved'; END IF;
   BEGIN
     PERFORM public.save_public_proposal_edits('00000000-0000-4000-8000-000000003101','[]',
       '[{"id":"00000000-0000-4000-8000-000000003301","description":"Keep","item_index":0}]');
