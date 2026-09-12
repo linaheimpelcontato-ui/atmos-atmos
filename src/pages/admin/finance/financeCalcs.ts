@@ -1,3 +1,4 @@
+import { lineTotal, supplierCommission, operatingProfit } from "@/lib/proposalCalcs";
 import type { Proposal, DayItem, ProposalCost, Guide, Product } from "./useFinanceData";
 import { format, startOfMonth, endOfMonth, subMonths, eachMonthOfInterval, addDays, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -8,30 +9,36 @@ export function calcProposalProfit(
 ) {
   const pItems = items.filter(i => i.proposal_id === p.id);
 
-  // Guide profit: (value - cost) for guide items
-  const guideProfit = pItems
-    .filter(i => i.category === "Diária Guia ATMOS" || i.category === "Guia")
-    .reduce((s, i) => s + (Number(i.value) - Number(i.cost_price)) * (i.quantity || 1), 0);
-
-  // Markup profit: (value - cost) for non-guide, non-waterfall items
-  const markupProfit = pItems
-    .filter(i => i.category !== "Diária Guia ATMOS" && i.category !== "Guia" && i.category !== "Cachoeira / Ingresso" && Number(i.cost_price) > 0)
-    .reduce((s, i) => s + (Number(i.value) - Number(i.cost_price)) * (i.quantity || 1), 0);
-
-  // Commission profit: cost * commission% for non-guide, non-waterfall
-  const commissionProfit = pItems
-    .filter(i => i.category !== "Diária Guia ATMOS" && i.category !== "Guia" && i.category !== "Cachoeira / Ingresso" && Number(i.commission_percent) > 0)
-    .reduce((s, i) => s + Number(i.cost_price) * (i.quantity || 1) * Number(i.commission_percent) / 100, 0);
-
-  // ATMOS service revenue
+  const isGuide = (category: string) => ["Guia ATMOS", "Diária Guia ATMOS", "Guia"].includes(category);
+  const billableItems = pItems.filter(i => i.category !== "Hospedagens");
+  const itemProfit = (i: DayItem) => lineTotal(Number(i.value), i.quantity ?? 1) - lineTotal(Number(i.cost_price), i.quantity ?? 1);
+  const guideProfit = billableItems.filter(i => isGuide(i.category)).reduce((s, i) => s + itemProfit(i), 0);
+  const markupProfit = billableItems.filter(i => !isGuide(i.category)).reduce((s, i) => s + itemProfit(i), 0);
+  const commissionProfit = billableItems.reduce((s, i) => s + supplierCommission(lineTotal(Number(i.cost_price), i.quantity ?? 1), Number(i.commission_percent)), 0);
   const atmos = p.atmos_service || {};
-  const atmosRevenue = Number(atmos.price_per_person_day || 0) * Number(p.num_people || 1) * Number(p.num_days || 1);
+  const atmosRevenue = Number(atmos.price_per_person_day || 0) * Number(p.num_people ?? 1) * Number(p.num_days ?? 1);
   const atmosInternalCosts = (atmos.internal_costs || []).reduce((s: number, ic: any) => s + Number(ic.amount || 0), 0);
-
-  // Direct costs from proposal_costs
   const directCosts = costs.filter(c => c.proposal_id === p.id).reduce((s, c) => s + Number(c.amount), 0);
-
-  const profit = guideProfit + markupProfit + commissionProfit + atmosRevenue - atmosInternalCosts - directCosts;
+  let accommodationProfit = 0;
+  for (const acc of p.proposal_accommodations || []) {
+    if (!acc.is_selected) continue;
+    const raw = acc.rooms || [];
+    const units = Array.isArray(raw) ? raw : [raw];
+    const rooms = units.flatMap((unit: any) => unit.rooms || unit.modalities || [unit]);
+    for (const room of rooms) {
+      if (room.available === false) continue;
+      const quantity = Number(room.units || 0) * (room.pricing_type === "per_person" ? Number(room.capacity || 1) : 1) * Number(acc.num_nights || 0);
+      const cost = lineTotal(Number(room.cost || 0), quantity);
+      const revenue = lineTotal(Number(room.price || 0), quantity);
+      const commission = supplierCommission(cost, Number(acc.products?.variables?.comissao || 0));
+      accommodationProfit += (acc.payment_type === "atmos" ? revenue - cost : 0) + commission;
+    }
+  }
+  const discount = Number(p.subtotal || 0) * Number(p.discount_percent || 0) / 100 + Number(p.discount_fixed || 0);
+  // Seller commission is an outgoing commission, separate from supplier commission.
+  const sellerCommission = Number(p.total) * Number(atmos.seller_commission_percent || 0) / 100;
+  const profit = operatingProfit(guideProfit + markupProfit + atmosRevenue + accommodationProfit, 0, commissionProfit,
+    atmosInternalCosts + directCosts + discount + sellerCommission);
   const revenue = Number(p.total);
   const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
 
@@ -165,12 +172,12 @@ export function calcGuideRanking(
 
 export function calcCategoryBreakdown(fd: FilteredData) {
   const catMap = new Map<string, { revenue: number; count: number }>();
-  const totalRevenue = fd.dayItems.reduce((s, i) => s + Number(i.value), 0);
+  const totalRevenue = fd.dayItems.reduce((s, i) => s + lineTotal(Number(i.value), i.quantity ?? 1), 0);
 
   for (const item of fd.dayItems) {
     const cat = item.category || "Outros";
     const existing = catMap.get(cat) || { revenue: 0, count: 0 };
-    existing.revenue += Number(item.value);
+    existing.revenue += lineTotal(Number(item.value), item.quantity ?? 1);
     existing.count += 1;
     catMap.set(cat, existing);
   }
@@ -197,7 +204,7 @@ export function calcProductRanking(fd: FilteredData, products: Product[], typeFi
     if (typeFilter !== "all" && cat !== typeFilter && item.category !== typeFilter) continue;
 
     const existing = prodMap.get(key) || { name, category: cat, revenue: 0, count: 0 };
-    existing.revenue += Number(item.value);
+    existing.revenue += lineTotal(Number(item.value), item.quantity ?? 1);
     existing.count += 1;
     prodMap.set(key, existing);
   }

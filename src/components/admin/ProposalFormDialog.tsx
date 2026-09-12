@@ -1,3 +1,4 @@
+import { lineTotal, money, supplierCommission, splitGroupTotal, resizeFixedPrice, operatingProfit } from "@/lib/proposalCalcs";
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -583,7 +584,7 @@ export default function ProposalFormDialog({
           const isTransferOrDrone = product.category === "transfer" || product.category === "drone";
           const pricingType = (vars.pricingType as string) || (isTransferOrDrone ? "total" : "");
           if (pricingType === "total" && (cell.qty || 1) > 0) {
-            return Math.round((Number(check.actual_cost) / (cell.qty || 1)) * 100) / 100;
+            return (Number(check.actual_cost) / (cell.qty || 1));
           }
         }
       }
@@ -616,14 +617,17 @@ export default function ProposalFormDialog({
           if (cell.variation_id) {
             const vars = (product.variables || {}) as Record<string, any>;
             const variation = (vars.variations || []).find((v: any) => v.id === cell.variation_id);
-            if (variation && Number(variation.cost_price) > 0) return Number(variation.cost_price);
+            if (variation && Number(variation.cost_price) > 0) {
+              const fixed = vars.pricingType === "total" || (!vars.pricingType && ["transfer", "drone"].includes(product.category));
+              return Number(variation.cost_price) / (fixed ? (cell.qty || 1) : 1);
+            }
           }
           const vars = (product.variables || {}) as Record<string, unknown>;
           const isTransferOrDrone = product.category === "transfer" || product.category === "drone";
           const pricingType = (vars.pricingType as string) || (isTransferOrDrone ? "total" : "");
           let cost = Number(product.cost_price) || 0;
           if (pricingType === "total" && numPeople > 0 && cost > 0) {
-            cost = Math.round((cost / numPeople) * 100) / 100;
+            cost = cost / (cell.qty || 1);
           }
           if (cost > 0) return cost;
         }
@@ -720,6 +724,7 @@ export default function ProposalFormDialog({
         if (as) {
           setAtmosService({ price_per_person_day: as.price_per_person_day || 0, description: as.description || "", internal_costs: (as.internal_costs || []).map((ic: any) => ({ description: ic.description || "", amount: Number(ic.amount) || 0, days: ic.days || 1, unit_amount: ic.unit_amount !== undefined ? Number(ic.unit_amount) : (Number(ic.amount) || 0) })) });
           setNumCourtesies(as.num_courtesies || 0);
+          setPartnerCommission(Number(as.seller_commission_percent) || 0);
         }
       }
       const { data: dayItems } = await db.from("proposal_day_items").select("*").eq("proposal_id", proposalId).order("day_number, item_index");
@@ -777,7 +782,7 @@ export default function ProposalFormDialog({
             const pricingType = (vars.pricingType as string) || (isTransferOrDrone ? "total" : "");
             const savedValue = item.value || 0;
             if (pricingType === "total" && numPeople > 0) {
-              const expectedValue = Math.round((Number(prod.unit_price) / numPeople) * 100) / 100;
+              const expectedValue = (Number(prod.unit_price) / numPeople);
               if (Math.abs(savedValue - expectedValue) > 0.01) {
                 manualKeys.add(`${item.day_number}_${item.item_index}`);
               }
@@ -912,20 +917,9 @@ export default function ProposalFormDialog({
         if (pricingType !== "total") return cell;
 
         const nextQty = numPeople;
-        let baseP = Number(prod.unit_price);
-        let baseC = Number(prod.cost_price) || baseP;
-        
-        if (cell.variation_id) {
-          const variations = (prod.variables?.variations || []) as any[];
-          const v = variations.find(x => x.id === cell.variation_id);
-          if (v) {
-            baseP = Number(v.unit_price);
-            baseC = Number(v.cost_price) || baseP;
-          }
-        }
-
-        const nextCost = Math.round((baseC / numPeople) * 100) / 100;
-        const nextValue = Math.round((baseP / numPeople) * 100) / 100;
+        const resized = resizeFixedPrice(cell.value, cell.cost, cell.qty, nextQty);
+        const nextValue = resized.value;
+        const nextCost = resized.cost;
         if (
           cell.qty === nextQty &&
           Math.abs((cell.value || 0) - nextValue) < 0.005 &&
@@ -945,7 +939,6 @@ export default function ProposalFormDialog({
   // When numPeople changes, update qty AND recalculate "valor total" items
   useEffect(() => {
     if (numPeople === prevNumPeople) return;
-    const totalGrupo = numPeople + numCourtesies;
     let limitWarning = false;
     setGrid((g) =>
       g.map((cell) => {
@@ -963,12 +956,9 @@ export default function ProposalFormDialog({
             }
 
             updated.qty = numPeople;
-            // Force 100% sync for total items
-            const totalSale = catalogSalePriceResolver(cell) || 0;
-            const totalCost = catalogCostResolver(cell) || 0;
-            
-            updated.value = Math.round((totalSale / numPeople) * 100) / 100;
-            updated.cost = Math.round((totalCost / numPeople) * 100) / 100;
+            const resized = resizeFixedPrice(cell.value, cell.cost, cell.qty, numPeople);
+            updated.value = resized.value;
+            updated.cost = resized.cost;
           }
         }
 
@@ -1027,47 +1017,6 @@ export default function ProposalFormDialog({
     setPrevNumPeople(numPeople);
   }, [numPeople, catalogItems]);
 
-  // When numCourtesies changes, recalculate "valor total" items
-  useEffect(() => {
-    const totalGrupo = numPeople + numCourtesies;
-    if (totalGrupo <= 0) return;
-    let limitWarning = false;
-    setGrid((g) =>
-      g.map((cell) => {
-        if (!cell.catalog_item_id) return cell;
-        const prod = catalogItems.find((c: any) => c.id === cell.catalog_item_id);
-        if (!prod) return cell;
-        const vars = (prod.variables || {}) as Record<string, any>;
-        const isTransferOrDrone = (prod.category === "transfer" || prod.category === "drone");
-        const pricingType = (vars.pricingType as string) || (isTransferOrDrone ? "total" : "");
-        if (pricingType !== "total" || numPeople <= 0) return cell;
-
-        let basePrice = Number(prod.unit_price);
-        let baseCost = Number(prod.cost_price) || basePrice;
-
-        if (cell.variation_id) {
-          const v = (vars.variations || []).find((vx: any) => vx.id === cell.variation_id);
-          if (v) {
-            basePrice = Number(v.unit_price);
-            baseCost = Number(v.cost_price);
-          }
-        }
-
-        const limite = Number(vars.limitPeople) || Number(vars.limitePessoas) || Number(vars.maxPessoas) || 0;
-        if (limite > 0 && numPeople > limite) limitWarning = true;
-        
-        return { 
-          ...cell, 
-          value: Math.round((basePrice / numPeople) * 100) / 100, 
-          cost: Math.round((baseCost / numPeople) * 100) / 100 
-        };
-      })
-    );
-    if (limitWarning) {
-      toast({ title: "Atenção", description: `O número de pessoas no grupo (${numPeople}) excede o limite permitido de algum produto.`, variant: "destructive" });
-    }
-  }, [numCourtesies]);
-
   // ─── Cell operations ──────────────────────────────────────────────
   const updateCell = (dayNum: number, cat: string, itemIdx: number, patch: Partial<DayItem>, isUserEdit = false) => {
     setIsDirty(true);
@@ -1082,11 +1031,7 @@ export default function ProposalFormDialog({
 
         // When user manually changes qty on a "total" priced item, recalculate value & cost per new qty
         if (isUserEdit && 'qty' in patch && cell.catalog_item_id && isTotalCostResolver(cell)) {
-          const totalSale = catalogSalePriceResolver(cell) || 0;
-          const totalCost = catalogCostResolver(cell) || 0;
-          
-          updated.value = Math.round((totalSale / updated.qty) * 100) / 100;
-          updated.cost = Math.round((totalCost / updated.qty) * 100) / 100;
+          Object.assign(updated, resizeFixedPrice(cell.value, cell.cost, cell.qty, updated.qty));
 
           // If the user changed the qty of a total-priced item, they are essentially changing the group size
           if (updated.qty !== numPeople) {
@@ -1256,11 +1201,11 @@ export default function ProposalFormDialog({
     const costPrice = Number(v.cost_price) || 0;
     
     const saleValue = pricingType === "total" && numPeople > 0
-      ? Math.round((unitPrice / numPeople) * 100) / 100
+      ? (unitPrice / numPeople)
       : unitPrice;
     
     const costValue = pricingType === "total" && numPeople > 0
-      ? Math.round((costPrice / numPeople) * 100) / 100
+      ? (costPrice / numPeople)
       : costPrice;
 
     const cleanName = v.name.split(" - R$")[0];
@@ -1329,11 +1274,11 @@ export default function ProposalFormDialog({
         const costPrice = Number(v.cost_price) || 0;
         
         const saleValue = pricingType === "total" && numPeople > 0
-          ? Math.round((unitPrice / numPeople) * 100) / 100
+          ? (unitPrice / numPeople)
           : unitPrice;
         
         const costValue = pricingType === "total" && numPeople > 0
-          ? Math.round((costPrice / numPeople) * 100) / 100
+          ? (costPrice / numPeople)
           : costPrice;
 
         const cleanName = v.name.split(" - R$")[0];
@@ -1362,10 +1307,10 @@ export default function ProposalFormDialog({
       const costPrice = Number(item.cost_price) || 0;
       const costBase = costPrice > 0 ? costPrice : unitPrice;
       const saleValue = pricingType === "total" && numPeople > 0
-        ? Math.round((unitPrice / numPeople) * 100) / 100
+        ? (unitPrice / numPeople)
         : unitPrice;
       const itemCost = pricingType === "total" && numPeople > 0
-        ? Math.round((costBase / numPeople) * 100) / 100
+        ? (costBase / numPeople)
         : costBase;
 
       const comissao = Number(vars.comissao) || 0;
@@ -1466,7 +1411,7 @@ export default function ProposalFormDialog({
   const dayTotals = useMemo(() => {
     const totals: Record<number, number> = {};
     for (let d = 1; d <= numDays; d++) {
-      totals[d] = grid.filter((c) => c.day_number === d).reduce((s, c) => s + c.value * c.qty, 0);
+      totals[d] = grid.filter((c) => c.day_number === d).reduce((s, c) => s + lineTotal(c.value, c.qty), 0);
     }
     return totals;
   }, [grid, numDays]);
@@ -1474,13 +1419,13 @@ export default function ProposalFormDialog({
   const catTotals = useMemo(() => {
     const totals: Record<string, number> = {};
     categories.forEach((cat) => {
-      totals[cat] = grid.filter((c) => c.category === cat).reduce((s, c) => s + c.value * c.qty, 0);
+      totals[cat] = grid.filter((c) => c.category === cat).reduce((s, c) => s + lineTotal(c.value, c.qty), 0);
     });
     return totals;
   }, [grid, categories]);
 
   const subtotal = useMemo(() => grid.reduce((s, c) => {
-    return s + c.value * c.qty;
+    return s + lineTotal(c.value, c.qty);
   }, 0), [grid]);
   const discountValue = subtotal * (discountPercent / 100) + discountFixed;
   const afterDiscount = subtotal - discountValue;
@@ -1495,11 +1440,10 @@ export default function ProposalFormDialog({
 
   // Group total before tax: items + atmos + ATMOS-type accommodation revenue - discounts
   const groupTotalPreTax = afterDiscount + atmosRevenue + accTotals.atmosRevenue;
-  const pricePerPersonPreTax = numPeople > 0 ? (afterDiscount + atmosRevenue) / numPeople : (afterDiscount + atmosRevenue);
-  const courtesyCost = pricePerPersonPreTax * numCourtesies;
+  const pricePerPersonPreTax = numPaying > 0 ? groupTotalPreTax / numPaying : 0;
 
   // Base per person WITHOUT accommodation (for variant calculation)
-  const basePerPerson = numPeople > 0 ? (afterDiscount + atmosRevenue) / numPeople : 0;
+  const basePerPerson = numPaying > 0 ? (afterDiscount + atmosRevenue) / numPaying : 0;
 
   const catalogCostResolver = useCallback((item: DayItem) => {
     // If it's a guide/GWP product
@@ -1550,37 +1494,11 @@ export default function ProposalFormDialog({
     return Number(item.value || 0) * (item.qty || 1);
   }, [catalogItems]);
 
-  // Detect which items are "Total Value" vs "Per Person"
-  const itemTypeAnalysis = useMemo(() => {
-    let totalValueSum = 0;
-    let perPersonSum = 0;
-
-    grid.forEach(cell => {
-      if (cell.category === "Hospedagens") return;
-      
-      const product = catalogItems.find(p => p.id === cell.catalog_item_id);
-      const vars = (product?.variables || {}) as Record<string, unknown>;
-      const isTransferOrDrone = product?.category === "transfer" || product?.category === "drone";
-      const isTotalValue = vars.pricingType === "total" || (isTransferOrDrone && !vars.pricingType);
-      
-      if (isTotalValue) {
-        totalValueSum += (cell.value || 0) * (cell.qty || 1);
-      } else {
-        perPersonSum += (cell.value || 0) * (cell.qty || 1);
-      }
-    });
-
-    return { totalValueSum, perPersonSum };
-  }, [grid, catalogItems]);
-
-  // NF base = what paying clients actually pay before tax
-  // We apply the discount proportionally and then only waive the PerPerson part for courtesies
-  const discountRatio = subtotal > 0 ? afterDiscount / subtotal : 1;
-  const nfBase = numPaying > 0
-    ? ( (itemTypeAnalysis.perPersonSum * discountRatio + atmosRevenue) * (numPaying / numPeople) )
-      + (itemTypeAnalysis.totalValueSum * discountRatio)
-      + accTotals.atmosRevenue
-    : 0;
+  // Preserve the full group amount; courtesies only change its distribution.
+  const allocation = numPaying > 0 && Number.isInteger(numPeople) && Number.isInteger(numCourtesies) && numCourtesies >= 0
+    ? splitGroupTotal(groupTotalPreTax, numPeople, numCourtesies)
+    : null;
+  const nfBase = allocation?.total ?? money(groupTotalPreTax);
 
   // Tax "por dentro": incide sobre o faturamento total (padrão NF Brasil)
   // Total = Base ÷ (1 - taxa%)  →  taxValue = Total - Base
@@ -1590,7 +1508,7 @@ export default function ProposalFormDialog({
   // For backward compat: total saved to DB = NF value
   const total = totalCharged;
   const totalWithAtmosFull = groupTotalPreTax; // for UI category breakdown
-  const pricePerPerson = numPaying > 0 ? totalCharged / numPaying : pricePerPersonPreTax;
+  const pricePerPerson = allocation ? totalCharged / allocation.paying : 0;
 
   const atmosInternalCosts = atmosService.internal_costs.reduce((s, c) => s + c.amount, 0);
 
@@ -1607,9 +1525,9 @@ export default function ProposalFormDialog({
       // Skip "Hospedagem" items — they are accounted for via accTotals
       if (cell.category === "Hospedagens") continue;
       const effCost = getEffectiveCost(cell);
-      const rev = cell.value * cell.qty;
-      const cost = effCost * cell.qty;
-      const comm = cost * (cell.comissao / 100);
+      const rev = lineTotal(cell.value, cell.qty);
+      const cost = lineTotal(effCost, cell.qty);
+      const comm = supplierCommission(cost, cell.comissao);
       const profit = rev - cost + comm;
 
       totalItemRevenue += rev;
@@ -1624,11 +1542,12 @@ export default function ProposalFormDialog({
 
   const totalCosts = costItems.reduce((s, c) => s + c.amount, 0);
   const commissionValue = totalCharged * (partnerCommission / 100);
-  const grossProfit = profitAnalysis.totalItemRevenue + atmosRevenue
-    - profitAnalysis.totalItemCost + profitAnalysis.totalCommission
-    + (accTotals.atmosRevenue - accTotals.atmosCost + accTotals.atmosCommission)
-    + accTotals.hospedagemCommission
-    - atmosInternalCosts - totalCosts - commissionValue - courtesyCost - discountValue;
+  const grossProfit = operatingProfit(
+    profitAnalysis.totalItemRevenue + atmosRevenue + accTotals.atmosRevenue,
+    profitAnalysis.totalItemCost + accTotals.atmosCost,
+    profitAnalysis.totalCommission + accTotals.atmosCommission + accTotals.hospedagemCommission,
+    atmosInternalCosts + totalCosts + commissionValue + discountValue,
+  );
   const totalRevenue = totalCharged;
   const margin = totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0;
   const atmosInsufficient = atmosRevenue < (totalCosts + taxValue) && (totalCosts + taxValue) > 0;
@@ -1636,6 +1555,7 @@ export default function ProposalFormDialog({
   // ─── Save ─────────────────────────────────────────────────────────
   const saveMutation = useMutation({
     mutationFn: async () => {
+      splitGroupTotal(nfBase, numPeople, numCourtesies);
       // Generate slug from title
       const slugify = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
       const baseSlug = slugify(title);
@@ -1655,7 +1575,9 @@ export default function ProposalFormDialog({
         start_date: startDate || null,
         end_date: endDate || null,
         language,
-        atmos_service: { ...atmosService, num_courtesies: numCourtesies },
+        atmos_service: { ...atmosService, num_courtesies: numCourtesies,
+          seller_commission_percent: partnerCommission,
+        },
         slug: baseSlug || null,
         payment_terms: paymentTerms.length > 0 ? { installments: paymentTerms } : null,
       };
@@ -1688,7 +1610,7 @@ export default function ProposalFormDialog({
             item_index: c.item_index,
             vehicle_type: dayVehicleType[c.day_number] || "carroTurista",
             quantity: c.qty,
-            cost_price: c.cost,
+            cost_price: getEffectiveCost(c),
             commission_percent: c.comissao,
             supplier_id: c.supplier_id || null,
           }));
@@ -1765,7 +1687,7 @@ export default function ProposalFormDialog({
               }
             }
           }
-          const commission = accCost * ((a._commission_percent || 0) / 100);
+          const commission = supplierCommission(accCost, a._commission_percent || 0);
           return {
             type: "receivable",
             description: `Comissão hospedagem: ${a.product_name} — ${code}`,
@@ -2037,7 +1959,7 @@ export default function ProposalFormDialog({
                   </Badge>
                   {numPeople > 1 && (
                     <div className="text-[10px] text-muted-foreground tabular-nums mt-0.5">
-                      R$ {(dayTotal / numPeople).toFixed(0)}/pessoa
+                      R$ {(numPaying > 0 ? dayTotal / numPaying : 0).toFixed(2)}/pessoa
                     </div>
                   )}
                 </div>
@@ -2536,7 +2458,7 @@ export default function ProposalFormDialog({
             {numCourtesies > 0 && (
               <div className="flex justify-between text-xs text-amber-600">
                 <span>Cortesias ({numCourtesies})</span>
-                <span className="tabular-nums">- R$ {courtesyCost.toFixed(2)}</span>
+                <span className="tabular-nums">Rateio entre {numPaying} pagantes</span>
               </div>
             )}
             {(numCourtesies > 0 || taxPercent > 0) && (
@@ -2651,12 +2573,7 @@ export default function ProposalFormDialog({
                         <span className="tabular-nums">− R$ {discountValue.toFixed(0)}</span>
                       </div>
                     )}
-                    {courtesyCost > 0 && (
-                      <div className="flex justify-between text-destructive text-xs">
-                        <span>Cortesias ({numCourtesies})</span>
-                        <span className="tabular-nums">− R$ {courtesyCost.toFixed(0)}</span>
-                      </div>
-                    )}
+
 
                     {itemsWithZeroCost.length > 0 && (
                       <div className="mt-1.5 p-2 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-[11px] space-y-1">

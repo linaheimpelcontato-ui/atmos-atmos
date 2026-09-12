@@ -1,3 +1,4 @@
+import { money, supplierCommission } from "@/lib/proposalCalcs";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -71,17 +72,17 @@ const MODALITY_LABELS: Record<string, string> = {
 function calcRoomSubtotal(room: ProposalRoom, nights: number): number {
   if (!room.available) return 0;
   if (room.pricing_type === "per_person") {
-    return room.units * room.capacity * room.price * nights;
+    return money(room.units * room.capacity * room.price * nights);
   }
-  return room.units * room.price * nights;
+  return money(room.units * room.price * nights);
 }
 
 function calcRoomCostTotal(room: ProposalRoom, nights: number): number {
   if (!room.available) return 0;
   if (room.pricing_type === "per_person") {
-    return room.units * room.capacity * room.cost * nights;
+    return money(room.units * room.capacity * room.cost * nights);
   }
-  return room.units * room.cost * nights;
+  return money(room.units * room.cost * nights);
 }
 
 function calcNights(checkin: string, checkout: string): number {
@@ -123,7 +124,7 @@ export function calcAccommodationTotals(accommodations: ProposalAccommodation[])
         totalRevenue += rev;
         totalCost += cost;
         totalPeople += room.units * room.capacity;
-        const comm = cost * (commPct / 100);
+        const comm = supplierCommission(cost, commPct);
         totalCommission += comm;
         if (isAtmos) {
           atmosRevenue += rev;
