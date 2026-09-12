@@ -5,6 +5,7 @@ import KanbanBoard from "@/components/admin/KanbanBoard";
 import ProspectSheet from "@/components/admin/ProspectSheet";
 import ProposalFormDialog from "@/components/admin/ProposalFormDialog";
 import { toast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, X, Globe, UserCheck, Gauge, Tags, RotateCcw } from "lucide-react";
 import PopoverFilter from "@/components/shared/PopoverFilter";

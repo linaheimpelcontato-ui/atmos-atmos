@@ -10,6 +10,7 @@ import { WishlistProvider } from "./contexts/WishlistContext";
 
 import { RouteTracker } from "./components/RouteTracker";
 import { CookieConsent } from "./components/ui/CookieConsent";
+import MaintenanceGate from "./components/MaintenanceGate";
 
 import { lazy, Suspense } from "react";
 
@@ -109,6 +110,7 @@ const App = () => (
               <RouteTracker />
               <Toaster />
               <Sonner />
+              <MaintenanceGate>
               <Suspense fallback={<div className="h-screen w-screen bg-[#FAF9F6]" />}>
                 <Routes>
                   {/* Public Home */}
@@ -189,6 +191,7 @@ const App = () => (
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
+              </MaintenanceGate>
             </TooltipProvider>
           </WishlistProvider>
         </BrowserRouter>

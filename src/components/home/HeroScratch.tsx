@@ -128,7 +128,7 @@ export default function HeroScratch({
               }}
               className="rounded-full px-10 h-12 text-[10px] font-bold uppercase tracking-[0.2em] bg-black text-white hover:bg-black/90 transition-all shadow-xl"
             >
-              Sign up
+              Criar conta
             </Button>
             <Button 
               onClick={() => {
@@ -138,7 +138,7 @@ export default function HeroScratch({
               variant="outline"
               className="rounded-full px-10 h-12 text-[10px] font-bold uppercase tracking-[0.2em] border-black/10 text-black hover:bg-black/5 transition-all bg-white"
             >
-              Log In
+              Entrar
             </Button>
           </motion.div>
         )}

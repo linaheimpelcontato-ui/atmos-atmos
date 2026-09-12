@@ -1,3 +1,5 @@
+import { staticMediaUrl } from "./staticMedia";
+
 const STORAGE_BASE = import.meta.env.VITE_R2_DOMAIN || "https://assets.atmos.tur.br";
 
 /**
@@ -165,6 +167,9 @@ export function getBaseStorageUrl(path: string): string {
   // If the path is already a full URL, return it as is
   if (path.startsWith("http")) return path;
   
+  const local = staticMediaUrl(path.replace(/^\//, ""));
+  if (local) return local;
+
   // Clean up leading slashes just in case
   let cleanPath = path.replace(/^\//, "");
   
@@ -174,10 +179,7 @@ export function getBaseStorageUrl(path: string): string {
   // Encode the path to handle spaces and special characters
   const encodedPath = cleanPath.split('/').map(segment => encodeURIComponent(segment)).join('/');
   
-  // In development, always prefer local assets to load instantly (0ms) and avoid slow network requests
-  if (import.meta.env.DEV) {
-    return `/assets/${encodedPath}`;
-  }
+  // Remote media must use the same origin in development and production.
   
   return `${STORAGE_BASE}/${encodedPath}`;
 }
@@ -222,6 +224,9 @@ export function heroUrl(path: string): string {
   if (!path) return "";
   if (path.startsWith("http")) return path;
 
+  const local = staticMediaUrl(path.replace(/^\//, ""));
+  if (local) return local;
+
   // Use the raw lowercase path — R2 stores files with lowercase, no-accent slugs
   const cleanPath = path.replace(/^\//, "");
 
@@ -242,6 +247,9 @@ export function heroUrl(path: string): string {
 export function cardUrl(path: string): string {
   if (!path) return "";
   if (path.startsWith("http")) return path;
+
+  const local = staticMediaUrl(path.replace(/^\//, ""));
+  if (local) return local;
 
   const cleanPath = path.replace(/^\//, "");
   const encodedPath = cleanPath.split('/').map(segment => encodeURIComponent(segment)).join('/');

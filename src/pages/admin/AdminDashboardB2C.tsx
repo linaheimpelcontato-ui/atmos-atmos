@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { isAfter, subDays, subMonths, startOfMonth, endOfMonth, format, differenceInDays, addDays } from "date-fns";
+import { isBefore, isAfter, subDays, subMonths, startOfMonth, endOfMonth, format, differenceInDays, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Instagram, Globe, MessageCircle, UserPlus, Users, RotateCcw, BarChart3, Filter, AlertCircle, TrendingUp, DollarSign, Target, Clock, ArrowRight, CalendarIcon as CalIcon } from "lucide-react";
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Bar, PieChart, Pie, Cell, AreaChart, Area } from "recharts";

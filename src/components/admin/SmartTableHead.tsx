@@ -18,6 +18,8 @@ export type SortDir = "asc" | "desc" | null;
 export type SmartFilters = Record<string, Set<string>>;
 
 export interface SmartFilterState {
+  search: string;
+  setSearch: (value: string) => void;
   sortKey: string | null;
   sortDir: SortDir;
   filters: SmartFilters;
@@ -31,6 +33,7 @@ export interface SmartFilterState {
 // ─── Hook ───────────────────────────────────────────────────────────
 
 export function useSmartFilters(): SmartFilterState {
+  const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>(null);
   const [filters, setFilters] = useState<SmartFilters>({});
@@ -66,6 +69,7 @@ export function useSmartFilters(): SmartFilterState {
   }, []);
 
   const clearAll = useCallback(() => {
+    setSearch("");
     setSortKey(null);
     setSortDir(null);
     setFilters({});
@@ -75,7 +79,14 @@ export function useSmartFilters(): SmartFilterState {
     data: T[],
     valueExtractors?: Record<string, (row: T) => unknown>,
   ): T[] => {
-    let result = data;
+    const term = search.trim().toLocaleLowerCase("pt-BR");
+    let result = term ? data.filter(row => {
+      const values = Object.values(row as Record<string, unknown>);
+      const labels = Object.values(valueExtractors ?? {}).map(extract => extract(row));
+      return [...values, ...labels].some(value =>
+        (typeof value === "string" || typeof value === "number") &&
+        String(value).toLocaleLowerCase("pt-BR").includes(term));
+    }) : data;
 
     // Apply column filters
     const activeFilters = Object.entries(filters);
@@ -110,9 +121,9 @@ export function useSmartFilters(): SmartFilterState {
     }
 
     return result;
-  }, [filters, sortKey, sortDir]);
+  }, [filters, sortKey, sortDir, search]);
 
-  return { sortKey, sortDir, filters, handleSort, setColumnFilter, clearColumnFilter, clearAll, applyFilters };
+  return { search, setSearch, sortKey, sortDir, filters, handleSort, setColumnFilter, clearColumnFilter, clearAll, applyFilters };
 }
 
 // ─── Shared Popover Content ─────────────────────────────────────────

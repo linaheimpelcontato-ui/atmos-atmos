@@ -16,22 +16,14 @@ export default function HeroMain({
   const [authMode, setAuthMode] = useState<"login" | "signup">("signup");
   const { user } = useAuth();
   const [videoActive, setVideoActive] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
-    // Only activate video on non-mobile devices to save massive bandwidth
-    if (window.innerWidth >= 768) {
-      setVideoActive(true);
-      return () => {
-        window.removeEventListener('resize', checkMobile);
-      };
-    }
-    
-    return () => window.removeEventListener('resize', checkMobile);
+    const media = window.matchMedia("(min-width: 768px)");
+    const update = () => setVideoActive(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
   }, []);
 
   return (
@@ -39,32 +31,34 @@ export default function HeroMain({
       {/* EXCLUSIVE VIVID VIDEO BACKGROUND */}
       <div className="absolute inset-0 z-0">
         {/* Desktop Video */}
-        <video
+        {videoActive && !videoFailed && <video
           autoPlay
           loop
           muted
           playsInline
-          preload="auto"
+          preload="metadata"
+          onError={() => setVideoFailed(true)}
           title="Atmos Chapada dos Veadeiros Cinematic"
           poster={optimizedUrl("home/hero-home.jpg", IMAGE_PRESETS.large)}
-          className="hidden md:block w-full h-full object-cover object-bottom opacity-70"
+          className="w-full h-full object-cover object-bottom opacity-70"
         >
           <source
             src={storageUrl("home/hero-bg.mp4")}
             type="video/mp4"
+            onError={() => setVideoFailed(true)}
           />
-        </video>
+        </video>}
 
         {/* Mobile/Fallback Image - Simple and Reliable */}
-        <img 
+        {(!videoActive || videoFailed) && <img
           src={optimizedUrl("home/hero-home.jpg", IMAGE_PRESETS.large)}
-          className="md:hidden w-full h-full object-cover object-bottom opacity-70"
+          className="w-full h-full object-cover object-bottom opacity-70"
           alt="Vista panorâmica da Chapada dos Veadeiros - ATMOS Turismo"
           fetchPriority="high"
           loading="eager"
           width="1920"
           height="1080"
-        />
+        />}
         
         {/* Enhanced Vignette for Accessibility/Contrast (Page 20 of report) */}
         <div className="absolute inset-0 bg-black/30 z-1" />
@@ -102,7 +96,7 @@ export default function HeroMain({
               }}
               className="rounded-full px-12 h-14 text-[10px] font-bold uppercase tracking-[0.2em] bg-[#141C15] text-[#FAF9F6] hover:bg-[#141C15]/90 transition-all shadow-2xl transform hover:scale-105"
             >
-              Sign up
+              Criar conta
             </Button>
             <Button 
               onClick={() => {
@@ -111,7 +105,7 @@ export default function HeroMain({
               }}
               className="rounded-full px-12 h-14 text-[10px] font-bold uppercase tracking-[0.2em] bg-[#FAF9F6] text-[#141C15] hover:bg-white transition-all shadow-2xl transform hover:scale-105"
             >
-              Log In
+              Entrar
             </Button>
           </motion.div>
         )}

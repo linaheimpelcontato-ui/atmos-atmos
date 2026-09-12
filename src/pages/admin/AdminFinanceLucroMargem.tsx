@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { SmartTh, useSmartFilters } from "@/components/admin/SmartTableHead";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Download, DollarSign, Percent, TrendingUp, Target, Activity, PieChart, Users, FileText, ChevronRight, Filter, Calendar } from "lucide-react";
 import {

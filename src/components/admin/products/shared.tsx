@@ -66,6 +66,7 @@ export type Product = {
 
 export type UpdatePayload = {
   id: string;
+  supplier_id?: string | null;
   unit_price?: number;
   cost_price?: number;
   is_active?: boolean;

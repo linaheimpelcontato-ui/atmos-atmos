@@ -54,7 +54,7 @@ function buildExperienceItems(): SyncItem[] {
   }));
 }
 
-function buildServiceItems(): SyncItem[] {
+export function buildServiceItems(): SyncItem[] {
   const items: SyncItem[] = [];
   for (const svc of services) {
     if (svc.tiers) {
@@ -94,7 +94,7 @@ function buildServiceItems(): SyncItem[] {
       }
     }
     // For services without tiers or items (like "especial")
-    if (!svc.tiers && !svc.items && !svc.transferTables) {
+    if (!svc.tiers && !svc.items && !svc.transferTable) {
       items.push({
         name: svc.title.pt,
         type: "service",
@@ -107,30 +107,36 @@ function buildServiceItems(): SyncItem[] {
         variables: {},
       });
     }
-    // Transfer tables as individual items
-    if (svc.transferTables) {
-      for (const table of svc.transferTables) {
-        for (const row of table.rows) {
-          const firstPrice = parseFloat(
-            (row.values[0] || "0").replace(/[^\d.,]/g, "").replace(".", "").replace(",", ".")
-          );
+    // Keep each vehicle capacity as an explicit, selectable catalog item.
+    if (svc.transferTable) {
+      const table = svc.transferTable;
+      for (const row of table.rows) {
+        row.values.forEach((price, index) => {
+          const amount = Number(price.replace(/[^\d,]/g, "").replace(",", "."));
+          if (!Number.isFinite(amount) || amount <= 0) return;
+          const perPerson = /\/pessoa/i.test(price);
+          const capacity = table.id === "particular" ? 4
+            : Number(table.columns[index + 1]?.match(/(\d+)\s*pessoas/i)?.[1]) || undefined;
+          const variant = row.values.length > 1 ? ` – ${table.columns[index + 1]}` : "";
+          const sourceId = `${table.id}-${row.destination.toLowerCase().replace(/\s/g, "-")}`;
           items.push({
-            name: `Transfer ${table.name.pt} – ${row.destination}`,
+            name: `Transfer ${table.name.pt} – ${row.destination}${variant}`,
             type: "service",
             segment: "b2c",
-            source_id: `${table.id}-${row.destination.toLowerCase().replace(/\s/g, "-")}`,
+            source_id: row.values.length > 1 ? `${sourceId}-${capacity}` : sourceId,
             source_type: "static_service",
             category: "transfer",
             description: table.description.pt.slice(0, 200),
-            unit_price: firstPrice,
-            variables: { 
+            unit_price: amount,
+            variables: {
               parentService: svc.id,
               transferType: table.id,
               destination: row.destination,
-              allValues: row.values,
+              pricingType: perPerson ? "por_pessoa" : "total",
+              ...(capacity ? { limitPeople: capacity } : {}),
             },
           });
-        }
+        });
       }
     }
   }

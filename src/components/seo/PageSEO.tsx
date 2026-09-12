@@ -1,9 +1,8 @@
 import { Helmet } from "react-helmet-async";
-import { optimizedUrl, IMAGE_PRESETS } from "@/lib/storage";
 
 const SITE_NAME = "ATMOS";
 const BASE_URL = "https://atmos.tur.br";
-const DEFAULT_OG_IMAGE = optimizedUrl("home/hero-home-1.jpg", IMAGE_PRESETS.large);
+const DEFAULT_OG_IMAGE = `${BASE_URL}/og-image.jpg`;
 
 interface PageSEOProps {
   title: string;
@@ -14,9 +13,9 @@ interface PageSEOProps {
 }
 
 export default function PageSEO({ title, description, path, image, keywords }: PageSEOProps) {
-  const fullTitle = path === "/" ? title : `${title} — ${SITE_NAME}`;
+  const fullTitle = path === "/" || /(?:—|\|)\s*ATMOS$/.test(title) ? title : `${title} — ${SITE_NAME}`;
   const canonical = `${BASE_URL}${path}`;
-  const ogImage = image || DEFAULT_OG_IMAGE;
+  const ogImage = new URL(image || DEFAULT_OG_IMAGE, BASE_URL).href;
 
   return (
     <Helmet>

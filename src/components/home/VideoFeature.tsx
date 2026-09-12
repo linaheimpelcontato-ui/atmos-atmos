@@ -5,7 +5,9 @@ import { storageUrl } from "@/lib/storage";
 export default function VideoFeature() {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const playRequest = useRef(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -19,6 +21,7 @@ export default function VideoFeature() {
 
   const handlePlay = async () => {
     if (!videoRef.current) return;
+    const request = ++playRequest.current;
 
     try {
       if (isPlaying) {
@@ -30,8 +33,12 @@ export default function VideoFeature() {
         await videoRef.current.play();
       }
     } catch (error) {
-      console.error("Video playback failed:", error);
+      if (request !== playRequest.current) return;
       setIsPlaying(false);
+      // AbortError (pause during loading) and autoplay restrictions are retryable.
+      if (videoRef.current?.error || (error instanceof DOMException && error.name === "NotSupportedError")) {
+        setVideoFailed(true);
+      }
     }
   };
 
@@ -66,7 +73,6 @@ export default function VideoFeature() {
       <motion.div
         style={{ scale, opacity, borderRadius, transformOrigin: "top" }}
         className="relative w-[88vw] max-w-[1400px] max-h-[82vh] mx-auto overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] border-2 border-white/90 z-10 cursor-pointer group flex items-start justify-center"
-        onClick={handlePlay}
       >
         <video
           ref={videoRef}
@@ -75,16 +81,26 @@ export default function VideoFeature() {
           poster={storageUrl("home/curadoria-bg.jpg")}
           className="w-full h-auto max-h-[82vh] object-cover block"
           onEnded={() => setIsPlaying(false)}
+          onError={() => { setVideoFailed(true); setIsPlaying(false); }}
         >
           <source
             src={storageUrl("home/video-destaque.mp4")}
             type="video/mp4"
+            onError={() => { setVideoFailed(true); setIsPlaying(false); }}
           />
           Your browser does not support the video tag.
         </video>
 
+        {videoFailed ? (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-white text-sm" role="status">
+            Vídeo indisponível no momento
+          </div>
+        ) : (
+          <button type="button" onClick={handlePlay} aria-label={isPlaying ? "Pausar filme" : "Assistir ao filme"}
+            className="absolute inset-0 z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-[-4px]" />
+        )}
         {/* HIGH-END EDITORIAL PLAY OVERLAY */}
-        {!isPlaying && (
+        {!isPlaying && !videoFailed && (
           <div className="absolute inset-0 bg-black/40 flex items-center justify-center transition-all duration-700 group-hover:bg-black/50">
             <motion.div 
               initial={{ opacity: 0 }}

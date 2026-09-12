@@ -330,7 +330,7 @@ export default function AdminFinanceContasReceber() {
                   </TableCell>
                   <TableCell className="p-4 text-center">
                     {tx.installment_number && tx.installment_total ? (
-                      <Badge variant="ghost" className="rounded-lg bg-admin-muted/60 text-[10px] font-black text-admin-primary/60 px-2">
+                      <Badge variant="secondary" className="rounded-lg bg-admin-muted/60 text-[10px] font-black text-admin-primary/60 px-2">
                         {tx.installment_number}/{tx.installment_total}
                       </Badge>
                     ) : "—"}

@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ArrowLeft, Mail, User, Phone, MapPin, Calendar, Lock, Check, ChevronRight, Globe, Eye, EyeOff, ChevronsUpDown } from "lucide-react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
@@ -23,7 +23,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
-import { Country, State, City } from 'country-state-city';
+
 
 interface AuthModalProps {
   open: boolean;
@@ -76,12 +76,13 @@ const ddiToCountry: Record<string, string> = {
 
 const loginImage = `${storageUrl("home/foto-login.jpg")}?v=2`;
 
-const normalizeString = (str: string) => 
+const normalizeString = (str: string) =>
   str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
 export default function AuthModal({ open, onClose, onSuccess, defaultMode = "signup" }: AuthModalProps) {
   const { signIn, signUp, signInWithGoogle, updateProfile, profile, user, session, resetPassword, signOut } = useAuth();
-  
+
+  const returnFocus = useRef<HTMLElement | null>(null);
   const [step, setStep] = useState<Step>("welcome");
   const [loading, setLoading] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
@@ -100,9 +101,23 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
   const [state, setState] = useState("");
   const [city, setCity] = useState("");
 
-  const allCountries = Country.getAllCountries();
-  const statesOfCountry = country ? State.getStatesOfCountry(country) : [];
-  const citiesOfState = (country && state) ? City.getCitiesOfState(country, state) : [];
+  const [geographyError, setGeographyError] = useState(false);
+  const [geographyAttempt, setGeographyAttempt] = useState(0);
+  const [geography, setGeography] = useState<typeof import("country-state-city") | null>(null);
+  useEffect(() => {
+    if (!open || step !== "location" || geography) return;
+    let cancelled = false;
+    setGeographyError(false);
+    import("country-state-city").then(data => {
+      if (!cancelled) setGeography(data);
+    }).catch(() => {
+      if (!cancelled) setGeographyError(true);
+    });
+    return () => { cancelled = true; };
+  }, [open, step, geography, geographyAttempt]);
+  const allCountries = geography?.Country.getAllCountries() ?? [];
+  const statesOfCountry = country ? geography?.State.getStatesOfCountry(country) ?? [] : [];
+  const citiesOfState = country && state ? geography?.City.getCitiesOfState(country, state) ?? [] : [];
   const [authMode, setAuthMode] = useState<"login" | "signup">(defaultMode);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -130,8 +145,8 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
   const handleNext = async () => {
     setError(null);
 
-    if (step === "welcome") { 
-      setMethod("email"); 
+    if (step === "welcome") {
+      setMethod("email");
       const checkedEmail = email.trim().toLowerCase();
       if (checkedEmail.includes("@gmil.com")) setEmail(checkedEmail.replace("@gmil.com", "@gmail.com"));
       else if (checkedEmail.includes("@gmai.com")) setEmail(checkedEmail.replace("@gmai.com", "@gmail.com"));
@@ -154,7 +169,7 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
         if (!email || !password) { setError("Defina e-mail e senha."); return; }
         if (password.length < 6) { setError("A senha deve ter no mínimo 6 caracteres."); return; }
         if (password !== confirmPassword) { setError("As senhas não coincidem."); return; }
-        setStep("name"); 
+        setStep("name");
       }
     }
     else if (step === "name") {
@@ -163,7 +178,7 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
     }
     else if (step === "phone") {
       if (!phone || phone.length < 10) { setError("Precisamos do seu telefone para contato."); return; }
-      
+
       const sortedDdis = Object.keys(ddiToCountry).sort((a, b) => b.length - a.length);
       for (const ddi of sortedDdis) {
         if (phone.startsWith(ddi)) {
@@ -184,15 +199,16 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
       const bYear = parseInt(birthYear);
       const date = new Date(bYear, bMonth - 1, bDay);
       if (date.getFullYear() !== bYear || date.getMonth() !== bMonth - 1 || date.getDate() !== bDay) {
-        setError("Data de nascimento inválida."); 
+        setError("Data de nascimento inválida.");
         return;
       }
       setStep("location");
     }
     else if (step === "location") {
-      if (!city.trim() || (country === "BR" && !state)) { 
-        setError("Conte-nos de onde você vê a Atmos."); 
-        return; 
+      if (!geography) { setError("Aguarde o carregamento das localidades antes de continuar."); return; }
+      if (!country || !city.trim() || (statesOfCountry.length > 0 && !state)) {
+        setError("Conte-nos de onde você vê a Atmos.");
+        return;
       }
       setLoading(true);
       await finishOnboarding();
@@ -221,10 +237,10 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
     try {
       const bDate = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`;
       const loc = country === "BR" ? `${city}, ${state}` : `${city}, ${country}`;
-      
+
       // Always save to auth metadata as backup and primary source
       const profileData = { full_name: fullName, phone, birth_date: bDate, city: loc };
-      
+
       // Update Auth Metadata first
       await supabase.auth.updateUser({
         data: profileData
@@ -253,12 +269,12 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
           await updateProfile({ full_name: fullName, phone });
         }
       }
-      
+
       // Sync with prospects table using a robust lookup-then-action pattern
       try {
         const normalizedEmail = email.toLowerCase();
         const { data: existing } = await supabase.from("prospects").select("id").eq("email", normalizedEmail).maybeSingle();
-        
+
         const prospectData = {
           name: fullName,
           email: normalizedEmail,
@@ -279,20 +295,20 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
       } catch (prospectErr) {
         console.error("Error syncing with prospects table:", prospectErr);
       }
-      
+
       setStep("success");
       trackSignup();
       setTimeout(() => { onSuccess(); onClose(); }, 1000);
-    } catch (err: any) { 
+    } catch (err: any) {
       console.error("Onboarding error:", err);
       if (err.message?.includes("User not found") || err.message?.includes("invalid_grant")) {
         setError("Sessão expirada. Por favor, faça login novamente.");
         setTimeout(() => { signOut(); onClose(); }, 2000);
       } else {
-        setError(err.message || "Ocorreu um erro ao finalizar seu cadastro."); 
+        setError(err.message || "Ocorreu um erro ao finalizar seu cadastro.");
       }
-    } finally { 
-      setLoading(false); 
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -318,21 +334,28 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-none w-screen h-screen p-0 border-none shadow-none !rounded-none bg-white z-[50] [&>button]:hidden overflow-hidden">
-        <div 
-          role="button"
+      {open && <DialogContent
+        onOpenAutoFocus={() => { returnFocus.current = document.activeElement as HTMLElement; }}
+        onCloseAutoFocus={(event) => { event.preventDefault(); returnFocus.current?.focus(); }}
+        className="max-w-none w-screen h-screen p-0 border-none shadow-none !rounded-none bg-white z-[50] [&>button]:hidden overflow-hidden">
+        <DialogTitle className="sr-only">{authMode === "login" ? "Entrar na Atmos" : "Criar conta na Atmos"}</DialogTitle>
+        <DialogDescription className="sr-only">Acesse sua conta ou cadastre-se para organizar sua viagem.</DialogDescription>
+        <div className="absolute top-12 right-8 z-[100]">
+        <button
+          type="button"
+          aria-label="Fechar acesso"
           onClick={() => {
-            if (user) signOut();
             onClose();
           }}
-          className="absolute top-12 right-8 w-10 h-10 bg-white/90 backdrop-blur-md rounded-full shadow-xl flex items-center justify-center group hover:bg-white transition-all z-[100] border border-black/5 cursor-pointer"
+          className="w-10 h-10 bg-white/90 backdrop-blur-md rounded-full shadow-xl flex items-center justify-center group hover:bg-white transition-all z-[100] border border-black/5 cursor-pointer"
         >
           <X className="h-4 w-4 text-black group-hover:scale-110 transition-transform" />
+        </button>
         </div>
 
         <div className="w-full h-full overflow-y-auto">
           <div className="flex flex-col lg:flex-row h-full w-full">
-            
+
             <div className="w-full lg:w-1/2 flex flex-col relative min-h-full">
               {currentStepIndex !== -1 && step !== "success" && (
                 <div className="absolute top-0 left-0 w-full h-1 bg-[#F5F5F5] z-[70]">
@@ -356,14 +379,14 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
                           <div className="space-y-6">
                             <Tabs value={authMode} onValueChange={(v) => setAuthMode(v as "login" | "signup")} className="w-full">
                               <TabsList className="grid w-full grid-cols-2 h-14 bg-black/[0.03] p-1 rounded-2xl">
-                                <TabsTrigger 
-                                  value="signup" 
+                                <TabsTrigger
+                                  value="signup"
                                   className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-lg font-bold tracking-tight text-xs uppercase"
                                 >
                                   Cadastro
                                 </TabsTrigger>
-                                <TabsTrigger 
-                                  value="login" 
+                                <TabsTrigger
+                                  value="login"
                                   className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-lg font-bold tracking-tight text-xs uppercase"
                                 >
                                   Login
@@ -379,8 +402,8 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
                               )}
                             </h2>
                             <p className="text-lg text-black/40 font-light max-w-sm">
-                              {authMode === "signup" 
-                                ? "Inicie sua jornada exclusiva pela Chapada dos Veadeiros." 
+                              {authMode === "signup"
+                                ? "Inicie sua jornada exclusiva pela Chapada dos Veadeiros."
                                 : "Acesse seu portal exclusivo e planeje sua próxima aventura."}
                             </p>
                           </div>
@@ -394,7 +417,7 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
                               <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-black/20">ou e-mail</span>
                               <div className="flex-grow h-px bg-black/5"></div>
                             </div>
-                            <form 
+                            <form
                               onSubmit={(e) => { e.preventDefault(); handleNext(); }}
                               className="space-y-4"
                             >
@@ -402,17 +425,17 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
                               {authMode === "signup" && <Input placeholder="Senha" type={showPassword ? "text" : "password"} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} className="h-16 rounded-2xl border-black/5 bg-[#FDFCFB] text-lg shadow-sm px-6" />}
                               {authMode === "signup" && (
                                 <div className="relative">
-                                  <Input 
-                                    placeholder="Confirme sua senha" 
-                                    type={showPassword ? "text" : "password"} 
-                                    autoComplete="new-password" 
-                                    value={confirmPassword} 
-                                    onChange={(e) => setConfirmPassword(e.target.value)} 
+                                  <Input
+                                    placeholder="Confirme sua senha"
+                                    type={showPassword ? "text" : "password"}
+                                    autoComplete="new-password"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
                                     className={cn(
                                       "h-16 rounded-2xl border-black/5 bg-[#FDFCFB] text-lg shadow-sm px-6 transition-all",
                                       confirmPassword && password && confirmPassword !== password && "border-red-500 focus:ring-red-500",
                                       confirmPassword && password && confirmPassword === password && "border-green-500 focus:ring-green-500"
-                                    )} 
+                                    )}
                                   />
                                   {confirmPassword && password && confirmPassword === password && (
                                     <Check className="absolute right-6 top-1/2 -translate-y-1/2 h-5 w-5 text-green-500" />
@@ -442,25 +465,25 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
                             </h2>
                             <p className="text-black/40 font-light">Insira sua senha para acessar sua conta.</p>
                           </div>
-                          <form 
+                          <form
                             onSubmit={(e) => { e.preventDefault(); handleNext(); }}
                             className="space-y-6 max-w-sm"
                           >
                             <div className="space-y-4">
-                              <Input 
+                              <Input
                                 disabled
                                 value={email}
                                 className="h-16 rounded-2xl border-black/5 bg-[#F8F8F8] text-lg px-6 opacity-60"
                               />
                               <div className="relative group">
-                                <Input 
+                                <Input
                                   autoFocus
-                                  placeholder="Sua senha" 
-                                  type={showPassword ? "text" : "password"} 
+                                  placeholder="Sua senha"
+                                  type={showPassword ? "text" : "password"}
                                   autoComplete="current-password"
-                                  className="h-16 rounded-2xl border-black/5 bg-[#FDFCFB] text-lg px-6 pr-14" 
-                                  value={password} 
-                                  onChange={(e) => setPassword(e.target.value)} 
+                                  className="h-16 rounded-2xl border-black/5 bg-[#FDFCFB] text-lg px-6 pr-14"
+                                  value={password}
+                                  onChange={(e) => setPassword(e.target.value)}
                                 />
                                 <button
                                   type="button"
@@ -475,7 +498,7 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
                             <Button type="submit" disabled={loading} className="w-full h-16 rounded-2xl bg-[#1A261B] text-white hover:bg-black font-bold uppercase tracking-widest text-[11px] flex items-center justify-center gap-3">
                               {loading ? <span className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <>Entrar <ChevronRight className="h-4 w-4" /></>}
                             </Button>
-                            <button 
+                            <button
                               type="button"
                               onClick={() => setStep("welcome")}
                               className="w-full text-[10px] uppercase tracking-[0.2em] font-bold text-black/40 hover:text-black transition-colors py-2"
@@ -494,7 +517,7 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
                             {step === "birthdate" && <>Data de nascimento</>}
                             {step === "location" && <>Onde você mora?</>}
                           </h3>
-                          <form 
+                          <form
                             onSubmit={(e) => { e.preventDefault(); handleNext(); }}
                             className="space-y-8 max-w-sm"
                           >
@@ -524,6 +547,12 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
                             )}
                             {step === "location" && (
                               <div className="space-y-6">
+                                {!geography && (geographyError ? (
+                                  <div role="alert" className="text-sm space-y-2">
+                                    <p>Não foi possível carregar as localidades.</p>
+                                    <Button type="button" variant="outline" onClick={() => setGeographyAttempt(value => value + 1)}>Tentar novamente</Button>
+                                  </div>
+                                ) : <p role="status" className="text-sm">Carregando localidades…</p>)}
                                 <div className="space-y-2">
                                   <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-black/40 pl-1">País</label>
                                   <Popover>
@@ -534,7 +563,7 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
                                       </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 rounded-2xl border-black/5 shadow-2xl z-[100]">
-                                      <Command 
+                                      <Command
                                         className="rounded-2xl"
                                         filter={(value, search) => {
                                           if (normalizeString(value).includes(normalizeString(search))) return 1;
@@ -576,7 +605,7 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
                                         </Button>
                                       </PopoverTrigger>
                                       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 rounded-2xl border-black/5 shadow-2xl z-[100]">
-                                        <Command 
+                                        <Command
                                           className="rounded-2xl"
                                           filter={(value, search) => {
                                             if (normalizeString(value).includes(normalizeString(search))) return 1;
@@ -618,7 +647,7 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
                                         </Button>
                                       </PopoverTrigger>
                                       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 rounded-2xl border-black/5 shadow-2xl z-[100]">
-                                        <Command 
+                                        <Command
                                           className="rounded-2xl"
                                           filter={(value, search) => {
                                             if (normalizeString(value).includes(normalizeString(search))) return 1;
@@ -644,11 +673,11 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
                                       </PopoverContent>
                                     </Popover>
                                   ) : (
-                                    <Input 
-                                      placeholder="Digite o nome da sua cidade" 
-                                      value={city} 
-                                      onChange={(e) => setCity(e.target.value)} 
-                                      className="h-16 rounded-2xl border-black/5 bg-[#FDFCFB] text-lg shadow-sm px-6" 
+                                    <Input
+                                      placeholder="Digite o nome da sua cidade"
+                                      value={city}
+                                      onChange={(e) => setCity(e.target.value)}
+                                      className="h-16 rounded-2xl border-black/5 bg-[#FDFCFB] text-lg shadow-sm px-6"
                                     />
                                   )}
                                 </div>
@@ -656,11 +685,11 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
                             )}
 
                             {error && <p className="text-[10px] font-bold text-red-500 uppercase tracking-widest">{error}</p>}
-                            <Button type="submit" disabled={loading} className="w-full h-16 rounded-2xl bg-[#1A261B] text-white hover:bg-black font-bold uppercase tracking-widest text-[11px] flex items-center justify-center gap-3">
+                            <Button type="submit" disabled={loading || (step === "location" && !geography)} className="w-full h-16 rounded-2xl bg-[#1A261B] text-white hover:bg-black font-bold uppercase tracking-widest text-[11px] flex items-center justify-center gap-3">
                               {loading ? <span className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <>Avançar <ChevronRight className="h-4 w-4" /></>}
                             </Button>
                             <div className="flex flex-col items-center gap-2">
-                              <button 
+                              <button
                                 type="button"
                                 onClick={() => {
                                   const steps: Step[] = ["welcome", "name", "phone", "birthdate", "location"];
@@ -671,7 +700,7 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
                               >
                                 Voltar
                               </button>
-                              <button 
+                              <button
                                 type="button"
                                 onClick={() => {
                                   signOut();
@@ -708,7 +737,7 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
             </div>
           </div>
         </div>
-      </DialogContent>
+      </DialogContent>}
     </Dialog>
   );
 }
