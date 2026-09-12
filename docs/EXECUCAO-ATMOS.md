@@ -69,3 +69,7 @@ Commit `7717250`: projeção pública com whitelist aninhada, separação de con
 Validação local após o lote: 31 testes Vitest passaram; TypeScript e `git diff --check` passaram. Preview da home: 109 imagens, nenhuma com carregamento concluído e largura natural zero. Preview de catálogo sem migration: mensagem de indisponibilidade e retry, sem consulta de fallback à tabela interna. Isso valida o tratamento de ausência do backend novo, não o conteúdo retornado pela futura RPC.
 
 Consulte `HOMOLOGACAO-E-PENDENCIAS.md` para o limite exato desta entrega e os ensaios ainda necessários. As fixtures SQL ainda não foram executadas.
+
+## Inventário inicial de mídia
+
+`docs/MEDIA-INVENTORY.json` registra 286 arquivos de mídia versionados no repositório, somando 431.069.663 bytes, com SHA-256 por arquivo. O campo `target_object_key` permanece nulo até definição do destino. Esse inventário não inclui objetos remotos de Cloudflare/Supabase nem originais ainda não fornecidos; nenhuma mídia foi migrada. A fonte e o hash permitem conferir cópia e preservar os nomes exatos, inclusive Unicode.
