@@ -1,4 +1,5 @@
-import { lineTotal, money, supplierCommission, splitGroupTotal, resizeFixedPrice, operatingProfit } from "@/lib/proposalCalcs";
+import { accommodationAmounts, normalizeSavedRooms, hasMissingCommission } from "@/lib/accommodationCalcs";
+import { lineTotal, money, supplierCommission, splitGroupTotal, resizeFixedPrice, operatingProfit, recordedCost } from "@/lib/proposalCalcs";
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -155,6 +156,7 @@ function TextCell({ value, onCommit, className, ...props }: {
 }
 
 type DayItem = {
+  id?: string;
   day_number: number;
   day_label: string;
   category: string;
@@ -592,7 +594,8 @@ export default function ProposalFormDialog({
     }
 
     // 2. Proposal's own cost → source of truth for existing proposals
-    if (cell.cost > 0) return cell.cost;
+    const savedCost = recordedCost(cell.cost);
+    if (savedCost !== undefined) return savedCost;
 
     // 3. Catalog fallback (only useful for brand-new items with no cost yet)
     if (cell.catalog_item_id) {
@@ -742,6 +745,7 @@ export default function ProposalFormDialog({
         });
         setDayVehicleType(vtMap);
         const loaded = dayItems.map((d: any) => ({
+          id: d.id,
           day_number: d.day_number,
           day_label: d.day_label || `Dia ${d.day_number}`,
           category: LEGACY_CATEGORY_MAP[d.category] || d.category,
@@ -817,46 +821,7 @@ export default function ProposalFormDialog({
         const loadedAccs: ProposalAccommodation[] = accData.map((a: any) => {
           const product = catalogItems.find((c: any) => c.id === a.product_id);
           const catalogConfigs = product ? normalizeRoomConfigs((product.variables || {}).room_modalities) : [];
-          const roomsRaw = a.rooms || {};
-          // New multi-unit format: array of unit configs
-          let unit_configs: any[] = [];
-          if (Array.isArray(roomsRaw)) {
-            // Could be array of unit configs (new) or old flat modality array
-            if (roomsRaw.length > 0 && roomsRaw[0].rooms) {
-              unit_configs = roomsRaw.map((u: any) => ({
-                unit_label: u.unit_label || "",
-                total_units: u.total_units || 0,
-                max_capacity: u.max_capacity || 1,
-                rooms: (u.rooms || []).map((r: any) => ({
-                  type: r.type || "", capacity: r.capacity || 1, units: r.units || 0,
-                  price: r.price || 0, cost: r.cost || 0, pricing_type: r.pricing_type || "per_room",
-                  available: r.available !== false,
-                })),
-              }));
-            } else {
-              // Old flat array of rooms
-              unit_configs = [{
-                unit_label: "", total_units: 0, max_capacity: 1,
-                rooms: roomsRaw.map((r: any) => ({
-                  type: r.type || "", capacity: r.capacity || 1, units: r.units || 0,
-                  price: r.price || 0, cost: r.cost || 0, pricing_type: r.pricing_type || "per_room",
-                  available: r.available !== false,
-                })),
-              }];
-            }
-          } else if (roomsRaw.modalities) {
-            // Old single-unit wrapped format
-            unit_configs = [{
-              unit_label: roomsRaw.unit_label || "",
-              total_units: roomsRaw.total_units || 0,
-              max_capacity: roomsRaw.max_capacity || 1,
-              rooms: (roomsRaw.modalities as any[]).map((r: any) => ({
-                type: r.type || "", capacity: r.capacity || 1, units: r.units || 0,
-                price: r.price || 0, cost: r.cost || 0, pricing_type: r.pricing_type || "per_room",
-                available: r.available !== false,
-              })),
-            }];
-          }
+          const unit_configs = normalizeSavedRooms(a.rooms);
           const vars = (product?.variables || {}) as Record<string, unknown>;
           const commPct = Number(vars.comissao) || 0;
           return {
@@ -1305,7 +1270,7 @@ export default function ProposalFormDialog({
       const pricingType = (vars.pricingType as string) || (isTransferOrDrone ? "total" : "");
       const unitPrice = Number(item.unit_price);
       const costPrice = Number(item.cost_price) || 0;
-      const costBase = costPrice > 0 ? costPrice : unitPrice;
+      const costBase = costPrice;
       const saleValue = pricingType === "total" && numPeople > 0
         ? (unitPrice / numPeople)
         : unitPrice;
@@ -1582,174 +1547,44 @@ export default function ProposalFormDialog({
         payment_terms: paymentTerms.length > 0 ? { installments: paymentTerms } : null,
       };
 
-      let propId = proposalId;
-      if (propId) {
-        const { error } = await db.from("proposals").update(payload).eq("id", propId);
-        if (error) throw error;
-        await db.from("proposal_day_items").delete().eq("proposal_id", propId);
-      } else {
-        const { data, error } = await db.from("proposals").insert(payload).select("id").single();
-        if (error) throw error;
-        propId = data.id;
+      if (proposalAccommodations.some(a => a.is_selected && hasMissingCommission(a.unit_configs))) {
+        throw new Error("Confirme a comissão de cada modalidade de hospedagem, inclusive quando for zero. O catálogo atual não comprova percentuais históricos.");
       }
+      const itemsPayload = grid.filter(c => c.value > 0 || c.item_name?.trim()).map(c => ({
+        id: c.id,
+        day_number: c.day_number, day_label: c.day_label, category: c.category,
+        item_name: c.item_name || "", value: c.value, value_text: c.value_text || null,
+        description: c.description || null, catalog_item_id: c.catalog_item_id || null,
+        variation_id: c.variation_id || null, item_index: c.item_index,
+        vehicle_type: dayVehicleType[c.day_number] || "carroTurista", quantity: c.qty,
+        cost_price: getEffectiveCost(c), commission_percent: c.comissao, supplier_id: c.supplier_id || null,
+      }));
+      const costsPayload = costItems.filter(c => c.amount > 0 || c.description).map(c => ({
+        id: c.id, description: c.description, amount: c.amount, account_id: c.account_id || null,
+      }));
+      const daysPayload = Array.from({ length: numDays }, (_, index) => ({ day_number: index + 1, description: dayDescriptions[index + 1] ?? "" }));
+      const accommodationsPayload = proposalAccommodations.map(a => ({
+        id: a.id ?? crypto.randomUUID(), product_id: a.product_id,
+        checkin_date: a.checkin_date || null, checkout_date: a.checkout_date || null,
+        num_nights: a.num_nights, notes: a.notes || "", is_selected: a.is_selected,
+        payment_type: a.payment_type, rooms: a.unit_configs,
+      }));
+      const commissions = proposalAccommodations.flatMap((a, index) => {
+        if (!a.is_selected || a.payment_type !== "hospedagem") return [];
+        const amount = accommodationAmounts(a.unit_configs, a.num_nights).commission;
+        if (amount <= 0) return [];
+        return [{ source_key: `accommodation:${accommodationsPayload[index].id}`,
+          description: `Comissão hospedagem: ${a.product_name}`, amount,
+          due_date: a.checkin_date || startDate || new Date().toISOString().slice(0, 10) }];
+      });
+      const { data, error } = await db.rpc("save_proposal_bundle", {
+        p_id: proposalId || null, p_proposal: payload, p_items: itemsPayload,
+        p_costs: costsPayload, p_days: daysPayload, p_accommodations: accommodationsPayload,
+        p_commissions: commissions,
+      });
+      if (error) throw error;
+      if (data?.legacy_commissions) toast({ title: "Comissões históricas preservadas", description: "Recebíveis antigos sem vínculo de origem exigem conciliação manual. Nenhum foi apagado, recriado ou alterado." });
 
-      if (grid.length > 0) {
-        const itemsPayload = grid
-          .filter((c) => c.value > 0 || (c.item_name && c.item_name.trim()))
-          .map((c) => ({
-            proposal_id: propId!,
-            day_number: c.day_number,
-            day_label: c.day_label,
-            category: c.category,
-            item_name: c.item_name || "",
-            value: c.value,
-            value_text: c.value_text || null,
-            description: c.description || null,
-            catalog_item_id: c.catalog_item_id || null,
-            variation_id: c.variation_id || null,
-            item_index: c.item_index,
-            vehicle_type: dayVehicleType[c.day_number] || "carroTurista",
-            quantity: c.qty,
-            cost_price: getEffectiveCost(c),
-            commission_percent: c.comissao,
-            supplier_id: c.supplier_id || null,
-          }));
-        if (itemsPayload.length > 0) {
-          const { error } = await db.from("proposal_day_items").insert(itemsPayload);
-          if (error) throw error;
-        }
-      }
-
-      await db.from("proposal_costs").delete().eq("proposal_id", propId);
-      if (costItems.length > 0) {
-        const costsPayload = costItems.filter((c) => c.amount > 0 || c.description).map((c) => ({
-          proposal_id: propId!,
-          description: c.description,
-          amount: c.amount,
-          account_id: c.account_id || null,
-        }));
-        if (costsPayload.length > 0) {
-          const { error } = await db.from("proposal_costs").insert(costsPayload);
-          if (error) throw error;
-        }
-      }
-
-      // Save day descriptions
-      await db.from("proposal_days").delete().eq("proposal_id", propId);
-      const dayDescsPayload = Object.entries(dayDescriptions)
-        .filter(([, desc]) => desc && desc.trim())
-        .map(([dayNum, description]) => ({
-          proposal_id: propId!,
-          day_number: parseInt(dayNum),
-          description,
-        }));
-      if (dayDescsPayload.length > 0) {
-        const { error } = await db.from("proposal_days").insert(dayDescsPayload);
-        if (error) throw error;
-      }
-
-      // Save proposal accommodations
-      await db.from("proposal_accommodations").delete().eq("proposal_id", propId);
-      if (proposalAccommodations.length > 0) {
-        const accPayload = proposalAccommodations.map((a) => ({
-          proposal_id: propId!,
-          product_id: a.product_id,
-          checkin_date: a.checkin_date || null,
-          checkout_date: a.checkout_date || null,
-          num_nights: a.num_nights,
-          notes: a.notes || "",
-          is_selected: a.is_selected,
-          payment_type: a.payment_type || "hospedagem",
-          rooms: a.unit_configs,
-        }));
-        const { error } = await db.from("proposal_accommodations").insert(accPayload);
-        if (error) throw error;
-      }
-
-      // Create financial transactions for "hospedagem" type commissions
-      // First delete existing commission transactions for this proposal's accommodations
-      await db.from("financial_transactions").delete()
-        .eq("proposal_id", propId)
-        .like("description", "Comissão hospedagem:%");
-
-      const hospedagemAccs = proposalAccommodations.filter(a => a.is_selected && a.payment_type === "hospedagem" && (a._commission_percent || 0) > 0);
-      if (hospedagemAccs.length > 0) {
-        const code = (await db.from("proposals").select("code").eq("id", propId).single()).data?.code || "";
-        const txPayload = hospedagemAccs.map(a => {
-          let accCost = 0;
-          for (const unit of a.unit_configs) {
-            for (const room of unit.rooms) {
-              if (!room.available) continue;
-              if (room.pricing_type === "per_person") {
-                accCost += room.units * room.capacity * room.cost * a.num_nights;
-              } else {
-                accCost += room.units * room.cost * a.num_nights;
-              }
-            }
-          }
-          const commission = supplierCommission(accCost, a._commission_percent || 0);
-          return {
-            type: "receivable",
-            description: `Comissão hospedagem: ${a.product_name} — ${code}`,
-            amount: commission,
-            due_date: a.checkin_date || startDate || new Date().toISOString().slice(0, 10),
-            proposal_id: propId!,
-            prospect_id: prospectId || null,
-            status: "pending",
-          };
-        }).filter(t => t.amount > 0);
-        if (txPayload.length > 0) {
-          await db.from("financial_transactions").insert(txPayload);
-        }
-      }
-
-      if (prospectId) {
-        // Update prospect name if title follows pattern "Proposta — Name"
-        const prospectUpdate: Record<string, unknown> = {};
-        const match = title.match(/^Proposta\s*[—–-]\s*(.+)$/i);
-        if (match) prospectUpdate.name = match[1].trim();
-        if (Object.keys(prospectUpdate).length > 0) {
-          await db.from("prospects").update(prospectUpdate).eq("id", prospectId);
-        }
-
-        // Update linked quote_request or imersao_lead with proposal data
-        const { data: prospect } = await db.from("prospects").select("email, segment").eq("id", prospectId).maybeSingle();
-        if (prospect?.email) {
-          if (prospect.segment === "b2c") {
-            const { data: qr } = await db.from("quote_requests")
-              .select("id, answers")
-              .eq("user_email", prospect.email)
-              .order("created_at", { ascending: false })
-              .limit(1)
-              .maybeSingle();
-            if (qr) {
-              const existingAnswers = (typeof qr.answers === "object" && qr.answers) ? qr.answers : {};
-              const updatedAnswers = {
-                ...existingAnswers,
-                groupSize: String(numPeople),
-                startDate: startDate || (existingAnswers as any).startDate || "",
-                endDate: endDate || (existingAnswers as any).endDate || "",
-                numDays: String(numDays),
-              };
-              await db.from("quote_requests").update({ answers: updatedAnswers }).eq("id", qr.id);
-            }
-          } else {
-            const { data: il } = await db.from("imersao_leads")
-              .select("id")
-              .eq("email", prospect.email)
-              .order("created_at", { ascending: false })
-              .limit(1)
-              .maybeSingle();
-            if (il) {
-              await db.from("imersao_leads").update({
-                num_participantes: String(numPeople),
-                data_especifica: startDate || null,
-                data_especifica_fim: endDate || null,
-              }).eq("id", il.id);
-            }
-          }
-        }
-      }
     },
     onSuccess: () => {
       setIsDirty(false);
@@ -2442,11 +2277,13 @@ export default function ProposalFormDialog({
             )}
             {numPeople > 1 && accVariants.length > 0 && (
               <div className="space-y-1 mt-1 p-2 rounded-md border border-primary/20 bg-primary/5">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Por pessoa (com hospedagem)</p>
-                {accVariants.map(v => (
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Média por pagante (com hospedagem)</p>
+                <p className="text-sm font-medium">R$ {pricePerPersonPreTax.toFixed(2)}</p>
+                {allocation && <p className="text-xs">{allocation.lowerCount} pagante(s) × R$ {allocation.lowerAmount.toFixed(2)}{allocation.upperCount > 0 ? ` + ${allocation.upperCount} pagante(s) × R$ ${allocation.upperAmount.toFixed(2)}` : ""} (antes de impostos)</p>}
+                {accVariants.length > 1 && numCourtesies > 0 && <p className="text-xs text-amber-700">Distribuição por modalidade pendente de definição. A média financia o total do grupo e não define preços individuais por quarto.</p>}
+                {numCourtesies === 0 && accVariants.map(v => (
                   <div key={v.type} className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">{v.label}</span>
-                    <span className="tabular-nums font-medium">R$ {(basePerPerson + v.revenuePerPerson).toFixed(2)}</span>
+                    <span>{v.label}</span><span>R$ {(basePerPerson + v.revenuePerPerson).toFixed(2)}</span>
                   </div>
                 ))}
                 <div className="flex justify-between text-xs border-t border-border pt-1 mt-1">

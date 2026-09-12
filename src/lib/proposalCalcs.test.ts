@@ -9,7 +9,7 @@ const item = (patch: Partial<DayItem> = {}): DayItem => ({ id: "i", proposal_id:
 describe("group pricing", () => {
   it("preserves all 20 travelers' costs when only 18 pay", () => {
     const total = lineTotal(100, 20);
-    expect(splitGroupTotal(total, 20, 2)).toEqual({ total: 2000, paying: 18, perPerson: 2000 / 18 });
+    expect(splitGroupTotal(total, 20, 2)).toMatchObject({ total: 2000, paying: 18, perPerson: 2000 / 18 });
     expect(splitGroupTotal(total, 20, 0).total).toBe(2000);
   });
   it.each([[20,20], [20,21], [0,0], [20,-1], [20,1.5]])("rejects invalid paying count %s/%s", (people, courtesies) => {
@@ -46,7 +46,7 @@ describe("finance matches saved proposal components", () => {
     expect(actual.guideProfit).toBe(100);
   });
   it.each(["atmos", "hospedagem"])("respects lodging payment mode %s", payment_type => {
-    const p = proposal({ subtotal: 0, proposal_accommodations: [{ is_selected: true, payment_type, num_nights: 2, products: { variables: { comissao: 10 } }, rooms: [{ rooms: [{ available: true, units: 1, capacity: 2, pricing_type: "per_person", cost: 100, price: 150 }] }] }] });
+    const p = proposal({ subtotal: 0, proposal_accommodations: [{ is_selected: true, payment_type, num_nights: 2, products: { variables: { comissao: 10 } }, rooms: [{ rooms: [{ available: true, units: 1, capacity: 2, pricing_type: "per_person", cost: 100, price: 150, commission_percent: 10 }] }] }] });
     expect(calcProposalProfit(p, [], []).profit).toBe(payment_type === "atmos" ? 240 : 40);
   });
   it("counts quantity in category and product reports", () => {

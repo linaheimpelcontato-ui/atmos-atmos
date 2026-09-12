@@ -1,3 +1,4 @@
+import { accommodationAmounts, normalizeSavedRooms } from "@/lib/accommodationCalcs";
 import { lineTotal, supplierCommission, operatingProfit } from "@/lib/proposalCalcs";
 import type { Proposal, DayItem, ProposalCost, Guide, Product } from "./useFinanceData";
 import { format, startOfMonth, endOfMonth, subMonths, eachMonthOfInterval, addDays, startOfWeek } from "date-fns";
@@ -20,20 +21,14 @@ export function calcProposalProfit(
   const atmosInternalCosts = (atmos.internal_costs || []).reduce((s: number, ic: any) => s + Number(ic.amount || 0), 0);
   const directCosts = costs.filter(c => c.proposal_id === p.id).reduce((s, c) => s + Number(c.amount), 0);
   let accommodationProfit = 0;
+  let missingAccommodationCommissions = 0;
   for (const acc of p.proposal_accommodations || []) {
     if (!acc.is_selected) continue;
-    const raw = acc.rooms || [];
-    const units = Array.isArray(raw) ? raw : [raw];
-    const rooms = units.flatMap((unit: any) => unit.rooms || unit.modalities || [unit]);
-    for (const room of rooms) {
-      if (room.available === false) continue;
-      const quantity = Number(room.units || 0) * (room.pricing_type === "per_person" ? Number(room.capacity || 1) : 1) * Number(acc.num_nights || 0);
-      const cost = lineTotal(Number(room.cost || 0), quantity);
-      const revenue = lineTotal(Number(room.price || 0), quantity);
-      const commission = supplierCommission(cost, Number(acc.products?.variables?.comissao || 0));
-      accommodationProfit += (acc.payment_type === "atmos" ? revenue - cost : 0) + commission;
-    }
+    const amounts = accommodationAmounts(normalizeSavedRooms(acc.rooms), Number(acc.num_nights ?? 0));
+    missingAccommodationCommissions += amounts.missingCommissions;
+    accommodationProfit += (acc.payment_type === "atmos" ? amounts.revenue - amounts.cost : 0) + amounts.commission;
   }
+
   const discount = Number(p.subtotal || 0) * Number(p.discount_percent || 0) / 100 + Number(p.discount_fixed || 0);
   // Seller commission is an outgoing commission, separate from supplier commission.
   const sellerCommission = Number(p.total) * Number(atmos.seller_commission_percent || 0) / 100;
@@ -42,7 +37,7 @@ export function calcProposalProfit(
   const revenue = Number(p.total);
   const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
 
-  return { revenue, profit, margin, guideProfit, markupProfit, commissionProfit, atmosRevenue, atmosInternalCosts, directCosts };
+  return { revenue, profit, margin, missingAccommodationCommissions, guideProfit, markupProfit, commissionProfit, atmosRevenue, atmosInternalCosts, directCosts };
 }
 
 export function getProposalCost(p: Proposal, costs: ProposalCost[], items?: DayItem[]) {

@@ -1,4 +1,5 @@
-import { money, supplierCommission } from "@/lib/proposalCalcs";
+import { accommodationAmounts } from "@/lib/accommodationCalcs";
+import { money } from "@/lib/proposalCalcs";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -114,28 +115,18 @@ export function calcAccommodationTotals(accommodations: ProposalAccommodation[])
   let atmosCommission = 0;
   let hospedagemCommission = 0;
   for (const acc of selected) {
-    const commPct = acc._commission_percent || 0;
-    const isAtmos = acc.payment_type === "atmos";
-    for (const unit of acc.unit_configs) {
-      for (const room of unit.rooms) {
-        if (!room.available) continue;
-        const rev = calcRoomSubtotal(room, acc.num_nights);
-        const cost = calcRoomCostTotal(room, acc.num_nights);
-        totalRevenue += rev;
-        totalCost += cost;
-        totalPeople += room.units * room.capacity;
-        const comm = supplierCommission(cost, commPct);
-        totalCommission += comm;
-        if (isAtmos) {
-          atmosRevenue += rev;
-          atmosCost += cost;
-          atmosCommission += comm;
-        } else {
-          hospedagemCommission += comm;
-        }
-      }
-    }
+    const amounts = accommodationAmounts(acc.unit_configs, acc.num_nights);
+    totalRevenue += amounts.revenue;
+    totalCost += amounts.cost;
+    totalPeople += amounts.people;
+    totalCommission += amounts.commission;
+    if (acc.payment_type === "atmos") {
+      atmosRevenue += amounts.revenue;
+      atmosCost += amounts.cost;
+      atmosCommission += amounts.commission;
+    } else hospedagemCommission += amounts.commission;
   }
+
   return { totalRevenue, totalCost, totalPeople, totalCommission, atmosRevenue, atmosCost, atmosCommission, hospedagemCommission };
 }
 
@@ -363,6 +354,7 @@ export default function ProposalAccommodationsSection({
       cost: catalogModality.cost_price,
       pricing_type: catalogModality.pricing_type,
       available: true,
+      commission_percent: acc._commission_percent ?? 0,
     };
 
     const arr = [...accommodations];
@@ -646,6 +638,12 @@ export default function ProposalAccommodationsSection({
                               />
                             </div>
                             <div className="flex items-center gap-1">
+                              <Label className="text-[10px]">Comissão %</Label>
+                              <Input aria-label="Comissão do fornecedor (%)" type="number" min={0} max={100} step="0.01" className="h-7 w-20 text-xs"
+                                placeholder="Confirmar" value={room.commission_percent ?? ""}
+                                onChange={e => updateRoom(accIdx, unitIdx, rIdx, { commission_percent: e.target.value === "" ? undefined : Number(e.target.value) })} />
+                            </div>
+                            <div className="flex items-center gap-1">
                               <Label className="text-[10px] text-muted-foreground">Venda</Label>
                               <Input
                                 className="h-7 w-20 text-xs text-right tabular-nums"
@@ -727,14 +725,12 @@ export default function ProposalAccommodationsSection({
                   <div className="flex items-center justify-between text-xs border-t border-border pt-2 flex-wrap gap-1">
                     <span className="text-muted-foreground">
                       {acc.num_nights} diária{acc.num_nights !== 1 ? "s" : ""} · {accPeople} pessoa{accPeople !== 1 ? "s" : ""}
-                      {(acc._commission_percent || 0) > 0 && (
-                        <span className="ml-2 text-green-600">Comissão: {acc._commission_percent}%</span>
-                      )}
+                      {accommodationAmounts(acc.unit_configs, acc.num_nights).missingCommissions > 0 && <span className="ml-2 text-amber-700">Comissão histórica não informada: confirme por modalidade antes de salvar.</span>}
                     </span>
                     <div className="flex gap-4">
                       <span className="text-muted-foreground">Custo: <span className="tabular-nums text-destructive">R$ {accCost.toFixed(0)}</span></span>
-                      {acc.payment_type === "hospedagem" && (acc._commission_percent || 0) > 0 && (
-                        <span className="text-green-600">Comissão a receber: <span className="tabular-nums">R$ {(accCost * (acc._commission_percent || 0) / 100).toFixed(0)}</span></span>
+                      {acc.payment_type === "hospedagem" && (
+                        <span className="text-green-600">Comissão a receber: <span className="tabular-nums">R$ {accommodationAmounts(acc.unit_configs, acc.num_nights).commission.toFixed(2)}</span></span>
                       )}
                       <span className="font-semibold">Total: <span className="tabular-nums">R$ {accTotal.toFixed(0)}</span></span>
                     </div>

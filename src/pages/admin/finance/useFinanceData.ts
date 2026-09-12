@@ -9,7 +9,7 @@ export function useFinanceData() {
     queryFn: async () => {
       const { data } = await db
         .from("proposals")
-        .select("id, title, code, total, subtotal, discount_percent, discount_fixed, proposal_accommodations(*, products(variables)), atmos_service, created_at, num_people, num_days, segment, status, start_date, prospect_id, seller_id")
+        .select("id, title, code, total, subtotal, discount_percent, discount_fixed, proposal_accommodations(*), atmos_service, created_at, num_people, num_days, segment, status, start_date, prospect_id, seller_id")
         .order("created_at", { ascending: false });
       return data || [];
     },
@@ -122,6 +122,7 @@ export type ProposalCost = {
 export type Guide = { id: string; name: string; is_active: boolean };
 export type Product = { id: string; name: string; type: string; category: string | null };
 export type Transaction = {
+  source_key: string | null;
   supplier_id: string | null; invoice_number: string | null; competence_date: string | null;
   id: string; type: string; description: string; amount: number;
   due_date: string; paid_date: string | null; status: string;

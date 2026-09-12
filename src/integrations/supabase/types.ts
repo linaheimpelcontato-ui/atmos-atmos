@@ -372,6 +372,7 @@ export type Database = {
       }
       financial_transactions: {
         Row: {
+          source_key: string | null
           supplier_id: string | null
           invoice_number: string | null
           competence_date: string | null
@@ -398,6 +399,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          source_key?: string | null
           supplier_id?: string | null
           invoice_number?: string | null
           competence_date?: string | null
@@ -424,6 +426,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          source_key?: string | null
           supplier_id?: string | null
           invoice_number?: string | null
           competence_date?: string | null
@@ -1928,6 +1931,10 @@ export type Database = {
     }
     Functions: {
       get_public_products: { Args: { p_type?: string | null }; Returns: Json }
+      save_proposal_bundle: {
+        Args: { p_id: string | null; p_proposal: Json; p_items: Json; p_costs: Json; p_days: Json; p_accommodations: Json; p_commissions: Json }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

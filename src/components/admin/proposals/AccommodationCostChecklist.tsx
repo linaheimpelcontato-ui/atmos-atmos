@@ -133,7 +133,7 @@ export default function AccommodationCostChecklist({ proposalId, accommodation, 
         room_index: roomIdx,
         catalog_cost: room.cost,
         actual_cost: existing
-          ? (Number(existing.actual_cost) === 0 && room.cost > 0 ? room.cost : Number(existing.actual_cost))
+          ? Number(existing.actual_cost)
           : room.cost,
         is_verified: existing?.is_verified ?? false,
         notes: existing?.notes ?? "",

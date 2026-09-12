@@ -7,7 +7,12 @@ export function splitGroupTotal(total: number, people: number, courtesies: numbe
     throw new Error("Informe um grupo válido com pelo menos um pagante.");
   }
   const paying = people - courtesies;
-  return { total: money(total), paying, perPerson: total / paying };
+  const cents = Math.round(money(total) * 100);
+  const lowerCents = Math.floor(cents / paying);
+  const upperCount = cents - lowerCents * paying;
+  return { total: money(total), paying, perPerson: total / paying,
+    lowerAmount: lowerCents / 100, lowerCount: paying - upperCount,
+    upperAmount: (lowerCents + 1) / 100, upperCount };
 }
 export function resizeFixedPrice(value: number, cost: number, oldQuantity: number, newQuantity: number) {
   if (newQuantity <= 0) return { value, cost };
@@ -15,4 +20,9 @@ export function resizeFixedPrice(value: number, cost: number, oldQuantity: numbe
 }
 export function operatingProfit(revenue: number, cost: number, commission: number, deductions: number) {
   return money(revenue - cost + commission - deductions);
+}
+
+/** Undefined/null means absent; zero is an explicitly recorded cost. */
+export function recordedCost(cost: number | null | undefined): number | undefined {
+  return cost != null && Number.isFinite(cost) ? cost : undefined;
 }
