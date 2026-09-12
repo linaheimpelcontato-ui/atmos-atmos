@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useLayoutEffect, useState, useCallback, useRef } from "react";
+import "@/styles/proposal-public.css";
 import { useAuth } from "@/contexts/AuthContext";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -293,6 +294,8 @@ export default function ProposalPublic() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const pageRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
   const [editMode, setEditMode] = useState(false);
   const [editLabels, setEditLabels] = useState<Record<number, string>>({});
   const [editObservations, setEditObservations] = useState<Record<number, string>>({});
@@ -894,6 +897,21 @@ export default function ProposalPublic() {
     })();
   }, [items, products, findProductRef, proposal?.proposal_accommodations]);
 
+  // The fixed toolbar can wrap as the viewport, fonts or edit controls change.
+  // Reserve its actual height instead of assuming a desktop-only top offset.
+  useLayoutEffect(() => {
+    const page = pageRef.current;
+    const header = headerRef.current;
+    if (!page || !header) return;
+    const updateHeaderHeight = () => {
+      page.style.setProperty("--proposal-header-height", `${header.getBoundingClientRect().height}px`);
+    };
+    updateHeaderHeight();
+    const observer = new ResizeObserver(updateHeaderHeight);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, [loading, error, isAdmin, proposal?.published_at]);
+
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: "#fcfaf7" }}>
       <div className="flex flex-col items-center gap-4">
@@ -1076,20 +1094,18 @@ export default function ProposalPublic() {
   const renderItems = editMode ? editItemOrder : items;
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 1 }}
-      className="min-h-screen" 
+    <div
+      ref={pageRef}
+      className="proposal-public min-h-screen"
       style={{ background: "#fcfaf7", fontFamily: "'Inter', system-ui, sans-serif" }}
     >
 
       {/* ══════════════════════ STICKY HEADER — client only ══════════════════════ */}
       {proposal.published_at && !isAdmin && (
-        <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-10 py-2"
+        <header ref={headerRef} className="proposal-public-header fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 md:px-10 py-2"
           style={{ background: "rgba(0,0,0,0.08)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}>
           <img loading="lazy" src={logoAtmos} alt="ATMOS" className="h-16 md:h-20 brightness-0 invert drop-shadow-xl" />
-          <div className="flex items-center gap-2">
+          <div className="min-w-0 flex flex-wrap items-center justify-end gap-2">
             {["sent", "negotiating"].includes(proposal.status) && !proposalExpired && (
               <button
                 onClick={handleApprove}
@@ -1155,10 +1171,10 @@ export default function ProposalPublic() {
 
       {/* ══════════════════════ ADMIN EDIT BAR ══════════════════════ */}
       {isAdmin && (
-        <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-10 py-2"
+        <header ref={headerRef} className="proposal-public-header fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 md:px-10 py-2"
           style={{ background: "rgba(255,255,255,0.9)", borderBottom: "1px solid #e4dbcc", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", isolation: "isolate" }}>
           <img loading="lazy" src={logoAtmos} alt="ATMOS" className="h-12 md:h-16 shrink-0" />
-          <div className="flex flex-wrap justify-end gap-1">
+          <div className="min-w-0 flex flex-wrap justify-end gap-1">
             <button
               onClick={() => { if (window.history.length > 1) navigate(-1); else navigate("/admin"); }}
               className="px-3 py-1.5 text-[10px] uppercase tracking-widest font-bold transition-all hover:bg-black/5"
@@ -1279,12 +1295,9 @@ export default function ProposalPublic() {
       )}
 
       {/* ══════════════════════ HERO ══════════════════════ */}
-      <section className="relative h-screen min-h-[650px] overflow-hidden bg-[#2e2019]">
-        <motion.img 
+      <section className="proposal-public-hero relative flex flex-col justify-end overflow-hidden bg-[#2e2019]">
+        <img
           key={heroImageUrl}
-          initial={{ scale: 1.1, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 2, ease: "easeOut" }}
           src={heroImageUrl} 
           alt="Hero" 
           className="absolute inset-0 w-full h-full object-cover" 
@@ -1293,7 +1306,7 @@ export default function ProposalPublic() {
         <div className="absolute inset-0 bg-gradient-to-t from-[#2e2019] via-[#2e2019]/40 to-transparent" />
         <div className="absolute inset-0 bg-black/20" />
         
-        <div className="absolute bottom-0 left-0 right-0 px-6 pb-20 md:px-16 md:pb-24">
+        <div className="relative w-full px-6 pb-12 md:px-16 md:pb-16">
           <div className="max-w-7xl mx-auto">
             <div className="inline-flex items-center gap-3 mb-6 animate-fade-in-up">
               <div className="w-8 h-[1px] bg-white/60" />
@@ -1302,7 +1315,7 @@ export default function ProposalPublic() {
               </span>
             </div>
             
-            <h1 className="text-white text-5xl md:text-8xl lg:text-[10rem] font-black leading-[0.85] tracking-tighter drop-shadow-2xl mb-10 max-w-5xl font-outfit uppercase">
+            <h1 className="proposal-public-title text-white font-black tracking-tighter drop-shadow-2xl mb-8 max-w-5xl font-outfit uppercase">
               {proposal.title}
             </h1>
 
@@ -1334,7 +1347,7 @@ export default function ProposalPublic() {
 
       {/* ══════════════════════ BRAND INTRO ══════════════════════ */}
       <motion.section 
-        initial={{ opacity: 0 }}
+        initial={false}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 1.2 }}
@@ -1375,7 +1388,7 @@ export default function ProposalPublic() {
         return (
           <motion.section 
             key={dayNum} 
-            initial={{ opacity: 0, y: 40 }}
+            initial={false}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.8, ease: "easeOut" }}
@@ -1640,7 +1653,7 @@ export default function ProposalPublic() {
       {/* ══════════════════════ ACCOMMODATION SECTION ══════════════════════ */}
       {accommodations.length > 0 && (
         <motion.section 
-          initial={{ opacity: 0 }}
+          initial={false}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 1 }}
@@ -1693,7 +1706,7 @@ export default function ProposalPublic() {
 
       {/* ══════════════════════ UNIFIED INVESTMENT ══════════════════════ */}
       <motion.section 
-        initial={{ opacity: 0 }}
+        initial={false}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 1 }}
@@ -2013,6 +2026,6 @@ export default function ProposalPublic() {
       <div className="py-4 text-center text-[8px] text-gray-500 opacity-20">
         v2.6.0 - Immersive UI & Asset Sync Live
       </div>
-    </motion.div>
+    </div>
   );
 }

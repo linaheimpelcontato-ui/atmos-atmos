@@ -1,0 +1,35 @@
+.proposal-public {
+  --proposal-header-height: 0px;
+}
+
+.proposal-public-header {
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+
+.proposal-public-header > div {
+  flex: 1 1 16rem;
+}
+
+.proposal-public-header > img {
+  flex-shrink: 0;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.proposal-public-hero {
+  /* Keep the cover at least viewport-height, but let long content grow it. */
+  min-height: 100vh;
+  min-height: 100svh;
+  padding-top: calc(var(--proposal-header-height) + 3rem);
+}
+
+.proposal-public-title {
+  font-size: clamp(2.5rem, 7vw, 6rem);
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.proposal-public-hero > div:last-child {
+  overflow-wrap: anywhere;
+}

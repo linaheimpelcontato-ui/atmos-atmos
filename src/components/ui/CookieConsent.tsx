@@ -57,7 +57,7 @@ export function CookieConsent() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3 w-full md:w-auto">
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto md:shrink-0">
           <Button
             variant="outline"
             className="w-full md:w-auto"
