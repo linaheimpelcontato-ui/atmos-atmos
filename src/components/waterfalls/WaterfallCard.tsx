@@ -84,7 +84,8 @@ export default function WaterfallCard({ waterfall, onClick }: WaterfallCardProps
                 zIndex: isActive ? 2 : 1,
                 visibility: isActive || (idx === (currentIndex - 1 + cardImages.length) % cardImages.length) ? 'visible' : 'hidden'
               }}
-              loading={idx === 0 ? "eager" : "lazy"}
+              loading="lazy"
+              decoding="async"
               width="400"
               height="533"
             />

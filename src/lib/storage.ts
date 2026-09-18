@@ -1,6 +1,14 @@
 import { staticMediaUrl } from "./staticMedia";
 
 const STORAGE_BASE = import.meta.env.VITE_R2_DOMAIN || "https://assets.atmos.tur.br";
+const IMAGE_PROXY_BASE = "https://wsrv.nl/";
+const STORAGE_HOST = (() => {
+  try {
+    return new URL(STORAGE_BASE).hostname;
+  } catch {
+    return "assets.atmos.tur.br";
+  }
+})();
 
 /**
  * Legacy path mapping for R2. Kept as an identity function to prevent breaking 
@@ -112,55 +120,181 @@ const PRODUCT_PATH_MAP: Record<string, string> = {
   "registro-com-drone": "Registro com Drone/Registro com Drone-1.jpg",
 };
 
+/**
+ * Aliases that already exist in the R2 bucket. The source data still contains
+ * a few legacy names, while the bucket uses the canonical slug on disk.
+ */
+const R2_FOLDER_ALIASES: Record<string, string> = {
+  "almecegas": "almecegas-i-e-ii--sao-bento",
+  "almecegas-sao-bento": "almecegas-i-e-ii--sao-bento",
+  "almecegas-i-e-ii--sao-bento": "almecegas-i-e-ii--sao-bento",
+  "canion-da-sao-felix": "canions-sao-felix-e-boa-brisa",
+  "coca-cola-urucum": "urucum-coca-cola",
+  "fazenda-volta-da-serra-cordovil-e-esmeralda": "fzda-volta-da-serra",
+  "guardiao-curriola": "curriola-guardiao",
+  "mirante-da-janeja": "mirante-da-janela",
+  "marleys-house": "marley-s-house",
+
+  // Legacy experience identifiers still used by itinerary data.
+  "astroturismo": "astro-turismo",
+  "batismo-de-escalada": "rapel",
+  "bike-cerrado": "canionismo",
+  "comitivas": "passeio-a-cavalo",
+  "cozinha-de-origem": "celestial-garden",
+  "expedicao-4x4": "experiencia-noturna-imersiva",
+  "feira-do-produtor": "feira-dos-produtores-locais",
+  "flutuacao-no-rio": "rafting",
+  "forro-pe-de-serra": "aula-de-forro",
+  "massagem-terapeutica": "massagem-e-bem-estar",
+  "observacao-de-aves": "celestial-garden",
+  "rapel-nas-cachoeiras": "rapel",
+  "ritual-do-fogo": "danca-com-fogo",
+  "tirolesa-vovo-a-jato": "tirolesa-fazenda-sao-bento",
+  "trilha-noturna": "experiencia-noturna-imersiva",
+  "voo-paramotor": "voo-de-paramotor",
+  "massagem-bem-estar": "massagem-e-bem-estar",
+  "yoga-meditacao": "yoga-e-meditacao",
+  "passeio-cavalo": "passeio-a-cavalo",
+  "aula-forro": "aula-de-forro",
+  "feira-produtores": "feira-dos-produtores-locais",
+};
+
+/** Legacy service shortcuts that point to objects in the current R2 layout. */
+const SERVICE_ROOT_ALIASES: Record<string, string> = {
+  "lanche": "lanche-de-trilha-atmos-1.png",
+  "lanche-de-trilha": "lanche-de-trilha-atmos-1.png",
+  "drone": "registro-com-drone-captacao-com-edicao/registro-com-drone-captacao-com-edicao-1.jpg",
+  "registro-drone": "registro-com-drone-captacao-com-edicao/registro-com-drone-captacao-com-edicao-1.jpg",
+  "transfer": "transfer-aeroporto-carro-particular/transfer-aeroporto-carro-particular-1.jpg",
+  "transfers": "transfer-aeroporto-carro-particular/transfer-aeroporto-carro-particular-1.jpg",
+  "seguro": "pedidos-especiais-atmos/pedidos-especiais-atmos-1.jpg",
+  "especial": "pedidos-especiais-atmos/pedidos-especiais-atmos-1.jpg",
+};
+
+/**
+ * Several folders were uploaded with a stable extension different from the
+ * old frontend guesses. Keep the key name canonical and correct only the
+ * extension; dynamically listed R2 keys already arrive with their true value.
+ */
+const R2_EXTENSION_ALIASES: Record<string, string> = {
+  "a-nossa-casa-da-arvore": "avif",
+  "amana-hotel": "avif",
+  "bagua-bangalos": "avif",
+  "casa-alta": "jpeg",
+  "casa-horizonte": "jpeg",
+  "casa-kanaro": "jpeg",
+  "casa-poema": "jpeg",
+  "espaco-horus": "jpeg",
+  "mariri-jungle-lodge": "jpeg",
+  "marley-s-house": "jpeg",
+  "refugio-veadeiros": "jpeg",
+  "rustik-chapada": "jpeg",
+  "vila-abaton": "jpeg",
+  "vila-komorebi": "jpeg",
+  "danca-com-fogo": "jpeg",
+  "experiencia-noturna-imersiva": "png",
+  "feira-dos-produtores-locais": "png",
+  "gota-sat-som": "png",
+  "massagem-e-bem-estar": "png",
+  "passeio-a-cavalo": "png",
+  "rafting": "jpeg",
+  "tirolesa-fazenda-sao-bento": "png",
+  "voo-de-paramotor": "png",
+  "yoga-e-meditacao": "png",
+};
+
+const PRODUCT_CATEGORIES = new Set(["cachoeiras", "experiencias", "hospedagens", "servicos"]);
+
+function canonicalStorageSegment(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+function canonicalProductCategory(value: string): string | undefined {
+  const category = canonicalStorageSegment(value);
+  if (!PRODUCT_CATEGORIES.has(category)) return undefined;
+  return category === "servicos" ? "serviços" : category;
+}
+
+function resolveR2Folder(folderKey: string): string {
+  const key = canonicalStorageSegment(folderKey);
+  const legacyMapped = PRODUCT_PATH_MAP[key]?.split("/")[0];
+  const mappedKey = legacyMapped ? canonicalStorageSegment(legacyMapped) : key;
+  return R2_FOLDER_ALIASES[key] || R2_FOLDER_ALIASES[mappedKey] || mappedKey;
+}
+
+function canonicalProductFile(fileName: string, sourceFolder: string, mappedFolder: string): string {
+  const sourceExtension = fileName.match(/\.[a-z0-9]+$/i)?.[0]?.toLowerCase() || "";
+  const extension = R2_EXTENSION_ALIASES[mappedFolder]
+    ? `.${R2_EXTENSION_ALIASES[mappedFolder]}`
+    : sourceExtension;
+  const base = sourceExtension ? fileName.slice(0, -sourceExtension.length) : fileName;
+  const numbered = base.match(/-(\d+)$/);
+  const sourceFolderIsCanonical =
+    sourceFolder === canonicalStorageSegment(sourceFolder) &&
+    sourceFolder === sourceFolder.toLowerCase();
+
+  // Do not rewrite already-canonical keys such as `_capa.jpg`.
+  if (sourceFolderIsCanonical && sourceFolder === mappedFolder && /^[a-z0-9._-]+$/.test(fileName)) {
+    return sourceExtension && sourceExtension !== extension
+      ? `${base}${extension}`
+      : fileName;
+  }
+
+  if (numbered) return `${mappedFolder}-${numbered[1]}${extension}`;
+  return `${canonicalStorageSegment(base)}${extension}`;
+}
+
 export function correctStoragePath(path: string): string {
   if (!path) return path;
-  
-  let clean = path.replace(/^\//, "");
-  
-  const subfolders = ["cachoeiras", "experiencias", "hospedagens", "serviços", "serviços"];
-  
-  for (const sub of subfolders) {
-    let trigger = `produtos/${sub}/`;
-    let rest = "";
-    let prefix = "";
-    
-    if (clean.includes(trigger)) {
-      const parts = clean.split(trigger);
-      prefix = parts[0] + trigger;
-      rest = parts[1];
-    } else if (clean.startsWith(`${sub}/`)) {
-      prefix = `produtos/${sub}/`;
-      rest = clean.slice(`${sub}/`.length);
-    }
-    
-    if (rest) {
-      let folderKey = "";
-      let fileName = "";
-      
-      if (rest.includes("/")) {
-        const subParts = rest.split("/");
-        folderKey = subParts[0].toLowerCase();
-        fileName = subParts[1] || "";
-      } else {
-        fileName = rest;
-        folderKey = rest.split(".")[0].replace(/-\d+$/, "").toLowerCase();
-      }
-      
-      const mapped = PRODUCT_PATH_MAP[folderKey];
-      if (mapped) {
-        const match = fileName.match(/-(\d+)\.(jpg|png|jpeg|svg|webp)$/i);
-        if (match) {
-          const index = match[1];
-          const ext = match[2];
-          const mappedFolder = mapped.split("/")[0];
-          return `${prefix}${mappedFolder}/${mappedFolder}-${index}.${ext}`;
-        }
-        return prefix + mapped;
-      }
-    }
+
+  const clean = path.replace(/^\/+/, "");
+  const segments = clean.split("/").filter(Boolean);
+  const categoryIndex = segments.findIndex((segment, index) => {
+    const category = canonicalProductCategory(segment);
+    const isDirectCategory = index === 0;
+    const isUnderProducts = canonicalStorageSegment(segments[index - 1] || "") === "produtos";
+    return !!category && (isDirectCategory || isUnderProducts);
+  });
+
+  if (categoryIndex < 0) return clean;
+
+  const category = canonicalProductCategory(segments[categoryIndex])!;
+  const prefix = categoryIndex === 0 ? ["produtos"] : segments.slice(0, categoryIndex);
+  const rest = segments.slice(categoryIndex + 1);
+  if (rest.length === 0) return [...prefix, category].join("/");
+
+  // Some legacy service paths point directly to a shortcut file. Resolve them
+  // to the real object rather than generating a URL that can never exist.
+  if (category === "serviços" && rest.length === 1) {
+    const fileName = rest[0];
+    const shortcutKey = canonicalStorageSegment(fileName.replace(/\.[^.]+$/, "").replace(/-\d+$/, ""));
+    const shortcut = SERVICE_ROOT_ALIASES[shortcutKey];
+    if (shortcut) return [...prefix, category, shortcut].join("/");
+
+    const extension = fileName.match(/\.[a-z0-9]+$/i)?.[0]?.toLowerCase() || "";
+    const base = extension ? fileName.slice(0, -extension.length) : fileName;
+    return [...prefix, category, `${canonicalStorageSegment(base)}${extension}`].join("/");
   }
-  
-  return clean;
+
+  // Product assets use one folder followed by a numbered file. Normalize both
+  // parts while retaining already-canonical R2 keys byte-for-byte.
+  const sourceFolder = rest[0];
+  let mappedFolder = resolveR2Folder(sourceFolder);
+  const sourceFile = rest.slice(1).join("/");
+  if (!sourceFile) return [...prefix, category, mappedFolder].join("/");
+
+  const normalizedSourceFile = canonicalStorageSegment(sourceFile.replace(/\.[^.]+$/, ""));
+  if (mappedFolder === "registro-com-drone" && normalizedSourceFile.endsWith("-1")) {
+    mappedFolder = "registro-com-drone-captacao-com-edicao";
+  }
+
+  const fileName = canonicalProductFile(sourceFile, sourceFolder, mappedFolder);
+  return [...prefix, category, mappedFolder, fileName].join("/");
 }
 
 export function getBaseStorageUrl(path: string): string {
@@ -209,8 +343,36 @@ export const IMAGE_PRESETS = {
  * Returns an optimized image URL using wsrv.nl proxy.
  * This handles resizing, compression, and format conversion (WebP/AVIF) at the edge without extra costs.
  */
-export function optimizedUrl(path: string, options: { width?: number; height?: number; quality?: number; format?: string } = {}): string {
-  return getBaseStorageUrl(path);
+export function optimizedUrl(path: string, options: OptimizedOptions = {}): string {
+  const baseUrl = getBaseStorageUrl(path);
+
+  // Bundled assets and third-party URLs should keep their original origin.
+  // The proxy is only allowed to fetch images that belong to our R2 domain.
+  let sourceUrl: URL;
+  try {
+    sourceUrl = new URL(baseUrl);
+  } catch {
+    return baseUrl;
+  }
+
+  if (sourceUrl.hostname !== STORAGE_HOST || sourceUrl.protocol !== "https:") {
+    return baseUrl;
+  }
+
+  const params = new URLSearchParams({ url: sourceUrl.href });
+  const width = Number.isFinite(options.width) ? Math.round(options.width!) : undefined;
+  const height = Number.isFinite(options.height) ? Math.round(options.height!) : undefined;
+  const quality = Number.isFinite(options.quality)
+    ? Math.min(100, Math.max(1, Math.round(options.quality!)))
+    : 80;
+
+  if (width && width > 0) params.set("w", String(width));
+  if (height && height > 0) params.set("h", String(height));
+  if (options.resize) params.set("fit", options.resize);
+  if (options.format && options.format !== "origin") params.set("output", options.format);
+  if (options.format !== "origin") params.set("q", String(quality));
+
+  return `${IMAGE_PROXY_BASE}?${params.toString()}`;
 }
 
 /**
@@ -228,7 +390,7 @@ export function heroUrl(path: string): string {
   if (local) return local;
 
   // Use the raw lowercase path — R2 stores files with lowercase, no-accent slugs
-  const cleanPath = path.replace(/^\//, "");
+  const cleanPath = correctStoragePath(path.replace(/^\//, ""));
 
   // Encode each segment for URL safety (handles spaces, etc.)
   const encodedPath = cleanPath.split('/').map(segment => encodeURIComponent(segment)).join('/');
@@ -251,7 +413,7 @@ export function cardUrl(path: string): string {
   const local = staticMediaUrl(path.replace(/^\//, ""));
   if (local) return local;
 
-  const cleanPath = path.replace(/^\//, "");
+  const cleanPath = correctStoragePath(path.replace(/^\//, ""));
   const encodedPath = cleanPath.split('/').map(segment => encodeURIComponent(segment)).join('/');
   const r2Url = `${R2_BASE}/${encodedPath}`;
 
@@ -301,4 +463,3 @@ export function isImageMatch(fullKey: string, prefix: string, rawName?: string):
 
   return false;
 }
-

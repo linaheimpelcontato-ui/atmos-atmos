@@ -72,7 +72,8 @@ export default function AccommodationCard({ accommodation, onClick }: Accommodat
             transition={{ duration: 1.5, ease: "easeInOut" }}
             className="absolute inset-0 w-full h-full object-cover"
             style={{ zIndex: idx === currentIndex ? 1 : 0 }}
-            loading={idx === 0 ? "eager" : "lazy"}
+            loading="lazy"
+            decoding="async"
           />
         ))}
       </div>

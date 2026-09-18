@@ -3,9 +3,8 @@ import { useState, useMemo } from "react";
 import PageSEO from "@/components/seo/PageSEO";
 
 import Layout from "@/components/layout/Layout";
-import { storageUrl } from "@/lib/storage";
+import heroServicos from "@/assets/hero-servicos.jpg";
 
-const heroServicos = storageUrl("servicos/hero-servicos.jpg");
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useProducts } from "@/hooks/useProducts";
 import { type Service, services as staticServices } from "@/data/services";

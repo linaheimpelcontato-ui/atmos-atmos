@@ -3,9 +3,8 @@ import { useState, useMemo, useEffect } from "react";
 import PageSEO from "@/components/seo/PageSEO";
 
 import Layout from "@/components/layout/Layout";
-import { storageUrl } from "@/lib/storage";
+import heroHospedagens from "@/assets/hero-hospedagens.jpg";
 
-const heroHospedagens = storageUrl("hospedagens/hero-hospedagens.jpg");
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
   type AccRegion,

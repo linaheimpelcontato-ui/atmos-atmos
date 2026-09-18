@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -14,29 +15,40 @@ interface HeroVideoProps {
 export default function HeroVideo({ tagline, title }: HeroVideoProps) {
   const { t } = useLanguage();
   const { user } = useAuth();
+  const [videoFailed, setVideoFailed] = useState(false);
 
   return (
     <section className="relative min-h-[calc(100vh-80px)] lg:min-h-[calc(100vh-120px)] w-full overflow-hidden bg-black">
       {/* Background Video Loop */}
       <div className="absolute inset-0 z-0">
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="w-full h-full object-cover opacity-60 scale-105"
-          style={{ filter: "brightness(0.9) contrast(1.1)" }}
-        >
-          <source
-            src={storageUrl("home/hero-video.mp4")}
-            type="video/mp4"
+        {videoFailed ? (
+          <img
+            src={storageUrl("home/hero-home.jpg")}
+            alt="Chapada dos Veadeiros"
+            className="w-full h-full object-cover opacity-60 scale-105"
           />
-          {/* Fallback to original mixkit if Supabase fails or as backup */}
-          <source
-            src="https://assets.mixkit.co/videos/preview/mixkit-waterfall-in-a-forest-greenery-1153-large.mp4"
-            type="video/mp4"
-          />
-        </video>
+        ) : (
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="metadata"
+            onError={() => setVideoFailed(true)}
+            className="w-full h-full object-cover opacity-60 scale-105"
+            style={{ filter: "brightness(0.9) contrast(1.1)" }}
+          >
+            <source
+              src={storageUrl("home/hero-bg.mp4")}
+              type="video/mp4"
+            />
+            {/* Fallback to an external video only when the CDN asset is unavailable. */}
+            <source
+              src="https://assets.mixkit.co/videos/preview/mixkit-waterfall-in-a-forest-greenery-1153-large.mp4"
+              type="video/mp4"
+            />
+          </video>
+        )}
         
         {/* Cinematic Overlays */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/40 z-1" />

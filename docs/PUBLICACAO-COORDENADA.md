@@ -11,7 +11,7 @@ Roteiro de execução futura, preparado em 12/09/2026. **Nenhuma ação remota, 
 | Validação integrada informada pelo Root | 470 testes, 18 suítes SQL no clone da estrutura PRD e 12 endpoints Deno aprovados; catch de erro desconhecido R2 corrigido para erro genérico |
 | Revisão independente | Claude revisa a migration 24 somente leitura; incorporar parecer e resolver bloqueadores técnicos antes da execução |
 | Supabase PRD | `ekbsqckzelabjabuodmo`; histórico observado anteriormente até `20260330233228` |
-| Plano SQL | CLI 2.117.0 dry-run informado lista **23 migrations pendentes**, terminando em `20260912240000`; confirmar novamente na janela |
+| Plano SQL | Preflight em 18/09/2026 com CLI 2.117.0 lista **25 migrations pendentes**, terminando em `20260913010000`; confirmar novamente na janela |
 | DEV | `zjavxhmxrbpidvssrbca`, inativo; restauração retornou **403**; não homologado remotamente |
 | Vercel | Preview [CPBKtrxci7PYCSYWEhfjTs8t4Kqv](https://vercel.com/studio-78/atmos-atmos/CPBKtrxci7PYCSYWEhfjTs8t4Kqv) bloqueado; GitHub informou **Deployment was blocked**; sem login/token Vercel disponível |
 
@@ -20,6 +20,10 @@ Os resultados integrados acima pertencem à base `a509b53`. O Root informou adic
 O bloqueio Vercel é um fato informado pelo responsável, não um diagnóstico da causa ou uma nova consulta remota feita para este documento. Não presumir problema de plano ou autoria. Não propor upgrade pago, falsificação de autor Git ou substituição de credenciais para contornar a política. O titular autorizado precisa inspecionar o motivo, regularizar acesso/política e obter um preview elegível do SHA correto.
 
 Testes locais e push da branch não comprovam funcionamento do preview, aplicação remota, validade dos secrets ou entrega de mensagens pelos provedores.
+
+### Atualização de preflight — 18/09/2026
+
+O commit `d01f3a2` acrescentou as migrations financeiras `20260913000000_proposal_cost_supplier_traceability.sql` e `20260913010000_bank_reconciliation_lines.sql`. O dry-run remoto atual encontrou as três migrations históricas de abril, as vinte de setembro até `20260912240000` e essas duas novas migrations — **25 arquivos ao todo**. As duas novas migrations foram revisadas estaticamente e os objetos correspondentes existem na homologação local; nenhuma migration foi aplicada remotamente nesta sessão. O plano antigo de 23 arquivos fica reconciliado para a sequência de 25, sem usar `migration repair`.
 
 ## Pré-requisitos técnicos de execução
 
@@ -74,7 +78,7 @@ npm exec --yes --package=supabase@2.117.0 -- supabase db push --linked --include
 
 O link é configuração da ferramenta; as credenciais devem vir do mecanismo seguro do operador. Conferir o projeto antes de cada comando remoto. Dry-run não substitui ensaio de execução nem garante ausência de conflito com dados reais.
 
-Plano esperado: três migrations de abril (`force_insert`, campos de profiles, variation support) e vinte de setembro, até a 24. Registrar a lista exata e checksums na janela. **Se a lista divergir das 23 revisadas, parar e reconciliar**; não usar `migration repair` para marcar arquivos não executados ou apagar histórico para forçar correspondência.
+Plano esperado: três migrations de abril (`force_insert`, campos de profiles, variation support), vinte de setembro até a 24 e as duas migrations financeiras de 13/09 (`proposal_cost_supplier_traceability` e `bank_reconciliation_lines`). Registrar a lista exata e checksums na janela. **Se a lista divergir das 25 revisadas, parar e reconciliar**; não usar `migration repair` para marcar arquivos não executados ou apagar histórico para forçar correspondência.
 
 ### Exceção documentada: migration histórica ainda não aplicada em PRD
 
@@ -84,7 +88,7 @@ O Root alterou somente `20260410000000_force_insert.sql`: envolveu CREATE/REVOKE
 
 Revisão estática do delta: não identifiquei bloqueador no mecanismo de criação/revogação atômica. O REVOKE explícito cobre tanto o grant padrão a PUBLIC quanto grants diretos de anon/authenticated; não depende somente do search_path. A função mantém sua implementação privilegiada e não deve ser chamada durante a janela; owner e eventual service role confiável não foram desautorizados por esse REVOKE. Não classificá-la como segura para uso geral. A remoção final de setembro permanece obrigatória.
 
-Ensaio concluído pelo Root no clone: `anon_execute=false`, `authenticated=false`; helper removido ao final da cadeia. Consulta atual do Root a PRD também confirmou `force_insert` ausente. Não atribuir a esse resultado testes adicionais de rollback induzido que não foram informados. Resta conferir o plano de 23 migrations na janela e registrar checksum novo e SHA do candidato que incorpora o delta. Esta revisão não executou a função nem SQL no banco.
+Ensaio concluído pelo Root no clone: `anon_execute=false`, `authenticated=false`; helper removido ao final da cadeia. Consulta atual do Root a PRD também confirmou `force_insert` ausente. Não atribuir a esse resultado testes adicionais de rollback induzido que não foram informados. Resta conferir o plano de 25 migrations na janela e registrar checksum novo e SHA do candidato que incorpora o delta. Esta revisão não executou a função nem SQL no banco.
 
 ### 2. Abrir janela e conter tráfego
 
@@ -102,7 +106,7 @@ Com os pré-requisitos técnicos atendidos, a contenção comprovada e o dry-run
 npm exec --yes --package=supabase@2.117.0 -- supabase db push --linked --include-all
 ```
 
-Aplicar o plano revisado inteiro, na ordem dos timestamps; não publicar somente 23/24 pulando dependências. Entre elas: índice source_key/bundle/totais; correção de drift e email; equipe 17; identidade Clicksign 18; editor/storage 19/20; aprovação 21; recebíveis 22; outbox Clicksign 23; autorização 24.
+Aplicar o plano revisado inteiro, na ordem dos timestamps; não pular as migrations financeiras posteriores às de autorização. Entre elas: índice source_key/bundle/totais; correção de drift e email; equipe 17; identidade Clicksign 18; editor/storage 19/20; aprovação 21; recebíveis 22; outbox Clicksign 23; autorização 24; rastreabilidade de fornecedor e conciliação bancária 25.
 
 Em qualquer erro, manter contenção e parar. Registrar último arquivo comprovadamente concluído, SQLSTATE e transação efetivamente confirmada. Comparar histórico **e** objetos reais antes de decidir como retomar; não reaplicar cegamente um arquivo possivelmente parcialmente confirmado e não remover a migration do histórico como rollback.
 
