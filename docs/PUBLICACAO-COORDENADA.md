@@ -25,6 +25,14 @@ Testes locais e push da branch não comprovam funcionamento do preview, aplicaç
 
 O commit `d01f3a2` acrescentou as migrations financeiras `20260913000000_proposal_cost_supplier_traceability.sql` e `20260913010000_bank_reconciliation_lines.sql`. O dry-run remoto atual encontrou as três migrations históricas de abril, as vinte de setembro até `20260912240000` e essas duas novas migrations — **25 arquivos ao todo**. As duas novas migrations foram revisadas estaticamente e os objetos correspondentes existem na homologação local; nenhuma migration foi aplicada remotamente nesta sessão. O plano antigo de 23 arquivos fica reconciliado para a sequência de 25, sem usar `migration repair`.
 
+### Registro de execução — 18/09/2026 22:19 UTC
+
+- O candidato `37bb178` foi enviado para `codex/atmos-stabilization`; o preview Vercel correspondente ficou **Ready** após o repositório se tornar público.
+- Antes da alteração remota, foi produzido um dump restrito, fora do repositório, de schema e dados de `public`, `auth` e `storage`. Os arquivos ficaram com modo `600` e seus checksums foram registrados no log do executor. O `pg_dump` registrou a advertência esperada de referência circular em `chart_of_accounts`; não houve erro de exportação nem restauração destrutiva.
+- A CLI Supabase `2.117.0` aplicou, em ordem, as 25 migrations listadas acima. Um dry-run imediatamente posterior retornou `upToDate=true`, sem migrations pendentes.
+- Smoke read-only pós-migration: `get_public_products` respondeu HTTP 200 com 96 produtos públicos; `get_public_proposal` com token inválido retornou `null` sem mutação. No preview, `/monte-seu-roteiro/{cachoeiras,experiencias,hospedagens,servicos}` carregou sem alertas de catálogo ou imagens quebradas; o vídeo `home/hero-bg.mp4` ficou pronto para reprodução.
+- A produção ainda não recebeu um novo deployment do domínio principal, e nenhum objeto novo foi enviado ao R2 nesta janela.
+
 ## Pré-requisitos técnicos de execução
 
 Registrar responsável técnico, evidência e horário de cada verificação no ticket da publicação. Trata-se de prontidão operacional, não de um novo fluxo de autorização de Gustavo.
