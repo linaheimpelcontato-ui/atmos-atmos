@@ -18,6 +18,7 @@ import * as XLSX from "xlsx";
 import { motion } from "framer-motion";
 
 const db = supabase as any;
+const paymentMethodLabels: Record<string, string> = { pix: "PIX", boleto: "Boleto", cartao: "Cartão", transferencia: "Transferência", dinheiro: "Dinheiro", outro: "Outro" };
 
 export default function AdminFinanceContasPagar() {
   const { toast } = useToast();
@@ -26,6 +27,7 @@ export default function AdminFinanceContasPagar() {
   const [bankAccounts, setBankAccounts] = useState<any[]>([]);
   const [sellers, setSellers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Filters
   const [search, setSearch] = useState("");
@@ -41,23 +43,34 @@ export default function AdminFinanceContasPagar() {
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
-    const [{ data: txs }, { data: accs }, { data: banks }, { data: sell }] = await Promise.all([
+    const results = await Promise.all([
       db.from("financial_transactions").select("*").in("type", ["payable", "commission_out"]).in("status", ["pending", "overdue"]).order("due_date"),
       db.from("chart_of_accounts").select("id, code, name").eq("is_active", true),
       db.from("bank_accounts").select("id, name").eq("is_active", true),
       db.from("sellers").select("id, name"),
     ]);
+    const error = results.find(result => result.error)?.error;
+    if (error) {
+      setLoadError(error.message || "Não foi possível carregar as contas a pagar.");
+      setTransactions([]); setChartAccounts([]); setBankAccounts([]); setSellers([]);
+      toast({ title: "Falha ao carregar contas a pagar", description: error.message, variant: "destructive" });
+      setLoading(false);
+      return;
+    }
+    const [{ data: txs }, { data: accs }, { data: banks }, { data: sell }] = results;
+    setLoadError(null);
     setTransactions(txs || []);
     setChartAccounts(accs || []);
     setBankAccounts(banks || []);
     setSellers(sell || []);
     setLoading(false);
-  }, []);
+  }, [toast]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
   const handleMarkPaid = async (id: string) => {
-    await db.from("financial_transactions").update({ status: "paid", paid_date: format(new Date(), "yyyy-MM-dd") }).eq("id", id);
+    const { error } = await db.from("financial_transactions").update({ status: "paid", paid_date: format(new Date(), "yyyy-MM-dd") }).eq("id", id);
+    if (error) { toast({ title: "Não foi possível marcar como pago", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Marcado como pago" });
     fetchAll();
   };
@@ -67,13 +80,15 @@ export default function AdminFinanceContasPagar() {
   const enriched = useMemo(() => {
     return transactions.map((tx: any) => {
       const acc = chartAccounts.find((a: any) => a.id === tx.account_id);
+      const bank = bankAccounts.find((b: any) => b.id === tx.bank_account_id);
       return {
         ...tx,
         _account_label: acc ? `${acc.code} ${acc.name}` : "",
+        _bank_label: bank?.name || "Não informada",
         _isOverdue: tx.due_date < today,
       };
     });
-  }, [transactions, chartAccounts, today]);
+  }, [transactions, chartAccounts, bankAccounts, today]);
 
   const filtered = useMemo(() => {
     return enriched.filter(tx => {
@@ -145,6 +160,13 @@ export default function AdminFinanceContasPagar() {
           <p className="text-muted-foreground text-sm font-medium ml-14">Gestão de obrigações e aging financeiro</p>
         </div>
       </div>
+
+      {loadError && (
+        <div role="alert" className="flex items-start gap-3 rounded-xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span><strong>Dados incompletos:</strong> {loadError}</span>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <motion.div whileHover={{ y: -4 }} className="bg-white rounded-[2rem] p-6 border border-admin-border/60 shadow-sm relative overflow-hidden group">
@@ -293,9 +315,8 @@ export default function AdminFinanceContasPagar() {
                   <TableCell className="p-4 font-bold text-admin-primary tabular-nums">{tx.due_date}</TableCell>
                   <TableCell className="p-4">
                     <div className="flex flex-col gap-0.5">
-                      <span className="font-bold text-admin-primary/80 truncate max-w-[180px]">
-                        {tx.description}
-                      </span>
+                      <span className="font-bold text-admin-primary/80 truncate max-w-[180px]">{tx.description}</span>
+                      <span className="text-[10px] text-muted-foreground/60">{tx._bank_label} · {paymentMethodLabels[tx.payment_method] || tx.payment_method || "Forma não informada"}</span>
                       {tx.is_recurring && (
                         <Badge variant="outline" className="w-fit text-[8px] font-black uppercase tracking-tight py-0 px-1 border-admin-primary/20 text-admin-primary/60">
                           Fixo
@@ -361,7 +382,8 @@ export default function AdminFinanceContasPagar() {
         onClear={selection.clear}
         onDelete={async () => {
           const ids = [...selection.selectedIds];
-          await db.from("financial_transactions").delete().in("id", ids);
+          const { error } = await db.from("financial_transactions").delete().in("id", ids);
+          if (error) { toast({ title: "Falha ao excluir lançamentos", description: error.message, variant: "destructive" }); return; }
           toast({ title: `${ids.length} lançamento(s) excluído(s)` });
           selection.clear();
           fetchAll();
@@ -390,7 +412,8 @@ export default function AdminFinanceContasPagar() {
           const parsed = field === "amount" ? (parseFloat(String(value)) || 0) : value;
           const update: any = { [field]: parsed };
           if (field === "status" && value === "paid") update.paid_date = format(new Date(), "yyyy-MM-dd");
-          await db.from("financial_transactions").update(update).in("id", ids);
+          const { error } = await db.from("financial_transactions").update(update).in("id", ids);
+          if (error) { toast({ title: "Falha ao atualizar lançamentos", description: error.message, variant: "destructive" }); return; }
           toast({ title: `${ids.length} lançamento(s) atualizado(s)` });
           selection.clear();
           fetchAll();

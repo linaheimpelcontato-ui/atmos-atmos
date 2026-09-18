@@ -7,17 +7,25 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Printer, Sparkles, Loader2, Download, FileText, Activity, TrendingUp, Users, PieChart, Filter, Calendar, ChevronRight, BarChart3, Globe, Target } from "lucide-react";
+import { Printer, Sparkles, Loader2, Download, FileText, Activity, TrendingUp, Users, PieChart, Filter, Calendar, ChevronRight, BarChart3, Globe, Target, AlertCircle } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart as RePieChart, Pie, Cell, AreaChart, Area } from "recharts";
-import { format, startOfMonth, subMonths, parseISO, getMonth, getYear } from "date-fns";
+import { format, startOfMonth, subMonths } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from "xlsx";
 import { motion, AnimatePresence } from "framer-motion";
 import { fmt } from "./finance/financeCalcs";
+import { moneySum } from "@/lib/proposalCalcs";
+import {
+  calcActualCashFlow,
+  calcProposalClusters,
+  calcTransactionDre,
+  REPORT_BASIS_LABELS,
+  selectTransactionsForReport,
+  type FinanceReportBasis,
+} from "./finance/financeReporting";
 
 const db = supabase as any;
 const COLORS = ["hsl(var(--admin-primary))", "hsl(142 71% 45%)", "hsl(45 93% 58%)", "hsl(0 84% 60%)", "hsl(280 67% 55%)", "hsl(190 80% 50%)"];
-const MONTHS_PT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
 export default function AdminFinanceReports() {
   const { toast } = useToast();
@@ -25,13 +33,16 @@ export default function AdminFinanceReports() {
   const [dateTo, setDateTo] = useState(format(new Date(), "yyyy-MM-dd"));
   const [segment, setSegment] = useState("all");
   const [sellerId, setSellerId] = useState("all");
+  const [basis, setBasis] = useState<FinanceReportBasis>("due");
   const [transactions, setTransactions] = useState<any[]>([]);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [prospects, setProspects] = useState<any[]>([]);
   const [proposals, setProposals] = useState<any[]>([]);
+  const [proposalDirectory, setProposalDirectory] = useState<any[]>([]);
   const [sellers, setSellers] = useState<any[]>([]);
   const [stages, setStages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [aiInsights, setAiInsights] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
 
@@ -44,50 +55,54 @@ export default function AdminFinanceReports() {
     if (segment !== "all") { prospectQ = prospectQ.eq("segment", segment); proposalQ = proposalQ.eq("segment", segment); }
     if (sellerId !== "all") { prospectQ = prospectQ.eq("seller_id", sellerId); proposalQ = proposalQ.eq("seller_id", sellerId); }
 
-    const [{ data: txs }, { data: accs }, { data: prData }, { data: propData }, { data: sData }, { data: stData }] = await Promise.all([
-      db.from("financial_transactions").select("id, type, amount, due_date, status, account_id, paid_date").gte("due_date", dateFrom).lte("due_date", dateTo).neq("status", "cancelled"),
+    const results = await Promise.all([
+      db.from("financial_transactions").select("id, type, amount, due_date, competence_date, status, account_id, paid_date, proposal_id, supplier_id, invoice_number"),
       db.from("chart_of_accounts").select("id, code, name, type").order("code"),
       prospectQ, proposalQ,
+      db.from("proposals").select("id, title, code"),
       db.from("sellers").select("id, name").eq("is_active", true).order("name"),
       db.from("pipeline_stages").select("*").order("position"),
     ]);
-    setTransactions(txs || []); setAccounts(accs || []); setProspects(prData || []); setProposals(propData || []); setSellers(sData || []); setStages(stData || []);
+    const error = results.find(result => result.error)?.error;
+    if (error) {
+      setLoadError(error.message || "Não foi possível carregar os dados financeiros.");
+      setTransactions([]); setAccounts([]); setProspects([]); setProposals([]); setProposalDirectory([]); setSellers([]); setStages([]);
+      setLoading(false);
+      toast({ title: "Falha ao carregar relatórios", description: error.message, variant: "destructive" });
+      return;
+    }
+    const [{ data: txs }, { data: accs }, { data: prData }, { data: propData }, { data: propDirectory }, { data: sData }, { data: stData }] = results;
+    setLoadError(null);
+    setTransactions(txs || []); setAccounts(accs || []); setProspects(prData || []); setProposals(propData || []); setProposalDirectory(propDirectory || []); setSellers(sData || []); setStages(stData || []);
     setLoading(false);
-  }, [dateFrom, dateTo, segment, sellerId]);
+  }, [dateFrom, dateTo, segment, sellerId, toast]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const dre = useMemo(() => {
-    const revenue = transactions.filter(t => t.type === "receivable" || t.type === "commission_in").reduce((s: number, t: any) => s + Number(t.amount), 0);
-    const costs = transactions.filter(t => t.type === "payable").reduce((s: number, t: any) => s + Number(t.amount), 0);
-    const commissions = transactions.filter(t => t.type === "commission_out").reduce((s: number, t: any) => s + Number(t.amount), 0);
-    const profit = revenue - costs - commissions;
-    const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
-    return { revenue, costs, commissions, profit, margin };
-  }, [transactions]);
+  const dre = useMemo(() => calcTransactionDre(transactions, dateFrom, dateTo, basis), [transactions, dateFrom, dateTo, basis]);
 
-  const cashFlow = useMemo(() => {
-    const months: Record<string, { month: string; entradas: number; saidas: number }> = {};
-    transactions.forEach(tx => {
-      const d = parseISO(tx.due_date);
-      const key = `${getYear(d)}-${String(getMonth(d) + 1).padStart(2, "0")}`;
-      if (!months[key]) months[key] = { month: `${MONTHS_PT[getMonth(d)]}/${String(getYear(d)).slice(2)}`, entradas: 0, saidas: 0 };
-      if (tx.type === "receivable" || tx.type === "commission_in") months[key].entradas += Number(tx.amount);
-      else months[key].saidas += Number(tx.amount);
-    });
-    return Object.values(months).sort((a, b) => a.month.localeCompare(b.month));
-  }, [transactions]);
+  const cashFlow = useMemo(() => calcActualCashFlow(transactions, dateFrom, dateTo), [transactions, dateFrom, dateTo]);
+
+  const reportTransactions = useMemo(
+    () => selectTransactionsForReport(transactions, dateFrom, dateTo, basis),
+    [transactions, dateFrom, dateTo, basis],
+  );
+
+  const proposalClusters = useMemo(
+    () => calcProposalClusters(transactions, proposalDirectory, dateFrom, dateTo, basis),
+    [transactions, proposalDirectory, dateFrom, dateTo, basis],
+  );
 
   const byAccount = useMemo(() => {
     const map: Record<string, { code: string; name: string; type: string; total: number }> = {};
-    transactions.forEach(tx => {
+    reportTransactions.forEach(tx => {
       const acc = accounts.find((a: any) => a.id === tx.account_id);
       if (!acc) return;
       if (!map[acc.id]) map[acc.id] = { code: acc.code, name: acc.name, type: acc.type, total: 0 };
-      map[acc.id].total += Number(tx.amount);
+       map[acc.id].total = moneySum(map[acc.id].total, Number(tx.amount));
     });
     return Object.values(map).sort((a, b) => a.code.localeCompare(b.code));
-  }, [transactions, accounts]);
+  }, [reportTransactions, accounts]);
 
   const acceptedRevenue = proposals.filter(p => isApprovedProposalStatus(p.status)).reduce((s: number, p: any) => s + Number(p.total), 0);
   const pipelineData = stages.map(s => ({ name: s.name, value: prospects.filter((p: any) => p.stage_id === s.id).length, color: s.color })).filter(d => d.value > 0);
@@ -97,6 +112,13 @@ export default function AdminFinanceReports() {
 
   const handleExportExcel = () => {
     const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([
+      ["Critério do relatório", REPORT_BASIS_LABELS[basis]],
+      ["Período", `${dateFrom} a ${dateTo}`],
+      ["Lançamentos considerados", dre.transactionCount],
+      ["Lançamentos sem data da base", dre.missingDateCount],
+    ]), "Critério");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["Proposta / Grupo", "Entradas", "Saídas", "Saldo", "Lançamentos", "Pendente", "Pago"], ...proposalClusters.map(cluster => [cluster.label, cluster.entradas, cluster.saidas, cluster.saldo, cluster.transactionCount, cluster.pending, cluster.paid])]), "Por Proposta");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["DRE"], ["Receita Bruta", dre.revenue], ["(-) Custos", dre.costs], ["(-) Comissões", dre.commissions], ["Lucro", dre.profit], ["Margem %", dre.margin.toFixed(1)],]), "DRE");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["Código", "Nome", "Tipo", "Total"], ...byAccount.map(a => [a.code, a.name, a.type, a.total])]), "Por Conta");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["Comercial"], ["Total Prospects", prospects.length], ["Total Propostas", proposals.length], ["Valor aprovado", acceptedRevenue],]), "Comercial");
@@ -113,6 +135,12 @@ export default function AdminFinanceReports() {
     } catch (err: any) { toast({ title: "Erro", description: err.message || String(err), variant: "destructive" }); }
     finally { setAiLoading(false); }
   };
+
+  const basisDateLabel = basis === "competence"
+    ? "competência"
+    : basis === "cash"
+      ? "data de pagamento"
+      : "data de vencimento";
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -201,8 +229,31 @@ export default function AdminFinanceReports() {
               </SelectContent>
             </Select>
           </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Base do DRE:</span>
+            <Select value={basis} onValueChange={value => setBasis(value as FinanceReportBasis)}>
+              <SelectTrigger className="h-10 border-none bg-admin-muted/40 hover:bg-admin-muted/60 rounded-xl transition-colors min-w-[150px] font-bold text-xs uppercase tracking-wider focus:ring-0">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="rounded-2xl border-none shadow-xl">
+                <SelectItem value="due">Vencimento</SelectItem>
+                <SelectItem value="competence">Competência</SelectItem>
+                <SelectItem value="cash">Caixa (pago)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
+
+      {loadError && (
+        <div role="alert" className="flex items-start gap-3 rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive print:hidden">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          <div>
+            <p className="font-black">Os dados financeiros não puderam ser carregados.</p>
+            <p className="mt-1 font-medium">{loadError}</p>
+          </div>
+        </div>
+      )}
 
       <AnimatePresence>
         {aiInsights && (
@@ -238,6 +289,23 @@ export default function AdminFinanceReports() {
         </TabsList>
 
         <TabsContent value="dre" className="space-y-8 focus-visible:ring-0">
+          <div className="flex flex-col gap-2 rounded-2xl border border-admin-primary/10 bg-admin-primary/[0.03] px-5 py-4 text-xs text-admin-primary/70 md:flex-row md:items-center md:justify-between">
+            <span>
+              DRE gerencial por <strong className="text-admin-primary">{REPORT_BASIS_LABELS[basis].toLowerCase()}</strong> no período selecionado.
+              O fluxo de caixa abaixo usa sempre a data efetiva de pagamento.
+            </span>
+            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+          </div>
+          {dre.missingDateCount > 0 || dre.invalidAmountCount > 0 ? (
+            <div role="status" className="flex items-start gap-3 rounded-2xl border border-yellow-300/60 bg-yellow-50 p-4 text-xs text-yellow-900">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>
+                {dre.missingDateCount > 0 && `${dre.missingDateCount} lançamento(s) sem ${basisDateLabel} ficaram fora do DRE.`}
+                {dre.invalidAmountCount > 0 && ` ${dre.invalidAmountCount} lançamento(s) com valor inválido também ficaram fora.`}
+                {" "}{basis === "competence" ? "Preencha a competência antes de usar este relatório como fechamento contábil." : "Revise os lançamentos sem a data usada neste critério antes de fechar o período."}
+              </span>
+            </div>
+          ) : null}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <motion.div className="lg:col-span-1 bg-white border border-admin-border/60 rounded-[2rem] p-8 shadow-sm relative overflow-hidden group">
               <div className="absolute top-0 right-0 p-10 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity">
@@ -324,6 +392,46 @@ export default function AdminFinanceReports() {
                 </div>
               ))}
             </div>
+          </motion.div>
+
+          <motion.div className="bg-white rounded-[2rem] p-8 border border-admin-border/60 shadow-sm relative overflow-hidden group">
+            <div className="flex items-center justify-between mb-6">
+              <div className="space-y-1">
+                <h3 className="text-sm font-black uppercase tracking-[0.2em] text-admin-primary/80">Resultado por proposta / grupo</h3>
+                <p className="text-xs text-muted-foreground font-medium italic">Entradas e saídas rastreáveis no mesmo período e base do DRE</p>
+              </div>
+              <div className="p-2 rounded-xl bg-admin-primary/10">
+                <Target className="h-4 w-4 text-admin-primary" />
+              </div>
+            </div>
+            {proposalClusters.length === 0 ? (
+              <p className="py-8 text-center text-xs font-bold uppercase tracking-widest text-muted-foreground/50">Nenhum lançamento vinculado ao período</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[680px] text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-admin-border/40 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                      <th className="pb-3 pr-4">Proposta / grupo</th>
+                      <th className="pb-3 px-4 text-right">Entradas</th>
+                      <th className="pb-3 px-4 text-right">Saídas</th>
+                      <th className="pb-3 px-4 text-right">Saldo</th>
+                      <th className="pb-3 pl-4 text-right">Lançamentos</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {proposalClusters.slice(0, 20).map(cluster => (
+                      <tr key={cluster.proposalId || "unlinked"} className="border-b border-admin-border/20 last:border-0">
+                        <td className="py-3 pr-4 font-black text-admin-primary">{cluster.label}</td>
+                        <td className="px-4 py-3 text-right font-bold text-green-600 tabular-nums">{fmt(cluster.entradas)}</td>
+                        <td className="px-4 py-3 text-right font-bold text-destructive tabular-nums">{fmt(cluster.saidas)}</td>
+                        <td className={`px-4 py-3 text-right font-black tabular-nums ${cluster.saldo >= 0 ? "text-green-600" : "text-destructive"}`}>{fmt(cluster.saldo)}</td>
+                        <td className="py-3 pl-4 text-right font-bold text-muted-foreground tabular-nums">{cluster.transactionCount}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </motion.div>
         </TabsContent>
 

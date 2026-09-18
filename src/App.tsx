@@ -65,6 +65,7 @@ const AdminFinanceContasPagar = lazy(() => import("./pages/admin/AdminFinanceCon
 const AdminFinanceLucroMargem = lazy(() => import("./pages/admin/AdminFinanceLucroMargem"));
 const AdminFinanceFluxoCaixa = lazy(() => import("./pages/admin/AdminFinanceFluxoCaixa"));
 const AdminFinanceReports = lazy(() => import("./pages/admin/AdminFinanceReports"));
+const AdminFinanceConciliacao = lazy(() => import("./pages/admin/AdminFinanceConciliacao"));
 const AdminFinanceConfig = lazy(() => import("./pages/admin/AdminFinanceConfig"));
 
 // Guide Pages - Lazy Loaded
@@ -173,6 +174,7 @@ const App = () => (
                     <Route path="financeiro/lucro-margem" element={<AdminFinanceLucroMargem />} />
                     <Route path="financeiro/fluxo-caixa" element={<AdminFinanceFluxoCaixa />} />
                     <Route path="financeiro/relatorios" element={<AdminFinanceReports />} />
+                    <Route path="financeiro/conciliacao" element={<AdminFinanceConciliacao />} />
                     <Route path="financeiro/configuracoes" element={<AdminFinanceConfig />} />
                     <Route path="configuracoes" element={<AdminSettings />} />
                     <Route path="metas" element={<AdminGoals />} />

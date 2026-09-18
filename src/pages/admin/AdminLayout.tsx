@@ -5,7 +5,7 @@ import {
   Kanban, Building2, Package, UsersRound, Settings, Settings2, 
   CalendarDays, Mail, BarChart3, Sparkles, Target, DollarSign, 
   BookOpen, PieChart, TrendingUp, TrendingDown, ArrowDownLeft, 
-  ArrowUpRight, Percent, Truck, Palette, MapPin, Bell, Search, LogOut
+  ArrowUpRight, Percent, Truck, Palette, MapPin, Bell, Search, LogOut, Link2
 } from "lucide-react";
 import { useAdminGuard } from "@/hooks/useAdminGuard";
 import { canAccessAdminRoute, hasInvalidAdminModules } from "@/lib/adminRouteAccess";
@@ -79,6 +79,7 @@ const adminNavSections = [
       { path: "/admin/financeiro/contas-pagar", label: "Contas a Pagar", icon: ArrowUpRight, exact: false },
       { path: "/admin/financeiro/lucro-margem", label: "Lucro & Margem", icon: Percent, exact: false },
       { path: "/admin/financeiro/fluxo-caixa", label: "Fluxo de Caixa", icon: DollarSign, exact: false },
+      { path: "/admin/financeiro/conciliacao", label: "Conciliação Bancária", icon: Link2, exact: false },
       { path: "/admin/financeiro/relatorios", label: "Relatórios", icon: BarChart3, exact: false },
       { path: "/admin/financeiro/configuracoes", label: "Configurações", icon: Settings2, exact: false },
     ],

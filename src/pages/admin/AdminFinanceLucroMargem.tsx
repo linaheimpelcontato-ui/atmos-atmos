@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components
 import { SmartTh, useSmartFilters } from "@/components/admin/SmartTableHead";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, DollarSign, Percent, TrendingUp, Target, Activity, PieChart, Users, FileText, ChevronRight, Filter, Calendar } from "lucide-react";
+import { Download, DollarSign, Percent, TrendingUp, Target, Activity, PieChart, Users, FileText, ChevronRight, Filter, Calendar, AlertCircle } from "lucide-react";
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer, AreaChart, Area
@@ -32,7 +32,7 @@ export default function AdminFinanceLucroMargem() {
   const guideFilterState = useSmartFilters();
   const categoryFilterState = useSmartFilters();
 
-  const { proposals, dayItems, proposalCosts, guides, products } = useFinanceData();
+  const { proposals, dayItems, proposalCosts, guides, products, error: financeError } = useFinanceData();
 
   const fd = useMemo(() => filterProposals(proposals, dayItems, proposalCosts, dateFrom, dateTo, segment), [proposals, dayItems, proposalCosts, dateFrom, dateTo, segment]);
   const kpis = useMemo(() => calcOverviewKPIs(fd, proposalCosts), [fd, proposalCosts]);
@@ -106,6 +106,13 @@ export default function AdminFinanceLucroMargem() {
         </div>
       )}
 
+      {financeError && (
+        <div role="alert" className="flex items-start gap-3 rounded-xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span><strong>Dados financeiros incompletos:</strong> {financeError instanceof Error ? financeError.message : String(financeError)}</span>
+        </div>
+      )}
+
       <div className="flex flex-col lg:flex-row gap-4 items-center bg-white/50 backdrop-blur-sm p-4 rounded-[2rem] border border-admin-border/40 shadow-sm">
         <div className="flex items-center gap-3 px-4 border-r border-admin-border/40">
           <Filter className="h-4 w-4 text-admin-primary/40" />
@@ -143,7 +150,7 @@ export default function AdminFinanceLucroMargem() {
             <div className="p-2 rounded-xl bg-admin-primary/10">
               <FileText className="h-4 w-4 text-admin-primary" />
             </div>
-            <h2 className="text-sm font-black uppercase tracking-[0.2em] text-admin-primary/80">DRE Operacional</h2>
+            <h2 className="text-sm font-black uppercase tracking-[0.2em] text-admin-primary/80">Rentabilidade das propostas</h2>
           </div>
           <div className="space-y-6 relative">
             <div className="flex justify-between items-baseline py-2 border-b border-admin-border/10">

@@ -19,15 +19,15 @@ export function calcProposalProfit(
   const commissionProfit = billableItems.reduce((s, i) => moneySum(s, supplierCommission(lineTotal(Number(i.cost_price), i.quantity ?? 1), Number(i.commission_percent || 0))), 0);
   const atmos = p.atmos_service || {};
   const atmosRevenue = moneyProduct(Number(atmos.price_per_person_day || 0), Number(p.num_people ?? 1), Number(p.num_days ?? 1));
-  const atmosInternalCosts = (atmos.internal_costs || []).reduce((s: number, ic: any) => s + Number(ic.amount || 0), 0);
-  const directCosts = costs.filter(c => c.proposal_id === p.id).reduce((s, c) => s + Number(c.amount), 0);
+  const atmosInternalCosts = moneySum(...(atmos.internal_costs || []).map((ic: any) => Number(ic.amount || 0)));
+  const directCosts = moneySum(...costs.filter(c => c.proposal_id === p.id).map(c => Number(c.amount)));
   let accommodationProfit = 0;
   let missingAccommodationCommissions = 0;
   for (const acc of p.proposal_accommodations || []) {
     if (!acc.is_selected) continue;
     const amounts = accommodationAmounts(normalizeSavedRooms(acc.rooms), Number(acc.num_nights ?? 0));
     missingAccommodationCommissions += amounts.missingCommissions;
-    accommodationProfit += (acc.payment_type === "atmos" ? amounts.revenue - amounts.cost : 0) + amounts.commission;
+    accommodationProfit = moneySum(accommodationProfit, acc.payment_type === "atmos" ? amounts.revenue - amounts.cost : 0, amounts.commission);
   }
 
   const discount = proposalDiscount(Number(p.subtotal || 0), Number(p.discount_percent || 0), Number(p.discount_fixed || 0));
@@ -46,9 +46,9 @@ export function getProposalCost(p: Proposal, costs: ProposalCost[], items?: DayI
     const pf = calcProposalProfit(p, items, costs);
     return pf.revenue - pf.profit; // effective cost = revenue - profit
   }
-  const directCosts = costs.filter(c => c.proposal_id === p.id).reduce((s, c) => s + Number(c.amount), 0);
+  const directCosts = moneySum(...costs.filter(c => c.proposal_id === p.id).map(c => Number(c.amount)));
   const atmos = p.atmos_service || {};
-  const internalCosts = (atmos.internal_costs || []).reduce((s: number, ic: any) => s + Number(ic.amount || 0), 0);
+  const internalCosts = moneySum(...(atmos.internal_costs || []).map((ic: any) => Number(ic.amount || 0)));
   return directCosts + internalCosts;
 }
 
@@ -81,8 +81,8 @@ export function calcOverviewKPIs(fd: FilteredData, costs: ProposalCost[]) {
   let totalRevenue = 0, totalProfit = 0, incompleteProposals = 0, missingAccommodationCommissions = 0;
   for (const p of fd.accepted) {
     const pf = calcProposalProfit(p, fd.dayItems, costs);
-    totalRevenue += pf.revenue;
-    totalProfit += pf.profit;
+    totalRevenue = moneySum(totalRevenue, pf.revenue);
+    totalProfit = moneySum(totalProfit, pf.profit);
     if (pf.resultIncomplete) incompleteProposals++;
     missingAccommodationCommissions += pf.missingAccommodationCommissions;
   }
@@ -120,8 +120,8 @@ export function calcMonthlyEvolution(
     let rev = 0, profit = 0, incompleteProposals = 0;
     for (const p of mp) {
       const pf = calcProposalProfit(p, dayItems, costs);
-      rev += pf.revenue;
-      profit += pf.profit;
+      rev = moneySum(rev, pf.revenue);
+      profit = moneySum(profit, pf.profit);
       if (pf.resultIncomplete) incompleteProposals++;
     }
     return {

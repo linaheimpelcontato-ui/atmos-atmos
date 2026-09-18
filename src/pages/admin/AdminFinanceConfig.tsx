@@ -65,34 +65,39 @@ export default function AdminFinanceConfig() {
 
   const [branches, setBranches] = useState<Branch[]>([]);
   const [loadingBranches, setLoadingBranches] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [branchDialogOpen, setBranchDialogOpen] = useState(false);
   const [branchEditingId, setBranchEditingId] = useState<string | null>(null);
   const [branchForm, setBranchForm] = useState({ name: "", cnpj: "", address: "", is_active: true });
 
   const fetchAccounts = useCallback(async () => {
     setLoadingAccounts(true);
-    const { data } = await db.from("chart_of_accounts").select("*").order("code");
+    const { data, error } = await db.from("chart_of_accounts").select("*").order("code");
+    if (error) { setLoadError(error.message); setAccounts([]); setLoadingAccounts(false); return; }
     setAccounts(data || []);
     setLoadingAccounts(false);
   }, []);
 
   const fetchRecurring = useCallback(async () => {
     setLoadingRecurring(true);
-    const { data } = await db.from("financial_transactions").select("*").eq("is_recurring", true).order("description");
+    const { data, error } = await db.from("financial_transactions").select("*").eq("is_recurring", true).order("description");
+    if (error) { setLoadError(error.message); setRecurring([]); setLoadingRecurring(false); return; }
     setRecurring(data || []);
     setLoadingRecurring(false);
   }, []);
 
   const fetchBanks = useCallback(async () => {
     setLoadingBanks(true);
-    const { data } = await db.from("bank_accounts").select("*").order("name");
+    const { data, error } = await db.from("bank_accounts").select("*").order("name");
+    if (error) { setLoadError(error.message); setBankAccounts([]); setLoadingBanks(false); return; }
     setBankAccounts(data || []);
     setLoadingBanks(false);
   }, []);
 
   const fetchBranches = useCallback(async () => {
     setLoadingBranches(true);
-    const { data } = await db.from("branches").select("*").order("name");
+    const { data, error } = await db.from("branches").select("*").order("name");
+    if (error) { setLoadError(error.message); setBranches([]); setLoadingBranches(false); return; }
     setBranches(data || []);
     setLoadingBranches(false);
   }, []);
@@ -110,7 +115,7 @@ export default function AdminFinanceConfig() {
     setAccDialogOpen(false);
     fetchAccounts();
   };
-  const handleDeleteAcc = async (id: string) => { await db.from("chart_of_accounts").delete().eq("id", id); fetchAccounts(); };
+  const handleDeleteAcc = async (id: string) => { const { error } = await db.from("chart_of_accounts").delete().eq("id", id); if (error) { toast({ title: "Não foi possível excluir a conta", description: error.message, variant: "destructive" }); return; } fetchAccounts(); };
 
   const getDepth = (a: Account): number => {
     if (!a.parent_id) return 0;
@@ -129,7 +134,7 @@ export default function AdminFinanceConfig() {
     setBankDialogOpen(false);
     fetchBanks();
   };
-  const handleDeleteBank = async (id: string) => { await db.from("bank_accounts").delete().eq("id", id); fetchBanks(); };
+  const handleDeleteBank = async (id: string) => { const { error } = await db.from("bank_accounts").delete().eq("id", id); if (error) { toast({ title: "Não foi possível excluir a conta bancária", description: error.message, variant: "destructive" }); return; } fetchBanks(); };
 
   const resetBranchForm = () => setBranchForm({ name: "", cnpj: "", address: "", is_active: true });
   const openNewBranch = () => { resetBranchForm(); setBranchEditingId(null); setBranchDialogOpen(true); };
@@ -142,7 +147,7 @@ export default function AdminFinanceConfig() {
     setBranchDialogOpen(false);
     fetchBranches();
   };
-  const handleDeleteBranch = async (id: string) => { await db.from("branches").delete().eq("id", id); fetchBranches(); };
+  const handleDeleteBranch = async (id: string) => { const { error } = await db.from("branches").delete().eq("id", id); if (error) { toast({ title: "Não foi possível excluir a filial", description: error.message, variant: "destructive" }); return; } fetchBranches(); };
 
   const totalRecurring = recurring.reduce((s: number, t: any) => s + Number(t.amount), 0);
 
@@ -163,6 +168,12 @@ export default function AdminFinanceConfig() {
           <p className="text-muted-foreground text-sm font-medium ml-14">Gestão de infraestrutura, contas e regras de negócio</p>
         </div>
       </div>
+
+      {loadError && (
+        <div role="alert" className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive">
+          <strong>Configuração financeira incompleta:</strong> {loadError}
+        </div>
+      )}
 
       <Tabs defaultValue="accounts" className="space-y-8">
         <TabsList className="bg-admin-muted/40 p-1.5 rounded-2xl flex-wrap h-auto print:hidden">

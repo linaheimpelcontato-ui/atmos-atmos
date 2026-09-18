@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { 
   DollarSign, TrendingUp, AlertTriangle, Percent, Users, Target, 
   Download, XCircle, ArrowRight, Wallet, PieChart, Activity,
-  ArrowUpRight, ArrowDownRight, Calendar, Filter, Receipt
+  ArrowUpRight, ArrowDownRight, Calendar, Filter, Receipt, AlertCircle
 } from "lucide-react";
 import { 
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, 
@@ -29,7 +29,7 @@ export default function AdminFinanceDashboard() {
   const [dateTo, setDateTo] = useState(format(now, "yyyy-MM-dd"));
   const [segment, setSegment] = useState("all");
 
-  const { proposals, dayItems, proposalCosts, transactions } = useFinanceData();
+  const { proposals, dayItems, proposalCosts, transactions, error: financeError } = useFinanceData();
 
   const fd = useMemo(() => filterProposals(proposals, dayItems, proposalCosts, dateFrom, dateTo, segment), [proposals, dayItems, proposalCosts, dateFrom, dateTo, segment]);
   const kpis = useMemo(() => calcOverviewKPIs(fd, proposalCosts), [fd, proposalCosts]);
@@ -126,6 +126,13 @@ export default function AdminFinanceDashboard() {
         <div role="status" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
           <strong>Resultado incompleto</strong> — Há comissões de hospedagem sem dado nas propostas ou no histórico exibido.
           Lucro, custos derivados, margem e ROI são parciais; os valores não comprovam o lucro final.
+        </div>
+      )}
+
+      {financeError && (
+        <div role="alert" className="flex items-start gap-3 rounded-xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span><strong>Dados financeiros incompletos:</strong> {financeError instanceof Error ? financeError.message : String(financeError)}</span>
         </div>
       )}
 

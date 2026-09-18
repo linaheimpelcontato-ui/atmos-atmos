@@ -39,6 +39,7 @@ const routeModules: Record<string, AdminModule> = {
   "/admin/financeiro/lucro-margem": "financeiro",
   "/admin/financeiro/fluxo-caixa": "financeiro",
   "/admin/financeiro/relatorios": "financeiro",
+  "/admin/financeiro/conciliacao": "financeiro",
   "/admin/financeiro/configuracoes": "financeiro",
   "/admin/configuracoes": "configuracoes",
 };

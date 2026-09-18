@@ -35,6 +35,7 @@ import * as XLSX from "xlsx";
 import { motion } from "framer-motion";
 
 const db = supabase as any;
+const paymentMethodLabels: Record<string, string> = { pix: "PIX", boleto: "Boleto", cartao: "Cartão", transferencia: "Transferência", dinheiro: "Dinheiro" };
 
 const statusBadge: Record<string, string> = { 
   pending: "bg-yellow-100 text-yellow-800 border-yellow-200", 
@@ -49,6 +50,7 @@ export default function AdminFinanceDespesas() {
   const { toast } = useToast();
   const [transactions, setTransactions] = useState<any[]>([]);
   const [accounts, setAccounts] = useState<any[]>([]);
+  const [bankAccounts, setBankAccounts] = useState<any[]>([]);
   const [proposals, setProposals] = useState<any[]>([]);
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [sellers, setSellers] = useState<any[]>([]);
@@ -61,7 +63,7 @@ export default function AdminFinanceDespesas() {
   const [form, setForm] = useState({
     ...readTraceability(),
     type: "payable", description: "", amount: 0, due_date: format(new Date(), "yyyy-MM-dd"),
-    paid_date: "", status: "pending", account_id: "", seller_id: "", is_recurring: false, recurrence_day: 0, notes: "",
+    paid_date: "", status: "pending", account_id: "", bank_account_id: "", payment_method: "", seller_id: "", is_recurring: false, recurrence_day: 0, notes: "",
   });
   const smartFilters = useSmartFilters();
   const selection = useRowSelection();
@@ -77,6 +79,7 @@ export default function AdminFinanceDespesas() {
     const results = await Promise.all([
       q,
       db.from("chart_of_accounts").select("id, code, name, type").eq("is_active", true).order("code"),
+      db.from("bank_accounts").select("id, name, bank, account_number").eq("is_active", true).order("name"),
       db.from("sellers").select("id, name").eq("is_active", true).order("name"),
       db.from("proposals").select("id, title, code").order("created_at", { ascending: false }),
       db.from("suppliers").select("id, name, is_active").order("name"),
@@ -87,27 +90,28 @@ export default function AdminFinanceDespesas() {
       setLoading(false);
       return;
     }
-    const [{ data: txs }, { data: accs }, { data: sls }, { data: props }, { data: sups }] = results;
+    const [{ data: txs }, { data: accs }, { data: banks }, { data: sls }, { data: props }, { data: sups }] = results;
     setProposals(props || []);
     setSuppliers(sups || []);
     setTransactions(txs || []);
     setAccounts(accs || []);
+    setBankAccounts(banks || []);
     setSellers(sls || []);
     setLoading(false);
   }, [filterStatus, filterFrom, filterTo]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  const resetForm = () => setForm({ ...readTraceability(), type: "payable", description: "", amount: 0, due_date: format(new Date(), "yyyy-MM-dd"), paid_date: "", status: "pending", account_id: "", seller_id: "", is_recurring: false, recurrence_day: 0, notes: "" });
+  const resetForm = () => setForm({ ...readTraceability(), type: "payable", description: "", amount: 0, due_date: format(new Date(), "yyyy-MM-dd"), paid_date: "", status: "pending", account_id: "", bank_account_id: "", payment_method: "", seller_id: "", is_recurring: false, recurrence_day: 0, notes: "" });
   const openNew = () => { resetForm(); setEditingId(null); setDialogOpen(true); };
   const openEdit = (tx: any) => {
     setEditingId(tx.id);
-    setForm({ ...readTraceability(tx), type: tx.type, description: tx.description, amount: tx.amount, due_date: tx.due_date, paid_date: tx.paid_date || "", status: tx.status, account_id: tx.account_id || "", seller_id: tx.seller_id || "", is_recurring: tx.is_recurring, recurrence_day: tx.recurrence_day || 0, notes: tx.notes || "" });
+    setForm({ ...readTraceability(tx), type: tx.type, description: tx.description, amount: tx.amount, due_date: tx.due_date, paid_date: tx.paid_date || "", status: tx.status, account_id: tx.account_id || "", bank_account_id: tx.bank_account_id || "", payment_method: tx.payment_method || "", seller_id: tx.seller_id || "", is_recurring: tx.is_recurring, recurrence_day: tx.recurrence_day || 0, notes: tx.notes || "" });
     setDialogOpen(true);
   };
 
   const handleSave = async () => {
-    const payload = { ...traceabilityPayload(form), type: form.type, description: form.description, amount: form.amount, due_date: form.due_date, paid_date: form.paid_date || null, status: form.status, account_id: form.account_id || null, seller_id: form.seller_id || null, is_recurring: form.is_recurring, recurrence_day: form.is_recurring ? form.recurrence_day : null, notes: form.notes || null };
+    const payload = { ...traceabilityPayload(form), type: form.type, description: form.description, amount: form.amount, due_date: form.due_date, paid_date: form.paid_date || null, status: form.status, account_id: form.account_id || null, bank_account_id: form.bank_account_id || null, payment_method: form.payment_method || null, seller_id: form.seller_id || null, is_recurring: form.is_recurring, recurrence_day: form.is_recurring ? form.recurrence_day : null, notes: form.notes || null };
     const { error } = editingId ? await db.from("financial_transactions").update(payload).eq("id", editingId) : await db.from("financial_transactions").insert(payload);
     if (error) { toast({ title: "Erro", description: String(error.message), variant: "destructive" }); return; }
     toast({ title: editingId ? "Despesa atualizada" : "Despesa criada" });
@@ -115,14 +119,26 @@ export default function AdminFinanceDespesas() {
     fetchAll();
   };
 
-  const handleDelete = async (id: string) => { await db.from("financial_transactions").delete().eq("id", id); fetchAll(); };
-  const handleMarkPaid = async (id: string) => { await db.from("financial_transactions").update({ status: "paid", paid_date: format(new Date(), "yyyy-MM-dd") }).eq("id", id); fetchAll(); };
+  const handleDelete = async (id: string) => {
+    const { error } = await db.from("financial_transactions").delete().eq("id", id);
+    if (error) { toast({ title: "Não foi possível excluir", description: error.message, variant: "destructive" }); return; }
+    fetchAll();
+  };
+  const handleMarkPaid = async (id: string) => {
+    const { error } = await db.from("financial_transactions").update({ status: "paid", paid_date: format(new Date(), "yyyy-MM-dd") }).eq("id", id);
+    if (error) { toast({ title: "Não foi possível marcar como pago", description: error.message, variant: "destructive" }); return; }
+    fetchAll();
+  };
 
   const getAccountLabel = (tx: any) => {
     const acc = accounts.find((a: any) => a.id === tx.account_id);
     return acc ? `${acc.code} ${acc.name}` : "—";
   };
 
+  const getBankAccountLabel = (tx: any) => {
+    const bank = bankAccounts.find((account: any) => account.id === tx.bank_account_id);
+    return bank ? `${bank.name}${bank.bank ? ` — ${bank.bank}` : ""}` : "Não informada";
+  };
   const filteredTxs = smartFilters.applyFilters(transactions);
   const allIds = useMemo(() => filteredTxs.map((t: any) => t.id), [filteredTxs]);
 
@@ -281,6 +297,8 @@ export default function AdminFinanceDespesas() {
                     <TableCell className="p-4 text-muted-foreground font-medium min-w-[220px]">
                       <div>{tx.description}</div>
                       <div className="mt-1 text-xs space-y-1">
+                        <div>Conta financeira: {getBankAccountLabel(tx)}</div>
+                        <div>Forma de pagamento: {paymentMethodLabels[tx.payment_method] || tx.payment_method || "Não informada"}</div>
                         <div>Proposta / grupo: {proposalLabel(tx.proposal_id, proposals) || "Sem vínculo"}</div>
                         <div>Fornecedor: {supplierLabel(tx.supplier_id, suppliers) || "Não informado"}</div>
                         <div>NF: {tx.invoice_number || "Não informada"}</div>
@@ -349,7 +367,8 @@ export default function AdminFinanceDespesas() {
         onClear={selection.clear}
         onDelete={async () => {
           const ids = [...selection.selectedIds];
-          await db.from("financial_transactions").delete().in("id", ids);
+          const { error } = await db.from("financial_transactions").delete().in("id", ids);
+          if (error) { toast({ title: "Falha ao excluir lançamentos", description: error.message, variant: "destructive" }); return; }
           toast({ title: `${ids.length} despesa(s) excluída(s)` });
           selection.clear();
           fetchAll();
@@ -379,7 +398,8 @@ export default function AdminFinanceDespesas() {
           const parsed = field === "amount" ? (parseFloat(String(value)) || 0) : value;
           const update: any = { [field]: parsed };
           if (field === "status" && value === "paid") update.paid_date = format(new Date(), "yyyy-MM-dd");
-          await db.from("financial_transactions").update(update).in("id", ids);
+          const { error } = await db.from("financial_transactions").update(update).in("id", ids);
+          if (error) { toast({ title: "Falha ao atualizar lançamentos", description: error.message, variant: "destructive" }); return; }
           toast({ title: `${ids.length} despesa(s) atualizada(s)` });
           selection.clear();
           fetchAll();
@@ -495,6 +515,29 @@ export default function AdminFinanceDespesas() {
                     />
                   </div>
                 )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">Conta financeira</Label>
+                <Select value={form.bank_account_id || "none"} onValueChange={v => setForm({ ...form, bank_account_id: v === "none" ? "" : v })}>
+                  <SelectTrigger className="h-11 rounded-xl bg-admin-muted/50 border-none text-xs font-bold"><SelectValue placeholder="Selecionar conta..." /></SelectTrigger>
+                  <SelectContent className="rounded-xl border-none shadow-xl">
+                    {bankAccounts.map((account: any) => <SelectItem key={account.id} value={account.id}>{account.name}{account.bank ? ` — ${account.bank}` : ""}</SelectItem>)}
+                    <SelectItem value="none">Não informada</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">Forma de pagamento</Label>
+                <Select value={form.payment_method || "none"} onValueChange={v => setForm({ ...form, payment_method: v === "none" ? "" : v })}>
+                  <SelectTrigger className="h-11 rounded-xl bg-admin-muted/50 border-none text-xs font-bold"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
+                  <SelectContent className="rounded-xl border-none shadow-xl">
+                    {Object.entries(paymentMethodLabels).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}
+                    <SelectItem value="none">Não informada</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 

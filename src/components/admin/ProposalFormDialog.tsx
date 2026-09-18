@@ -184,6 +184,7 @@ type CostItem = {
   days: number;
   unit_amount: number;
   account_id: string | null;
+  supplier_id: string | null;
 };
 
 type AtmosInternalCost = { description: string; amount: number; days: number; unit_amount: number };
@@ -460,6 +461,7 @@ export default function ProposalFormDialog({
   const [partnerCommission, setPartnerCommission] = useState(0);
   const [costItems, setCostItems] = useState<CostItem[]>([]);
   const [costAccounts, setCostAccounts] = useState<{ id: string; code: string; name: string }[]>([]);
+  const [costSuppliers, setCostSuppliers] = useState<{ id: string; name: string; is_active?: boolean }[]>([]);
 
   const [atmosService, setAtmosService] = useState<AtmosService>({
     price_per_person_day: 0,
@@ -518,6 +520,9 @@ export default function ProposalFormDialog({
   useEffect(() => {
     db.from("chart_of_accounts").select("id, code, name").eq("is_active", true).order("code").then(({ data }: any) => {
       setCostAccounts(data || []);
+    });
+    db.from("suppliers").select("id, name, is_active").order("name").then(({ data }: any) => {
+      setCostSuppliers(data || []);
     });
   }, []);
 
@@ -815,7 +820,7 @@ export default function ProposalFormDialog({
       }
       const { data: costsData } = await db.from("proposal_costs").select("*").eq("proposal_id", proposalId);
       if (costsData && costsData.length > 0) {
-        setCostItems(costsData.map((c: any) => ({ id: c.id, description: c.description, amount: Number(c.amount), days: 1, unit_amount: Number(c.amount), account_id: c.account_id })));
+        setCostItems(costsData.map((c: any) => ({ id: c.id, description: c.description, amount: Number(c.amount), days: 1, unit_amount: Number(c.amount), account_id: c.account_id, supplier_id: c.supplier_id || null })));
       }
       // Load day descriptions
       const { data: dayDescs } = await db.from("proposal_days").select("day_number, description").eq("proposal_id", proposalId);
@@ -1492,7 +1497,7 @@ export default function ProposalFormDialog({
   const totalWithAtmosFull = groupTotalPreTax; // for UI category breakdown
   const pricePerPerson = allocation ? totalCharged / allocation.paying : 0;
 
-  const atmosInternalCosts = atmosService.internal_costs.reduce((s, c) => s + c.amount, 0);
+  const atmosInternalCosts = moneySum(...atmosService.internal_costs.map(c => c.amount));
 
   // ─── Unified profit analysis ──────────────────────────────────────
   type ItemProfit = { cell: DayItem; revenue: number; cost: number; commission: number; profit: number };
@@ -1532,7 +1537,8 @@ export default function ProposalFormDialog({
   );
   const totalRevenue = totalCharged;
   const margin = totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0;
-  const atmosInsufficient = atmosRevenue < (totalCosts + taxValue) && (totalCosts + taxValue) > 0;
+  const totalCostsWithTax = moneySum(totalCosts, taxValue);
+  const atmosInsufficient = atmosRevenue < totalCostsWithTax && totalCostsWithTax > 0;
 
   // ─── Save ─────────────────────────────────────────────────────────
   const saveMutation = useMutation({
@@ -1582,7 +1588,8 @@ export default function ProposalFormDialog({
         cost_price: getEffectiveCost(c), commission_percent: c.comissao, supplier_id: c.supplier_id || null,
       }));
       const costsPayload = costItems.filter(c => c.amount > 0 || c.description).map(c => ({
-        id: c.id, description: c.description, amount: c.amount, account_id: c.account_id || null,
+        id: c.id || crypto.randomUUID(), description: c.description, amount: c.amount, account_id: c.account_id || null,
+        supplier_id: c.supplier_id || null,
       }));
       const daysPayload = Array.from({ length: numDays }, (_, index) => ({ day_number: index + 1, description: dayDescriptions[index + 1] ?? "" }));
       const accommodationsPayload = proposalAccommodations.map(a => ({
@@ -1607,6 +1614,15 @@ export default function ProposalFormDialog({
         p_commissions: commissions,
       });
       if (error) throw error;
+      const savedProposalId = data?.id || proposalId;
+      if (savedProposalId) {
+        const supplierResults = await Promise.all(costsPayload.map(cost => db.from("proposal_costs")
+          .update({ supplier_id: cost.supplier_id })
+          .eq("id", cost.id)
+          .eq("proposal_id", savedProposalId)));
+        const supplierError = supplierResults.find((result: any) => result.error)?.error;
+        if (supplierError) throw supplierError;
+      }
       if (data?.legacy_commissions) toast({ title: "Comissões históricas preservadas", description: "Recebíveis antigos sem vínculo de origem exigem conciliação manual. Nenhum foi apagado, recriado ou alterado." });
 
     },
@@ -3057,17 +3073,18 @@ export default function ProposalFormDialog({
 
             <div className="space-y-2">
               {costItems.length > 0 && (
-                <div className="grid grid-cols-[1fr_60px_100px_80px_160px_auto] gap-2 text-[10px] text-muted-foreground px-1">
+                <div className="grid grid-cols-[1fr_60px_100px_80px_160px_200px_auto] gap-2 text-[10px] text-muted-foreground px-1">
                   <span>Descrição</span>
                   <span className="text-center">Dias</span>
                   <span className="text-center">Valor/dia</span>
                   <span className="text-center">Total</span>
                   <span>Conta</span>
+                  <span>Fornecedor</span>
                   <span></span>
                 </div>
               )}
               {costItems.map((ci, idx) => (
-                <div key={idx} className="grid grid-cols-[1fr_60px_100px_80px_160px_auto] gap-2 items-end">
+                <div key={idx} className="grid grid-cols-[1fr_60px_100px_80px_160px_200px_auto] gap-2 items-end">
                   <Input className="h-8 text-sm" placeholder="Descrição do custo" value={ci.description} onChange={(e) => {
                     const arr = [...costItems]; arr[idx] = { ...arr[idx], description: e.target.value }; setCostItems(arr);
                   }} />
@@ -3089,10 +3106,19 @@ export default function ProposalFormDialog({
                       {costAccounts.map((a) => <SelectItem key={a.id} value={a.id}>{a.code} {a.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
+                  <Select value={ci.supplier_id || "none"} onValueChange={(v) => {
+                    const arr = [...costItems]; arr[idx] = { ...arr[idx], supplier_id: v === "none" ? null : v }; setCostItems(arr);
+                  }}>
+                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Fornecedor" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Não informado</SelectItem>
+                      {costSuppliers.map((supplier) => <SelectItem key={supplier.id} value={supplier.id}>{supplier.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                   <Button type="button" size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setCostItems(costItems.filter((_, i) => i !== idx))}><Trash2 className="h-3.5 w-3.5" /></Button>
                 </div>
               ))}
-              <Button type="button" size="sm" variant="outline" onClick={() => setCostItems([...costItems, { description: "", amount: 0, days: 1, unit_amount: 0, account_id: null }])}>
+              <Button type="button" size="sm" variant="outline" onClick={() => setCostItems([...costItems, { description: "", amount: 0, days: 1, unit_amount: 0, account_id: null, supplier_id: null }])}>
                 <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar custo
               </Button>
             </div>

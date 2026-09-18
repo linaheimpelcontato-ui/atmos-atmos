@@ -3,7 +3,7 @@ import { format, subMonths, startOfMonth, addDays } from "date-fns";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, CheckCircle2, Download, Waves, TrendingUp, TrendingDown, Calendar, Filter, ArrowRight, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Download, Waves, TrendingUp, TrendingDown, Calendar, Filter, ArrowRight, ArrowUpRight, ArrowDownRight, AlertCircle } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer, LineChart, Line, AreaChart, Area
@@ -12,7 +12,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useFinanceData } from "./finance/useFinanceData";
-import { calcCashFlow, calcCashForecast, fmt } from "./finance/financeCalcs";
+import { calcCashForecast, fmt } from "./finance/financeCalcs";
+import { calcActualCashFlow } from "./finance/financeReporting";
 import { exportCashFlow } from "./finance/financeExport";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -25,9 +26,13 @@ export default function AdminFinanceFluxoCaixa() {
   const [dateFrom, setDateFrom] = useState(format(subMonths(startOfMonth(now), 11), "yyyy-MM-dd"));
   const [dateTo, setDateTo] = useState(format(now, "yyyy-MM-dd"));
 
-  const { transactions } = useFinanceData();
+  const { transactions, error: financeError } = useFinanceData();
 
-  const cashFlowData = useMemo(() => calcCashFlow(transactions, dateFrom, dateTo), [transactions, dateFrom, dateTo]);
+  const cashFlowData = useMemo(() => calcActualCashFlow(transactions, dateFrom, dateTo).map(month => ({
+    ...month,
+    // Os gráficos e a exportação legados usam `name` como rótulo do mês.
+    name: month.month,
+  })), [transactions, dateFrom, dateTo]);
   const cashForecast = useMemo(() => calcCashForecast(transactions), [transactions]);
 
   const today = format(now, "yyyy-MM-dd");
@@ -52,12 +57,14 @@ export default function AdminFinanceFluxoCaixa() {
 
   const markPaid = useMutation({
     mutationFn: async (id: string) => {
-      await db.from("financial_transactions").update({ status: "paid", paid_date: format(now, "yyyy-MM-dd") }).eq("id", id);
+      const { error } = await db.from("financial_transactions").update({ status: "paid", paid_date: format(now, "yyyy-MM-dd") }).eq("id", id);
+      if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["fin-all-transactions"] });
       toast({ title: "Marcado como pago" });
     },
+    onError: (error: any) => toast({ title: "Não foi possível marcar como pago", description: error.message || String(error), variant: "destructive" }),
   });
 
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -115,6 +122,13 @@ export default function AdminFinanceFluxoCaixa() {
           </div>
         </div>
       </div>
+
+      {financeError && (
+        <div role="alert" className="flex items-start gap-3 rounded-xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span><strong>Dados financeiros incompletos:</strong> {financeError instanceof Error ? financeError.message : String(financeError)}</span>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <motion.div whileHover={{ y: -4 }} className="bg-white rounded-[2rem] p-6 border border-admin-border/60 shadow-sm relative overflow-hidden group">
