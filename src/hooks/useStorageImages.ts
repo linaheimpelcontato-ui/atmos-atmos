@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { storageUrl, optimizedUrl, isImageMatch, normalize } from "@/lib/storage";
+import { exactStorageUrl, optimizedUrl, isImageMatch, normalize } from "@/lib/storage";
 import { r2 } from "@/lib/r2";
 
 /**
@@ -84,9 +84,9 @@ export async function fetchStorageImages(folder: string, prefix: string): Promis
         .map((file: any) => {
           // If it's a video file, skip optimization
           if (file.Key.toLowerCase().endsWith('.mp4') || file.Key.toLowerCase().endsWith('.mov')) {
-            return storageUrl(file.Key);
+            return exactStorageUrl(file.Key);
           }
-          return optimizedUrl(file.Key, { width: 1000, quality: 80 });
+          return optimizedUrl(exactStorageUrl(file.Key), { width: 1000, quality: 80 });
         });
 
       if (matching.length > 0) return matching;

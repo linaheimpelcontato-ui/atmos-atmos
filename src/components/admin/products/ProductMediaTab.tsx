@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { optimizedUrl, storageUrl, IMAGE_PRESETS, isImageMatch } from "@/lib/storage";
+import { exactStorageUrl, optimizedUrl, storageUrl, IMAGE_PRESETS, isImageMatch } from "@/lib/storage";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { toast } from "sonner";
 import { r2 } from "@/lib/r2";
@@ -256,7 +256,7 @@ function SortableItem({
           </div>
         ) : (
           <OptimizedImage
-            src={optimizedUrl(fullKey, IMAGE_PRESETS.thumbnail)}
+            src={optimizedUrl(exactStorageUrl(fullKey), IMAGE_PRESETS.thumbnail)}
             alt={fullKey}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             containerClassName="w-full h-full"

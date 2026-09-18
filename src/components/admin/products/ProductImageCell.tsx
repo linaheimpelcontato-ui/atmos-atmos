@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { storageUrl, optimizedUrl, IMAGE_PRESETS, isImageMatch } from "@/lib/storage";
+import { exactStorageUrl, optimizedUrl, IMAGE_PRESETS, isImageMatch } from "@/lib/storage";
 import { toast } from "sonner";
 import { r2 } from "@/lib/r2";
 import { type Product, getStorageInfo } from "./shared";
@@ -108,7 +108,7 @@ export function ProductImageCell({ product }: { product: Product }) {
 
   // Thumbnail: show first image
   const thumbUrl = images.length > 0
-    ? optimizedUrl(images[0], IMAGE_PRESETS.thumbnail)
+    ? optimizedUrl(exactStorageUrl(images[0]), IMAGE_PRESETS.thumbnail)
     : null;
 
   return (
@@ -157,7 +157,7 @@ export function ProductImageCell({ product }: { product: Product }) {
                   return (
                     <div key={fullKey} className="relative group rounded-lg overflow-hidden border border-border">
                       <img
-                        src={optimizedUrl(fullKey, IMAGE_PRESETS.thumbnail)}
+                        src={optimizedUrl(exactStorageUrl(fullKey), IMAGE_PRESETS.thumbnail)}
                         alt={fileName}
                         className="w-full aspect-[4/3] object-cover"
                       />

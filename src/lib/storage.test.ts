@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { storageUrl, heroUrl, cardUrl, correctStoragePath, optimizedUrl, IMAGE_PRESETS } from "./storage";
+import { storageUrl, heroUrl, cardUrl, correctStoragePath, exactStorageUrl, optimizedUrl, IMAGE_PRESETS } from "./storage";
 
 describe("storage URL routing", () => {
   it("serves shipped files consistently without altering accented filenames", () => {
@@ -59,6 +59,18 @@ describe("storage URL routing", () => {
     expect(parsed.searchParams.get("q")).toBe("75");
     expect(parsed.searchParams.get("output")).toBe("webp");
     expect(parsed.searchParams.get("fit")).toBe("cover");
+  });
+
+  it("preserves the exact extension returned by a dynamic R2 listing", () => {
+    const optimized = optimizedUrl(
+      exactStorageUrl("produtos/hospedagens/amana-hotel/amana-hotel-11.jpeg"),
+      IMAGE_PRESETS.card,
+    );
+    const parsed = new URL(optimized);
+
+    expect(parsed.searchParams.get("url")).toBe(
+      "https://assets.atmos.tur.br/produtos/hospedagens/amana-hotel/amana-hotel-11.jpeg",
+    );
   });
 
   it("keeps bundled and third-party images out of the R2 image proxy", () => {

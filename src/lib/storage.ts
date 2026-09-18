@@ -309,12 +309,23 @@ export function getBaseStorageUrl(path: string): string {
   
   // Apply case correction for folders and files in local assets and R2 storage
   cleanPath = correctStoragePath(cleanPath).normalize("NFD");
-  
-  // Encode the path to handle spaces and special characters
+
+  return exactStorageUrl(cleanPath);
+}
+
+/**
+ * Builds a URL from an object key exactly as returned by R2.
+ *
+ * Dynamic R2 listings are authoritative: they may contain a different
+ * extension for individual files in the same product folder (for example,
+ * `.avif` and `.jpeg` together). Do not run those keys through the legacy
+ * normalization aliases or a valid object can become a 404.
+ */
+export function exactStorageUrl(path: string): string {
+  if (path.startsWith("http")) return path;
+
+  const cleanPath = path.replace(/^\/+/, "");
   const encodedPath = cleanPath.split('/').map(segment => encodeURIComponent(segment)).join('/');
-  
-  // Remote media must use the same origin in development and production.
-  
   return `${STORAGE_BASE}/${encodedPath}`;
 }
 
