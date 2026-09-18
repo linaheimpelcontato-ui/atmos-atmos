@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, expect, it, vi } from 'vitest';
-import ProposalCostChecklist from './ProposalCostChecklist';
+import ProposalCostChecklist, { ProposalCostChecklistButton } from './ProposalCostChecklist';
 import { costSnapshot } from '@/lib/verifiedCostIdentity';
 const mocks = vi.hoisted(()=>({data:[] as unknown[],rpc:vi.fn(),toast:vi.fn()}));
 vi.mock('@/integrations/supabase/client',()=>({supabase:{from:()=>({select:()=>({eq:async()=>({data:mocks.data,error:null})})}),rpc:mocks.rpc}}));
@@ -9,6 +9,13 @@ vi.mock('@/hooks/use-toast',()=>({useToast:()=>({toast:mocks.toast})}));
 vi.mock('@/components/ui/sheet',()=>({Sheet:({children}:any)=><div>{children}</div>,SheetContent:({children}:any)=><div>{children}</div>,SheetHeader:({children}:any)=><div>{children}</div>,SheetTitle:({children}:any)=><div>{children}</div>}));
 afterEach(()=>{cleanup();vi.clearAllMocks();});
 const item={id:'item-A',day_number:1,item_index:0,item_name:'Service A',category:'Service',catalog_item_id:'product-A',cost:100,value:200,qty:1};
+it('blocks cost validation until newly imported catalog items are saved',async()=>{
+  const unsaved={...item,id:undefined};
+  render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}><ProposalCostChecklistButton proposalId="proposal" grid={[unsaved]} onClick={vi.fn()}/></QueryClientProvider>);
+  const button=await screen.findByRole('button',{name:/salve a proposta primeiro/i});
+  expect(button).toBeDisabled();
+  expect(button.parentElement).toHaveAttribute('title','Salve a proposta antes de validar os custos dos itens recém-adicionados.');
+});
 it('keeps verified zero on load and never closes/reports success for rejected RPC',async()=>{
   mocks.data=[{id:'check-A',item_id:item.id,identity_snapshot:costSnapshot(item),day_number:1,item_index:0,actual_cost:0,is_verified:true,notes:'zero agreement'}];
   mocks.rpc.mockResolvedValue({data:null,error:{message:'A composição mudou'}});

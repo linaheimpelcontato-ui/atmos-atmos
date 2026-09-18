@@ -1663,6 +1663,7 @@ export type Database = {
           id: string
           items: Json | null
           language: string | null
+          original_answers: Json | null
           status: string
           user_email: string | null
           user_id: string | null
@@ -1675,6 +1676,7 @@ export type Database = {
           id?: string
           items?: Json | null
           language?: string | null
+          original_answers?: Json | null
           status?: string
           user_email?: string | null
           user_id?: string | null
@@ -1687,6 +1689,7 @@ export type Database = {
           id?: string
           items?: Json | null
           language?: string | null
+          original_answers?: Json | null
           status?: string
           user_email?: string | null
           user_id?: string | null

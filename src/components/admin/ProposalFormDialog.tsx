@@ -3276,7 +3276,7 @@ export default function ProposalFormDialog({
                   );
                 })()}
                 {/* Questionnaire answers - matching AdminQuotes style */}
-                {wishlistData.answers && typeof wishlistData.answers === "object" && Object.keys(wishlistData.answers).length > 0 && (() => {
+                {(wishlistData.original_answers || wishlistData.answers) && typeof (wishlistData.original_answers || wishlistData.answers) === "object" && Object.keys(wishlistData.original_answers || wishlistData.answers).length > 0 && (() => {
                   const answerLabels: Record<string, string> = {
                     status: "Situação", startDate: "Início da viagem", endDate: "Fim da viagem",
                     numDays: "Nº Diárias",
@@ -3290,7 +3290,7 @@ export default function ProposalFormDialog({
                     "mobility", "mobilityDetails", "transport", "hasAccommodation",
                     "accommodationLocation", "notes",
                   ];
-                  const answers = wishlistData.answers as Record<string, unknown>;
+                  const answers = (wishlistData.original_answers || wishlistData.answers) as Record<string, unknown>;
                   return (
                     <div>
                       <div className="flex items-center gap-2 text-sm font-semibold text-foreground mb-3">

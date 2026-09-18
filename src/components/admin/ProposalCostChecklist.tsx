@@ -53,6 +53,7 @@ type Props = {
 
 export function ProposalCostChecklistButton({ proposalId, grid, onClick }: { proposalId: string | null; grid: DayItem[]; onClick: () => void }) {
   const costItems = grid.filter(i => !!i.catalog_item_id && i.category !== "Hospedagem");
+  const hasUnsavedItems = costItems.some(item => !item.id);
 
   const { data: checks = EMPTY_CHECKS } = useQuery({
     queryKey: ["cost-checks", proposalId],
@@ -70,8 +71,16 @@ export function ProposalCostChecklistButton({ proposalId, grid, onClick }: { pro
 
   if (!proposalId || costItems.length === 0) return null;
 
-  return (
-    <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={onClick}>
+  const button = (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      className="gap-1.5"
+      onClick={onClick}
+      disabled={hasUnsavedItems}
+      aria-label={hasUnsavedItems ? "Validar Custos — salve a proposta primeiro" : "Validar Custos"}
+    >
       <ClipboardCheck className="h-3.5 w-3.5" />
       Validar Custos
       {pending > 0 && (
@@ -81,6 +90,12 @@ export function ProposalCostChecklistButton({ proposalId, grid, onClick }: { pro
       )}
     </Button>
   );
+
+  return hasUnsavedItems ? (
+    <span title="Salve a proposta antes de validar os custos dos itens recém-adicionados.">
+      {button}
+    </span>
+  ) : button;
 }
 
 export default function ProposalCostChecklist({ proposalId, grid, open, onOpenChange, catalogCostResolver, isTotalCostResolver, catalogSalePriceResolver }: Props) {

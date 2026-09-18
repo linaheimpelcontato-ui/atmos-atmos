@@ -61,6 +61,7 @@ interface UnifiedLead {
   // turista-specific
   items?: unknown;
   answers?: unknown;
+  originalAnswers?: unknown;
   // imersao-specific
   empresa?: string;
   cargo?: string;
@@ -218,6 +219,7 @@ export default function AdminQuotes({ segment }: { segment: "b2c" | "b2b" }) {
         created_at: q.created_at,
         items: q.items,
         answers: q.answers,
+        originalAnswers: q.original_answers,
       }));
       setLeads(turistaLeads);
     } else {
@@ -315,9 +317,12 @@ export default function AdminQuotes({ segment }: { segment: "b2c" | "b2b" }) {
   }, [selected]);
 
   const getAnswers = (lead: UnifiedLead): Record<string, unknown> => {
-    if (!lead.answers) return {};
-    if (typeof lead.answers === "object") return lead.answers as Record<string, unknown>;
-    try { return JSON.parse(String(lead.answers)); } catch { return {}; }
+    const source = lead.origin === "turista" && lead.originalAnswers
+      ? lead.originalAnswers
+      : lead.answers;
+    if (!source) return {};
+    if (typeof source === "object") return source as Record<string, unknown>;
+    try { return JSON.parse(String(source)); } catch { return {}; }
   };
 
   const getItems = (lead: UnifiedLead): { name: string; type: string; details?: string }[] => {
