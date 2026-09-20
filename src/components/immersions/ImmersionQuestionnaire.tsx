@@ -324,45 +324,45 @@ export default function ImmersionQuestionnaire({ onClose, wishlistItems }: Props
         <div className="h-16 w-16 rounded-full bg-accent/20 flex items-center justify-center mx-auto">
           <Check className="h-8 w-8 text-accent" />
         </div>
-        <h3 className="text-2xl font-bold text-primary-foreground">Recebemos suas informações!</h3>
-        <p className="text-primary-foreground/70">Redirecionando para o WhatsApp...</p>
+        <h3 className="text-2xl font-bold text-[#1A1612]">Recebemos suas informações!</h3>
+        <p className="text-[#1A1612]/70">Redirecionando para o WhatsApp...</p>
       </div>
     );
   }
 
   /* ── Shared UI ── */
   const FieldError = ({ field }: { field: string }) =>
-    errors[field] ? <p className="text-red-300 text-xs mt-1">{errors[field]}</p> : null;
+    errors[field] ? <p className="text-red-600 text-xs mt-1">{errors[field]}</p> : null;
 
   const radioClass = (selected: boolean) => cn(
     "flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition-all text-sm",
     selected
-      ? "border-accent bg-accent/10 text-primary-foreground shadow-sm"
-      : "border-primary-foreground/20 text-primary-foreground/70 hover:border-primary-foreground/40"
+      ? "border-accent bg-accent/10 text-[#1A1612] shadow-sm"
+      : "border-[#1A1612]/15 text-[#1A1612]/70 hover:border-[#1A1612]/35"
   );
 
-  const inputClass = "bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground placeholder:text-primary-foreground/40";
+  const inputClass = "bg-white border-[#1A1612]/15 text-[#1A1612] placeholder:text-[#1A1612]/40";
 
   const ProgressBar = () => (
     <div className="flex items-center justify-between mb-2">
-      <span className="text-xs text-primary-foreground/60 font-medium">
+      <span className="text-xs text-[#1A1612]/60 font-medium">
         {step + 1} / {totalSteps}
       </span>
-      <button onClick={onClose} className="text-xs text-primary-foreground/60 hover:text-primary-foreground transition-colors">
+      <button onClick={onClose} className="text-xs text-[#1A1612]/60 hover:text-[#1A1612] transition-colors">
         Cancelar
       </button>
     </div>
   );
 
   const ProgressBarLine = () => (
-    <div className="w-full bg-primary-foreground/20 rounded-full h-1.5 mb-8">
+    <div className="w-full bg-[#1A1612]/10 rounded-full h-1.5 mb-8">
       <div className="bg-accent h-1.5 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
     </div>
   );
 
   const NavButtons = ({ showSubmit = false }: { showSubmit?: boolean }) => (
     <div className="flex items-center justify-between pt-6">
-      <Button variant="ghost" onClick={handleBack} className="text-primary-foreground/60 hover:text-primary-foreground gap-1">
+      <Button variant="ghost" onClick={handleBack} className="text-[#1A1612]/60 hover:text-[#1A1612] gap-1">
         <ArrowLeft className="h-4 w-4" /> Voltar
       </Button>
       {showSubmit ? (
@@ -381,52 +381,52 @@ export default function ImmersionQuestionnaire({ onClose, wishlistItems }: Props
   );
 
   return (
-    <div className="w-full max-w-2xl mx-auto animate-in slide-in-from-bottom-4">
+    <div className="w-full max-w-2xl mx-auto animate-in slide-in-from-bottom-4 text-[#1A1612]">
       <ProgressBar />
       <ProgressBarLine />
 
       {/* ── IDENTIFICATION (grouped) ── */}
       {current.id === "identification" && (
         <div className="space-y-5">
-          <h3 className="text-xl font-bold text-primary-foreground">{current.title}</h3>
+          <h3 className="text-xl font-bold text-[#1A1612]">{current.title}</h3>
 
           <div>
-            <label className="text-sm font-medium text-primary-foreground/80">Nome completo *</label>
+            <label className="text-sm font-medium text-[#1A1612]/80">Nome completo *</label>
             <Input value={form.nome} onChange={e => set("nome", e.target.value)}
               placeholder="Como podemos te chamar?" className={cn("mt-1", inputClass)} />
             <FieldError field="nome" />
           </div>
 
           <div>
-            <label className="text-sm font-medium text-primary-foreground/80">Email *</label>
+            <label className="text-sm font-medium text-[#1A1612]/80">Email *</label>
             <Input type="email" value={form.email} onChange={e => set("email", e.target.value)}
               placeholder="seu@email.com" className={cn("mt-1", inputClass)} />
             <FieldError field="email" />
           </div>
 
           <div>
-            <label className="text-sm font-medium text-primary-foreground/80">Instagram ou Site</label>
+            <label className="text-sm font-medium text-[#1A1612]/80">Instagram ou Site</label>
             <Input value={form.instagram_site} onChange={e => set("instagram_site", e.target.value)}
               placeholder="@seuinstagram ou www.seusite.com" className={cn("mt-1", inputClass)} />
           </div>
 
           <div>
-            <label className="text-sm font-medium text-primary-foreground/80">Telefone/WhatsApp *</label>
+            <label className="text-sm font-medium text-[#1A1612]/80">Telefone/WhatsApp *</label>
             <Input value={form.telefone} onChange={e => set("telefone", formatPhone(e.target.value))}
               placeholder="+55 (11) 99999-9999" className={cn("mt-1", inputClass)} />
-            <p className="text-xs text-primary-foreground/50 mt-1">Por onde você prefere conversar?</p>
+            <p className="text-xs text-[#1A1612]/50 mt-1">Por onde você prefere conversar?</p>
             <FieldError field="telefone" />
           </div>
 
           <div>
-            <label className="text-sm font-medium text-primary-foreground/80">Empresa/Organização *</label>
+            <label className="text-sm font-medium text-[#1A1612]/80">Empresa/Organização *</label>
             <Input value={form.empresa} onChange={e => set("empresa", e.target.value)}
               placeholder="Nome da empresa ou organização" className={cn("mt-1", inputClass)} />
             <FieldError field="empresa" />
           </div>
 
           <div>
-            <label className="text-sm font-medium text-primary-foreground/80">Seu cargo/função *</label>
+            <label className="text-sm font-medium text-[#1A1612]/80">Seu cargo/função *</label>
             <Input value={form.cargo} onChange={e => set("cargo", e.target.value)}
               placeholder="Ex: CEO, RH, Facilitadora, Organizador de Eventos" className={cn("mt-1", inputClass)} />
             <FieldError field="cargo" />
@@ -439,7 +439,7 @@ export default function ImmersionQuestionnaire({ onClose, wishlistItems }: Props
       {/* ── TIPO GRUPO (single radio) ── */}
       {current.id === "tipo_grupo" && (
         <div className="space-y-6">
-          <h3 className="text-lg md:text-xl font-semibold text-primary-foreground leading-snug">{current.title}</h3>
+          <h3 className="text-lg md:text-xl font-semibold text-[#1A1612] leading-snug">{current.title}</h3>
           <div className="space-y-2 min-h-[120px]">
             {tiposGrupo.map(t => (
               <button key={t} onClick={() => { set("tipo_grupo", t); set("tipo_grupo_outro", ""); }}
@@ -462,7 +462,7 @@ export default function ImmersionQuestionnaire({ onClose, wishlistItems }: Props
       {/* ── NUM PARTICIPANTES (single select as radio) ── */}
       {current.id === "num_participantes" && (
         <div className="space-y-6">
-          <h3 className="text-lg md:text-xl font-semibold text-primary-foreground leading-snug">{current.title}</h3>
+          <h3 className="text-lg md:text-xl font-semibold text-[#1A1612] leading-snug">{current.title}</h3>
           <div className="space-y-2 min-h-[120px]">
             {participantesOpts.map(o => (
               <button key={o} onClick={() => set("num_participantes", o)}
@@ -478,7 +478,7 @@ export default function ImmersionQuestionnaire({ onClose, wishlistItems }: Props
       {/* ── QUANDO (single radio + date range) ── */}
       {current.id === "quando" && (
         <div className="space-y-6">
-          <h3 className="text-lg md:text-xl font-semibold text-primary-foreground leading-snug">{current.title}</h3>
+          <h3 className="text-lg md:text-xl font-semibold text-[#1A1612] leading-snug">{current.title}</h3>
           <div className="space-y-2 min-h-[120px]">
             {quandoOpts.map(o => (
               <div key={o.value}>
@@ -491,7 +491,7 @@ export default function ImmersionQuestionnaire({ onClose, wishlistItems }: Props
                     <div className="flex gap-2">
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" className={cn("flex-1 justify-start text-left", inputClass, !form.data_especifica && "text-primary-foreground/40")}>
+                          <Button variant="outline" className={cn("flex-1 justify-start text-left", inputClass, !form.data_especifica && "text-[#1A1612]/40")}>
                             <CalendarIcon className="mr-2 h-4 w-4" />
                             {form.data_especifica ? format(form.data_especifica, "dd/MM/yyyy", { locale: ptBR }) : "Data de início"}
                           </Button>
@@ -503,7 +503,7 @@ export default function ImmersionQuestionnaire({ onClose, wishlistItems }: Props
                       </Popover>
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" className={cn("flex-1 justify-start text-left", inputClass, !form.data_especifica_fim && "text-primary-foreground/40")}>
+                          <Button variant="outline" className={cn("flex-1 justify-start text-left", inputClass, !form.data_especifica_fim && "text-[#1A1612]/40")}>
                             <CalendarIcon className="mr-2 h-4 w-4" />
                             {form.data_especifica_fim ? format(form.data_especifica_fim, "dd/MM/yyyy", { locale: ptBR }) : "Data de fim"}
                           </Button>
@@ -526,7 +526,7 @@ export default function ImmersionQuestionnaire({ onClose, wishlistItems }: Props
       {/* ── EXPERIENCIA GRUPOS (single radio) ── */}
       {current.id === "experiencia_grupos" && (
         <div className="space-y-6">
-          <h3 className="text-lg md:text-xl font-semibold text-primary-foreground leading-snug">{current.title}</h3>
+          <h3 className="text-lg md:text-xl font-semibold text-[#1A1612] leading-snug">{current.title}</h3>
           <div className="space-y-2 min-h-[120px]">
             {experienciaGruposOpts.map(o => (
               <button key={o} onClick={() => set("experiencia_grupos", o)}
@@ -542,7 +542,7 @@ export default function ImmersionQuestionnaire({ onClose, wishlistItems }: Props
       {/* ── CONHECE CHAPADA (single radio) ── */}
       {current.id === "conhece_chapada" && (
         <div className="space-y-6">
-          <h3 className="text-lg md:text-xl font-semibold text-primary-foreground leading-snug">{current.title}</h3>
+          <h3 className="text-lg md:text-xl font-semibold text-[#1A1612] leading-snug">{current.title}</h3>
           <div className="space-y-2 min-h-[120px]">
             {conheceChapadaOpts.map(o => (
               <button key={o} onClick={() => set("conhece_chapada", o)}
@@ -558,25 +558,25 @@ export default function ImmersionQuestionnaire({ onClose, wishlistItems }: Props
       {/* ── OBJETIVOS (checkboxes) ── */}
       {current.id === "objetivos" && (
         <div className="space-y-6">
-          <h3 className="text-lg md:text-xl font-semibold text-primary-foreground leading-snug">{current.title}</h3>
+          <h3 className="text-lg md:text-xl font-semibold text-[#1A1612] leading-snug">{current.title}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 min-h-[120px]">
             {objetivosOpts.map(obj => {
               const checked = form.objetivos.includes(obj);
               return (
                 <label key={obj} className={cn(
                   "flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all text-sm",
-                  checked ? "border-accent bg-accent/10 text-primary-foreground" : "border-primary-foreground/20 text-primary-foreground/70 hover:border-primary-foreground/40"
+                  checked ? "border-accent bg-accent/10 text-[#1A1612]" : "border-[#1A1612]/15 text-[#1A1612]/70 hover:border-[#1A1612]/35"
                 )}>
                   <Checkbox checked={checked} onCheckedChange={c => {
                     set("objetivos", c ? [...form.objetivos, obj] : form.objetivos.filter(o => o !== obj));
-                  }} className="border-primary-foreground/40 data-[state=checked]:bg-accent data-[state=checked]:border-accent" />
+                  }} className="border-[#1A1612]/30 data-[state=checked]:bg-accent data-[state=checked]:border-accent" />
                   {obj}
                 </label>
               );
             })}
             <label className={cn(
               "flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all text-sm sm:col-span-2",
-              form.objetivo_outro ? "border-accent bg-accent/10 text-primary-foreground" : "border-primary-foreground/20 text-primary-foreground/70"
+              form.objetivo_outro ? "border-accent bg-accent/10 text-[#1A1612]" : "border-[#1A1612]/15 text-[#1A1612]/70"
             )}>
               <span className="flex-shrink-0">Outro:</span>
               <Input value={form.objetivo_outro} onChange={e => set("objetivo_outro", e.target.value)}
@@ -590,7 +590,7 @@ export default function ImmersionQuestionnaire({ onClose, wishlistItems }: Props
       {/* ── HOSPEDAGEM (single radio horizontal) ── */}
       {current.id === "hospedagem" && (
         <div className="space-y-6">
-          <h3 className="text-lg md:text-xl font-semibold text-primary-foreground leading-snug">{current.title}</h3>
+          <h3 className="text-lg md:text-xl font-semibold text-[#1A1612] leading-snug">{current.title}</h3>
           <div className="space-y-2 min-h-[120px]">
             {["Sim, já temos hospedagem", "Gostaríamos de opções da ATMOS"].map(o => (
               <button key={o} onClick={() => set("hospedagem", o)}
@@ -606,8 +606,8 @@ export default function ImmersionQuestionnaire({ onClose, wishlistItems }: Props
       {/* ── ORÇAMENTO (single select as radio) ── */}
       {current.id === "orcamento" && (
         <div className="space-y-6">
-          <h3 className="text-lg md:text-xl font-semibold text-primary-foreground leading-snug">{current.title}</h3>
-          <p className="text-xs text-primary-foreground/50 -mt-4">O valor reflete na quantidade de dias e nos itens que adicionamos ao roteiro</p>
+          <h3 className="text-lg md:text-xl font-semibold text-[#1A1612] leading-snug">{current.title}</h3>
+          <p className="text-xs text-[#1A1612]/50 -mt-4">O valor reflete na quantidade de dias e nos itens que adicionamos ao roteiro</p>
           <div className="space-y-2 min-h-[120px]">
             {orcamentoOpts.map(o => (
               <button key={o} onClick={() => set("orcamento", o)}
@@ -623,10 +623,10 @@ export default function ImmersionQuestionnaire({ onClose, wishlistItems }: Props
       {/* ── FINAL (grouped) ── */}
       {current.id === "final" && (
         <div className="space-y-5">
-          <h3 className="text-xl font-bold text-primary-foreground">{current.title}</h3>
+          <h3 className="text-xl font-bold text-[#1A1612]">{current.title}</h3>
 
           <div>
-            <label className="text-sm font-medium text-primary-foreground/80">Como conheceu a ATMOS?</label>
+            <label className="text-sm font-medium text-[#1A1612]/80">Como conheceu a ATMOS?</label>
             <Select value={form.como_conheceu} onValueChange={v => set("como_conheceu", v)}>
               <SelectTrigger className={cn("mt-1", inputClass)}>
                 <SelectValue placeholder="Selecione..." />
@@ -643,11 +643,11 @@ export default function ImmersionQuestionnaire({ onClose, wishlistItems }: Props
           </div>
 
           <div>
-            <label className="text-sm font-medium text-primary-foreground/80">Algo mais que queira compartilhar?</label>
+            <label className="text-sm font-medium text-[#1A1612]/80">Algo mais que queira compartilhar?</label>
             <Textarea value={form.observacoes} onChange={e => { if (e.target.value.length <= 500) set("observacoes", e.target.value); }}
               placeholder="Compartilhe detalhes, dúvidas ou expectativas que acha importante a gente saber antes de conversarmos."
               rows={4} className={cn("mt-1", inputClass)} />
-            <p className="text-xs text-primary-foreground/50 text-right mt-1">{form.observacoes.length}/500</p>
+            <p className="text-xs text-[#1A1612]/50 text-right mt-1">{form.observacoes.length}/500</p>
           </div>
 
           <NavButtons showSubmit />

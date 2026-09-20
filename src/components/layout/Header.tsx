@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, Globe, Heart, LogIn, LogOut, UserCircle, Shield, MapPin } from "lucide-react";
 import { useLanguage, type Language } from "@/contexts/LanguageContext";
@@ -35,8 +35,10 @@ const navLinks = [
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [headerVisible, setHeaderVisible] = useState(true);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [myProposalSlug, setMyProposalSlug] = useState<string | null>(null);
+  const lastScrollY = useRef(0);
   const { language, setLanguage, t } = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
@@ -44,6 +46,53 @@ export default function Header() {
   const { user, profile, signOut } = useAuth();
   const isAdmin = useIsAdmin();
   const isGuide = useIsGuide();
+
+  const handleNavClick = (path: string) => {
+    setMobileOpen(false);
+    if (location.pathname === path) {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    }
+  };
+
+  // Give the page more breathing room while reading: the header leaves the
+  // viewport on a downward scroll and returns as soon as the visitor scrolls
+  // upward. Route changes always restore it before the next page is painted.
+  useLayoutEffect(() => {
+    lastScrollY.current = window.scrollY;
+    setHeaderVisible(true);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    let frame: number | null = null;
+
+    const handleScroll = () => {
+      if (frame !== null) return;
+
+      frame = window.requestAnimationFrame(() => {
+        const currentScrollY = window.scrollY;
+        const previousScrollY = lastScrollY.current;
+        const scrollDelta = currentScrollY - previousScrollY;
+
+        if (currentScrollY <= 12) {
+          setHeaderVisible(true);
+        } else if (scrollDelta > 6 && currentScrollY > 96) {
+          setHeaderVisible(false);
+          setMobileOpen(false);
+        } else if (scrollDelta < -6) {
+          setHeaderVisible(true);
+        }
+
+        lastScrollY.current = currentScrollY;
+        frame = null;
+      });
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (frame !== null) window.cancelAnimationFrame(frame);
+    };
+  }, []);
 
   // Fetch user's published proposal link via RPC (ownership + published_at
   // enforced server-side; no direct proposals/prospects select from the
@@ -89,10 +138,14 @@ export default function Header() {
     : user?.email?.charAt(0).toUpperCase() ?? "U";
 
   return (
-    <header className="sticky top-0 z-[60] bg-white border-b border-border/50 shadow-sm backdrop-blur-md">
-      <div className="container flex items-center h-20 px-6">
+    <header
+      className={`sticky top-0 z-[60] bg-white border-b border-border/50 shadow-sm backdrop-blur-md transition-transform duration-300 ease-out will-change-transform ${
+        headerVisible ? "translate-y-0" : "-translate-y-full"
+      }`}
+    >
+      <div className="container grid grid-cols-[1fr_auto_1fr] items-center h-20 px-4 sm:px-6">
         {/* Left: Atmos Symbol */}
-        <div className="w-1/3 flex justify-start items-center">
+        <div className="min-w-0 flex justify-start items-center">
           <Link to="/" className="flex items-center gap-2 group">
             <div className="h-10 w-10 flex items-center justify-center transition-transform group-hover:scale-110">
               <img
@@ -107,12 +160,12 @@ export default function Header() {
         </div>
 
         {/* Center: Atmos Logo */}
-        <div className="w-1/3 flex justify-center items-center">
-          <Link to="/" className="flex items-center transition-opacity hover:opacity-80">
+        <div className="min-w-0 flex justify-center items-center">
+          <Link to="/" className="flex min-w-0 items-center transition-opacity hover:opacity-80">
             <img 
               src={storageUrl("home/logo-atmos.png")} 
               alt="ATMOS Logo" 
-              className="h-14 sm:h-16 w-auto object-contain" 
+              className="h-10 sm:h-16 max-w-[100px] sm:max-w-none w-auto object-contain"
               width="160"
               height="64"
             />
@@ -120,12 +173,12 @@ export default function Header() {
         </div>
 
         {/* Right Actions */}
-        <div className="w-1/3 flex justify-end items-center gap-4">
+        <div className="min-w-0 flex justify-end items-center gap-1 sm:gap-4">
           {/* Language Selector removed as requested */}
 
           {/* User Auth / Profile */}
           {user ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 sm:gap-3">
               {/* Wishlist Icon only if logged in */}
               <Link
                 to="/wishlist"
@@ -177,7 +230,7 @@ export default function Header() {
               }}
               variant="outline"
               size="sm"
-              className="font-poppins font-bold uppercase tracking-widest text-[10px] border-[#2C3E2D]/20 text-[#2C3E2D] hover:bg-[#2C3E2D]/5 px-6 rounded-full h-10"
+              className="font-poppins font-bold uppercase tracking-widest text-[10px] border-[#2C3E2D]/20 text-[#2C3E2D] hover:bg-[#2C3E2D]/5 px-3 sm:px-6 rounded-full h-10 whitespace-nowrap"
             >
               Entrar
             </Button>
@@ -205,6 +258,7 @@ export default function Header() {
               <Link
                 key={link.path}
                 to={link.path}
+                onClick={() => handleNavClick(link.path)}
                 className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all hover:bg-accent/5 ${location.pathname === link.path
                     ? "text-accent bg-accent/10"
                     : "text-nav-foreground/60 hover:text-accent"
@@ -225,7 +279,7 @@ export default function Header() {
               <Link
                 key={link.path}
                 to={link.path}
-                onClick={() => setMobileOpen(false)}
+                onClick={() => handleNavClick(link.path)}
                 className={`block py-3 text-sm font-semibold transition-colors ${location.pathname === link.path ? "text-accent" : "text-nav-foreground/75"
                   }`}
               >
@@ -249,8 +303,15 @@ export default function Header() {
         onClose={() => setAuthModalOpen(false)}
         onSuccess={() => {
           setAuthModalOpen(false);
-          const from = location.state?.from?.pathname || "/monte-seu-roteiro";
-          navigate(from);
+          const from = location.state?.from?.pathname;
+          if (from) {
+            navigate(from, { replace: true });
+          } else {
+            navigate("/monte-seu-roteiro", {
+              replace: true,
+              state: { scrollTo: "categorias" },
+            });
+          }
         }}
       />
     </header>

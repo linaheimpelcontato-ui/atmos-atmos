@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import AuthModal from "@/components/auth/AuthModal";
+import AtmosWordmark from "@/components/brand/AtmosWordmark";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { storageUrl, optimizedUrl, IMAGE_PRESETS } from "@/lib/storage";
+import { storageUrl } from "@/lib/storage";
 
 export default function HeroMain({ 
   tagline = "O seu espaço para explorar a", 
@@ -15,50 +16,89 @@ export default function HeroMain({
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup">("signup");
   const { user } = useAuth();
-  const [videoActive, setVideoActive] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
+  const [loaderMinimumReady, setLoaderMinimumReady] = useState(false);
+  const handleVideoError = () => {
+    setVideoReady(false);
+    setVideoFailed(true);
+  };
 
+  // Keep the branded entrance long enough to feel intentional, but never block
+  // the visitor indefinitely while the video is unavailable.
   useEffect(() => {
-    const media = window.matchMedia("(min-width: 768px)");
-    const update = () => setVideoActive(media.matches);
-    update();
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
+    const minimumTimer = window.setTimeout(() => setLoaderMinimumReady(true), 1500);
+    return () => window.clearTimeout(minimumTimer);
   }, []);
 
+  useEffect(() => {
+    if (videoReady || videoFailed) return;
+
+    const fallbackTimer = window.setTimeout(() => setVideoFailed(true), 6000);
+    return () => window.clearTimeout(fallbackTimer);
+  }, [videoReady, videoFailed]);
+
+  const showAtmosLoader = !loaderMinimumReady || (!videoReady && !videoFailed);
+
   return (
-    <section className="relative min-h-[calc(100vh-80px)] lg:min-h-[calc(100vh-120px)] w-full flex flex-col items-center justify-center bg-black px-6 overflow-hidden">
+    <section className="relative min-h-[calc(100vh-80px)] lg:min-h-[calc(100vh-120px)] w-full flex flex-col items-center justify-center bg-[#141C15] px-6 overflow-hidden">
+      {/* Branded entrance masks the video startup without blocking forever. */}
+      <div
+        className={`fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-[#141C15] transition-opacity duration-700 ease-out ${
+          showAtmosLoader ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+        aria-hidden={!showAtmosLoader}
+      >
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(196,169,125,0.14),transparent_42%)]" />
+        <div className="relative flex flex-col items-center px-8 text-center" role="status">
+          <div className="relative mb-8 flex h-28 w-[21rem] items-center justify-center">
+            <img
+              src={storageUrl("home/simboloatmos.png")}
+              alt=""
+              aria-hidden="true"
+              className="absolute left-1 top-1/2 h-14 w-14 -translate-y-1/2 object-contain opacity-80"
+              loading="eager"
+              decoding="async"
+            />
+            <AtmosWordmark className="h-24 w-64 translate-x-5 text-[#FAF9F6]" />
+          </div>
+          <p className="text-[10px] font-medium uppercase tracking-[0.45em] text-[#c4a97d]">
+            Preparando sua atmosfera
+          </p>
+          <div className="mt-5 h-px w-32 overflow-hidden bg-white/10">
+            <span className="block h-full w-1/2 bg-[#c4a97d] motion-safe:animate-pulse" />
+          </div>
+        </div>
+      </div>
+
       {/* EXCLUSIVE VIVID VIDEO BACKGROUND */}
       <div className="absolute inset-0 z-0">
-        {/* Desktop Video */}
-        {videoActive && !videoFailed && <video
+        {/* Mobile uses the local 720p cut; desktop keeps the 4K R2 master. */}
+        {!videoFailed && <video
           autoPlay
           loop
           muted
           playsInline
-          preload="metadata"
-          onError={() => setVideoFailed(true)}
+          preload="auto"
+          onLoadedData={() => setVideoReady(true)}
+          onError={handleVideoError}
           title="Atmos Chapada dos Veadeiros Cinematic"
-          poster={optimizedUrl("home/hero-home.jpg", IMAGE_PRESETS.large)}
-          className="w-full h-full object-cover object-bottom opacity-70"
+          className={`relative w-full h-full object-cover object-bottom transition-opacity duration-500 ${
+            videoReady ? "opacity-70" : "opacity-0"
+          }`}
         >
+          <source
+            media="(max-width: 767px)"
+            src="/videos/hero-chapada.mp4"
+            type="video/mp4"
+            onError={handleVideoError}
+          />
           <source
             src={storageUrl("home/hero-bg.mp4")}
             type="video/mp4"
-            onError={() => setVideoFailed(true)}
+            onError={handleVideoError}
           />
         </video>}
-
-        {/* Mobile/Fallback Image - Simple and Reliable */}
-        {(!videoActive || videoFailed) && <img
-          src={optimizedUrl("home/hero-home.jpg", IMAGE_PRESETS.large)}
-          className="w-full h-full object-cover object-bottom opacity-70"
-          alt="Vista panorâmica da Chapada dos Veadeiros - ATMOS Turismo"
-          fetchPriority="high"
-          loading="eager"
-          width="1920"
-          height="1080"
-        />}
         
         {/* Enhanced Vignette for Accessibility/Contrast (Page 20 of report) */}
         <div className="absolute inset-0 bg-black/30 z-1" />

@@ -281,7 +281,7 @@ export default function FAQ() {
             <span className="inline-block px-4 py-1 rounded-full bg-[#C5A267]/20 border border-[#C5A267]/30 text-[#C5A267] text-[10px] uppercase tracking-[0.3em] font-bold mb-6">
               Informativo ATMOS
             </span>
-            <h1 className="text-5xl md:text-8xl font-display text-white mb-8 tracking-tight leading-[0.9]">
+            <h1 className="text-4xl sm:text-5xl md:text-8xl font-display text-white mb-8 tracking-tight leading-[0.9]">
               {labels.title.split(" ").map((word, i) => (
                 <span key={i} className="block overflow-hidden">
                   <motion.span 
@@ -295,7 +295,7 @@ export default function FAQ() {
                 </span>
               ))}
             </h1>
-            <p className="text-lg md:text-xl text-white/70 max-w-2xl mx-auto leading-relaxed font-light">
+            <p className="w-full max-w-[340px] px-2 sm:max-w-2xl mx-auto text-base sm:text-lg md:text-xl text-white/70 leading-relaxed font-light">
               {labels.subtitle}
             </p>
           </motion.div>

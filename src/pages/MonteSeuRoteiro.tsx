@@ -1,7 +1,7 @@
 import { CatalogStatus } from "@/components/CatalogStatus";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import PageSEO from "@/components/seo/PageSEO";
 import Layout from "@/components/layout/Layout";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -169,9 +169,54 @@ export default function MonteSeuRoteiro() {
   const { language = "pt", t } = useLanguage();
   const { count } = useWishlist();
   const { category } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(category || TABS[0].id);
   const [searchQuery, setSearchQuery] = useState("");
+  const [catalogToolsVisible, setCatalogToolsVisible] = useState(true);
+  const lastScrollY = useRef(0);
+
+  // Keep the catalog controls available while the visitor explores, but hide
+  // the sticky strip on downward scroll and bring it back on upward scroll.
+  useEffect(() => {
+    lastScrollY.current = window.scrollY;
+    const onScroll = () => {
+      const currentScrollY = window.scrollY;
+      const delta = currentScrollY - lastScrollY.current;
+
+      if (currentScrollY <= 160) {
+        setCatalogToolsVisible(true);
+      } else if (delta > 6) {
+        setCatalogToolsVisible(false);
+      } else if (delta < -6) {
+        setCatalogToolsVisible(true);
+      }
+
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // New visitors arriving from signup should see the explanatory curation
+  // section first, instead of landing on the cinematic hero with no context.
+  const shouldFocusCategories = location.state?.scrollTo === "categorias";
+  useEffect(() => {
+    if (!shouldFocusCategories) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      const section = document.getElementById("categorias");
+      if (section) {
+        const headerOffset = window.innerWidth >= 1024 ? 112 : 80;
+        const top = section.getBoundingClientRect().top + window.scrollY - headerOffset;
+        window.scrollTo({ top: Math.max(0, top), left: 0, behavior: "auto" });
+      }
+      navigate(location.pathname, { replace: true, state: null });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [location.pathname, navigate, shouldFocusCategories]);
 
   // Sync tab with URL
   useEffect(() => {
@@ -421,7 +466,7 @@ export default function MonteSeuRoteiro() {
 
 
       {/* Content area: Tabs & Grids */}
-      <section className="py-24 bg-white" id="categorias">
+      <section className="py-24 bg-white scroll-mt-[112px]" id="categorias">
         <div className="container px-6 max-w-7xl mx-auto">
           
           <div className="text-left mb-16">
@@ -451,7 +496,7 @@ export default function MonteSeuRoteiro() {
             </p>
           </div>
 
-          <div className="sticky top-[80px] md:top-[112px] z-40 bg-white/95 backdrop-blur-md py-4 -mx-6 px-6 border-b border-[#1A261B]/5 transition-all duration-300">
+          <div className={`sticky top-[80px] md:top-[112px] z-40 bg-white/95 backdrop-blur-md py-4 -mx-6 px-6 border-b border-[#1A261B]/5 transition-transform duration-300 will-change-transform ${catalogToolsVisible ? "translate-y-0" : "-translate-y-full pointer-events-none"}`}>
             {/* Category Menu with Photos */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
               {TABS.map((tab) => {

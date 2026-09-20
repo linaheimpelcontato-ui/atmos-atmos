@@ -117,6 +117,7 @@ export default function AccommodationDetailDialog({
         type: "accommodation",
         name: accommodation.name,
         details: `${accommodation.priceRange} — ${accRegionLabels[accommodation.region][language]}`,
+        imageUrl: images[0],
       });
       toast({ title: l.added });
     }

@@ -520,10 +520,15 @@ const Itineraries = () => {
               <span className="inline-block px-4 py-1 rounded-full bg-[#C5A267]/20 border border-[#C5A267]/30 text-[#C5A267] text-[10px] uppercase tracking-[0.3em] font-bold mb-6">
                 {l.tag}
               </span>
-              <h1 className="text-5xl md:text-8xl font-display text-white mb-8 tracking-tight leading-[0.9]">
-                {l.title}
+              <h1 className="mx-auto max-w-[340px] text-4xl sm:max-w-none sm:text-5xl md:text-8xl font-display text-white mb-8 tracking-tight leading-[0.9]">
+                {l.title.split(" ").map((word, index) => (
+                  <span key={`${word}-${index}`} className="block sm:inline">
+                    {index > 0 && " "}
+                    {word}
+                  </span>
+                ))}
               </h1>
-              <p className="text-lg md:text-xl text-white/70 max-w-2xl mx-auto leading-relaxed font-light">
+              <p className="w-full max-w-[320px] sm:max-w-2xl mx-auto text-sm sm:text-lg md:text-xl text-white/70 leading-relaxed font-light">
                 {l.subtitle}
               </p>
             </motion.div>

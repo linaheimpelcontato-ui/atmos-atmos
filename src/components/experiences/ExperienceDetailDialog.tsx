@@ -101,6 +101,7 @@ export default function ExperienceDetailDialog({
         type: "experience",
         name: experience.name[language],
         details: experience.priceRange,
+        imageUrl: images[0],
       });
       toast({ title: l.added });
     }

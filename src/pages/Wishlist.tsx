@@ -28,6 +28,7 @@ import {
 import { storageUrl } from "@/lib/storage";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import WishlistReservationForm from "@/components/wishlist/WishlistReservationForm";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
 
 /* ── i18n helpers ─────────────────────────────────────────── */
 
@@ -57,6 +58,38 @@ const groupOrder: WishlistItemType[] = [
   "accommodation",
   "service",
 ];
+
+const wishlistBuckets: Partial<Record<WishlistItemType, string>> = {
+  waterfall: "cachoeiras",
+  experience: "experiencias",
+  accommodation: "hospedagens",
+  service: "servicos",
+  itinerary: "cachoeiras",
+};
+
+function getWishlistImageSources(item: { id: string; type: WishlistItemType; imageUrl?: string }) {
+  const bucket = wishlistBuckets[item.type] || "cachoeiras";
+  const storageId = item.type === "waterfall"
+    ? item.id.replace("macacão", "macacao").replace("canions-cariocas", "cariocas")
+    : item.id;
+  const canonicalBase = `produtos/${bucket}/${storageId}/${storageId}-1`;
+  const localFallbacks: Record<WishlistItemType, string> = {
+    waterfall: storageUrl("home/waterfall-placeholder-1.jpg"),
+    experience: storageUrl("home/exp-astro.jpg"),
+    accommodation: storageUrl("home/acc-placeholder-1.jpg"),
+    service: storageUrl("home/svc-especial.jpg"),
+    itinerary: storageUrl("home/waterfall-placeholder-1.jpg"),
+  };
+
+  return [
+    item.imageUrl,
+    storageUrl(`${canonicalBase}.jpg`),
+    storageUrl(`${canonicalBase}.jpeg`),
+    storageUrl(`${canonicalBase}.png`),
+    storageUrl(`${canonicalBase}.webp`),
+    localFallbacks[item.type] || localFallbacks.waterfall,
+  ].filter((source): source is string => Boolean(source));
+}
 
 const Wishlist = () => {
   const { language } = useLanguage();
@@ -212,28 +245,16 @@ const Wishlist = () => {
                           {/* Image Layer */}
                           <div className="absolute inset-0 w-full h-full">
                             {(() => {
-                              // Correctly map buckets for all item types
-                              const bucketMap: Record<string, string> = {
-                                'accommodation': 'hospedagens',
-                                'experience': 'experiencias',
-                                'waterfall': 'cachoeiras',
-                                'service': 'servicos'
-                              };
+                              const sources = getWishlistImageSources(item);
+                              const [primarySource, ...fallbackSources] = sources;
 
-                              const bucket = bucketMap[item.type] || 'cachoeiras';
-                              
-                              // Handle specific ID overrides for waterfalls
-                              let storageId = item.id;
-                              if (item.type === 'waterfall') {
-                                storageId = storageId.replace('macacão', 'macacao').replace('canions-cariocas', 'cariocas');
-                              }
-
-                              const finalUrl = item.imageUrl || storageUrl(`${bucket}/${storageId}-1.jpg`);
-
-                              return finalUrl ? (
-                                <img loading="lazy" 
-                                  src={finalUrl} 
-                                  alt={item.name} 
+                              return primarySource ? (
+                                <OptimizedImage
+                                  src={primarySource}
+                                  fallbackSrcs={fallbackSources}
+                                  alt={item.name}
+                                  loading="lazy"
+                                  containerClassName="w-full h-full"
                                   className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                                 />
                               ) : (
@@ -306,12 +327,14 @@ const Wishlist = () => {
 
             {/* Reservation Form Modal Dialog */}
             <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-              <DialogContent className="max-w-xl md:max-w-2xl bg-[#fcfaf7] border border-[#e4dbcc] p-6 md:p-10 text-[#2e2019] rounded-none focus:outline-none focus-visible:outline-none">
-                <WishlistReservationForm
-                  items={items}
-                  language={language}
-                  onClose={() => setIsFormOpen(false)}
-                />
+              <DialogContent className="w-[calc(100%-1rem)] max-w-4xl h-[calc(100dvh-1rem)] max-h-[calc(100dvh-1rem)] overflow-hidden bg-[#fcfaf7] border border-[#e4dbcc] p-0 text-[#2e2019] rounded-2xl focus:outline-none focus-visible:outline-none">
+                <div className="h-full min-h-0 overflow-y-auto overscroll-contain p-5 pt-12 sm:p-8 sm:pt-14 md:p-12 md:pt-16">
+                  <WishlistReservationForm
+                    items={items}
+                    language={language}
+                    onClose={() => setIsFormOpen(false)}
+                  />
+                </div>
               </DialogContent>
             </Dialog>
 

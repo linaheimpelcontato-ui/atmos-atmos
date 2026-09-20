@@ -141,6 +141,7 @@ export default function WaterfallDetailDialog({
         type: "waterfall",
         name: waterfall.name[language],
         details: `${waterfall.distanceKm}km — ${difficultyLabels[waterfall.difficulty][language]}`,
+        imageUrl: images[0],
       });
       toast({ title: l.added });
     }

@@ -60,7 +60,13 @@ const GalleryRing = ({ radius, count, speed, imgSize, opacity = 1, images }: { r
               transform: `translate(-50%, -50%) rotate(${angleStep + 90}deg)`,
             }}
           >
-            <img src={img} alt="" className="w-full h-full object-cover" />
+            <img
+              src={img}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              className="w-full h-full object-cover"
+            />
           </div>
         );
       })}
@@ -80,21 +86,30 @@ export default function HeroScratch({
   const { user } = useAuth();
 
   return (
-    <section className="relative min-h-[calc(100vh-80px)] lg:min-h-[calc(100vh-120px)] w-full flex flex-col items-center justify-center bg-transparent px-6 border-t border-black/5">
+    <section className="relative min-h-[calc(100vh-80px)] lg:min-h-[calc(100vh-120px)] w-full flex flex-col items-center justify-center overflow-hidden bg-transparent px-6 border-t border-black/5">
       {/* Three concentrical rotating rings - Masked at the bottom for seamless fade */}
       <div 
-        className="absolute inset-0 flex items-center justify-center overflow-visible"
+        className="absolute inset-0 flex items-center justify-center overflow-hidden"
         style={{
           maskImage: 'linear-gradient(to bottom, black 80%, transparent 100%)',
           WebkitMaskImage: 'linear-gradient(to bottom, black 80%, transparent 100%)'
         }}
       >
-        {/* Ring 1 - Inner (12 photos) - Experiences - FASTEST */}
-        <GalleryRing radius={380} count={12} speed={30} imgSize={70} opacity={1} images={innerImages} />
-        {/* Ring 2 - Middle (12 photos) - Waterfalls - INTERMEDIATE */}
-        <GalleryRing radius={560} count={12} speed={55} imgSize={100} opacity={0.7} images={middleImages} />
-        {/* Ring 3 - Outer (12 photos) - Landscapes - SLOWEST */}
-        <GalleryRing radius={750} count={12} speed={80} imgSize={130} opacity={0.4} images={outerImages} />
+        <div className="absolute inset-0 hidden md:block">
+          {/* Ring 1 - Inner (12 photos) - Experiences - FASTEST */}
+          <GalleryRing radius={380} count={12} speed={30} imgSize={70} opacity={1} images={innerImages} />
+          {/* Ring 2 - Middle (12 photos) - Waterfalls - INTERMEDIATE */}
+          <GalleryRing radius={560} count={12} speed={55} imgSize={100} opacity={0.7} images={middleImages} />
+          {/* Ring 3 - Outer (12 photos) - Landscapes - SLOWEST */}
+          <GalleryRing radius={750} count={12} speed={80} imgSize={130} opacity={0.4} images={outerImages} />
+        </div>
+
+        <div className="absolute inset-0 md:hidden">
+          {/* Mobile rings stay inside the viewport so the motion is actually visible. */}
+          <GalleryRing radius={130} count={8} speed={28} imgSize={54} opacity={1} images={innerImages} />
+          <GalleryRing radius={205} count={8} speed={48} imgSize={74} opacity={0.65} images={middleImages} />
+          <GalleryRing radius={285} count={8} speed={70} imgSize={88} opacity={0.35} images={outerImages} />
+        </div>
       </div>
 
       {/* Hero Content - Protected central zone */}

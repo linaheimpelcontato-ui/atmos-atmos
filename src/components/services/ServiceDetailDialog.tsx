@@ -162,6 +162,7 @@ export default function ServiceDetailDialog({
         type: "service",
         name: service.title[language as keyof typeof service.title],
         details: categoryLabels[service.category][language as keyof typeof labels],
+        imageUrl: allProductImages[0],
       });
       toast({ title: l.added });
     }

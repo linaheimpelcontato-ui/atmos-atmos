@@ -1,4 +1,4 @@
-import { useEffect, useRef, lazy, Suspense } from "react";
+import { useEffect, useLayoutEffect, useRef, lazy, Suspense } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import Header from "./Header";
 import Footer from "./Footer";
@@ -24,6 +24,12 @@ export default function Layout({ children, hideWishlist }: LayoutProps) {
   useApplySiteOverrides();
   // Apply focal points + rotation to images
   useApplyFocalPoints();
+
+  // Every route starts at the top. Using a layout effect prevents the browser
+  // from painting the previous page's scroll position for a frame first.
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [pathname]);
 
   useEffect(() => {
     firedRef.current = new Set();

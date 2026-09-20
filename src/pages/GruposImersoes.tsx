@@ -1,7 +1,8 @@
 import { useState } from "react";
 import PageSEO from "@/components/seo/PageSEO";
 import Layout from "@/components/layout/Layout";
-import { storageUrl } from "@/lib/storage";
+import heroImg from "@/assets/imersoes-hero.jpg";
+import parallax1 from "@/assets/parallax-imersoes-1.jpg";
 import ParallaxDivider from "@/components/home/ParallaxDivider";
 import { Button } from "@/components/ui/button";
 import ImmersionQuestionnaire from "@/components/immersions/ImmersionQuestionnaire";
@@ -18,9 +19,6 @@ import {
   Sparkles,
   CheckCircle2
 } from "lucide-react";
-
-const heroImg = storageUrl("imersoes/imersoes-hero.jpg");
-const parallax1 = storageUrl("imersoes/parallax-imersoes-1.jpg");
 
 export default function GruposImersoes() {
   const [showForm, setShowForm] = useState(false);
@@ -109,7 +107,7 @@ export default function GruposImersoes() {
       </section>
 
       {/* CTA / Questionnaire */}
-      <section id="questionario" className="py-24 bg-white">
+      <section id="questionario" className="py-24 bg-white scroll-mt-[80px] lg:scroll-mt-[112px]">
         <div className="container px-4 max-w-3xl mx-auto">
           {!showForm ? (
             <div className="text-center space-y-8">
@@ -141,10 +139,10 @@ export default function GruposImersoes() {
               </div>
             </div>
           ) : (
-            <div className="bg-[#FAF9F6] p-8 md:p-12 rounded-3xl border border-black/5 shadow-xl relative">
+            <div className="fixed inset-x-0 top-[80px] lg:top-[112px] bottom-0 z-[55] overflow-y-auto bg-[#FAF9F6] border-t border-black/5 shadow-xl px-8 py-8 md:px-12 md:py-12">
               <button 
                 onClick={() => setShowForm(false)}
-                className="absolute top-6 right-6 text-[#1A1612]/40 hover:text-[#1A1612]"
+                className="absolute top-6 right-6 text-[#1A1612]/60 hover:text-[#1A1612]"
               >
                 Voltar
               </button>
