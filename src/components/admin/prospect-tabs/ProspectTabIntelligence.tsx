@@ -6,10 +6,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Brain, Loader2, Globe, Sparkles, Save, DollarSign, Users, MapPin, Briefcase } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 import { toast } from "@/hooks/use-toast";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default function ProspectTabIntelligence({ prospect, onUpdate, segment }: { prospect: any; onUpdate: (patch: Record<string, unknown>) => void; segment?: string }) {
+export default function ProspectTabIntelligence({ prospect, onUpdate, segment }: { prospect: any; onUpdate: (patch: TablesUpdate<"prospects">) => void; segment?: string }) {
   const [loading, setLoading] = useState(false);
   const [websiteUrl, setWebsiteUrl] = useState(prospect.website ?? "");
   const isB2B = segment === "b2b";
@@ -56,7 +57,7 @@ export default function ProspectTabIntelligence({ prospect, onUpdate, segment }:
       });
       if (error) throw error;
       if (data?.result) {
-        const patch: Record<string, unknown> = {};
+        const patch: TablesUpdate<"prospects"> = {};
         if (data.result.description) patch.description = data.result.description;
         if (data.result.linkedin) patch.linkedin = data.result.linkedin;
         if (data.result.instagram) patch.instagram = data.result.instagram;

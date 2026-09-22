@@ -58,6 +58,25 @@ describe('admin guard permission boundaries', () => {
 
 
 describe('stable auth identity', () => {
+  it('does not restart an in-flight permission check when the navigation callback changes', async () => {
+    let resolvePermissions!: (value: unknown) => void;
+    mocks.maybeSingle.mockReturnValue(new Promise(resolve => { resolvePermissions = resolve; }));
+    const { result, rerender } = renderHook(useAdminGuard);
+    await waitFor(() => expect(mocks.maybeSingle).toHaveBeenCalledTimes(1));
+    const latestNavigate = vi.fn();
+    mocks.navigate = latestNavigate;
+    rerender();
+    await act(async () => resolvePermissions({ data: { allowed_modules: ['b2c'] }, error: null }));
+    expect(result.current.isAdmin).toBe(true);
+    expect(result.current.allowedModules).toEqual(['b2c']);
+    expect(mocks.rpc).toHaveBeenCalledTimes(1);
+    expect(mocks.maybeSingle).toHaveBeenCalledTimes(1);
+    mocks.auth = { user: null, loading: false };
+    rerender();
+    expect(result.current.isAdmin).toBe(false);
+    expect(latestNavigate).toHaveBeenCalledWith('/');
+  });
+
   it('keeps editor content mounted when auth emits a new object for the same user', async () => {
     mocks.maybeSingle.mockResolvedValue({ data: { allowed_modules: ['site'] }, error: null });
     const mounted = vi.fn();

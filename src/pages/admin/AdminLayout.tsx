@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
 import { Link, useLocation, Outlet } from "react-router-dom";
 import { 
   LayoutDashboard, FileText, Users, ArrowLeft, Shield, Menu, UserCheck, 
@@ -12,6 +12,7 @@ import { canAccessAdminRoute, hasInvalidAdminModules } from "@/lib/adminRouteAcc
 import { storageUrl } from "@/lib/storage";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { motion, AnimatePresence } from "framer-motion";
+import { AdminAppearanceProvider } from "@/components/ui/admin-appearance";
 
 const logoAtmos = storageUrl("home/logo-atmos.png");
 
@@ -120,6 +121,7 @@ function NavLinks({ location, allowedModules, onNavigate }: { location: ReturnTy
                   <Link
                     key={link.path}
                     to={link.path}
+                    aria-current={isActive ? "page" : undefined}
                     onClick={onNavigate}
                     className={`flex items-center gap-3.5 px-4 py-3 rounded-[1.25rem] text-[13.5px] font-bold transition-all duration-300 group ${
                       isActive
@@ -151,16 +153,20 @@ function NavLinks({ location, allowedModules, onNavigate }: { location: ReturnTy
 }
 
 export default function AdminLayout() {
+  return <AdminAppearanceProvider><AdminLayoutContent /></AdminAppearanceProvider>;
+}
+
+function AdminLayoutContent() {
   const { isAdmin, checking, allowedModules = [] } = useAdminGuard();
   const location = useLocation();
   const invalidPermissions = hasInvalidAdminModules(allowedModules);
   const routeAllowed = canAccessAdminRoute(location.pathname, location.search, allowedModules);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const mainRef = useRef<HTMLElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    mainRef.current?.scrollTo(0, 0);
-    window.scrollTo(0, 0);
+    // Only the new page starts at the top. The sidebar keeps its own position.
+    contentRef.current?.scrollTo(0, 0);
   }, [location.pathname]);
 
   if (checking || !isAdmin) {
@@ -184,7 +190,7 @@ export default function AdminLayout() {
   }
 
   return (
-    <div className="h-screen flex bg-admin-bg overflow-hidden font-sans selection:bg-admin-primary/10">
+    <div className="admin-ui h-screen flex bg-admin-bg overflow-hidden font-sans selection:bg-admin-primary/10">
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex w-[var(--admin-sidebar-w)] bg-white border-r border-admin-border/60 flex-col shrink-0 z-30 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
         <div className="px-8 py-10">
@@ -233,7 +239,7 @@ export default function AdminLayout() {
       </Sheet>
 
       {/* Main content */}
-      <main ref={mainRef} className="flex-1 flex flex-col overflow-hidden md:pt-0 pt-16 min-w-0 bg-admin-bg relative">
+      <main className="flex-1 flex flex-col overflow-hidden md:pt-0 pt-16 min-w-0 bg-admin-bg relative">
         {/* Glassmorphism Header */}
         <header className="hidden md:flex sticky top-0 z-30 h-20 px-8 items-center justify-between bg-white border-b border-admin-border/40 shadow-sm">
           <div className="flex items-center gap-4 flex-1">
@@ -258,7 +264,7 @@ export default function AdminLayout() {
           </div>
         </header>
 
-        <div className="flex-1 flex flex-col relative overflow-y-auto custom-scrollbar md:pt-6 pt-6">
+        <div ref={contentRef} className="flex-1 flex flex-col relative overflow-y-auto custom-scrollbar md:pt-6 pt-6">
           {/* Subtle background decoration */}
           <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-admin-primary/[0.02] rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
           
@@ -272,7 +278,9 @@ export default function AdminLayout() {
                 transition={{ duration: 0.25, ease: "easeOut" }}
                 className="flex-1 flex flex-col"
               >
-                <Outlet />
+                <Suspense fallback={<p role="status" className="p-8 text-sm text-muted-foreground">Carregando página...</p>}>
+                  <Outlet />
+                </Suspense>
               </motion.div>
             </AnimatePresence> : (
               <div role="alert" className="m-6 rounded-2xl border border-admin-border bg-white p-6 space-y-2">

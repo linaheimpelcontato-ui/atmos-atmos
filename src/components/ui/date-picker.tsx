@@ -60,6 +60,7 @@ export function DatePicker({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
+          data-admin-field=""
           variant="outline"
           disabled={disabled}
           className={cn(

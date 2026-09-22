@@ -523,10 +523,10 @@ export default function AdminGuides() {
       <GuideDetailSheet guide={detailGuide} open={detailOpen} onOpenChange={setDetailOpen} />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-2xl rounded-[2rem] border-none shadow-2xl overflow-hidden p-0 h-[90vh] flex flex-col">
+        <DialogContent className="admin-ui w-[calc(100vw-2rem)] sm:max-w-2xl rounded-[2rem] border-none shadow-2xl overflow-hidden p-0 h-[90dvh] min-h-0 flex flex-col">
           <Tabs defaultValue="geral" className="flex-1 flex flex-col min-h-0">
-            <div className="bg-admin-primary p-8 text-white relative shrink-0">
-              <div className="absolute top-0 right-0 p-10 opacity-10">
+            <div className="bg-admin-primary p-8 pr-16 text-white relative shrink-0">
+              <div className="absolute top-0 right-0 p-10 opacity-10 pointer-events-none" aria-hidden="true">
                 <ShieldCheck className="h-24 w-24" />
               </div>
               <DialogHeader>
@@ -538,34 +538,34 @@ export default function AdminGuides() {
               
               <div className="mt-6">
                 <TabsList className="bg-admin-primary-foreground/10 border-none h-11 p-1 rounded-xl w-full justify-start gap-1">
-                  <TabsTrigger value="geral" className="flex-1 rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-admin-primary transition-all">Geral</TabsTrigger>
-                  <TabsTrigger value="logistica" className="flex-1 rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-admin-primary transition-all">Logística</TabsTrigger>
-                  <TabsTrigger value="cachoeiras" className="flex-1 rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-admin-primary transition-all">Cachoeiras</TabsTrigger>
+                  <TabsTrigger value="geral" className="flex-1 rounded-lg text-[10px] font-black uppercase tracking-widest text-white/70 data-[state=active]:bg-white data-[state=active]:text-admin-primary transition-all">Geral</TabsTrigger>
+                  <TabsTrigger value="logistica" className="flex-1 rounded-lg text-[10px] font-black uppercase tracking-widest text-white/70 data-[state=active]:bg-white data-[state=active]:text-admin-primary transition-all">Logística</TabsTrigger>
+                  <TabsTrigger value="cachoeiras" className="flex-1 rounded-lg text-[10px] font-black uppercase tracking-widest text-white/70 data-[state=active]:bg-white data-[state=active]:text-admin-primary transition-all">Cachoeiras</TabsTrigger>
                 </TabsList>
               </div>
             </div>
             
             <form className="flex-1 flex flex-col min-h-0" onSubmit={e => { e.preventDefault(); saveMutation.mutate(editing ? { ...form, id: editing.id } : form); }}>
-              <div className="flex-1 overflow-y-auto p-8 pt-4 custom-scrollbar">
-                <TabsContent value="geral" className="mt-0 space-y-8 animate-in fade-in slide-in-from-bottom-2">
+              <div data-guide-scroll className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain p-8 pt-4 custom-scrollbar">
+                <TabsContent value="geral" tabIndex={-1} className="mt-0 space-y-8 animate-in fade-in slide-in-from-bottom-2">
             <div className="space-y-6">
               <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-admin-primary flex items-center gap-2">
                 <Activity className="h-3 w-3" /> Identidade & Localidade
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2 sm:col-span-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Nome Completo *</Label>
+                  <Label htmlFor="guide-name" className="text-[10px] font-black uppercase tracking-widest text-foreground/70 ml-1">Nome Completo *</Label>
                   <Input 
                     value={form.name} 
                     onChange={e => setForm({ ...form, name: e.target.value })} 
-                    required 
-                    className="h-12 bg-admin-muted/40 border-none rounded-2xl font-bold"
+                    required
+                    id="guide-name" className="h-12 admin-field bg-white rounded-2xl font-bold"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Vila / Localidade</Label>
+                  <Label htmlFor="guide-residence" className="text-[10px] font-black uppercase tracking-widest text-foreground/70 ml-1">Vila / Localidade</Label>
                   <Select value={form.residence} onValueChange={v => setForm({ ...form, residence: v })}>
-                    <SelectTrigger className="h-12 bg-admin-muted/40 border-none rounded-2xl font-bold uppercase tracking-widest text-[10px] px-4">
+                    <SelectTrigger id="guide-residence" className="h-12 admin-field bg-white rounded-2xl font-bold uppercase tracking-widest text-[10px] px-4">
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                     <SelectContent className="rounded-2xl border-none shadow-2xl">
@@ -578,9 +578,9 @@ export default function AdminGuides() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Sexo Biológico</Label>
+                  <Label htmlFor="guide-gender" className="text-[10px] font-black uppercase tracking-widest text-foreground/70 ml-1">Sexo Biológico</Label>
                   <Select value={form.gender} onValueChange={v => setForm({ ...form, gender: v })}>
-                    <SelectTrigger className="h-12 bg-admin-muted/40 border-none rounded-2xl font-bold uppercase tracking-widest text-[10px] px-4">
+                    <SelectTrigger id="guide-gender" className="h-12 admin-field bg-white rounded-2xl font-bold uppercase tracking-widest text-[10px] px-4">
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                     <SelectContent className="rounded-2xl border-none shadow-2xl">
@@ -593,24 +593,24 @@ export default function AdminGuides() {
               </div>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-6 border-t border-admin-border/40 pt-8">
               <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-admin-primary flex items-center gap-2">
                 <Phone className="h-3 w-3" /> Comunicação & Digital
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">WhatsApp Principal</Label>
-                  <Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} className="h-12 bg-admin-muted/40 border-none rounded-2xl font-bold" />
+                  <Label htmlFor="guide-phone" className="text-[10px] font-black uppercase tracking-widest text-foreground/70 ml-1">WhatsApp Principal</Label>
+                  <Input id="guide-phone" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} className="h-12 admin-field bg-white rounded-2xl font-bold" />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Email</Label>
-                  <Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="h-12 bg-admin-muted/40 border-none rounded-2xl" />
+                  <Label htmlFor="guide-email" className="text-[10px] font-black uppercase tracking-widest text-foreground/70 ml-1">Email</Label>
+                  <Input id="guide-email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="h-12 admin-field bg-white rounded-2xl" />
                 </div>
                 <div className="space-y-2 sm:col-span-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Instagram (@perfil)</Label>
+                  <Label htmlFor="guide-instagram" className="text-[10px] font-black uppercase tracking-widest text-foreground/70 ml-1">Instagram (@perfil)</Label>
                   <div className="relative">
                     <Instagram className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40" />
-                    <Input value={form.instagram} onChange={e => setForm({ ...form, instagram: e.target.value })} className="h-12 bg-admin-muted/40 border-none rounded-2xl pl-11" />
+                    <Input id="guide-instagram" value={form.instagram} onChange={e => setForm({ ...form, instagram: e.target.value })} className="h-12 admin-field bg-white rounded-2xl pl-11" />
                   </div>
                 </div>
               </div>
@@ -636,18 +636,18 @@ export default function AdminGuides() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-admin-primary ml-1">Especialidades (separadas por vírgula)</Label>
+                <Label htmlFor="guide-specialties" className="text-[10px] font-black uppercase tracking-widest text-admin-primary ml-1">Especialidades (separadas por vírgula)</Label>
                 <Input 
                   placeholder="Ex: Ornitologia, Rapel, História Kalunga" 
                   value={form.specialties} 
-                  onChange={e => setForm({ ...form, specialties: e.target.value })} 
-                  className="h-12 bg-white border-none rounded-2xl font-bold text-admin-primary"
+                  onChange={e => setForm({ ...form, specialties: e.target.value })}
+                  id="guide-specialties" className="h-12 admin-field bg-white rounded-2xl font-bold text-admin-primary"
                 />
               </div>
             </div>
           </TabsContent>
 
-          <TabsContent value="logistica" className="mt-0 space-y-8 animate-in fade-in slide-in-from-bottom-2">
+          <TabsContent value="logistica" tabIndex={-1} className="mt-0 space-y-8 animate-in fade-in slide-in-from-bottom-2">
 
             <div className="space-y-6">
               <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-admin-primary flex items-center gap-2">
@@ -656,17 +656,17 @@ export default function AdminGuides() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div className="flex items-center gap-4 bg-blue-500/5 p-5 rounded-2xl border border-blue-500/10">
-                    <Switch checked={form.has_4x4} onCheckedChange={v => setForm({ ...form, has_4x4: v })} className="data-[state=checked]:bg-blue-500" />
+                    <Switch id="guide-has-4x4" checked={form.has_4x4} onCheckedChange={v => setForm({ ...form, has_4x4: v })} className="data-[state=checked]:bg-blue-500" />
                     <div className="flex-1">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-blue-600">Veículo 4x4 Próprio</Label>
+                      <Label htmlFor="guide-has-4x4" className="text-[10px] font-black uppercase tracking-widest text-blue-600">Veículo 4x4 Próprio</Label>
                       <p className="text-[9px] font-bold text-blue-600/60 uppercase">Capacidade de transporte autônomo</p>
                     </div>
                   </div>
                   {form.has_4x4 && (
                     <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Configuração do Veículo</Label>
+                      <Label htmlFor="guide-vehicle-seats" className="text-[10px] font-black uppercase tracking-widest text-foreground/70 ml-1">Configuração do Veículo</Label>
                       <Select value={String(form.vehicle_seats)} onValueChange={v => setForm({ ...form, vehicle_seats: parseInt(v) })}>
-                        <SelectTrigger className="h-11 bg-admin-muted/40 border-none rounded-xl font-bold uppercase tracking-widest text-[10px] px-4">
+                        <SelectTrigger id="guide-vehicle-seats" className="h-11 admin-field bg-white rounded-xl font-bold uppercase tracking-widest text-[10px] px-4">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="rounded-xl border-none shadow-xl">
@@ -679,32 +679,32 @@ export default function AdminGuides() {
                 </div>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Capacidade Turistas</Label>
+                    <Label htmlFor="guide-limit-tourist" className="text-[10px] font-black uppercase tracking-widest text-foreground/70 ml-1">Capacidade Turistas</Label>
                     <Input 
                       type="number" 
                       min="0" 
                       placeholder="Geral" 
                       value={form.limit_tourist} 
-                      onChange={e => setForm({ ...form, limit_tourist: e.target.value })} 
-                      className="h-11 bg-admin-muted/40 border-none rounded-xl font-black text-admin-primary"
+                      onChange={e => setForm({ ...form, limit_tourist: e.target.value })}
+                      id="guide-limit-tourist" className="h-11 admin-field bg-white rounded-xl font-black text-admin-primary"
                     />
                   </div>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-center gap-4 bg-orange-500/5 p-5 rounded-2xl border border-orange-500/10">
-                  <Switch checked={form.is_kalunga} onCheckedChange={v => setForm({ ...form, is_kalunga: v, residence: !v && form.residence === "Engenho II" ? "" : form.residence })} className="data-[state=checked]:bg-orange-500" />
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-orange-600">Ancestralidade Kalunga</Label>
+                  <Switch id="guide-kalunga" checked={form.is_kalunga} onCheckedChange={v => setForm({ ...form, is_kalunga: v, residence: !v && form.residence === "Engenho II" ? "" : form.residence })} className="data-[state=checked]:bg-orange-500" />
+                  <Label htmlFor="guide-kalunga" className="text-[10px] font-black uppercase tracking-widest text-orange-600">Ancestralidade Kalunga</Label>
                 </div>
                 <div className="flex items-center gap-4 bg-emerald-500/5 p-5 rounded-2xl border border-emerald-500/10">
-                  <Switch checked={form.has_cadastur} onCheckedChange={v => setForm({ ...form, has_cadastur: v })} className="data-[state=checked]:bg-emerald-500" />
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Certificado Cadastur</Label>
+                  <Switch id="guide-cadastur" checked={form.has_cadastur} onCheckedChange={v => setForm({ ...form, has_cadastur: v })} className="data-[state=checked]:bg-emerald-500" />
+                  <Label htmlFor="guide-cadastur" className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Certificado Cadastur</Label>
                 </div>
               </div>
             </div>
 
-            <div className="space-y-4">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Anotações do Condutor</Label>
+            <div className="space-y-4 border-t border-admin-border/40 pt-8">
+              <Label htmlFor="guide-notes" className="text-[10px] font-black uppercase tracking-widest text-foreground/70 ml-1">Anotações do Condutor</Label>
               <div className="relative">
                 <FileText className="absolute left-4 top-4 h-4 w-4 text-muted-foreground/40" />
                 <Textarea 
@@ -712,20 +712,20 @@ export default function AdminGuides() {
                   onChange={e => setForm({ ...form, notes: e.target.value })} 
                   rows={4} 
                   placeholder="Observações sobre perfil, limitações ou habilidades específicas..." 
-                  className="rounded-3xl bg-admin-muted/40 border-none pl-11 p-4 font-medium"
+                  id="guide-notes" className="rounded-3xl admin-field bg-white pl-11 p-4 font-medium"
                 />
               </div>
               <div className="flex items-center gap-4 bg-admin-muted/20 p-5 rounded-2xl border border-admin-border/10">
-                <Switch checked={form.is_active} onCheckedChange={v => setForm({ ...form, is_active: v })} className="data-[state=checked]:bg-emerald-500" />
+                <Switch id="guide-active" checked={form.is_active} onCheckedChange={v => setForm({ ...form, is_active: v })} className="data-[state=checked]:bg-emerald-500" />
                 <div className="flex-1">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-admin-primary">Status para Escalas</Label>
+                  <Label htmlFor="guide-active" className="text-[10px] font-black uppercase tracking-widest text-admin-primary">Status para Escalas</Label>
                   <p className="text-[9px] font-bold text-muted-foreground uppercase opacity-60">Habilitado para seleção em novos itinerários</p>
                 </div>
               </div>
             </div>
           </TabsContent>
 
-          <TabsContent value="cachoeiras" className="mt-0 space-y-6 animate-in fade-in slide-in-from-bottom-2 h-full">
+          <TabsContent value="cachoeiras" tabIndex={-1} className="mt-0 space-y-6 animate-in fade-in slide-in-from-bottom-2 h-full">
                 {!editing ? (
                   <div className="flex flex-col items-center justify-center py-12 text-center space-y-4 bg-admin-muted/20 rounded-[2rem] border-2 border-dashed border-admin-primary/10">
                     <ShieldCheck className="h-12 w-12 text-admin-primary/20" />
@@ -801,7 +801,7 @@ export default function AdminGuides() {
               </TabsContent>
             </div>
 
-            <div className="p-8 pt-0 flex gap-3 shrink-0">
+            <div data-guide-footer className="p-8 pt-4 flex items-center gap-3 shrink-0 border-t border-input/40 bg-background">
               <Button type="button" variant="ghost" onClick={() => setDialogOpen(false)} className="flex-1 rounded-xl font-bold uppercase tracking-widest text-[10px]">Cancelar</Button>
               <Button 
                 type="submit" 

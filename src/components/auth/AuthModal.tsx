@@ -314,7 +314,7 @@ export default function AuthModal({ open, onClose, onSuccess, defaultMode = "sig
       {open && <DialogContent
         onOpenAutoFocus={() => { returnFocus.current = document.activeElement as HTMLElement; }}
         onCloseAutoFocus={(event) => { event.preventDefault(); returnFocus.current?.focus(); }}
-        className="max-w-none w-screen h-screen p-0 border-none shadow-none !rounded-none bg-white z-[50] [&>button]:hidden overflow-hidden">
+        className="max-w-none w-screen h-screen p-0 border-none shadow-none !rounded-none bg-white [&>button]:hidden overflow-hidden">
         <DialogTitle className="sr-only">{authMode === "login" ? "Entrar na Atmos" : "Criar conta na Atmos"}</DialogTitle>
         <DialogDescription className="sr-only">Acesse sua conta ou cadastre-se para organizar sua viagem.</DialogDescription>
         <div className="absolute top-12 right-8 z-[100]">

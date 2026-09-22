@@ -18,6 +18,12 @@ export default {
       },
     },
     extend: {
+      // Radix portals share one layer above the site header (60). DOM order
+      // then puts each newly opened menu/dialog above its owning overlay.
+      // Keep backdrops and contents together; raising only Dialog hides Select.
+      zIndex: {
+        overlay: "70",
+      },
       fontFamily: {
         sans: ["Poppins", "system-ui", "sans-serif"],
         display: ["MadInk", "serif"],

@@ -18,6 +18,7 @@ import { ProspectFilters } from "@/components/admin/prospects/ProspectFilters";
 import { ProspectTable } from "@/components/admin/prospects/ProspectTable";
 import { ProspectTableRow } from "@/components/admin/prospects/ProspectTableRow";
 import { ALL_COLUMNS, getRelevantColumns, type ColumnKey } from "@/components/admin/prospects/shared";
+import { buildProspectWorkbook, importedBirthDate } from "@/components/admin/prospects/prospectExport";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any;
@@ -206,17 +207,12 @@ export default function AdminProspects({ segment: initialSegment }: AdminProspec
   };
 
   const handleExport = () => {
-    const ws = XLSX.utils.json_to_sheet(filtered.map((p: any) => {
-      const obj: Record<string, unknown> = {};
-      orderedColumnDefs.forEach(col => {
-        const ext = col.valueExtractor;
-        obj[col.label] = ext ? ext(p) : p[col.key];
-      });
-      return obj;
-    }));
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Clientes");
-    XLSX.writeFile(wb, `clientes-${activeTab}-${new Date().toISOString().split('T')[0]}.xlsx`);
+    try {
+      const wb = buildProspectWorkbook(filtered, orderedColumnDefs, stages);
+      XLSX.writeFile(wb, `clientes-${activeTab}-${new Date().toISOString().split('T')[0]}.xlsx`, { cellStyles: true });
+    } catch (error) {
+      toast({ title: "Erro ao exportar clientes", description: error instanceof Error ? error.message : "Não foi possível gerar o Excel.", variant: "destructive" });
+    }
   };
 
   const handleImport = () => {
@@ -230,7 +226,7 @@ export default function AdminProspects({ segment: initialSegment }: AdminProspec
       const reader = new FileReader();
       reader.onload = async (e) => {
         const data = e.target?.result;
-        const workbook = XLSX.read(data, { type: 'binary' });
+        const workbook = XLSX.read(data, { type: 'binary', cellDates: true });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
         const json = XLSX.utils.sheet_to_json(sheet) as any[];
 
@@ -248,7 +244,7 @@ export default function AdminProspects({ segment: initialSegment }: AdminProspec
           company_name: row.Empresa || row.company_name,
           city: row.Cidade || row.city,
           country: row.País || row.country,
-          birth_date: row["Data de Nascimento"] || row.birth_date,
+          birth_date: importedBirthDate(row["Data de Nascimento"] ?? row.Nascimento ?? row.birth_date),
           document: String(row.Documento || row.document || "").replace(/\D/g, ""),
           document_type: String(row.Documento || row.document || "").length > 11 ? "cnpj" : "cpf",
         }));
@@ -309,9 +305,10 @@ export default function AdminProspects({ segment: initialSegment }: AdminProspec
               variant="outline" 
               size="sm" 
               onClick={handleExport} 
+              title="Exportar Excel (.xlsx) com as colunas e filtros atuais"
               className="rounded-xl font-bold text-[11px] uppercase tracking-wider h-10 px-4 border-admin-border/60 hover:bg-admin-muted"
             >
-              <Download className="h-3.5 w-3.5 mr-2 opacity-60" /> Exportar
+              <Download className="h-3.5 w-3.5 mr-2 opacity-60" /> Exportar Excel
             </Button>
             <Button 
               onClick={handleCreateProspect} 

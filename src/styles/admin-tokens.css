@@ -47,8 +47,8 @@
 }
 
 .admin-card {
-  background: var(--admin-card-bg);
-  border: 1px solid var(--admin-border);
+  background: hsl(var(--admin-card-bg));
+  border: 1px solid hsl(var(--admin-border));
   box-shadow: var(--admin-shadow-md);
   border-radius: 1.25rem; /* 20px */
   transition: var(--admin-transition);
@@ -61,9 +61,100 @@
 
 .admin-table-row {
   transition: var(--admin-transition);
-  border-bottom: 1px solid var(--admin-border);
+  border-bottom: 1px solid hsl(var(--admin-border));
 }
 
 .admin-table-row:hover {
-  background-color: var(--admin-muted);
+  background-color: hsl(var(--admin-muted));
+}
+
+/* Admin-only form appearance. The same scope follows dialogs and popovers via
+   React context; public forms and their brand styles are intentionally untouched.
+   Keep dimensions/layout with each component: these rules only clarify states. */
+.admin-ui {
+  --admin-field-border: 35 9% 52%;
+  --admin-field-hover: 35 12% 37%;
+  --admin-field-focus: 105 20% 25%;
+  --input: var(--admin-field-border);
+  --ring: var(--admin-field-focus);
+  --muted-foreground: 30 8% 36%;
+}
+
+/* Exclude hidden Radix native selects, command search inputs and non-text inputs. */
+.admin-ui :is(
+  input:not([type="hidden"], [type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"], [type="button"], [type="submit"], [type="reset"], [hidden], [cmdk-input]),
+  textarea,
+  select:not([aria-hidden="true"]),
+  button[role="combobox"],
+  [data-admin-field],
+  .admin-field
+) {
+  border: 1px solid hsl(var(--admin-field-border));
+  background-color: #fff;
+  color: hsl(25 16% 17%);
+}
+
+.admin-ui :is(input, textarea)::placeholder {
+  color: hsl(var(--muted-foreground));
+  opacity: 1;
+}
+
+.admin-ui :is(input, textarea, select, button[role="combobox"], [data-admin-field], .admin-field):hover:not(:disabled):not([readonly]) {
+  border-color: hsl(var(--admin-field-hover));
+}
+
+.admin-ui :is(input, textarea, select, button[role="combobox"], [data-admin-field], .admin-field):focus-visible {
+  border-color: hsl(var(--admin-field-focus));
+  outline: 2px solid hsl(var(--admin-field-focus));
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+.admin-ui :is(input, textarea, select, button[role="combobox"], [data-admin-field], .admin-field):is(:disabled, [readonly]) {
+  background-color: hsl(35 12% 94%);
+  border-color: hsl(35 7% 69%);
+  color: hsl(30 7% 37%);
+  opacity: 1;
+}
+
+.admin-ui :is(input, textarea, select, button[role="combobox"], [data-admin-field], .admin-field):is([aria-invalid="true"], :user-invalid) {
+  border-color: hsl(0 65% 42%);
+  outline-color: hsl(0 65% 42%);
+}
+
+.admin-ui [role="checkbox"][data-state="unchecked"] {
+  border-color: hsl(var(--admin-field-border));
+  background-color: #fff;
+}
+
+.admin-ui [role="switch"][data-state="unchecked"] {
+  background-color: hsl(35 9% 52%);
+}
+
+.admin-ui button[role="combobox"] > svg {
+  opacity: 0.8;
+}
+
+.admin-ui[role="listbox"] {
+  border: 1px solid hsl(var(--admin-field-border));
+  background-color: #fff;
+}
+
+/* A contrast-safe close control on both white and black modal headers. */
+.admin-ui > .admin-dialog-close {
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid hsl(var(--admin-field-border));
+  border-radius: 0.5rem;
+  background-color: #fff;
+  color: #242a20;
+  opacity: 1;
+}
+
+.admin-ui > .admin-dialog-close:hover {
+  background-color: #efeee9;
 }

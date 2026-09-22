@@ -2,19 +2,22 @@ import { assertVerifiedCostIdentity, verifiedCheckForCell, type CostIdentity, ty
 import { requestedPriceBreakdown, validateBundleCommissions } from "@/lib/proposalBundleContract";
 import { accommodationAmounts, normalizeSavedRooms, hasMissingCommission } from "@/lib/accommodationCalcs";
 import { lineTotal, money, moneyProduct, moneySum, proposalPriceTotals, supplierCommission, splitGroupTotal, resizeFixedPrice, operatingProfit, recordedCost } from "@/lib/proposalCalcs";
-import { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import { formatBRL, parseAmountInput } from "@/lib/currency";
+import ProspectCombobox, { type ProposalProspect } from "@/components/admin/proposals/ProspectCombobox";
+import { useEffect, useState, useMemo, useCallback, useRef, useId } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, TrendingUp, Copy, Check, Car, ChevronDown, ChevronRight, GripVertical, LayoutGrid, List, ExternalLink, AlertCircle, AlertTriangle, Route, Heart, ClipboardList, MessageSquare, HelpCircle, PenLine, Info, CalendarIcon, ChevronsUpDown, Eye } from "lucide-react";
+import { Plus, Trash2, TrendingUp, Copy, Check, Car, ChevronDown, ChevronRight, GripVertical, LayoutGrid, List, ExternalLink, AlertCircle, AlertTriangle, Route, Heart, ClipboardList, MessageSquare, HelpCircle, PenLine, Info, CalendarIcon, ChevronsUpDown, Eye, ArrowLeft } from "lucide-react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -55,8 +58,18 @@ function NumericCell({ value, onCommit, inputMode = "decimal", className, ...pro
       inputMode={inputMode}
       className={className}
       value={text}
-      onChange={(e) => setText(e.target.value)}
-      onBlur={() => onCommit(parseFloat(text.replace(",", ".")) || 0)}
+      onChange={(e) => { e.target.setCustomValidity(""); setText(e.target.value); }}
+      onBlur={(e) => {
+        const parsed = parseAmountInput(text);
+        if (parsed === null) {
+          e.currentTarget.setCustomValidity("Informe um número válido, por exemplo 1.470,00.");
+          e.currentTarget.reportValidity();
+          return;
+        }
+        e.currentTarget.setCustomValidity("");
+        onCommit(parsed);
+        setText(String(parsed || ""));
+      }}
     />
   );
 }
@@ -96,7 +109,7 @@ function SearchableCatalogCombobox({ value, onSelect, options, placeholder, clas
                     </div>
                     {o.price !== undefined && (
                       <span className="text-[10px] text-muted-foreground ml-2">
-                        R$ {typeof o.price === 'number' ? o.price.toFixed(2) : o.price}
+                        {formatBRL(Number(o.price))}
                       </span>
                     )}
                   </div>
@@ -129,7 +142,7 @@ function VariationSelect({ productId, value, onSelect, catalogItems, className }
       <SelectContent>
         {variations.map(v => (
           <SelectItem key={v.id} value={v.id} className="text-xs">
-            {v.name} — R$ {Number(v.unit_price).toFixed(2)}
+            {v.name} — {formatBRL(Number(v.unit_price))}
           </SelectItem>
         ))}
       </SelectContent>
@@ -194,8 +207,6 @@ type AtmosService = {
   description: string;
   internal_costs: AtmosInternalCost[];
 };
-
-type Prospect = { id: string; name: string };
 
 type GuidePriceRow = {
   guide_id: string;
@@ -450,6 +461,8 @@ export default function ProposalFormDialog({
   const [dayVehicleType, setDayVehicleType] = useState<Record<number, string>>({});
   const [isDirty, setIsDirty] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const proposalFormId = useId();
+  const proposalFormRef = useRef<HTMLFormElement>(null);
   type PaymentInstallment = { label: string; percent: number; due_rule: string };
   const DEFAULT_B2B_PAYMENT_TERMS: PaymentInstallment[] = [
     { label: "Pré Reserva", percent: 10, due_rule: "on_booking" },
@@ -486,8 +499,9 @@ export default function ProposalFormDialog({
   const { data: prospects = [] } = useQuery({
     queryKey: ["prospects-segment", segment],
     queryFn: async () => {
-      const { data } = await supabase.from("prospects").select("id, name").eq("segment", segment).order("name");
-      return (data || []) as Prospect[];
+      const { data, error } = await supabase.from("prospects").select("id, name, email, phone, company_name").eq("segment", segment).order("name").order("id");
+      if (error) throw error;
+      return (data || []) as ProposalProspect[];
     },
   });
 
@@ -1719,7 +1733,7 @@ export default function ProposalFormDialog({
               key={cat}
               className={`${CATEGORY_COLORS[cat] || "bg-muted-foreground"} transition-all`}
               style={{ width: `${pct}%` }}
-              title={`${cat}: R$ ${(catTotals[cat] || 0).toFixed(2)} (${pct.toFixed(0)}%)`}
+              title={`${cat}: ${formatBRL((catTotals[cat] || 0))} (${pct.toFixed(0)}%)`}
             />
           );
         })}
@@ -1727,7 +1741,7 @@ export default function ProposalFormDialog({
           <div
             className="bg-primary transition-all"
             style={{ width: `${(atmosRevenue / totalWithAtmos) * 100}%` }}
-            title={`Serviço ATMOS: R$ ${atmosRevenue.toFixed(2)} (${((atmosRevenue / totalWithAtmos) * 100).toFixed(0)}%)`}
+            title={`Serviço ATMOS: ${formatBRL(atmosRevenue)} (${((atmosRevenue / totalWithAtmos) * 100).toFixed(0)}%)`}
           />
         )}
       </div>
@@ -1832,11 +1846,11 @@ export default function ProposalFormDialog({
                 </div>
                 <div className="text-right">
                   <Badge variant="outline" className="tabular-nums text-xs">
-                    Total: R$ {dayTotal.toFixed(2)}
+                    Total: {formatBRL(dayTotal)}
                   </Badge>
                   {numPeople > 1 && (
                     <div className="text-[10px] text-muted-foreground tabular-nums mt-0.5">
-                      R$ {(numPaying > 0 ? dayTotal / numPaying : 0).toFixed(2)}/pessoa
+                      {formatBRL((numPaying > 0 ? dayTotal / numPaying : 0))}/pessoa
                     </div>
                   )}
                 </div>
@@ -1877,7 +1891,7 @@ export default function ProposalFormDialog({
                           )}
                         </div>
                         {blockIdx === 0 && cellItems.length > 0 && (
-                          <div className="grid grid-cols-[1fr_1fr_60px_100px] gap-2 pl-6 pr-[60px]">
+                          <div className="grid grid-cols-[1fr_1fr_60px_140px] gap-2 pl-6 pr-[60px]">
                             <span className="text-[10px] text-muted-foreground">Produto</span>
                             <span className="text-[10px] text-muted-foreground">Detalhe</span>
                             <span className="text-[10px] text-muted-foreground text-center">Qtd</span>
@@ -1889,7 +1903,7 @@ export default function ProposalFormDialog({
                           <SortableItem key={cell._uid} id={cell._uid}>
                             <div className="space-y-1">
                               <div className="flex items-center gap-1">
-                                <div className="grid grid-cols-[1fr_1fr_60px_100px] gap-2 items-center flex-1">
+                                <div className="grid grid-cols-[1fr_1fr_60px_140px] gap-2 items-center flex-1">
                                 {isGuia ? (
                                   hasWaterfall ? (
                                     <SearchableCatalogCombobox
@@ -1902,7 +1916,7 @@ export default function ProposalFormDialog({
                                           const waterfallProduct = waterfallId ? catalogItems.find((c: any) => c.id === waterfallId) : null;
                                           const vt = dayVehicleType[dayNum] || "carroTurista";
                                           const salePrice = getGuideSalePrice(waterfallProduct, vt, cell.qty) || Number(g.daily_rate);
-                                          return { id: g.id, label: `${g.name}${!g.is_active ? " (Rascunho)" : ""}`, price: salePrice.toFixed(2) };
+                                          return { id: g.id, label: `${g.name}${!g.is_active ? " (Rascunho)" : ""}`, price: salePrice };
                                         })
                                       ]}
                                       onSelect={(v) => v === "custom"
@@ -1977,11 +1991,13 @@ export default function ProposalFormDialog({
                                 />
 
                                 <div className="space-y-0.5">
-                                  <NumericCell
+                                  <CurrencyInput
                                     className="h-8 text-sm text-right tabular-nums"
-                                    placeholder="R$ 0"
-                                    value={cell.value || ""}
-                                    onCommit={(raw) => {
+                                    aria-label="Valor do item"
+                                    placeholder="R$ 0,00"
+                                    value={cell.value}
+                                    commitOnBlur
+                                    onValueChange={(raw) => {
                                       const effCost = getEffectiveCost(cell);
                                       if (raw < effCost && effCost > 0) {
                                         toast({ title: "Valor de venda menor que custo real", variant: "destructive" });
@@ -2132,7 +2148,7 @@ export default function ProposalFormDialog({
                                     const waterfallProduct = wId ? catalogItems.find((c: any) => c.id === wId) : null;
                                     const vt = dayVehicleType[dayNum] || "carroTurista";
                                     const salePrice = getGuideSalePrice(waterfallProduct, vt, cell.qty) || Number(g.daily_rate);
-                                    return { id: g.id, label: `${g.name}${!g.is_active ? " (Rascunho)" : ""}`, price: salePrice.toFixed(2) };
+                                    return { id: g.id, label: `${g.name}${!g.is_active ? " (Rascunho)" : ""}`, price: salePrice };
                                   })
                                 ]}
                                 onSelect={(v) => v === "custom"
@@ -2176,13 +2192,12 @@ export default function ProposalFormDialog({
                               onChange={(e) => updateCell(dayNum, cat, cell.item_index, { qty: Math.max(parseInt(e.target.value) || 1, 1) }, true)}
                             />
                              <div className="space-y-0.5">
-                               <Input
-                                 className="h-7 text-xs w-20 tabular-nums"
-                                 type="number"
-                                 step="0.01"
-                                 placeholder="R$"
-                                 value={cell.value || ""}
-                                 onChange={(e) => updateCell(dayNum, cat, cell.item_index, { value: parseFloat(e.target.value) || 0 }, true)}
+                               <CurrencyInput
+                                 className="h-7 text-xs w-32 text-right tabular-nums"
+                                 aria-label="Valor do item"
+                                 placeholder="R$ 0,00"
+                                 value={cell.value}
+                                 onValueChange={(value) => updateCell(dayNum, cat, cell.item_index, { value }, true)}
                                />
                                {cell.catalog_item_id && (
                                  <div className="text-[8px] text-muted-foreground text-right leading-none pr-0.5">
@@ -2227,16 +2242,16 @@ export default function ProposalFormDialog({
                 );
               })}
               <td className="p-2 text-right font-semibold align-top text-sm">
-                R$ {(dayTotals[dayNum] || 0).toFixed(2)}
+                {formatBRL((dayTotals[dayNum] || 0))}
               </td>
             </tr>
           ))}
           <tr className="border-t-2 border-border bg-muted/30 font-medium">
             <td className="p-2 sticky left-0 bg-muted/30 text-sm">Totais</td>
             {categories.map((cat) => (
-              <td key={cat} className="p-2 text-center text-sm">R$ {(catTotals[cat] || 0).toFixed(2)}</td>
+              <td key={cat} className="p-2 text-center text-sm">{formatBRL((catTotals[cat] || 0))}</td>
             ))}
-            <td className="p-2 text-right font-bold text-sm">R$ {subtotal.toFixed(2)}</td>
+            <td className="p-2 text-right font-bold text-sm">{formatBRL(subtotal)}</td>
           </tr>
         </tbody>
       </table>
@@ -2251,7 +2266,7 @@ export default function ProposalFormDialog({
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Desc. R$</Label>
-              <Input className="h-8 text-sm tabular-nums" type="number" step="0.01" min={0} value={discountFixed || ""} onChange={(e) => setDiscountFixed(parseFloat(e.target.value) || 0)} />
+              <CurrencyInput aria-label="Desconto em reais" className="h-8 text-sm tabular-nums" min={0} value={discountFixed} onValueChange={setDiscountFixed} />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Imp. %</Label>
@@ -2284,7 +2299,7 @@ export default function ProposalFormDialog({
                     <span className={`w-2 h-2 rounded-full ${CATEGORY_COLORS[cat] || "bg-muted-foreground"}`} />
                     {cat}
                   </span>
-                  <span className="tabular-nums">R$ {val.toFixed(2)} <span className="text-muted-foreground">({pct.toFixed(0)}%)</span></span>
+                  <span className="tabular-nums">{formatBRL(val)} <span className="text-muted-foreground">({pct.toFixed(0)}%)</span></span>
                 </div>
               );
             })}
@@ -2294,7 +2309,7 @@ export default function ProposalFormDialog({
                   <span className="w-2 h-2 rounded-full bg-primary" />
                   Serviço ATMOS
                 </span>
-                <span className="tabular-nums">R$ {atmosRevenue.toFixed(2)} <span className="text-muted-foreground">({totalWithAtmos > 0 ? ((atmosRevenue / totalWithAtmos) * 100).toFixed(0) : 0}%)</span></span>
+                <span className="tabular-nums">{formatBRL(atmosRevenue)} <span className="text-muted-foreground">({totalWithAtmos > 0 ? ((atmosRevenue / totalWithAtmos) * 100).toFixed(0) : 0}%)</span></span>
               </div>
             )}
             {accTotals.atmosRevenue > 0 && (
@@ -2303,7 +2318,7 @@ export default function ProposalFormDialog({
                   <span className="w-2 h-2 rounded-full bg-primary" />
                   Hospedagem (ATMOS)
                 </span>
-                <span className="tabular-nums">R$ {accTotals.atmosRevenue.toFixed(2)} <span className="text-muted-foreground">({totalWithAtmos > 0 ? ((accTotals.atmosRevenue / totalWithAtmos) * 100).toFixed(0) : 0}%)</span></span>
+                <span className="tabular-nums">{formatBRL(accTotals.atmosRevenue)} <span className="text-muted-foreground">({totalWithAtmos > 0 ? ((accTotals.atmosRevenue / totalWithAtmos) * 100).toFixed(0) : 0}%)</span></span>
               </div>
             )}
           </div>
@@ -2311,44 +2326,44 @@ export default function ProposalFormDialog({
           <div className="border-t border-border pt-3 space-y-1.5 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Subtotal roteiro</span>
-              <span className="tabular-nums">R$ {(subtotal + atmosRevenue).toFixed(2)}</span>
+              <span className="tabular-nums">{formatBRL((subtotal + atmosRevenue))}</span>
             </div>
             {accTotals.atmosRevenue > 0 && (
               <div className="flex justify-between">
                 <span className="text-muted-foreground">+ Hospedagem (ATMOS)</span>
-                <span className="tabular-nums">R$ {accTotals.atmosRevenue.toFixed(2)}</span>
+                <span className="tabular-nums">{formatBRL(accTotals.atmosRevenue)}</span>
               </div>
             )}
             {discountValue > 0 && (
               <div className="flex justify-between text-destructive">
                 <span>Desconto</span>
-                <span className="tabular-nums">- R$ {discountValue.toFixed(2)}</span>
+                <span className="tabular-nums">- {formatBRL(discountValue)}</span>
               </div>
             )}
             <div className="flex justify-between font-medium">
               <span>Total grupo ({numPeople} pax)</span>
-              <span className="tabular-nums">R$ {groupTotalPreTax.toFixed(2)}</span>
+              <span className="tabular-nums">{formatBRL(groupTotalPreTax)}</span>
             </div>
             {numPeople > 1 && accVariants.length === 0 && (
               <div className="flex justify-between text-muted-foreground text-xs">
                 <span>Por pessoa</span>
-                <span className="tabular-nums">R$ {pricePerPersonPreTax.toFixed(2)}</span>
+                <span className="tabular-nums">{formatBRL(pricePerPersonPreTax)}</span>
               </div>
             )}
             {numPeople > 1 && accVariants.length > 0 && (
               <div className="space-y-1 mt-1 p-2 rounded-md border border-primary/20 bg-primary/5">
                 <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Média por pagante (com hospedagem)</p>
-                <p className="text-sm font-medium">R$ {pricePerPersonPreTax.toFixed(2)}</p>
-                {allocation && <p className="text-xs">{allocation.lowerCount} pagante(s) × R$ {allocation.lowerAmount.toFixed(2)}{allocation.upperCount > 0 ? ` + ${allocation.upperCount} pagante(s) × R$ ${allocation.upperAmount.toFixed(2)}` : ""} (antes de impostos)</p>}
+                <p className="text-sm font-medium">{formatBRL(pricePerPersonPreTax)}</p>
+                {allocation && <p className="text-xs">{allocation.lowerCount} pagante(s) × {formatBRL(allocation.lowerAmount)}{allocation.upperCount > 0 ? ` + ${allocation.upperCount} pagante(s) × ${formatBRL(allocation.upperAmount)}` : ""} (antes de impostos)</p>}
                 {accVariants.length > 1 && numCourtesies > 0 && <p className="text-xs text-amber-700">Distribuição por modalidade pendente de definição. A média financia o total do grupo e não define preços individuais por quarto.</p>}
                 {numCourtesies === 0 && accVariants.map(v => (
                   <div key={v.type} className="flex justify-between text-xs">
-                    <span>{v.label}</span><span>R$ {(basePerPerson + v.revenuePerPerson).toFixed(2)}</span>
+                    <span>{v.label}</span><span>{formatBRL((basePerPerson + v.revenuePerPerson))}</span>
                   </div>
                 ))}
                 <div className="flex justify-between text-xs border-t border-border pt-1 mt-1">
                   <span className="text-muted-foreground">Base (sem hosp.)</span>
-                  <span className="tabular-nums">R$ {basePerPerson.toFixed(2)}</span>
+                  <span className="tabular-nums">{formatBRL(basePerPerson)}</span>
                 </div>
               </div>
             )}
@@ -2361,23 +2376,23 @@ export default function ProposalFormDialog({
             {(numCourtesies > 0 || taxPercent > 0) && (
               <div className="flex justify-between font-bold text-sm">
                 <span>TOTAL SEM NF</span>
-                <span className="tabular-nums">R$ {nfBase.toFixed(2)}</span>
+                <span className="tabular-nums">{formatBRL(nfBase)}</span>
               </div>
             )}
             {taxValue > 0 && (
               <div className="flex justify-between text-xs">
                 <span className="text-muted-foreground">Imposto ({taxPercent}%)</span>
-                <span className="tabular-nums">+ R$ {taxValue.toFixed(2)}</span>
+                <span className="tabular-nums">+ {formatBRL(taxValue)}</span>
               </div>
             )}
             <div className="flex justify-between font-bold text-lg pt-2 border-t-2 border-foreground/20">
               <span>Total cobrado</span>
-              <span className="tabular-nums">R$ {totalCharged.toFixed(2)}</span>
+              <span className="tabular-nums">{formatBRL(totalCharged)}</span>
             </div>
             {numPaying > 0 && taxValue > 0 && (
               <div className="flex justify-between text-muted-foreground text-xs">
                 <span>Por pessoa (c/ imposto)</span>
-                <span className="tabular-nums">R$ {pricePerPerson.toFixed(2)}</span>
+                <span className="tabular-nums">{formatBRL(pricePerPerson)}</span>
               </div>
             )}
           </div>
@@ -2396,18 +2411,18 @@ export default function ProposalFormDialog({
             <div className="space-y-1 text-xs">
               <div className="flex justify-between font-medium">
                 <span>Receita dos itens</span>
-                <span className="tabular-nums">R$ {profitAnalysis.totalItemRevenue.toFixed(2)}</span>
+                <span className="tabular-nums">{formatBRL(profitAnalysis.totalItemRevenue)}</span>
               </div>
               {atmosRevenue > 0 && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">+ Receita Serviço ATMOS</span>
-                  <span className="tabular-nums">R$ {atmosRevenue.toFixed(2)}</span>
+                  <span className="tabular-nums">{formatBRL(atmosRevenue)}</span>
                 </div>
               )}
               {accTotals.totalRevenue > 0 && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">+ Receita Hospedagem</span>
-                  <span className="tabular-nums">R$ {accTotals.totalRevenue.toFixed(2)}</span>
+                  <span className="tabular-nums">{formatBRL(accTotals.totalRevenue)}</span>
                 </div>
               )}
 
@@ -2434,26 +2449,26 @@ export default function ProposalFormDialog({
                           <span className={`w-2 h-2 rounded-full ${CATEGORY_COLORS[cat] || "bg-muted-foreground"}`} />
                           {cat}
                         </span>
-                        <span className="tabular-nums">− R$ {(costsByCategory[cat]).toFixed(2)}</span>
+                        <span className="tabular-nums">− {formatBRL((costsByCategory[cat]))}</span>
                       </div>
                     ))}
                     {totalCosts > 0 && (
                       <div className="flex justify-between text-destructive text-xs">
                         <span>Custos operacionais</span>
-                        <span className="tabular-nums">− R$ {totalCosts.toFixed(2)}</span>
+                        <span className="tabular-nums">− {formatBRL(totalCosts)}</span>
                       </div>
                     )}
 
                     {segment === "b2b" && commissionValue > 0 && (
                       <div className="flex justify-between text-destructive text-xs">
                         <span>Comissão Vendedor ({partnerCommission}%)</span>
-                        <span className="tabular-nums">− R$ {commissionValue.toFixed(2)}</span>
+                        <span className="tabular-nums">− {formatBRL(commissionValue)}</span>
                       </div>
                     )}
                     {discountValue > 0 && (
                       <div className="flex justify-between text-destructive text-xs">
                         <span>Desconto concedido</span>
-                        <span className="tabular-nums">− R$ {discountValue.toFixed(2)}</span>
+                        <span className="tabular-nums">− {formatBRL(discountValue)}</span>
                       </div>
                     )}
 
@@ -2479,7 +2494,7 @@ export default function ProposalFormDialog({
                         </div>
                         <ul className="list-disc list-inside pl-1 space-y-0.5">
                           {itemsWithCostNoSale.map((c, idx) => (
-                            <li key={idx}>D{c.day_number} — {c.item_name || c.category} (custo: R$ {lineTotal(getEffectiveCost(c), c.qty).toFixed(2)})</li>
+                            <li key={idx}>D{c.day_number} — {c.item_name || c.category} (custo: {formatBRL(lineTotal(getEffectiveCost(c), c.qty))})</li>
                           ))}
                         </ul>
                       </div>
@@ -2496,13 +2511,13 @@ export default function ProposalFormDialog({
                 {profitAnalysis.totalCommission > 0 && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Comissões fornecedores (itens)</span>
-                    <span className="tabular-nums text-green-600">+ R$ {profitAnalysis.totalCommission.toFixed(2)}</span>
+                    <span className="tabular-nums text-green-600">+ {formatBRL(profitAnalysis.totalCommission)}</span>
                   </div>
                 )}
                 {accTotals.totalCommission > 0 && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Comissões fornecedores (hospedagem)</span>
-                    <span className="tabular-nums text-green-600">+ R$ {accTotals.totalCommission.toFixed(2)}</span>
+                    <span className="tabular-nums text-green-600">+ {formatBRL(accTotals.totalCommission)}</span>
                   </div>
                 )}
               </div>
@@ -2511,7 +2526,7 @@ export default function ProposalFormDialog({
             {/* Final profit */}
             <div className={`flex justify-between font-bold text-sm pt-2 mt-2 border-t-2 border-border ${grossProfit >= 0 ? "text-green-600" : "text-destructive"}`}>
               <span>Lucro ATMOS</span>
-              <span className="tabular-nums">R$ {grossProfit.toFixed(2)} ({margin.toFixed(1)}%)</span>
+              <span className="tabular-nums">{formatBRL(grossProfit)} ({margin.toFixed(1)}%)</span>
             </div>
             {margin < 20 && totalRevenue > 0 && (
               <div className="flex items-start gap-2 mt-2 p-2 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-xs">
@@ -2554,10 +2569,10 @@ export default function ProposalFormDialog({
                             <span className={`w-2 h-2 rounded-full shrink-0 ${CATEGORY_COLORS[cat] || "bg-muted-foreground"}`} />
                             {cat} <span className="text-muted-foreground font-normal">({g.items.length})</span>
                           </span>
-                          <span className="tabular-nums text-right whitespace-nowrap">R$ {g.rev.toFixed(2)}</span>
-                          <span className="tabular-nums text-right whitespace-nowrap">R$ {g.cost.toFixed(2)}</span>
-                          <span className="tabular-nums text-right whitespace-nowrap">{g.comm > 0 ? `R$ ${g.comm.toFixed(2)}` : "—"}</span>
-                          <span className={`tabular-nums text-right whitespace-nowrap ${g.profit >= 0 ? "text-green-600" : "text-destructive"}`}>R$ {g.profit.toFixed(2)}</span>
+                          <span className="tabular-nums text-right whitespace-nowrap">{formatBRL(g.rev)}</span>
+                          <span className="tabular-nums text-right whitespace-nowrap">{formatBRL(g.cost)}</span>
+                          <span className="tabular-nums text-right whitespace-nowrap">{g.comm > 0 ? `${formatBRL(g.comm)}` : "—"}</span>
+                          <span className={`tabular-nums text-right whitespace-nowrap ${g.profit >= 0 ? "text-green-600" : "text-destructive"}`}>{formatBRL(g.profit)}</span>
                         </div>
                       ) : (
                         <div className="grid grid-cols-[1fr_minmax(56px,auto)_minmax(56px,auto)] gap-x-2 py-1 px-1 rounded hover:bg-muted/50 font-medium">
@@ -2566,8 +2581,8 @@ export default function ProposalFormDialog({
                             <span className={`w-2 h-2 rounded-full shrink-0 ${CATEGORY_COLORS[cat] || "bg-muted-foreground"}`} />
                             {cat} <span className="text-muted-foreground font-normal">({g.items.length})</span>
                           </span>
-                          <span className="tabular-nums text-right whitespace-nowrap">R$ {g.cost.toFixed(2)}</span>
-                          <span className="tabular-nums text-right whitespace-nowrap">{g.comm > 0 ? `R$ ${g.comm.toFixed(2)}` : "—"}</span>
+                          <span className="tabular-nums text-right whitespace-nowrap">{formatBRL(g.cost)}</span>
+                          <span className="tabular-nums text-right whitespace-nowrap">{g.comm > 0 ? `${formatBRL(g.comm)}` : "—"}</span>
                         </div>
                       )}
                     </CollapsibleTrigger>
@@ -2582,10 +2597,10 @@ export default function ProposalFormDialog({
                                   D{p.cell.day_number} {p.cell.item_name || p.cell.category}
                                   {p.cell.qty > 1 && <span className="ml-0.5">×{p.cell.qty}</span>}
                                 </span>
-                                <span className="tabular-nums text-right whitespace-nowrap">R$ {p.revenue.toFixed(2)}</span>
-                                <span className="tabular-nums text-right whitespace-nowrap">R$ {p.cost.toFixed(2)}</span>
-                                <span className="tabular-nums text-right whitespace-nowrap">{p.commission > 0 ? `R$ ${p.commission.toFixed(2)}` : "—"}</span>
-                                <span className="tabular-nums text-right whitespace-nowrap">R$ {p.profit.toFixed(2)}</span>
+                                <span className="tabular-nums text-right whitespace-nowrap">{formatBRL(p.revenue)}</span>
+                                <span className="tabular-nums text-right whitespace-nowrap">{formatBRL(p.cost)}</span>
+                                <span className="tabular-nums text-right whitespace-nowrap">{p.commission > 0 ? `${formatBRL(p.commission)}` : "—"}</span>
+                                <span className="tabular-nums text-right whitespace-nowrap">{formatBRL(p.profit)}</span>
                               </div>
                             ) : (
                               <div key={i} className="grid grid-cols-[1fr_minmax(56px,auto)_minmax(56px,auto)] gap-x-2 py-0.5 text-muted-foreground">
@@ -2596,8 +2611,8 @@ export default function ProposalFormDialog({
                                     <TooltipProvider><Tooltip><TooltipTrigger asChild><AlertTriangle className="h-3 w-3 text-amber-500 shrink-0" /></TooltipTrigger><TooltipContent><p className="text-xs">Custo não cadastrado</p></TooltipContent></Tooltip></TooltipProvider>
                                   )}
                                 </span>
-                                <span className="tabular-nums text-right whitespace-nowrap">R$ {p.cost.toFixed(2)}</span>
-                                <span className="tabular-nums text-right whitespace-nowrap">{p.commission > 0 ? `R$ ${p.commission.toFixed(2)}` : "—"}</span>
+                                <span className="tabular-nums text-right whitespace-nowrap">{formatBRL(p.cost)}</span>
+                                <span className="tabular-nums text-right whitespace-nowrap">{p.commission > 0 ? `${formatBRL(p.commission)}` : "—"}</span>
                               </div>
                             )
                           )}
@@ -2666,10 +2681,16 @@ export default function ProposalFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleDialogClose}>
-      <DialogContent className="max-w-[95vw] md:max-w-[1200px] max-h-[90vh] flex flex-col p-0 sm:rounded-[2rem] overflow-hidden shadow-2xl border-none">
-        <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border/50 px-8 py-5 flex items-center justify-between shrink-0">
-          <DialogTitle className="font-black uppercase tracking-widest text-lg">{proposalId ? "Editar Proposta" : "Nova Proposta"}</DialogTitle>
-          <div className="flex items-center gap-2">
+      <DialogContent showCloseButton={false} aria-describedby={undefined} data-proposal-editor
+        className="w-[calc(100vw-2rem)] max-w-[1200px] h-[90dvh] max-h-[90dvh] min-h-0 flex flex-col gap-0 p-0 sm:rounded-[2rem] overflow-hidden shadow-2xl border-none">
+        <div data-proposal-header className="relative shrink-0 bg-background border-b border-border/50 px-4 md:px-8 py-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <Button type="button" variant="outline" size="sm" aria-label="Voltar para propostas" onClick={() => handleDialogClose(false)}>
+              <ArrowLeft className="mr-1.5 h-4 w-4" /> Voltar
+            </Button>
+            <DialogTitle className="font-black uppercase tracking-widest text-sm md:text-lg">{proposalId ? "Editar Proposta" : "Nova Proposta"}</DialogTitle>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
             {prospectId && (
               <Button
                 type="button"
@@ -2724,9 +2745,10 @@ export default function ProposalFormDialog({
             )}
           </div>
         </div>
-        <div className="overflow-y-auto flex-1 px-4 md:px-8 py-8 bg-stone-50/50">
-        <DialogHeader className="sr-only"><DialogTitle>{proposalId ? "Editar Proposta" : "Nova Proposta"}</DialogTitle></DialogHeader>
-        <form className="space-y-5" onChangeCapture={() => setIsDirty(true)} onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(); }}>
+        {/* Relative positioning contains Radix's absolute native controls inside this
+            scroller instead of allowing them to expand/scroll the dialog itself. */}
+        <div data-proposal-scroll className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 md:px-8 py-6 bg-stone-50">
+        <form id={proposalFormId} ref={proposalFormRef} className="space-y-5" onChangeCapture={() => setIsDirty(true)} onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(); }}>
           {costIdentityError && <p role="alert" className="text-destructive">{costIdentityError}</p>}
 
           {/* ── Section 1: Dados Gerais ─────────────────────────── */}
@@ -2734,39 +2756,13 @@ export default function ProposalFormDialog({
             <h3 className="text-xs font-black text-foreground/80 uppercase tracking-widest mb-2">Dados Gerais</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
               <div className="space-y-1.5 col-span-2 md:col-span-1">
-                <Label className="text-xs">Título *</Label>
-                <Input className="h-8 text-sm" value={title} onChange={(e) => setTitle(e.target.value)} required />
+                <Label htmlFor={`${proposalFormId}-title`} className="text-xs">Título *</Label>
+                <Input id={`${proposalFormId}-title`} className="h-8 text-sm" value={title} onChange={(e) => setTitle(e.target.value)} required />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Prospect</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" role="combobox" className="h-8 text-sm w-full justify-between font-normal">
-                      {prospectId ? prospects.find(p => p.id === prospectId)?.name ?? "Selecionar..." : "Nenhum"}
-                      <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[240px] p-0 max-h-[320px]" align="start" onWheel={(e) => e.stopPropagation()}>
-                    <Command>
-                      <CommandInput placeholder="Buscar prospect..." className="h-8 text-sm" />
-                      <CommandList className="max-h-[250px]">
-                        <CommandEmpty>Nenhum encontrado.</CommandEmpty>
-                        <CommandGroup>
-                          <CommandItem value="__none__" onSelect={() => setProspectId(null)}>
-                            <Check className={cn("mr-2 h-3.5 w-3.5", !prospectId ? "opacity-100" : "opacity-0")} />
-                            Nenhum
-                          </CommandItem>
-                          {prospects.map((p) => (
-                            <CommandItem key={p.id} value={p.name} onSelect={() => setProspectId(p.id)}>
-                              <Check className={cn("mr-2 h-3.5 w-3.5", prospectId === p.id ? "opacity-100" : "opacity-0")} />
-                              {p.name}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
+                <ProspectCombobox prospects={prospects} value={prospectId}
+                  onChange={id => { setProspectId(id); setIsDirty(true); }} />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Vendedor</Label>
@@ -3041,11 +3037,11 @@ export default function ProposalFormDialog({
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               <div className="space-y-1">
                 <Label className="text-xs">Valor por pessoa/dia (R$) *</Label>
-                <Input className="h-8 text-sm tabular-nums" type="number" step="any" min={0} value={atmosService.price_per_person_day || ""} onChange={(e) => setAtmosService((s) => ({ ...s, price_per_person_day: parseFloat(e.target.value) || 0 }))} required />
+                <CurrencyInput aria-label="Valor do serviço por pessoa/dia" className="h-8 text-sm tabular-nums" min={0} value={atmosService.price_per_person_day || ""} onValueChange={(value) => setAtmosService((s) => ({ ...s, price_per_person_day: value }))} required />
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Receita Serviço</Label>
-                <p className="text-sm font-semibold mt-1 tabular-nums">R$ {atmosRevenue.toFixed(2)}</p>
+                <p className="text-sm font-semibold mt-1 tabular-nums">{formatBRL(atmosRevenue)}</p>
                 <p className="text-xs text-muted-foreground">{numPeople} pax × {numDays} dias × R$ {atmosService.price_per_person_day.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 20 })}</p>
               </div>
             </div>
@@ -3084,7 +3080,7 @@ export default function ProposalFormDialog({
                 </div>
               )}
               {costItems.map((ci, idx) => (
-                <div key={idx} className="grid grid-cols-[1fr_60px_100px_80px_160px_200px_auto] gap-2 items-end">
+                <div key={idx} className="grid grid-cols-[1fr_60px_140px_80px_160px_200px_auto] gap-2 items-end">
                   <Input className="h-8 text-sm" placeholder="Descrição do custo" value={ci.description} onChange={(e) => {
                     const arr = [...costItems]; arr[idx] = { ...arr[idx], description: e.target.value }; setCostItems(arr);
                   }} />
@@ -3092,11 +3088,10 @@ export default function ProposalFormDialog({
                     const d = parseFloat(e.target.value) || 1;
                     const arr = [...costItems]; arr[idx] = { ...arr[idx], days: d, amount: moneyProduct(d, arr[idx].unit_amount) }; setCostItems(arr);
                   }} />
-                  <Input className="h-8 text-sm tabular-nums" type="number" step="0.01" placeholder="R$/dia" value={ci.unit_amount || ""} onChange={(e) => {
-                    const ua = parseFloat(e.target.value) || 0;
+                  <CurrencyInput aria-label="Custo por dia" className="h-8 text-sm tabular-nums" placeholder="R$ 0,00/dia" value={ci.unit_amount} onValueChange={(ua) => {
                     const arr = [...costItems]; arr[idx] = { ...arr[idx], unit_amount: ua, amount: moneyProduct(arr[idx].days || 1, ua) }; setCostItems(arr);
                   }} />
-                  <span className="h-8 flex items-center text-xs tabular-nums text-muted-foreground">= R$ {ci.amount.toFixed(2)}</span>
+                  <span className="h-8 flex items-center text-xs tabular-nums text-muted-foreground">= {formatBRL(ci.amount)}</span>
                   <Select value={ci.account_id || "none"} onValueChange={(v) => {
                     const arr = [...costItems]; arr[idx] = { ...arr[idx], account_id: v === "none" ? null : v }; setCostItems(arr);
                   }}>
@@ -3134,7 +3129,7 @@ export default function ProposalFormDialog({
 
             <div className="flex justify-between font-semibold text-sm pt-2 border-t border-border">
               <span>Total custos operacionais</span>
-              <span className="tabular-nums">R$ {totalCosts.toFixed(2)}</span>
+              <span className="tabular-nums">{formatBRL(totalCosts)}</span>
             </div>
           </div>
 
@@ -3190,12 +3185,13 @@ export default function ProposalFormDialog({
             <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
           </div>
 
-          <div className="flex gap-2">
-            <Button type="submit" className="flex-1" disabled={saveMutation.isPending || atmosInsufficient || !!pricing.error}>
+        </form>
+        </div>
+        <div data-proposal-footer className="relative shrink-0 flex gap-3 border-t border-border/50 bg-background px-4 md:px-8 py-3">
+            <Button type="button" variant="outline" onClick={() => handleDialogClose(false)}>Cancelar</Button>
+            <Button type="submit" form={proposalFormId} className="flex-1" disabled={saveMutation.isPending || atmosInsufficient || !!pricing.error}>
               {saveMutation.isPending ? "Salvando..." : "Salvar Proposta"}
             </Button>
-          </div>
-        </form>
         </div>
       </DialogContent>
 
@@ -3405,9 +3401,12 @@ export default function ProposalFormDialog({
               Sair sem salvar
             </Button>
             <AlertDialogAction
+              disabled={saveMutation.isPending || atmosInsufficient || !!pricing.error}
               onClick={() => {
                 setShowExitConfirm(false);
-                saveMutation.mutate();
+                // Wait for the confirmation to release its focus trap, then use
+                // the same native validation/submit path as the visible Save button.
+                requestAnimationFrame(() => proposalFormRef.current?.requestSubmit());
               }}
             >
               Salvar e sair

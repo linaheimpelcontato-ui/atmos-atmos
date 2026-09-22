@@ -86,10 +86,10 @@ export function ProspectFilters({
             variant="ghost" 
             className="h-11 px-4 hover:bg-admin-muted hover:text-admin-primary transition-all rounded-xl gap-2 text-[10px] font-black uppercase tracking-widest border-r border-admin-border/10 rounded-none"
             onClick={onExport}
-            title="Exportar Excel"
+            title="Exportar Excel (.xlsx) com as colunas e filtros atuais"
           >
             <Download className="h-4 w-4" />
-            Exportar
+            Exportar Excel
           </Button>
           <Button 
             variant="ghost" 

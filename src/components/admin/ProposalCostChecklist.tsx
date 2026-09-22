@@ -1,4 +1,5 @@
 import { requireSavedCostChecks } from "@/lib/costCheckSave";
+import { formatBRL } from "@/lib/currency";
 import { boundCheckMatches, checklistSavedValues, costSnapshot, type CostIdentity } from "@/lib/verifiedCostIdentity";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -267,7 +268,7 @@ export default function ProposalCostChecklist({ proposalId, grid, open, onOpenCh
         {loadError && <p role="alert">Erro ao carregar conferências. Reabra o painel antes de salvar.</p>}
         {unresolved.length > 0 && <div className="my-4 border p-3 text-sm">
           <p>Conferências sem vínculo seguro ou com identidade antiga: revise manualmente. Valores e notas abaixo são históricos, não foram aplicados aos itens atuais.</p>
-          {unresolved.map(c => <p key={c.id}>Dia {c.day_number}, posição {c.item_index}: R$ {Number(c.actual_cost).toFixed(2)} — {c.notes || 'Sem nota'} {c.is_verified ? '(conferido antigo)' : '(não conferido)'}</p>)}
+          {unresolved.map(c => <p key={c.id}>Dia {c.day_number}, posição {c.item_index}: {formatBRL(Number(c.actual_cost))} — {c.notes || 'Sem nota'} {c.is_verified ? '(conferido antigo)' : '(não conferido)'}</p>)}
           <Button type="button" disabled={releaseMutation.isPending || !unresolved.some(c=>c.is_verified)} onClick={()=>releaseMutation.mutate()}>Desmarcar conferências antigas preservando histórico</Button>
         </div>}
         {isLoading ? (
@@ -381,7 +382,7 @@ export default function ProposalCostChecklist({ proposalId, grid, open, onOpenCh
                           const profitPct = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
                           const color = totalProfit > 0 ? "text-green-600" : totalProfit < 0 ? "text-red-600" : "text-muted-foreground";
                           return (
-                            <span className={`tabular-nums font-medium ${color}`}>R$ {totalProfit.toFixed(2)} <span className="text-[10px] font-normal">({profitPct.toFixed(1)}%)</span></span>
+                            <span className={`tabular-nums font-medium ${color}`}>{formatBRL(totalProfit)} <span className="text-[10px] font-normal">({profitPct.toFixed(1)}%)</span></span>
                           );
                         })()}
                       </div>
@@ -398,7 +399,7 @@ export default function ProposalCostChecklist({ proposalId, grid, open, onOpenCh
                               <span className="text-muted-foreground block mb-0.5">
                                 {isTotal ? "Venda total" : "Venda /pessoa"}
                               </span>
-                              <span className="tabular-nums">R$ {saleValue.toFixed(2)}</span>
+                              <span className="tabular-nums">{formatBRL(saleValue)}</span>
                             </>
                           );
                         })()}
@@ -412,7 +413,7 @@ export default function ProposalCostChecklist({ proposalId, grid, open, onOpenCh
                               <span className="text-muted-foreground block mb-0.5">
                                 {isTotal ? "Custo cadastro" : "Custo cadastro /pessoa"}
                               </span>
-                              <span className="tabular-nums">R$ {regCost.toFixed(2)}</span>
+                              <span className="tabular-nums">{formatBRL(regCost)}</span>
                             </>
                           );
                         })()}

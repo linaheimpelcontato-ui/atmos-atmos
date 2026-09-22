@@ -432,8 +432,8 @@ export default function AdminDashboardB2C() {
                 <XAxis dataKey="month" tick={{ fontSize: 10, fontWeight: 'bold' }} axisLine={false} tickLine={false} className="fill-muted-foreground/40" />
                 <YAxis tick={{ fontSize: 10, fontWeight: 'bold' }} axisLine={false} tickLine={false} className="fill-muted-foreground/40" />
                 <Tooltip
-                  cursor={{ fill: 'rgba(var(--admin-primary), 0.03)' }}
-                  contentStyle={{ background: "rgba(255, 255, 255, 0.9)", backdropFilter: "blur(8px)", border: "1px solid rgba(var(--admin-border), 0.4)", borderRadius: 16, fontSize: 11, fontWeight: 'bold' }}
+                  cursor={{ fill: 'hsl(var(--admin-primary) / 0.03)' }}
+                  contentStyle={{ background: "rgba(255, 255, 255, 0.9)", backdropFilter: "blur(8px)", border: "1px solid hsl(var(--admin-border) / 0.4)", borderRadius: 16, fontSize: 11, fontWeight: 'bold' }}
                 />
                 <Bar dataKey="prospects" name="Prospects" fill="hsl(var(--admin-primary))" radius={[6, 6, 0, 0]} />
                 <Bar dataKey="propostas" name="Propostas" fill="#F59E0B" radius={[6, 6, 0, 0]} />
@@ -504,7 +504,7 @@ export default function AdminDashboardB2C() {
                   {sourceDonut.map((d, i) => <Cell key={i} fill={d.color} />)}
                 </Pie>
                 <Tooltip 
-                  contentStyle={{ background: "rgba(255, 255, 255, 0.9)", backdropFilter: "blur(8px)", border: "1px solid rgba(var(--admin-border), 0.4)", borderRadius: 16, fontSize: 11, fontWeight: 'bold' }}
+                  contentStyle={{ background: "rgba(255, 255, 255, 0.9)", backdropFilter: "blur(8px)", border: "1px solid hsl(var(--admin-border) / 0.4)", borderRadius: 16, fontSize: 11, fontWeight: 'bold' }}
                 />
               </PieChart>
             </ResponsiveContainer>

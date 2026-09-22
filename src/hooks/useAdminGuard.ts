@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,6 +11,10 @@ export function useAdminGuard() {
   // Auth events can replace the User object without changing the signed-in identity.
   const userId = user?.id;
   const navigate = useNavigate();
+  // BrowserRouter replaces navigate on pathname changes. That is not an auth
+  // change: restarting this guard would unmount the whole admin shell/menu.
+  const navigateRef = useRef(navigate);
+  useEffect(() => { navigateRef.current = navigate; }, [navigate]);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [checking, setChecking] = useState(true);
   const [allowedModules, setAllowedModules] = useState<string[]>([]);
@@ -25,7 +29,7 @@ export function useAdminGuard() {
     if (!userId) {
       setIsAdmin(false);
       setChecking(false);
-      navigate("/");
+      navigateRef.current("/");
       return;
     }
 
@@ -34,7 +38,7 @@ export function useAdminGuard() {
       if (cancelled) return;
       if (error || !roleOk) {
         setIsAdmin(false);
-        navigate("/");
+        navigateRef.current("/");
         setChecking(false);
         return;
       }
@@ -51,7 +55,7 @@ export function useAdminGuard() {
       if (permissionsError) {
         setIsAdmin(false);
         setChecking(false);
-        navigate("/");
+        navigateRef.current("/");
         return;
       }
       setAllowedModules(perms?.allowed_modules ?? []);
@@ -59,7 +63,7 @@ export function useAdminGuard() {
       setChecking(false);
     })();
     return () => { cancelled = true; };
-  }, [userId, loading, navigate]);
+  }, [userId, loading]);
 
   return { isAdmin, checking, allowedModules };
 }

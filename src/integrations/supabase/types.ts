@@ -1517,6 +1517,7 @@ export type Database = {
           annual_volume: number | null
           birth_date: string | null
           brazil_destinations: string | null
+          city: string | null
           commission_rate: number | null
           company_name: string | null
           company_segment: string | null
@@ -1559,6 +1560,7 @@ export type Database = {
           annual_volume?: number | null
           birth_date?: string | null
           brazil_destinations?: string | null
+          city?: string | null
           commission_rate?: number | null
           company_name?: string | null
           company_segment?: string | null
@@ -1601,6 +1603,7 @@ export type Database = {
           annual_volume?: number | null
           birth_date?: string | null
           brazil_destinations?: string | null
+          city?: string | null
           commission_rate?: number | null
           company_name?: string | null
           company_segment?: string | null

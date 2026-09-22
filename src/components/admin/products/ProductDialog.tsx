@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useId, useRef } from "react";
 import { Plus, Pencil, ImageIcon, Info, Check, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -45,6 +45,9 @@ export function ProductDialog({
   getTypeLabel,
   allProducts,
 }: ProductDialogProps) {
+  const [activeTab, setActiveTab] = useState("geral");
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const galleryTabRef = useRef<HTMLButtonElement>(null);
   const [formName, setFormName] = useState("");
   const [formSubtitle, setFormSubtitle] = useState("");
   const [formType, setFormType] = useState("experience");
@@ -63,19 +66,37 @@ export function ProductDialog({
 
   const [isAddingNewSubcategory, setIsAddingNewSubcategory] = useState(false);
   const [newSubcategory, setNewSubcategory] = useState("");
+  const subcategoryId = useId();
+  const subcategoryHintId = `${subcategoryId}-hint`;
 
   const subcategories = useMemo(() => {
     const subs = new Set<string>();
     allProducts.forEach(p => {
-      const vars = (p.variables || {}) as any;
-      const s = vars.subcategory;
-      if (s) subs.add(s);
+      const s = p.variables?.subcategory;
+      if (typeof s === "string" && s.trim()) subs.add(s);
     });
+    // A confirmed draft must have a SelectItem before the product is persisted.
+    if (formSubcategory) subs.add(formSubcategory);
     return Array.from(subs).sort();
-  }, [allProducts]);
+  }, [allProducts, formSubcategory]);
+
+  const cancelNewSubcategory = () => {
+    setIsAddingNewSubcategory(false);
+    setNewSubcategory("");
+  };
+
+  const confirmNewSubcategory = () => {
+    const name = newSubcategory.trim();
+    if (!name) return;
+    setFormSubcategory(name);
+    cancelNewSubcategory();
+  };
 
   useEffect(() => {
     if (open) {
+      setActiveTab("geral");
+      setIsAddingNewSubcategory(false);
+      setNewSubcategory("");
       if (editingProduct) {
         setFormName(editingProduct.name);
         const varsData = (editingProduct.variables || {}) as Record<string, unknown>;
@@ -119,6 +140,10 @@ export function ProductDialog({
       }
     }
   }, [open, editingProduct]);
+
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+  }, [activeTab, open]);
 
   // Intelligent SEO Auto-generation
   useEffect(() => {
@@ -196,7 +221,15 @@ export function ProductDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-4xl h-[90vh] flex flex-col p-0 overflow-hidden border-none shadow-2xl bg-admin-bg">
+      <DialogContent
+        className="sm:max-w-4xl h-[90vh] flex flex-col p-0 overflow-hidden border-none shadow-2xl bg-admin-bg"
+        onEscapeKeyDown={(event) => {
+          if (isAddingNewSubcategory) {
+            event.preventDefault();
+            cancelNewSubcategory();
+          }
+        }}
+      >
         <DialogHeader className="p-8 pb-4 bg-white border-b border-admin-border/50">
           <DialogTitle className="flex items-center gap-4 text-2xl font-bold tracking-tight text-admin-primary">
             {editingProduct ? (
@@ -212,12 +245,13 @@ export function ProductDialog({
         </DialogHeader>
 
         <div className="flex-1 flex flex-col min-h-0 bg-admin-surface">
-          <Tabs defaultValue="geral" className="flex-1 flex flex-col h-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col h-full">
             <div className="px-8 bg-white border-b border-admin-border/50">
               <TabsList className="bg-transparent h-14 w-full justify-start gap-8 rounded-none p-0">
                 {["geral", "variations", "images", "details", "fiscal"].map((t) => (
                   <TabsTrigger 
                     key={t} 
+                    ref={t === "images" ? galleryTabRef : undefined}
                     value={t} 
                     className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-admin-primary rounded-none h-14 px-1 text-sm font-semibold transition-all uppercase tracking-widest text-muted-foreground/60 data-[state=active]:text-admin-primary"
                   >
@@ -230,7 +264,7 @@ export function ProductDialog({
               </TabsList>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-8 custom-scrollbar">
               <TabsContent value="geral" className="mt-0 space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                   <div className="space-y-6">
@@ -280,10 +314,12 @@ export function ProductDialog({
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-sm font-bold text-admin-primary uppercase tracking-wider">Subcategoria</Label>
+                      <Label htmlFor={subcategoryId} className="text-sm font-bold text-admin-primary uppercase tracking-wider">Subcategoria</Label>
                       {isAddingNewSubcategory ? (
                         <div className="flex gap-2 animate-in fade-in slide-in-from-left-2">
                           <Input 
+                            id={subcategoryId}
+                            aria-describedby={subcategoryHintId}
                             value={newSubcategory}
                             onChange={(e) => setNewSubcategory(e.target.value)}
                             className="h-12 bg-white border-admin-border focus:border-admin-primary rounded-xl flex-1"
@@ -291,31 +327,30 @@ export function ProductDialog({
                             autoFocus
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
-                                if (newSubcategory.trim()) {
-                                  setFormSubcategory(newSubcategory.trim());
-                                  setIsAddingNewSubcategory(false);
-                                }
+                                e.preventDefault();
+                                confirmNewSubcategory();
                               }
-                              if (e.key === 'Escape') setIsAddingNewSubcategory(false);
                             }}
                           />
                           <Button 
+                            type="button"
+                            aria-label="Confirmar subcategoria"
+                            title="Confirmar subcategoria"
                             variant="outline" 
                             size="icon"
-                            onClick={() => {
-                              if (newSubcategory.trim()) {
-                                setFormSubcategory(newSubcategory.trim());
-                                setIsAddingNewSubcategory(false);
-                              }
-                            }}
+                            disabled={!newSubcategory.trim()}
+                            onClick={confirmNewSubcategory}
                             className="h-12 w-12 rounded-xl text-green-600 border-admin-border"
                           >
                             <Check className="h-5 w-5" />
                           </Button>
                           <Button 
+                            type="button"
+                            aria-label="Cancelar nova subcategoria"
+                            title="Cancelar nova subcategoria"
                             variant="ghost" 
                             size="icon"
-                            onClick={() => setIsAddingNewSubcategory(false)}
+                            onClick={cancelNewSubcategory}
                             className="h-12 w-12 rounded-xl text-muted-foreground"
                           >
                             <X className="h-5 w-5" />
@@ -323,23 +358,23 @@ export function ProductDialog({
                         </div>
                       ) : (
                         <Select 
-                          value={formSubcategory} 
+                          value={formSubcategory ? `subcategory:${formSubcategory}` : ""}
                           onValueChange={(v) => {
                             if (v === "NEW") {
                               setIsAddingNewSubcategory(true);
                               setNewSubcategory("");
                             } else {
-                              setFormSubcategory(v);
+                              setFormSubcategory(v.slice("subcategory:".length));
                             }
                           }}
                         >
-                          <SelectTrigger className="h-12 bg-white border-admin-border rounded-xl shadow-sm font-medium">
+                          <SelectTrigger id={subcategoryId} aria-describedby={subcategoryHintId} className="h-12 bg-white border-admin-border rounded-xl shadow-sm font-medium">
                             <SelectValue placeholder="Selecionar subcategoria..." />
                           </SelectTrigger>
                           <SelectContent className="rounded-xl border-admin-border shadow-2xl">
                             <div className="max-h-[300px] overflow-y-auto">
                               {subcategories.map(s => (
-                                <SelectItem key={s} value={s} className="text-sm font-medium">{s}</SelectItem>
+                                <SelectItem key={s} value={`subcategory:${s}`} className="text-sm font-medium">{s}</SelectItem>
                               ))}
                               {subcategories.length > 0 && <div className="h-px bg-admin-border/50 my-2" />}
                               <SelectItem value="NEW" className="font-bold text-admin-primary">+ Criar Nova...</SelectItem>
@@ -347,6 +382,9 @@ export function ProductDialog({
                           </SelectContent>
                         </Select>
                       )}
+                      <p id={subcategoryHintId} className="text-xs text-muted-foreground">
+                        A subcategoria será salva junto com o produto.
+                      </p>
                     </div>
 
                     {formType === "service" && (
@@ -502,7 +540,10 @@ export function ProductDialog({
                       type="button" 
                       variant="outline" 
                       className="w-full justify-start gap-4 h-16 rounded-2xl border-dashed border-admin-border hover:border-admin-primary/30 hover:bg-admin-primary/5 group transition-all"
-                      onClick={() => (document.querySelector('[value="images"]') as HTMLButtonElement)?.click()}
+                      onClick={() => {
+                        setActiveTab("images");
+                        galleryTabRef.current?.focus();
+                      }}
                     >
                       <div className="h-10 w-10 rounded-xl bg-admin-muted flex items-center justify-center group-hover:bg-admin-primary/10 transition-colors">
                         <ImageIcon className="h-5 w-5 text-muted-foreground group-hover:text-admin-primary transition-colors" />

@@ -1,8 +1,10 @@
 import { accommodationAmounts } from "@/lib/accommodationCalcs";
 import { money, moneyProduct, moneySum } from "@/lib/proposalCalcs";
+import { formatBRL } from "@/lib/currency";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -498,7 +500,7 @@ export default function ProposalAccommodationsSection({
                         <span>·</span>
                         <span>{accPeople} pax</span>
                         <span>·</span>
-                        <span className="font-medium text-foreground tabular-nums">R$ {accTotal.toFixed(2)}</span>
+                        <span className="font-medium text-foreground tabular-nums">{formatBRL(accTotal)}</span>
                       </>
                     )}
                     <AccommodationCostChecklistButton
@@ -632,11 +634,12 @@ export default function ProposalAccommodationsSection({
                             </div>
                             <div className="flex items-center gap-1">
                               <Label className="text-[10px] text-muted-foreground">Custo</Label>
-                              <Input
-                                className="h-7 w-20 text-xs text-right tabular-nums"
-                                type="number" step="any" min={0}
-                                value={room.cost || ""}
-                                onChange={(e) => updateRoom(accIdx, unitIdx, rIdx, { cost: parseFloat(e.target.value) || 0 })}
+                              <CurrencyInput
+                                aria-label="Custo da hospedagem"
+                                className="h-7 w-32 text-xs text-right tabular-nums"
+                                min={0}
+                                value={room.cost}
+                                onValueChange={(cost) => updateRoom(accIdx, unitIdx, rIdx, { cost })}
                               />
                             </div>
                             <div className="flex items-center gap-1">
@@ -647,18 +650,19 @@ export default function ProposalAccommodationsSection({
                             </div>
                             <div className="flex items-center gap-1">
                               <Label className="text-[10px] text-muted-foreground">Venda</Label>
-                              <Input
-                                className="h-7 w-20 text-xs text-right tabular-nums"
-                                type="number" step="any" min={0}
-                                value={room.price || ""}
-                                onChange={(e) => updateRoom(accIdx, unitIdx, rIdx, { price: parseFloat(e.target.value) || 0 })}
+                              <CurrencyInput
+                                aria-label="Valor de venda da hospedagem"
+                                className="h-7 w-32 text-xs text-right tabular-nums"
+                                min={0}
+                                value={room.price}
+                                onValueChange={(price) => updateRoom(accIdx, unitIdx, rIdx, { price })}
                               />
                             </div>
                             <span className="text-[10px] text-muted-foreground">
                               {room.pricing_type === "per_person" ? "/pax" : "/quarto"}
                             </span>
                             <span className="text-xs tabular-nums font-medium ml-auto">
-                              {room.available ? `R$ ${calcRoomSubtotal(room, acc.num_nights).toFixed(2)}` : "—"}
+                              {room.available ? `${formatBRL(calcRoomSubtotal(room, acc.num_nights))}` : "—"}
                             </span>
                             <Button type="button" size="icon" variant="ghost" className="h-6 w-6 text-destructive shrink-0" onClick={() => removeRoom(accIdx, unitIdx, rIdx)}>
                               <Trash2 className="h-3 w-3" />
@@ -730,11 +734,11 @@ export default function ProposalAccommodationsSection({
                       {accommodationAmounts(acc.unit_configs, acc.num_nights).missingCommissions > 0 && <span className="ml-2 text-amber-700">Comissão histórica não informada: confirme por modalidade antes de salvar.</span>}
                     </span>
                     <div className="flex gap-4">
-                      <span className="text-muted-foreground">Custo: <span className="tabular-nums text-destructive">R$ {accCost.toFixed(2)}</span></span>
+                      <span className="text-muted-foreground">Custo: <span className="tabular-nums text-destructive">{formatBRL(accCost)}</span></span>
                       {acc.payment_type === "hospedagem" && (
-                        <span className="text-green-600">Comissão a receber: <span className="tabular-nums">R$ {accommodationAmounts(acc.unit_configs, acc.num_nights).commission.toFixed(2)}</span></span>
+                        <span className="text-green-600">Comissão a receber: <span className="tabular-nums">{formatBRL(accommodationAmounts(acc.unit_configs, acc.num_nights).commission)}</span></span>
                       )}
-                      <span className="font-semibold">Total: <span className="tabular-nums">R$ {accTotal.toFixed(2)}</span></span>
+                      <span className="font-semibold">Total: <span className="tabular-nums">{formatBRL(accTotal)}</span></span>
                     </div>
                   </div>
                   {acc.payment_type === "atmos" && (
@@ -762,17 +766,17 @@ export default function ProposalAccommodationsSection({
             {selectedAccs.length} hospedagem{selectedAccs.length !== 1 ? "ns" : ""} selecionada{selectedAccs.length !== 1 ? "s" : ""}
           </span>
           <div className="flex gap-4 flex-wrap">
-            <span className="text-xs text-muted-foreground">Custo: <span className="tabular-nums text-destructive">R$ {totalCost.toFixed(2)}</span></span>
+            <span className="text-xs text-muted-foreground">Custo: <span className="tabular-nums text-destructive">{formatBRL(totalCost)}</span></span>
             {totalCommission > 0 && (
-              <span className="text-xs text-green-600">Comissão: <span className="tabular-nums">R$ {totalCommission.toFixed(2)}</span></span>
+              <span className="text-xs text-green-600">Comissão: <span className="tabular-nums">{formatBRL(totalCommission)}</span></span>
             )}
             {summaryTotals.atmosRevenue > 0 && (
-              <span className="text-xs text-primary font-medium">ATMOS: <span className="tabular-nums">R$ {summaryTotals.atmosRevenue.toFixed(2)}</span></span>
+              <span className="text-xs text-primary font-medium">ATMOS: <span className="tabular-nums">{formatBRL(summaryTotals.atmosRevenue)}</span></span>
             )}
             {summaryTotals.hospedagemCommission > 0 && (
-              <span className="text-xs text-green-600">Comissão a receber: <span className="tabular-nums">R$ {summaryTotals.hospedagemCommission.toFixed(2)}</span></span>
+              <span className="text-xs text-green-600">Comissão a receber: <span className="tabular-nums">{formatBRL(summaryTotals.hospedagemCommission)}</span></span>
             )}
-            <span className="font-semibold">Total hospedagens: <span className="tabular-nums">R$ {totalRevenue.toFixed(2)}</span></span>
+            <span className="font-semibold">Total hospedagens: <span className="tabular-nums">{formatBRL(totalRevenue)}</span></span>
           </div>
         </div>
       )}

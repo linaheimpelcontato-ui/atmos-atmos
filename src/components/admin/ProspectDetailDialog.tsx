@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import ProspectTabGeneral from "./prospect-tabs/ProspectTabGeneral";
@@ -110,9 +111,9 @@ export default function ProspectDetailDialog({ open, onOpenChange, prospectId, s
     if (prospect) fetchPurchaseHistory();
   }, [prospect, fetchPurchaseHistory]);
 
-  const handleUpdateProspect = async (patch: Record<string, unknown>) => {
+  const handleUpdateProspect = async (patch: TablesUpdate<"prospects">) => {
     if (!prospectId) return;
-    const { error } = await db.from("prospects").update(patch).eq("id", prospectId);
+    const { error } = await supabase.from("prospects").update(patch).eq("id", prospectId);
     if (error) {
       toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" });
     } else {
@@ -172,7 +173,8 @@ export default function ProspectDetailDialog({ open, onOpenChange, prospectId, s
   if (!prospect) return null;
 
   const stage = stages.find(s => s.id === prospect.stage_id);
-  const isB2B = segment === "b2b";
+  const currentSegment = prospect.segment || segment;
+  const isB2B = currentSegment === "b2b";
 
   const acceptedProposals = purchaseHistory.filter((p: any) => isApprovedProposalStatus(p.status));
   const tripCount = acceptedProposals.length;
@@ -306,13 +308,13 @@ export default function ProspectDetailDialog({ open, onOpenChange, prospectId, s
               </TabsList>
 
               <TabsContent value="general" className="bg-white">
-                <ProspectTabGeneral prospect={prospect} stages={stages} segment={segment} onUpdate={handleUpdateProspect} />
+                <ProspectTabGeneral prospect={prospect} stages={stages} segment={currentSegment} onUpdate={handleUpdateProspect} />
               </TabsContent>
               <TabsContent value="contacts" className="bg-white">
                 <ProspectTabContacts contacts={contacts} onAdd={handleAddContact} onDelete={handleDeleteContact} />
               </TabsContent>
               <TabsContent value="intelligence" className="bg-white">
-                <ProspectTabIntelligence prospect={prospect} onUpdate={handleUpdateProspect} segment={segment} />
+                <ProspectTabIntelligence prospect={prospect} onUpdate={handleUpdateProspect} segment={currentSegment} />
               </TabsContent>
               <TabsContent value="history" className="bg-white">
                 <ProspectTabHistory interactions={interactions} onAdd={handleAddInteraction} />

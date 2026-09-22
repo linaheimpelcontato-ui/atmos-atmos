@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { formatBRL } from "@/lib/currency";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -273,7 +274,7 @@ export default function AccommodationCostChecklist({ proposalId, accommodation, 
                       </div>
                       <div>
                         <span className="text-muted-foreground block mb-0.5">Custo cadastro</span>
-                        <span className="tabular-nums">R$ {r.catalog_cost.toFixed(2)}</span>
+                        <span className="tabular-nums">{formatBRL(r.catalog_cost)}</span>
                       </div>
                       <div>
                         <span className="text-muted-foreground block mb-0.5">Custo real</span>

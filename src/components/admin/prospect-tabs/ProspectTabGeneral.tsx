@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Calendar, Save, Globe, Linkedin, Instagram, Star, Cake, UserCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 import WhatsAppPhone from "@/components/admin/WhatsAppPhone";
 
 interface Stage { id: string; name: string; color: string; }
@@ -61,7 +62,7 @@ function scoreToPriority(s: number): string {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default function ProspectTabGeneral({ prospect, stages, segment, onUpdate }: { prospect: any; stages: Stage[]; segment: string; onUpdate: (patch: Record<string, unknown>) => void }) {
+export default function ProspectTabGeneral({ prospect, stages, segment, onUpdate }: { prospect: any; stages: Stage[]; segment: string; onUpdate: (patch: TablesUpdate<"prospects">) => void }) {
   const [form, setForm] = useState({
     name: "", email: "", phone: "", company_name: "", source: "manual", stage_id: "",
     tags: "", notes: "", type: "direct", country: "", target_market: "", website: "",
@@ -115,12 +116,12 @@ export default function ProspectTabGeneral({ prospect, stages, segment, onUpdate
         custom_company_type: isCustomType ? companyTypeVal : "",
         custom_company_segment: isCustomSegment ? companySegmentVal : "",
         seller_id: prospect.seller_id ?? "",
-        segment: prospect.segment ?? "b2c",
+        segment: prospect.segment ?? segment,
         city: prospect.city ?? "",
       });
       setPriorityScore(priorityToScore(prospect.priority));
     }
-  }, [prospect]);
+  }, [prospect, segment]);
 
   const handleSave = () => {
     const finalCompanyType = form.company_type === "Outro" ? form.custom_company_type : form.company_type;
@@ -157,7 +158,7 @@ export default function ProspectTabGeneral({ prospect, stages, segment, onUpdate
   };
 
   const set = (key: string, val: string) => setForm(f => ({ ...f, [key]: val }));
-  const isB2B = segment === "b2b";
+  const isB2B = form.segment === "b2b";
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
@@ -182,9 +183,9 @@ export default function ProspectTabGeneral({ prospect, stages, segment, onUpdate
           />
         </div>
         <div className="space-y-2">
-          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">Classificação (Segmento)</Label>
+          <Label htmlFor="prospect-segment" className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">Classificação (Segmento)</Label>
           <Select value={form.segment} onValueChange={v => set("segment", v)}>
-            <SelectTrigger className="h-12 rounded-xl border-admin-border/60 bg-white font-medium">
+            <SelectTrigger id="prospect-segment" className="h-12 rounded-xl border-admin-border/60 bg-white font-medium">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="rounded-xl border-admin-border/60">
@@ -342,8 +343,8 @@ export default function ProspectTabGeneral({ prospect, stages, segment, onUpdate
         </div>
 
         <div className="space-y-2">
-          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">Localização (Cidade)</Label>
-          <Input value={form.city} onChange={e => set("city", e.target.value)} placeholder="Ex: São Paulo" className="h-12 rounded-xl border-admin-border/60 bg-white font-medium" />
+          <Label htmlFor="prospect-city" className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">Localização (Cidade)</Label>
+          <Input id="prospect-city" value={form.city} onChange={e => set("city", e.target.value)} placeholder="Ex: São Paulo" className="h-12 rounded-xl border-admin-border/60 bg-white font-medium" />
         </div>
 
         <div className="space-y-2">
